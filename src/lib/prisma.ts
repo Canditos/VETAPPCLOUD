@@ -29,16 +29,27 @@ declare global {
   var prisma: undefined | ReturnType<typeof prismaClientSingleton>
 }
 
-const prisma = globalThis.prisma ?? prismaClientSingleton()
+let _prisma: any;
+const getPrisma = () => {
+  if (!_prisma) {
+    _prisma = globalThis.prisma ?? prismaClientSingleton();
+    if (process.env.NODE_ENV !== 'production') globalThis.prisma = _prisma;
+  }
+  return _prisma;
+}
 
-export default prisma
+// Lazy Export to prevent build-time initialization
+const prisma = new Proxy({} as any, {
+  get: (target, prop) => {
+    return getPrisma()[prop];
+  }
+});
 
-if (process.env.NODE_ENV !== 'production') globalThis.prisma = prisma
+export default prisma;
 
 /**
  * Returns a Prisma client instance scoped to a specific clinic.
- * All queries made through this client will automatically include the clinicId.
  */
 export const getTenantClient = (clinicId: string) => {
-  return prisma.$extends(multiTenantExtension(clinicId));
+  return getPrisma().$extends(multiTenantExtension(clinicId));
 }
