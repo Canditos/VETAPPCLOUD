@@ -2,7 +2,11 @@ import { PrismaClient } from '@prisma/client'
 import { multiTenantExtension } from './prisma-tenant-ext'
 
 const prismaClientSingleton = () => {
-  return new PrismaClient()
+  if (process.env.NEXT_PHASE === 'phase-production-build' && !process.env.DATABASE_URL) {
+    console.warn("Skipping Prisma initialization during build due to missing DATABASE_URL");
+    return {} as any;
+  }
+  return new PrismaClient();
 }
 
 declare global {
