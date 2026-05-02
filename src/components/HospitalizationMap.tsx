@@ -1,12 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { format, addHours, startOfDay, eachHourOfInterval, isSameHour } from "date-fns";
-import { pt } from "date-fns/locale";
-import { CheckCircle2, Circle, Clock, AlertCircle } from "lucide-react";
+import { format } from "date-fns";
+import { CheckCircle2, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Task {
   id: string;
@@ -27,9 +24,6 @@ interface Hospitalization {
 }
 
 export function HospitalizationMap({ hospitalizations }: { hospitalizations: Hospitalization[] }) {
-  const [selectedHour, setSelectedHour] = useState<number | null>(null);
-
-  // Generate 24 hours starting from now or beginning of day
   const hours = Array.from({ length: 24 }, (_, i) => i);
   const currentHour = new Date().getHours();
 
@@ -97,7 +91,6 @@ export function HospitalizationMap({ hospitalizations }: { hospitalizations: Hos
 
                   const hasPending = tasksInHour.some(t => t.status === "PENDING");
                   const hasLate = hasPending && hour < currentHour;
-                  const allDone = tasksInHour.length > 0 && tasksInHour.every(t => t.status === "COMPLETED");
 
                   return (
                     <td 
@@ -106,30 +99,19 @@ export function HospitalizationMap({ hospitalizations }: { hospitalizations: Hos
                     >
                       <div className="flex flex-wrap gap-1 justify-center min-h-[40px]">
                         {tasksInHour.map((task) => (
-                          <TooltipProvider key={task.id}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
-                                  task.status === "COMPLETED" 
-                                    ? 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200' 
-                                    : hasLate 
-                                      ? 'bg-red-100 text-red-600 animate-pulse' 
-                                      : 'bg-amber-100 text-amber-600 hover:bg-amber-200 shadow-sm'
-                                }`}>
-                                  {task.status === "COMPLETED" ? <CheckCircle2 size={16} /> : <Clock size={16} />}
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent className="bg-slate-900 text-white border-none rounded-xl p-3">
-                                <div className="space-y-1">
-                                  <p className="font-black text-xs">{task.description}</p>
-                                  <p className="text-[10px] opacity-70">
-                                    Agendado: {format(new Date(task.scheduledTime), "HH:mm")}
-                                  </p>
-                                  {task.notes && <p className="text-[10px] italic mt-1 border-t border-white/10 pt-1">{task.notes}</p>}
-                                </div>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                          <button 
+                            key={task.id}
+                            title={`${task.description} (${format(new Date(task.scheduledTime), "HH:mm")})`}
+                            className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
+                              task.status === "COMPLETED" 
+                                ? 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200' 
+                                : hasLate 
+                                  ? 'bg-red-100 text-red-600 animate-pulse' 
+                                  : 'bg-amber-100 text-amber-600 hover:bg-amber-200 shadow-sm'
+                            }`}
+                          >
+                            {task.status === "COMPLETED" ? <CheckCircle2 size={16} /> : <Clock size={16} />}
+                          </button>
                         ))}
                       </div>
                     </td>

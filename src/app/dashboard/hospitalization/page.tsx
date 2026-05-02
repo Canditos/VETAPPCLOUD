@@ -16,7 +16,7 @@ import {
   RefreshCw, 
   Search,
   LayoutGrid,
-  Trello
+  List
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -290,7 +290,7 @@ export default function HospitalizationPage() {
               className={`rounded-lg font-black text-[10px] uppercase gap-2 ${view === "map" ? 'bg-white text-slate-900 shadow-sm hover:bg-white' : 'text-slate-400'}`}
               onClick={() => setView("map")}
             >
-              <Trello size={14} /> Mapa
+              <List size={14} /> Mapa
             </Button>
           </div>
           <Button
