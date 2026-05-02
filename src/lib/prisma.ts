@@ -5,16 +5,21 @@ const prismaClientSingleton = () => {
   if (process.env.NEXT_PHASE === 'phase-production-build' && !process.env.DATABASE_URL) {
     console.warn("Using No-Op Prisma Proxy during build phase");
     return new Proxy({} as any, {
-      get: () => () => ({
-        findMany: async () => [],
-        findUnique: async () => null,
-        findFirst: async () => null,
-        create: async () => ({}),
-        update: async () => ({}),
-        delete: async () => ({}),
-        $extends: () => prisma,
-        $transaction: async (fn: any) => fn(prisma),
-      })
+      get: (target, prop) => {
+        if (prop === '$extends') return () => prisma;
+        if (prop === '$transaction') return (fn: any) => fn(prisma);
+        return {
+          findMany: async () => [],
+          findUnique: async () => null,
+          findFirst: async () => null,
+          create: async () => ({}),
+          update: async () => ({}),
+          delete: async () => ({}),
+          count: async () => 0,
+          aggregate: async () => ({}),
+          groupBy: async () => [],
+        };
+      }
     });
   }
   return new PrismaClient();
