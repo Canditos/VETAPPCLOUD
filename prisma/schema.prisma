@@ -20,6 +20,7 @@ model Clinic {
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   users            User[]
+  owners           Owner[]
   patients         Patient[]
   consultations    Consultation[]
   appointments     Appointment[]
@@ -32,7 +33,7 @@ model User {
   id                  String                @id @default(uuid())
   name                String
   email               String                @unique
-  password            String
+  passwordHash        String
   role                Role                  @default(VETERINARIAN)
   clinicId            String
   clinic              Clinic                @relation(fields: [clinicId], references: [id])
@@ -74,13 +75,17 @@ model Patient {
 model Owner {
   id        String    @id @default(uuid())
   name      String
-  email     String?   @unique
+  email     String?
   phone     String?
   vatNumber String?
   address   String?
+  clinicId  String
+  clinic    Clinic    @relation(fields: [clinicId], references: [id])
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   patients  Patient[]
+
+  @@unique([clinicId, email])
 }
 
 model Consultation {
@@ -159,6 +164,7 @@ model Invoice {
   consultationId   String?      @unique
   consultation     Consultation? @relation(fields: [consultationId], references: [id])
   jasminInvoiceId  String?      @unique
+  externalId       String?      @unique
   total            Decimal      @db.Decimal(10, 2)
   vatTotal6        Decimal      @default(0) @db.Decimal(10, 2)
   vatTotal13       Decimal      @default(0) @db.Decimal(10, 2)
