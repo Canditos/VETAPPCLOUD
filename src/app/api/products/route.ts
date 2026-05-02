@@ -1,6 +1,5 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-export const dynamic = "force-dynamic";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import prisma, { getTenantClient } from "@/lib/prisma";
