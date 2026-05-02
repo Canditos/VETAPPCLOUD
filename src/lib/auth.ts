@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
 export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET || "fallback-secret-for-build-only",
   adapter: PrismaAdapter(prisma) as any,
   session: {
     strategy: "jwt",
