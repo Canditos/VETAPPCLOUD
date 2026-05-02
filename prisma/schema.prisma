@@ -176,6 +176,8 @@ model InvoiceItem {
   id          String  @id @default(uuid())
   invoiceId   String
   invoice     Invoice @relation(fields: [invoiceId], references: [id])
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id])
   description String
   quantity    Int
   price       Decimal @db.Decimal(10, 2)
@@ -191,10 +193,14 @@ model Product {
   vatRate       Int      @default(23)
   stockQuantity Int      @default(0)
   barcode       String?
+  batchNumber   String?  // Added for medical traceability
+  expiryDate    DateTime? // Added for medical traceability
+  category      String?   // Medications, Consumables, Pet Food, etc.
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  movements StockMovement[]
+  movements    StockMovement[]
+  invoiceItems InvoiceItem[]
 }
 
 model StockMovement {
