@@ -2,19 +2,21 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Bed,
-  Plus,
-  Activity,
-  Clock,
-  CheckCircle2,
-  Thermometer,
-  Heart,
-  ChevronRight,
-  ClipboardList,
-  AlertCircle,
-  RefreshCw,
+import { 
+  Bed, 
+  Plus, 
+  Activity, 
+  Clock, 
+  CheckCircle2, 
+  Thermometer, 
+  Heart, 
+  ChevronRight, 
+  ClipboardList, 
+  AlertCircle, 
+  RefreshCw, 
   Search,
+  LayoutGrid,
+  Trello
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,6 +33,7 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { HospitalizationMap } from "@/components/HospitalizationMap";
 
 const TOTAL_BOXES = 8;
 
@@ -217,6 +220,7 @@ export default function HospitalizationPage() {
   const queryClient = useQueryClient();
   const [selectedHosp, setSelectedHosp] = useState<any>(null);
   const [admitBox, setAdmitBox] = useState<string | null>(null);
+  const [view, setView] = useState<"grid" | "map">("grid");
 
   const { data: hospitalizations = [], isLoading, isError, refetch } = useQuery({
     queryKey: ["hospitalization"],
@@ -271,6 +275,24 @@ export default function HospitalizationPage() {
           </p>
         </div>
         <div className="flex gap-3">
+          <div className="bg-slate-100 p-1 rounded-xl flex mr-2">
+            <Button
+              variant={view === "grid" ? "default" : "ghost"}
+              size="sm"
+              className={`rounded-lg font-black text-[10px] uppercase gap-2 ${view === "grid" ? 'bg-white text-slate-900 shadow-sm hover:bg-white' : 'text-slate-400'}`}
+              onClick={() => setView("grid")}
+            >
+              <LayoutGrid size={14} /> Boxes
+            </Button>
+            <Button
+              variant={view === "map" ? "default" : "ghost"}
+              size="sm"
+              className={`rounded-lg font-black text-[10px] uppercase gap-2 ${view === "map" ? 'bg-white text-slate-900 shadow-sm hover:bg-white' : 'text-slate-400'}`}
+              onClick={() => setView("map")}
+            >
+              <Trello size={14} /> Mapa
+            </Button>
+          </div>
           <Button
             variant="outline"
             className="rounded-xl border-slate-200 font-bold gap-2"
@@ -297,94 +319,98 @@ export default function HospitalizationPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {/* Occupied boxes */}
-        {isLoading
-          ? Array.from({ length: 4 }).map((_, i) => (
-              <Card key={i} className="border-none shadow-sm rounded-3xl overflow-hidden">
-                <CardHeader className="pb-3">
-                  <Skeleton className="h-5 w-16 rounded-full" />
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <Skeleton className="h-7 w-32" />
-                  <Skeleton className="h-3 w-24" />
-                  <Skeleton className="h-2 w-full rounded-full" />
-                </CardContent>
-              </Card>
-            ))
-          : hospitalizations.map((hosp: any) => {
-              const tasks = hosp.tasks ?? [];
-              const completed = tasks.filter((t: any) => t.status === "COMPLETED").length;
-              const dotColor = vitalColor(tasks);
-              const label = vitalLabel(tasks);
-              return (
-                <Card
-                  key={hosp.id}
-                  className="border-none shadow-sm transition-all rounded-3xl overflow-hidden group cursor-pointer ring-1 ring-slate-100 hover:ring-blue-100"
-                  onClick={() => setSelectedHosp(hosp)}
-                >
-                  <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
-                    <Badge className="font-black text-[10px] uppercase bg-blue-100 text-blue-700 border-none">
-                      {hosp.boxNumber ?? "Box —"}
-                    </Badge>
-                    <div className={`w-2 h-2 rounded-full ${dotColor}`} />
+      {view === "grid" ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {/* Occupied boxes */}
+          {isLoading
+            ? Array.from({ length: 4 }).map((_, i) => (
+                <Card key={i} className="border-none shadow-sm rounded-3xl overflow-hidden">
+                  <CardHeader className="pb-3">
+                    <Skeleton className="h-5 w-16 rounded-full" />
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div>
-                        <h3 className="text-xl font-black text-slate-900">{hosp.patient.name}</h3>
-                        <p className="text-xs text-slate-500 font-bold uppercase tracking-tight">
-                          {hosp.patient.species}
-                          {hosp.patient.breed ? ` • ${hosp.patient.breed}` : ""}
-                        </p>
-                      </div>
-                      {tasks.length > 0 && (
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                            <span>Tratamentos</span>
-                            <span>{completed}/{tasks.length}</span>
-                          </div>
-                          <Progress
-                            value={(completed / tasks.length) * 100}
-                            className="h-1.5 bg-slate-100"
-                          />
-                        </div>
-                      )}
-                      <div className="flex items-center justify-between pt-2">
-                        <div className="flex gap-2">
-                          <Thermometer size={14} className="text-slate-300" />
-                          <Heart size={14} className="text-slate-300" />
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 text-[10px] font-black uppercase text-blue-600 hover:bg-blue-50 rounded-lg"
-                        >
-                          Ver Plano <ChevronRight size={12} />
-                        </Button>
-                      </div>
-                    </div>
+                  <CardContent className="space-y-3">
+                    <Skeleton className="h-7 w-32" />
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-2 w-full rounded-full" />
                   </CardContent>
                 </Card>
-              );
-            })}
+              ))
+            : hospitalizations.map((hosp: any) => {
+                const tasks = hosp.tasks ?? [];
+                const completed = tasks.filter((t: any) => t.status === "COMPLETED").length;
+                const dotColor = vitalColor(tasks);
+                const label = vitalLabel(tasks);
+                return (
+                  <Card
+                    key={hosp.id}
+                    className="border-none shadow-sm transition-all rounded-3xl overflow-hidden group cursor-pointer ring-1 ring-slate-100 hover:ring-blue-100"
+                    onClick={() => setSelectedHosp(hosp)}
+                  >
+                    <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+                      <Badge className="font-black text-[10px] uppercase bg-blue-100 text-blue-700 border-none">
+                        {hosp.boxNumber ?? "Box —"}
+                      </Badge>
+                      <div className={`w-2 h-2 rounded-full ${dotColor}`} />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div>
+                          <h3 className="text-xl font-black text-slate-900">{hosp.patient.name}</h3>
+                          <p className="text-xs text-slate-500 font-bold uppercase tracking-tight">
+                            {hosp.patient.species}
+                            {hosp.patient.breed ? ` • ${hosp.patient.breed}` : ""}
+                          </p>
+                        </div>
+                        {tasks.length > 0 && (
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                              <span>Tratamentos</span>
+                              <span>{completed}/{tasks.length}</span>
+                            </div>
+                            <Progress
+                              value={(completed / tasks.length) * 100}
+                              className="h-1.5 bg-slate-100"
+                            />
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between pt-2">
+                          <div className="flex gap-2">
+                            <Thermometer size={14} className="text-slate-300" />
+                            <Heart size={14} className="text-slate-300" />
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-[10px] font-black uppercase text-blue-600 hover:bg-blue-50 rounded-lg"
+                          >
+                            Ver Plano <ChevronRight size={12} />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
 
-        {/* Empty boxes */}
-        {!isLoading &&
-          emptyBoxes.map((boxLabel) => (
-            <Card
-              key={boxLabel}
-              className="border-none bg-slate-50/50 border-2 border-dashed border-slate-200 shadow-none rounded-3xl overflow-hidden cursor-pointer hover:border-blue-200 transition-colors"
-              onClick={() => setAdmitBox(boxLabel)}
-            >
-              <CardContent className="flex flex-col items-center justify-center py-12 text-slate-300 space-y-2">
-                <Bed size={32} strokeWidth={1.5} />
-                <p className="text-xs font-bold uppercase tracking-widest">{boxLabel}</p>
-                <p className="text-xs text-slate-400">Disponível</p>
-              </CardContent>
-            </Card>
-          ))}
-      </div>
+          {/* Empty boxes */}
+          {!isLoading &&
+            emptyBoxes.map((boxLabel) => (
+              <Card
+                key={boxLabel}
+                className="border-none bg-slate-50/50 border-2 border-dashed border-slate-200 shadow-none rounded-3xl overflow-hidden cursor-pointer hover:border-blue-200 transition-colors"
+                onClick={() => setAdmitBox(boxLabel)}
+              >
+                <CardContent className="flex flex-col items-center justify-center py-12 text-slate-300 space-y-2">
+                  <Bed size={32} strokeWidth={1.5} />
+                  <p className="text-xs font-bold uppercase tracking-widest">{boxLabel}</p>
+                  <p className="text-xs text-slate-400">Disponível</p>
+                </CardContent>
+              </Card>
+            ))}
+        </div>
+      ) : (
+        <HospitalizationMap hospitalizations={hospitalizations} />
+      )}
 
       {/* Detail Dialog */}
       <Dialog open={!!selectedHosp} onOpenChange={() => setSelectedHosp(null)}>

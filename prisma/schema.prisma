@@ -1,9 +1,10 @@
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Clinic {
@@ -30,6 +31,8 @@ model Clinic {
   hospitalizations Hospitalization[]
   payments         Payment[]
   budgets          Budget[]
+  healthPlans      HealthPlan[]
+  subscriptions    Subscription[]
 }
 
 model User {
@@ -76,6 +79,7 @@ model Patient {
   imagingStudies   ImagingStudy[]
   hospitalizations Hospitalization[]
   budgets          Budget[]
+  subscriptions    Subscription[]
 }
 
 model Owner {
@@ -94,6 +98,7 @@ model Owner {
   invoices  Invoice[]
   payments  Payment[]
   budgets   Budget[]
+  subscriptions Subscription[]
 
   @@unique([clinicId, email])
 }
@@ -327,4 +332,35 @@ model HospitalizationTask {
   completedBy       User?           @relation(fields: [completedById], references: [id])
   status            String          @default("PENDING") // PENDING, COMPLETED, SKIPPED
   notes             String?
+}
+
+model HealthPlan {
+  id            String         @id @default(uuid())
+  clinicId      String
+  clinic        Clinic         @relation(fields: [clinicId], references: [id])
+  name          String
+  description   String?        @db.Text
+  price         Decimal        @db.Decimal(10, 2)
+  billingCycle  String         @default("MONTHLY") // MONTHLY, YEARLY
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id           String     @id @default(uuid())
+  clinicId     String
+  clinic       Clinic     @relation(fields: [clinicId], references: [id])
+  ownerId      String
+  owner        Owner      @relation(fields: [ownerId], references: [id])
+  patientId    String
+  patient      Patient    @relation(fields: [patientId], references: [id])
+  planId       String
+  plan         HealthPlan @relation(fields: [planId], references: [id])
+  status       String     @default("ACTIVE") // ACTIVE, CANCELLED, PAST_DUE
+  startDate    DateTime   @default(now())
+  nextBilling  DateTime
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 }

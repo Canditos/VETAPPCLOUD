@@ -19,7 +19,12 @@ import {
   ArrowUpRight,
   PawPrint,
   Clock,
-  ExternalLink
+  ExternalLink,
+  Sparkles,
+  Smartphone,
+  ShieldCheck,
+  ArrowRight,
+  Calendar
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";

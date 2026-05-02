@@ -16,7 +16,8 @@ import {
   Smartphone,
   Wallet,
   Scale,
-  RefreshCw
+  RefreshCw,
+  Search
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -133,8 +134,14 @@ export default function ManagementPage() {
           <TabsTrigger value="daily" className="rounded-xl px-8 py-3 data-[state=active]:bg-blue-600 data-[state=active]:text-white font-black text-sm uppercase tracking-widest transition-all">
             Fecho Diário
           </TabsTrigger>
+          <TabsTrigger value="bi" className="rounded-xl px-8 py-3 data-[state=active]:bg-blue-600 data-[state=active]:text-white font-black text-sm uppercase tracking-widest transition-all">
+            Business Intelligence
+          </TabsTrigger>
+          <TabsTrigger value="plans" className="rounded-xl px-8 py-3 data-[state=active]:bg-blue-600 data-[state=active]:text-white font-black text-sm uppercase tracking-widest transition-all">
+            Planos de Saúde
+          </TabsTrigger>
           <TabsTrigger value="invoices" className="rounded-xl px-8 py-3 data-[state=active]:bg-blue-600 data-[state=active]:text-white font-black text-sm uppercase tracking-widest transition-all">
-            Auditoria de Faturas
+            Auditoria
           </TabsTrigger>
         </TabsList>
 
@@ -211,6 +218,14 @@ export default function ManagementPage() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="bi">
+           <BIGraphicsSection />
+        </TabsContent>
+
+        <TabsContent value="plans">
+           <HealthPlansSection />
+        </TabsContent>
+
         <TabsContent value="daily">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <Card className="border-none shadow-lg rounded-3xl bg-white p-8 group hover:scale-[1.02] transition-all">
@@ -276,7 +291,150 @@ export default function ManagementPage() {
              </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="invoices">
+          <Card className="border-none shadow-xl rounded-[2rem] overflow-hidden bg-white">
+            <CardHeader className="p-8 border-b border-slate-50 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-2xl font-black">Auditoria de Documentos</CardTitle>
+                <CardDescription className="font-medium">Lista detalhada de todas as faturas e recibos emitidos.</CardDescription>
+              </div>
+              <div className="flex gap-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                  <Input placeholder="Procurar fatura..." className="pl-10 rounded-xl bg-slate-50 border-none font-bold w-64" />
+                </div>
+                <Button variant="outline" className="rounded-xl border-slate-100 font-bold"><Filter size={16} className="mr-2" /> Filtros</Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent border-slate-50">
+                    <TableHead className="px-8 py-6 text-slate-400 font-black text-[10px] uppercase tracking-[0.2em]">Referência</TableHead>
+                    <TableHead className="px-8 py-6 text-slate-400 font-black text-[10px] uppercase tracking-[0.2em]">Data</TableHead>
+                    <TableHead className="px-8 py-6 text-slate-400 font-black text-[10px] uppercase tracking-[0.2em]">Cliente</TableHead>
+                    <TableHead className="px-8 py-6 text-slate-400 font-black text-[10px] uppercase tracking-[0.2em]">Base</TableHead>
+                    <TableHead className="px-8 py-6 text-slate-400 font-black text-[10px] uppercase tracking-[0.2em]">IVA</TableHead>
+                    <TableHead className="px-8 py-6 text-right text-slate-400 font-black text-[10px] uppercase tracking-[0.2em]">Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <TableRow key={i} className="hover:bg-slate-50 transition-colors">
+                      <TableCell className="px-8 py-6 font-black text-slate-900">FT 2024/{100+i}</TableCell>
+                      <TableCell className="px-8 py-6 font-bold text-slate-500">12/05/2026</TableCell>
+                      <TableCell className="px-8 py-6">
+                        <span className="font-black text-slate-900">Marco Candido</span>
+                        <p className="text-[10px] font-bold text-slate-400">912 345 678</p>
+                      </TableCell>
+                      <TableCell className="px-8 py-6 font-bold text-slate-900">€{(40 * i).toFixed(2)}</TableCell>
+                      <TableCell className="px-8 py-6 font-bold text-blue-600">€{(40 * i * 0.23).toFixed(2)}</TableCell>
+                      <TableCell className="px-8 py-6 text-right font-black text-slate-900">€{(40 * i * 1.23).toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <div className="p-8 border-t border-slate-50 flex justify-center">
+                 <Button variant="ghost" className="font-black text-blue-600 hover:bg-blue-50 rounded-xl">Carregar Mais Documentos</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+function BIGraphicsSection() {
+  const { data: biData } = useQuery({
+    queryKey: ["bi-data"],
+    queryFn: async () => {
+      const res = await fetch("/api/management/bi");
+      return res.json();
+    }
+  });
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <Card className="border-none shadow-xl rounded-[2rem] bg-white p-8">
+        <CardTitle className="mb-8 font-black text-slate-900 uppercase text-xs tracking-widest">Tendência de Receita (6 Meses)</CardTitle>
+        <div className="h-64 flex items-end gap-2">
+          {biData?.revenueTrend?.map((m: any, i: number) => (
+            <div key={i} className="flex-1 flex flex-col items-center gap-3">
+              <div className="w-full bg-blue-50 rounded-2xl relative overflow-hidden h-48">
+                <div 
+                  className="absolute bottom-0 w-full bg-blue-600 rounded-2xl transition-all duration-1000"
+                  style={{ height: `${(m.revenue / 5000) * 100}%` }}
+                ></div>
+              </div>
+              <span className="font-black text-slate-400 text-[10px] uppercase">{m.month}</span>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <div className="grid grid-cols-2 gap-4">
+        <Card className="border-none shadow-lg rounded-3xl bg-slate-900 text-white p-8">
+           <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mb-2">Ticket Médio</p>
+           <h4 className="text-3xl font-black">€{biData?.stats?.avgTicket?.toFixed(2)}</h4>
+        </Card>
+        <Card className="border-none shadow-lg rounded-3xl bg-blue-600 text-white p-8">
+           <p className="text-blue-100 font-bold uppercase text-[10px] tracking-widest mb-2">Retenção</p>
+           <h4 className="text-3xl font-black">{biData?.stats?.patientRetention}%</h4>
+        </Card>
+        <Card className="border-none shadow-lg rounded-3xl bg-white p-8 border border-slate-50">
+           <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest mb-2">Receita Recorrente</p>
+           <h4 className="text-3xl font-black text-slate-900">€{biData?.stats?.mrr?.toFixed(2)}</h4>
+        </Card>
+        <Card className="border-none shadow-lg rounded-3xl bg-white p-8 border border-slate-50">
+           <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest mb-2">Assinaturas Ativas</p>
+           <h4 className="text-3xl font-black text-slate-900">{biData?.stats?.activeSubscriptions}</h4>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function HealthPlansSection() {
+  const { data: plans } = useQuery({
+    queryKey: ["health-plans"],
+    queryFn: async () => {
+      const res = await fetch("/api/management/health-plans");
+      return res.json();
+    }
+  });
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h3 className="text-2xl font-black text-slate-900">Planos de Saúde Ativos</h3>
+        <Button className="rounded-xl bg-slate-900 font-black">+ Criar Novo Plano</Button>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {plans?.map((plan: any) => (
+          <Card key={plan.id} className="border-none shadow-xl rounded-[2rem] bg-white overflow-hidden group hover:shadow-2xl transition-all">
+            <div className="p-8 bg-slate-50 border-b border-white">
+               <Badge className="bg-blue-100 text-blue-700 border-none mb-4 uppercase font-black tracking-widest text-[10px]">{plan.billingCycle}</Badge>
+               <h4 className="text-2xl font-black text-slate-900">{plan.name}</h4>
+               <p className="text-slate-400 font-medium text-sm mt-2">{plan.description}</p>
+            </div>
+            <div className="p-8">
+               <div className="flex justify-between items-end mb-6">
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Preço/Mês</p>
+                    <h5 className="text-3xl font-black text-slate-900">€{Number(plan.price).toFixed(2)}</h5>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Assinantes</p>
+                    <h5 className="text-3xl font-black text-blue-600">{plan._count.subscriptions}</h5>
+                  </div>
+               </div>
+               <Button variant="outline" className="w-full rounded-xl border-slate-100 font-bold group-hover:bg-slate-900 group-hover:text-white transition-all">Gerir Assinantes</Button>
+            </div>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

@@ -2,9 +2,7 @@ const { PrismaClient } = require("@prisma/client");
 require("dotenv").config();
 const bcrypt = require("bcryptjs");
 
-const prisma = new PrismaClient({
-  datasourceUrl: process.env.DATABASE_URL,
-});
+const prisma = new PrismaClient({});
 
 async function main() {
   console.log("Starting production-grade seed...");
@@ -217,9 +215,109 @@ async function main() {
     }
   });
 
+  // 8. Hospitalizations
+  const hosp1 = await prisma.hospitalization.create({
+    data: {
+      patientId: patient1.id,
+      boxNumber: "BOX 01",
+      reason: "Pós-operatório de esterilização",
+      status: "ADMITTED",
+      admissionDate: new Date(),
+      admissionById: admin.id,
+      clinicId: clinic.id,
+      tasks: {
+        create: [
+          { 
+            description: "Medição de Temperatura", 
+            scheduledTime: new Date(new Date().setHours(new Date().getHours() + 2)),
+            status: "PENDING"
+          },
+          { 
+            description: "Administração de Antibiótico", 
+            scheduledTime: new Date(new Date().setHours(new Date().getHours() - 1)),
+            status: "COMPLETED",
+            completedById: admin.id,
+            completedAt: new Date()
+          },
+          { 
+            description: "Limpeza da Box", 
+            scheduledTime: new Date(new Date().setHours(new Date().getHours() + 4)),
+            status: "PENDING"
+          }
+        ]
+      }
+    }
+  });
+
+  const hosp2 = await prisma.hospitalization.create({
+    data: {
+      patientId: patient2.id,
+      boxNumber: "BOX 05",
+      reason: "Gastroenterite hemorrágica - Fluidoterapia",
+      status: "ADMITTED",
+      admissionDate: new Date(),
+      admissionById: vet.id,
+      clinicId: clinic.id,
+      tasks: {
+        create: [
+          { 
+            description: "Controlo de Fluídos", 
+            scheduledTime: new Date(new Date().setHours(new Date().getHours())),
+            status: "PENDING"
+          },
+          { 
+            description: "Monitorização Vital", 
+            scheduledTime: new Date(new Date().setHours(new Date().getHours() + 3)),
+            status: "PENDING"
+          }
+        ]
+      }
+    }
+  });
+
+  console.log(`Hospitalization Demo: Bolinha (Box 01) / Rex (Box 05)`);
+
+  // 9. Health Plans
+  console.log('Seeding health plans...');
+  const basicPlan = await prisma.healthPlan.create({
+    data: {
+      clinicId: clinic.id,
+      name: "Plano Preventivo Base",
+      description: "Inclui vacinação anual e 2 consultas de rotina.",
+      price: 15.00,
+      billingCycle: "MONTHLY",
+      isActive: true
+    }
+  });
+
+  const premiumPlan = await prisma.healthPlan.create({
+    data: {
+      clinicId: clinic.id,
+      name: "Plano Vitalidade Plus",
+      description: "Vacinação completa, check-up anual, destartarização e 15% de desconto em cirurgias.",
+      price: 35.00,
+      billingCycle: "MONTHLY",
+      isActive: true
+    }
+  });
+
+  // 10. Subscriptions
+  console.log('Seeding subscriptions...');
+  await prisma.subscription.create({
+    data: {
+      clinicId: clinic.id,
+      ownerId: customer1.id,
+      patientId: patient1.id,
+      planId: premiumPlan.id,
+      status: "ACTIVE",
+      nextBilling: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    }
+  });
+
   console.log("Seed finished successfully!");
   console.log(`Admin Login: marco@clinicavet.pt / admin123`);
   console.log(`Financial Hub Demo: Ricardo (Paid) / Ana (50€ Paid, 100€ Debt)`);
+  console.log(`Hospitalization Demo: Bolinha (Box 01) / Rex (Box 05)`);
 }
 
 main()
