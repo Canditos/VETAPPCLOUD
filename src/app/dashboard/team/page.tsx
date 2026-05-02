@@ -119,11 +119,11 @@ export default function TeamPage() {
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent border-slate-100">
-                <th className="px-6 py-4 text-slate-400 font-bold text-xs uppercase tracking-wider">Colaborador</th>
-                <th className="px-6 py-4 text-slate-400 font-bold text-xs uppercase tracking-wider">Permissões</th>
-                <th className="px-6 py-4 text-slate-400 font-bold text-xs uppercase tracking-wider">Estado</th>
-                <th className="px-6 py-4 text-right">Ações</th>
-              </tr>
+                <TableHead className="px-6 py-4 text-slate-400 font-bold text-xs uppercase tracking-wider">Colaborador</TableHead>
+                <TableHead className="px-6 py-4 text-slate-400 font-bold text-xs uppercase tracking-wider">Permissões</TableHead>
+                <TableHead className="px-6 py-4 text-slate-400 font-bold text-xs uppercase tracking-wider">Estado</TableHead>
+                <TableHead className="px-6 py-4 text-right">Ações</TableHead>
+              </TableRow>
             </TableHeader>
             <TableBody>
               {team.map((m) => (

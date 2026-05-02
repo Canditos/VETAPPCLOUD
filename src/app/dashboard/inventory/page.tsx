@@ -125,16 +125,16 @@ export default function InventoryPage() {
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent border-slate-100">
-                <th className="px-6 py-4 text-slate-400 font-bold text-xs uppercase tracking-wider">Produto</th>
-                <th className="px-6 py-4 text-slate-400 font-bold text-xs uppercase tracking-wider">Stock Atual</th>
-                <th className="px-6 py-4 text-slate-400 font-bold text-xs uppercase tracking-wider">Preço Un.</th>
-                <th className="px-6 py-4 text-slate-400 font-bold text-xs uppercase tracking-wider">Categoria</th>
-                <th className="px-6 py-4 text-right">Ajuste</th>
-              </tr>
+                <TableHead className="px-6 py-4 text-slate-400 font-bold text-xs uppercase tracking-wider">Produto</TableHead>
+                <TableHead className="px-6 py-4 text-slate-400 font-bold text-xs uppercase tracking-wider">Stock Atual</TableHead>
+                <TableHead className="px-6 py-4 text-slate-400 font-bold text-xs uppercase tracking-wider">Preço Un.</TableHead>
+                <TableHead className="px-6 py-4 text-slate-400 font-bold text-xs uppercase tracking-wider">Categoria</TableHead>
+                <TableHead className="px-6 py-4 text-right">Ajuste</TableHead>
+              </TableRow>
             </TableHeader>
             <TableBody>
               {products.map((p) => (
-                <tr key={p.id} className="hover:bg-slate-50/50 border-slate-50 transition-colors">
+                <TableRow key={p.id} className="hover:bg-slate-50/50 border-slate-50 transition-colors">
                   <td className="px-6 py-5">
                     <div>
                       <p className="font-bold text-slate-900">{p.name}</p>
@@ -163,7 +163,7 @@ export default function InventoryPage() {
                        </Button>
                     </div>
                   </td>
-                </tr>
+                </TableRow>
               ))}
             </TableBody>
           </Table>

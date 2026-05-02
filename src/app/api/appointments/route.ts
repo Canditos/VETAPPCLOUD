@@ -1,6 +1,7 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import prisma, { getTenantClient } from "@/lib/prisma";
 
 // GET /api/appointments - List appointments for the current clinic

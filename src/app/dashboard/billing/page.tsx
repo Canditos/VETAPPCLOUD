@@ -81,7 +81,7 @@ export default function BillingPage() {
                 <TableHead className="px-6 py-4 text-slate-400 font-bold text-xs uppercase tracking-wider">Total</TableHead>
                 <TableHead className="px-6 py-4 text-slate-400 font-bold text-xs uppercase tracking-wider">Estado Jasmin</TableHead>
                 <TableHead className="px-6 py-4 text-right">Ações</TableHead>
-              </tr>
+              </TableRow>
             </TableHeader>
             <TableBody>
               {invoices.map((inv) => (
