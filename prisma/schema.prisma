@@ -1,0 +1,202 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  VETERINARIAN
+  ASSISTANT
+  RECEPTIONIST
+}
+
+enum ConsultationStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum MovementType {
+  IN
+  OUT
+}
+
+enum AttachmentType {
+  IMAGE
+  PDF
+  DICOM
+}
+
+model Clinic {
+  id          String   @id @default(uuid())
+  name        String
+  address     String?
+  vatNumber   String?  @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users         User[]
+  patients      Patient[]
+  owners        Owner[]
+  consultations Consultation[]
+  invoices      Invoice[]
+  products      Product[]
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  passwordHash  String
+  role          Role      @default(RECEPTIONIST)
+  clinicId      String
+  clinic        Clinic    @relation(fields: [clinicId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  consultations Consultation[]
+}
+
+model Owner {
+  id        String   @id @default(uuid())
+  clinicId  String
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+  name      String
+  phone     String?
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  patients Patient[]
+}
+
+model Patient {
+  id         String    @id @default(uuid())
+  clinicId   String
+  clinic     Clinic    @relation(fields: [clinicId], references: [id])
+  ownerId    String
+  owner      Owner     @relation(fields: [ownerId], references: [id])
+  name       String
+  species    String
+  breed      String?
+  birthDate  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  consultations   Consultation[]
+  labResults      LabResult[]
+  imagingStudies  ImagingStudy[]
+}
+
+model Consultation {
+  id              String             @id @default(uuid())
+  clinicId        String
+  clinic          Clinic             @relation(fields: [clinicId], references: [id])
+  patientId       String
+  patient         Patient            @relation(fields: [patientId], references: [id])
+  veterinarianId  String
+  veterinarian    User               @relation(fields: [veterinarianId], references: [id])
+  date            DateTime           @default(now())
+  status          ConsultationStatus @default(IN_PROGRESS)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  notes       ClinicalNote?
+  attachments Attachment[]
+  invoice     Invoice?
+}
+
+model ClinicalNote {
+  id             String       @id @default(uuid())
+  consultationId String       @unique
+  consultation   Consultation @relation(fields: [consultationId], references: [id])
+  subjective     String?      @db.Text
+  objective      String?      @db.Text
+  assessment     String?      @db.Text
+  plan           String?      @db.Text
+}
+
+model Attachment {
+  id             String         @id @default(uuid())
+  consultationId String
+  consultation   Consultation   @relation(fields: [consultationId], references: [id])
+  fileUrl        String
+  type           AttachmentType @default(IMAGE)
+  createdAt      DateTime       @default(now())
+}
+
+model Invoice {
+  id              String       @id @default(uuid())
+  clinicId        String
+  clinic          Clinic       @relation(fields: [clinicId], references: [id])
+  consultationId  String       @unique
+  consultation    Consultation @relation(fields: [consultationId], references: [id])
+  jasminInvoiceId String?      @unique
+  total           Decimal      @db.Decimal(10, 2)
+  status          String       @default("DRAFT")
+  pdfUrl          String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  items InvoiceItem[]
+}
+
+model InvoiceItem {
+  id          String  @id @default(uuid())
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id])
+  description String
+  quantity    Int
+  price       Decimal @db.Decimal(10, 2)
+}
+
+model Product {
+  id            String   @id @default(uuid())
+  clinicId      String
+  clinic        Clinic   @relation(fields: [clinicId], references: [id])
+  name          String
+  price         Decimal  @db.Decimal(10, 2)
+  stockQuantity Int      @default(0)
+  barcode       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  movements StockMovement[]
+}
+
+model StockMovement {
+  id        String       @id @default(uuid())
+  productId String
+  product   Product      @relation(fields: [productId], references: [id])
+  type      MovementType
+  quantity  Int
+  source    String? // e.g., "consultation_id"
+  createdAt DateTime     @default(now())
+}
+
+model LabResult {
+  id            String   @id @default(uuid())
+  patientId     String
+  patient       Patient  @relation(fields: [patientId], references: [id])
+  source        String   @default("FUJI")
+  dataJson      Json
+  abnormalFlags Boolean  @default(false)
+  createdAt     DateTime @default(now())
+}
+
+model ImagingStudy {
+  id           String   @id @default(uuid())
+  patientId    String
+  patient      Patient  @relation(fields: [patientId], references: [id])
+  dicomUrl     String
+  metadataJson Json?
+  createdAt    DateTime @default(now())
+}
