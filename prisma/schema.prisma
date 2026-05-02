@@ -1,13 +1,46 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+}
+
+model Clinic {
+  id               String            @id @default(uuid())
+  name             String
+  vatNumber        String?
+  address          String?
+  phone            String?
+  email            String?
+  logoUrl          String?
+  jasminApiKey     String?
+  jasminAppId      String?
+  jasminSecret     String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  users            User[]
+  patients         Patient[]
+  consultations    Consultation[]
+  appointments     Appointment[]
+  invoices         Invoice[]
+  products         Product[]
+  hospitalizations Hospitalization[]
+}
+
+model User {
+  id                  String                @id @default(uuid())
+  name                String
+  email               String                @unique
+  password            String
+  role                Role                  @default(VETERINARIAN)
+  clinicId            String
+  clinic              Clinic                @relation(fields: [clinicId], references: [id])
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  consultations       Consultation[]
+  completedTasks      HospitalizationTask[]
+  hospitalAdmission   Hospitalization[]     @relation("AdmissionBy")
 }
 
 enum Role {
@@ -17,6 +50,58 @@ enum Role {
   RECEPTIONIST
 }
 
+model Patient {
+  id               String            @id @default(uuid())
+  name             String
+  species          String
+  breed            String?
+  gender           String?
+  birthDate        DateTime?
+  microchip        String?           @unique
+  clinicId         String
+  clinic           Clinic            @relation(fields: [clinicId], references: [id])
+  ownerId          String
+  owner            Owner             @relation(fields: [ownerId], references: [id])
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  consultations    Consultation[]
+  appointments     Appointment[]
+  labResults       LabResult[]
+  imagingStudies   ImagingStudy[]
+  hospitalizations Hospitalization[]
+}
+
+model Owner {
+  id        String    @id @default(uuid())
+  name      String
+  email     String?   @unique
+  phone     String?
+  vatNumber String?
+  address   String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  patients  Patient[]
+}
+
+model Consultation {
+  id             String             @id @default(uuid())
+  clinicId       String
+  clinic         Clinic             @relation(fields: [clinicId], references: [id])
+  patientId      String
+  patient        Patient            @relation(fields: [patientId], references: [id])
+  veterinarianId String
+  veterinarian   User               @relation(fields: [veterinarianId], references: [id])
+  date           DateTime           @default(now())
+  status         ConsultationStatus @default(IN_PROGRESS)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  notes       ClinicalNote?
+  attachments Attachment[]
+  invoice     Invoice?
+  appointment Appointment?
+}
+
 enum ConsultationStatus {
   SCHEDULED
   IN_PROGRESS
@@ -24,94 +109,22 @@ enum ConsultationStatus {
   CANCELLED
 }
 
-enum MovementType {
-  IN
-  OUT
-}
+model Appointment {
+  id             String             @id @default(uuid())
+  clinicId       String
+  clinic         Clinic             @relation(fields: [clinicId], references: [id])
+  patientId      String
+  patient        Patient            @relation(fields: [patientId], references: [id])
+  veterinarianId String
+  startTime      DateTime
+  endTime        DateTime
+  type           String? // e.g., "Check-up", "Surgery"
+  status         ConsultationStatus @default(SCHEDULED)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
 
-enum AttachmentType {
-  IMAGE
-  PDF
-  DICOM
-}
-
-model Clinic {
-  id          String   @id @default(uuid())
-  name        String
-  address     String?
-  vatNumber   String?  @unique
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  users         User[]
-  patients      Patient[]
-  owners        Owner[]
-  consultations Consultation[]
-  invoices      Invoice[]
-  products      Product[]
-}
-
-model User {
-  id            String    @id @default(uuid())
-  name          String
-  email         String    @unique
-  passwordHash  String
-  role          Role      @default(RECEPTIONIST)
-  clinicId      String
-  clinic        Clinic    @relation(fields: [clinicId], references: [id])
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  consultations Consultation[]
-}
-
-model Owner {
-  id        String   @id @default(uuid())
-  clinicId  String
-  clinic    Clinic   @relation(fields: [clinicId], references: [id])
-  name      String
-  phone     String?
-  email     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  patients Patient[]
-}
-
-model Patient {
-  id         String    @id @default(uuid())
-  clinicId   String
-  clinic     Clinic    @relation(fields: [clinicId], references: [id])
-  ownerId    String
-  owner      Owner     @relation(fields: [ownerId], references: [id])
-  name       String
-  species    String
-  breed      String?
-  birthDate  DateTime?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-
-  consultations   Consultation[]
-  labResults      LabResult[]
-  imagingStudies  ImagingStudy[]
-}
-
-model Consultation {
-  id              String             @id @default(uuid())
-  clinicId        String
-  clinic          Clinic             @relation(fields: [clinicId], references: [id])
-  patientId       String
-  patient         Patient            @relation(fields: [patientId], references: [id])
-  veterinarianId  String
-  veterinarian    User               @relation(fields: [veterinarianId], references: [id])
-  date            DateTime           @default(now())
-  status          ConsultationStatus @default(IN_PROGRESS)
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
-
-  notes       ClinicalNote?
-  attachments Attachment[]
-  invoice     Invoice?
+  consultation   Consultation? @relation(fields: [consultationId], references: [id])
+  consultationId String?       @unique
 }
 
 model ClinicalNote {
@@ -133,18 +146,28 @@ model Attachment {
   createdAt      DateTime       @default(now())
 }
 
+enum AttachmentType {
+  IMAGE
+  PDF
+  DICOM
+}
+
 model Invoice {
-  id              String       @id @default(uuid())
-  clinicId        String
-  clinic          Clinic       @relation(fields: [clinicId], references: [id])
-  consultationId  String       @unique
-  consultation    Consultation @relation(fields: [consultationId], references: [id])
-  jasminInvoiceId String?      @unique
-  total           Decimal      @db.Decimal(10, 2)
-  status          String       @default("DRAFT")
-  pdfUrl          String?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  id               String       @id @default(uuid())
+  clinicId         String
+  clinic           Clinic       @relation(fields: [clinicId], references: [id])
+  consultationId   String?      @unique
+  consultation     Consultation? @relation(fields: [consultationId], references: [id])
+  jasminInvoiceId  String?      @unique
+  total            Decimal      @db.Decimal(10, 2)
+  vatTotal6        Decimal      @default(0) @db.Decimal(10, 2)
+  vatTotal13       Decimal      @default(0) @db.Decimal(10, 2)
+  vatTotal23       Decimal      @default(0) @db.Decimal(10, 2)
+  paymentMethod    String? // MULTIBANCO, CASH, MBWAY
+  status           String       @default("DRAFT")
+  pdfUrl           String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 
   items InvoiceItem[]
 }
@@ -156,6 +179,7 @@ model InvoiceItem {
   description String
   quantity    Int
   price       Decimal @db.Decimal(10, 2)
+  vatRate     Int     @default(23)
 }
 
 model Product {
@@ -164,6 +188,7 @@ model Product {
   clinic        Clinic   @relation(fields: [clinicId], references: [id])
   name          String
   price         Decimal  @db.Decimal(10, 2)
+  vatRate       Int      @default(23)
   stockQuantity Int      @default(0)
   barcode       String?
   createdAt     DateTime @default(now())
@@ -180,6 +205,12 @@ model StockMovement {
   quantity  Int
   source    String? // e.g., "consultation_id"
   createdAt DateTime     @default(now())
+}
+
+enum MovementType {
+  IN
+  OUT
+  ADJUSTMENT
 }
 
 model LabResult {
@@ -199,4 +230,36 @@ model ImagingStudy {
   dicomUrl     String
   metadataJson Json?
   createdAt    DateTime @default(now())
+}
+
+model Hospitalization {
+  id            String    @id @default(uuid())
+  clinicId      String
+  clinic        Clinic    @relation(fields: [clinicId], references: [id])
+  patientId     String
+  patient       Patient   @relation(fields: [patientId], references: [id])
+  admissionDate DateTime  @default(now())
+  dischargeDate DateTime?
+  boxNumber     String?
+  reason        String
+  status        String    @default("ADMITTED") // ADMITTED, DISCHARGED
+  admissionById String
+  admissionBy   User      @relation("AdmissionBy", fields: [admissionById], references: [id])
+  
+  tasks         HospitalizationTask[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model HospitalizationTask {
+  id                String          @id @default(uuid())
+  hospitalizationId String
+  hospitalization   Hospitalization @relation(fields: [hospitalizationId], references: [id])
+  description       String
+  scheduledTime     DateTime
+  completedAt       DateTime?
+  completedById     String?
+  completedBy       User?           @relation(fields: [completedById], references: [id])
+  status            String          @default("PENDING") // PENDING, COMPLETED, SKIPPED
+  notes             String?
 }

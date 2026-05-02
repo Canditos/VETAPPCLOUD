@@ -68,6 +68,37 @@ async function main() {
     ],
   });
 
+  // 6. Create Appointments
+  const today = new Date();
+  today.setHours(9, 0, 0, 0);
+
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(11, 0, 0, 0);
+
+  await prisma.appointment.createMany({
+    data: [
+      {
+        clinicId: clinic.id,
+        patientId: patient.id,
+        veterinarianId: vet.id,
+        startTime: today,
+        endTime: new Date(today.getTime() + 60 * 60 * 1000),
+        type: "Vacinação",
+        status: "SCHEDULED",
+      },
+      {
+        clinicId: clinic.id,
+        patientId: patient.id,
+        veterinarianId: vet.id,
+        startTime: tomorrow,
+        endTime: new Date(tomorrow.getTime() + 60 * 60 * 1000),
+        type: "Check-up",
+        status: "SCHEDULED",
+      }
+    ]
+  });
+
   console.log("Seed finished successfully!");
   console.log(`Admin Login: marco@clinicavet.pt / admin123`);
 }

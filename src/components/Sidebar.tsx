@@ -10,7 +10,10 @@ import {
   Receipt, 
   Settings,
   Users,
-  LogOut
+  LogOut,
+  Activity,
+  Bed,
+  BarChart3
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 
@@ -18,6 +21,9 @@ const menuItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Pacientes", href: "/dashboard/patients", icon: PawPrint },
   { name: "Consultas", href: "/dashboard/consultations", icon: Stethoscope },
+  { name: "Diagnósticos", href: "/dashboard/diagnostics", icon: Activity },
+  { name: "Internamento", href: "/dashboard/hospitalization", icon: Bed },
+  { name: "Gestão", href: "/dashboard/management", icon: BarChart3 },
   { name: "Inventário", href: "/dashboard/inventory", icon: Package },
   { name: "Faturação", href: "/dashboard/billing", icon: Receipt },
   { name: "Equipa", href: "/dashboard/team", icon: Users },
