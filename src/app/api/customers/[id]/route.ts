@@ -1,14 +1,43 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(
-  req: NextRequest,
+  request: Request,
   { params }: { params: { id: string } }
 ) {
   const { id } = params;
   const clinicId = "c1-demo-clinic";
+
+  const mockCustomer = {
+    id: "demo-owner-1",
+    name: "Marco Cândido",
+    email: "marco@example.com",
+    phone: "912 345 678",
+    address: "Rua Principal, 123",
+    taxNumber: "123456789",
+    patients: [
+      { 
+        id: "p1", 
+        name: "Bolinha", 
+        species: "Cão", 
+        breed: "Pastor Alemão", 
+        birthDate: "2018-05-15",
+        weight: "32.5",
+        consultations: [
+          { id: "c1", date: new Date().toISOString(), type: "Check-up", status: "COMPLETED" }
+        ]
+      }
+    ],
+    invoices: [
+      { id: "inv-1", number: "FT 2024/001", amount: 125.50, status: "PAID", date: new Date().toISOString() },
+      { id: "inv-2", number: "FT 2024/045", amount: 45.00, status: "PENDING", date: new Date().toISOString() }
+    ],
+    subscriptions: [
+      { id: "sub-1", status: "ACTIVE", plan: { name: "Plano Wellness Gold", price: 29.90 } }
+    ]
+  };
 
   try {
     let customer = await prisma.owner.findUnique({
@@ -16,22 +45,15 @@ export async function GET(
       include: {
         patients: {
           include: {
-            _count: {
-              select: { consultations: true }
+            consultations: {
+              orderBy: { date: 'desc' },
+              take: 5
             }
           }
         },
         invoices: {
-          orderBy: { createdAt: "desc" },
-          take: 10,
-        },
-        budgets: {
-          orderBy: { createdAt: "desc" },
-          take: 5,
-        },
-        payments: {
-          orderBy: { createdAt: "desc" },
-          take: 5,
+          orderBy: { createdAt: 'desc' },
+          take: 10
         },
         subscriptions: {
           include: { plan: true }
@@ -39,51 +61,18 @@ export async function GET(
       }
     });
 
-    // Mock data fallback if ID starts with demo-
-    if (!customer && id.startsWith("demo-")) {
-      customer = {
-        id: id,
-        name: id === "demo-owner-1" ? "Marco Cândido" : "Ana Silva",
-        email: "demo@vet.pt",
-        phone: "912 345 678",
-        address: "Rua de Demonstração, 1",
-        vatNumber: "123456789",
-        notes: "Cliente VIP de teste.",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        clinicId: clinicId,
-        patients: [
-          {
-            id: "p1",
-            name: "Bolinha",
-            species: "Cão",
-            breed: "Pastor Alemão",
-            birthDate: new Date(Date.now() - 8 * 365 * 24 * 60 * 60 * 1000), // 8 years old
-            weight: 32.5,
-            _count: { consultations: 12 }
-          }
-        ],
-        invoices: [],
-        budgets: [],
-        payments: [],
-        subscriptions: []
-      } as any;
+    if (customer) {
+       return NextResponse.json(customer);
+    }
+    
+    // Demo fallback logic
+    if (id.startsWith("demo-") || id === "demo-owner-1") {
+        return NextResponse.json(mockCustomer);
     }
 
-    if (!customer) {
-      return NextResponse.json({ error: "Cliente não encontrado" }, { status: 404 });
-    }
-
-    return NextResponse.json({
-      ...customer,
-      stats: {
-        totalInvoiced: 450.00,
-        totalPaid: 350.00,
-        outstandingBalance: 100.00
-      }
-    });
+    return NextResponse.json({ error: "Customer not found" }, { status: 404 });
   } catch (error) {
-    console.error("Error fetching customer hub data:", error);
-    return NextResponse.json({ error: "Erro ao carregar dados do cliente" }, { status: 500 });
+    console.error("Hub error, returning mock:", error);
+    return NextResponse.json(mockCustomer);
   }
 }

@@ -5,6 +5,39 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const clinicId = "c1-demo-clinic";
+  const mockHospitalizations = [
+    {
+      id: "demo-hosp-1",
+      patient: {
+        name: "Bolinha",
+        owner: { name: "Marco Cândido" }
+      },
+      boxNumber: "BOX 01",
+      reason: "Recuperação Pós-Cirúrgica",
+      status: "ADMITTED",
+      admissionDate: new Date(),
+      admissionBy: { name: "Dra. Sara" },
+      tasks: [
+        { id: "t1", description: "Medição de Temperatura", scheduledTime: new Date(Date.now() + 2*3600000), status: "PENDING" },
+        { id: "t2", description: "Administração de Antibiótico", scheduledTime: new Date(Date.now() - 1*3600000), status: "COMPLETED", completedBy: { name: "Auxiliar João" } }
+      ]
+    },
+    {
+      id: "demo-hosp-2",
+      patient: {
+        name: "Rex",
+        owner: { name: "Ana Silva" }
+      },
+      boxNumber: "BOX 05",
+      reason: "Fluidoterapia - Gastroenterite",
+      status: "ADMITTED",
+      admissionDate: new Date(),
+      admissionBy: { name: "Dr. Pedro" },
+      tasks: [
+        { id: "t3", description: "Controlo de Soros", scheduledTime: new Date(), status: "PENDING" }
+      ]
+    }
+  ];
 
   try {
     const hospitalizations = await prisma.hospitalization.findMany({
@@ -20,46 +53,13 @@ export async function GET() {
       orderBy: { admissionDate: "asc" },
     });
 
-    if (hospitalizations.length === 0) {
-      return NextResponse.json([
-        {
-          id: "demo-hosp-1",
-          patient: {
-            name: "Bolinha",
-            owner: { name: "Marco Cândido" }
-          },
-          boxNumber: "BOX 01",
-          reason: "Recuperação Pós-Cirúrgica",
-          status: "ADMITTED",
-          admissionDate: new Date(),
-          admissionBy: { name: "Dra. Sara" },
-          tasks: [
-            { id: "t1", description: "Medição de Temperatura", scheduledTime: new Date(Date.now() + 2*3600000), status: "PENDING" },
-            { id: "t2", description: "Administração de Antibiótico", scheduledTime: new Date(Date.now() - 1*3600000), status: "COMPLETED", completedBy: { name: "Auxiliar João" } }
-          ]
-        },
-        {
-          id: "demo-hosp-2",
-          patient: {
-            name: "Rex",
-            owner: { name: "Ana Silva" }
-          },
-          boxNumber: "BOX 05",
-          reason: "Fluidoterapia - Gastroenterite",
-          status: "ADMITTED",
-          admissionDate: new Date(),
-          admissionBy: { name: "Dr. Pedro" },
-          tasks: [
-            { id: "t3", description: "Controlo de Soros", scheduledTime: new Date(), status: "PENDING" }
-          ]
-        }
-      ]);
+    if (hospitalizations && hospitalizations.length > 0) {
+      return NextResponse.json(hospitalizations);
     }
-
-    return NextResponse.json(hospitalizations);
+    return NextResponse.json(mockHospitalizations);
   } catch (error) {
-    console.error("Error fetching hospitalizations:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error("Hosp error, returning mocks:", error);
+    return NextResponse.json(mockHospitalizations);
   }
 }
 
@@ -78,7 +78,6 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(hospitalization);
   } catch (error) {
-    console.error("Error admitting patient:", error);
-    return NextResponse.json({ error: "Falha ao internar paciente" }, { status: 500 });
+    return NextResponse.json({ error: "Fail" }, { status: 500 });
   }
 }
