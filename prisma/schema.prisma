@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model Clinic {
@@ -29,6 +28,8 @@ model Clinic {
   invoices         Invoice[]
   products         Product[]
   hospitalizations Hospitalization[]
+  payments         Payment[]
+  budgets          Budget[]
 }
 
 model User {
