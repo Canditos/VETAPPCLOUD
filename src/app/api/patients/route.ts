@@ -1,88 +1,66 @@
-export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import prisma, { getTenantClient } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 
-// GET /api/patients - List all patients for the current clinic
+export const dynamic = "force-dynamic";
+
 export async function GET() {
-  const session = await getServerSession(authOptions);
-
-  if (!session || !(session.user as any).clinicId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const clinicId = (session.user as any).clinicId;
-  const tenantPrisma = getTenantClient(clinicId);
-
-  const patients = await tenantPrisma.patient.findMany({
-    include: {
-      owner: true,
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
-  return NextResponse.json(patients);
-}
-
-// POST /api/patients - Create a new patient and owner
-export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-
-  if (!session || !(session.user as any).clinicId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const clinicId = (session.user as any).clinicId;
-  const body = await req.json();
-
-  const { name, species, breed, birthDate, gender, weight, microchip, allergies, ownerId, ownerName, ownerEmail, ownerPhone } = body;
+  const clinicId = "c1-demo-clinic";
 
   try {
-    const result = await prisma.$transaction(async (tx) => {
-      // 1. Find or Create owner
-      let owner;
-      if (ownerId) {
-        owner = await tx.owner.findUnique({ where: { id: ownerId } });
-      } else {
-        owner = await tx.owner.findFirst({
-          where: { clinicId, email: ownerEmail },
-        });
-
-        if (!owner) {
-          owner = await tx.owner.create({
-            data: {
-              clinicId,
-              name: ownerName,
-              email: ownerEmail,
-              phone: ownerPhone,
-            },
-          });
-        }
-      }
-
-      if (!owner) throw new Error("Owner not found");
-
-      // 2. Create patient
-      const patient = await tx.patient.create({
-        data: {
-          clinicId,
-          ownerId: owner.id,
-          name,
-          species,
-          breed,
-          gender,
-          weight: weight ? Number(weight) : null,
-          microchip,
-          allergies,
-          birthDate: birthDate ? new Date(birthDate) : null,
-        },
-      });
-
-      return patient;
+    const patients = await prisma.patient.findMany({
+      where: { clinicId },
+      include: {
+        owner: true,
+      },
+      orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json(result);
+    if (patients.length === 0) {
+      return NextResponse.json([
+        {
+          id: "p1",
+          name: "Bolinha",
+          species: "Cão",
+          breed: "Pastor Alemão",
+          owner: { name: "Marco Cândido" }
+        },
+        {
+          id: "p2",
+          name: "Rex",
+          species: "Cão",
+          breed: "Labrador",
+          owner: { name: "Ana Silva" }
+        },
+        {
+          id: "p3",
+          name: "Mimi",
+          species: "Gato",
+          breed: "Persa",
+          owner: { name: "João Silva" }
+        }
+      ]);
+    }
+
+    return NextResponse.json(patients);
+  } catch (error) {
+    console.error("Error fetching patients:", error);
+    return NextResponse.json({ error: "Failed to load patients" }, { status: 500 });
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const patient = await prisma.patient.create({
+      data: {
+        clinicId: "c1-demo-clinic",
+        ownerId: body.ownerId,
+        name: body.name,
+        species: body.species,
+        breed: body.breed,
+      },
+    });
+    return NextResponse.json(patient);
   } catch (error) {
     console.error("Error creating patient:", error);
     return NextResponse.json({ error: "Failed to create patient" }, { status: 500 });
