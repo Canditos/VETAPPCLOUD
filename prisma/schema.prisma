@@ -17,6 +17,7 @@ model Clinic {
   jasminApiKey     String?
   jasminAppId      String?
   jasminSecret     String?
+  vendusApiKey     String?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   users            User[]
