@@ -8,33 +8,39 @@ export async function GET() {
   const mockHospitalizations = [
     {
       id: "demo-hosp-1",
+      patientId: "p1",
       patient: {
+        id: "p1",
         name: "Bolinha",
+        species: "Cão",
         owner: { name: "Marco Cândido" }
       },
       boxNumber: "BOX 01",
       reason: "Recuperação Pós-Cirúrgica",
       status: "ADMITTED",
-      admissionDate: new Date(),
+      admissionDate: new Date().toISOString(),
       admissionBy: { name: "Dra. Sara" },
       tasks: [
-        { id: "t1", description: "Medição de Temperatura", scheduledTime: new Date(Date.now() + 2*3600000), status: "PENDING" },
-        { id: "t2", description: "Administração de Antibiótico", scheduledTime: new Date(Date.now() - 1*3600000), status: "COMPLETED", completedBy: { name: "Auxiliar João" } }
+        { id: "t1", description: "Medição de Temperatura", scheduledTime: new Date(Date.now() + 2*3600000).toISOString(), status: "PENDING" },
+        { id: "t2", description: "Administração de Antibiótico", scheduledTime: new Date(Date.now() - 1*3600000).toISOString(), status: "COMPLETED", completedBy: { name: "Auxiliar João" } }
       ]
     },
     {
       id: "demo-hosp-2",
+      patientId: "p2",
       patient: {
+        id: "p2",
         name: "Rex",
+        species: "Cão",
         owner: { name: "Ana Silva" }
       },
       boxNumber: "BOX 05",
       reason: "Fluidoterapia - Gastroenterite",
       status: "ADMITTED",
-      admissionDate: new Date(),
+      admissionDate: new Date().toISOString(),
       admissionBy: { name: "Dr. Pedro" },
       tasks: [
-        { id: "t3", description: "Controlo de Soros", scheduledTime: new Date(), status: "PENDING" }
+        { id: "t3", description: "Controlo de Soros", scheduledTime: new Date().toISOString(), status: "PENDING" }
       ]
     }
   ];

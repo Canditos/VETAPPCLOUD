@@ -17,6 +17,11 @@ export async function GET(
     phone: "912 345 678",
     address: "Rua Principal, 123",
     taxNumber: "123456789",
+    stats: {
+      outstandingBalance: 125.50,
+      totalSpent: 4250.00,
+      lastVisit: new Date().toISOString()
+    },
     patients: [
       { 
         id: "p1", 
@@ -26,13 +31,22 @@ export async function GET(
         birthDate: "2018-05-15",
         weight: "32.5",
         consultations: [
-          { id: "c1", date: new Date().toISOString(), type: "Check-up", status: "COMPLETED" }
+          { id: "c1", date: new Date().toISOString(), type: "Check-up", status: "COMPLETED", notes: "Animal em excelente estado." }
         ]
+      },
+      { 
+        id: "p2", 
+        name: "Rex", 
+        species: "Cão", 
+        breed: "Labrador", 
+        birthDate: "2020-01-10",
+        weight: "28.0",
+        consultations: []
       }
     ],
     invoices: [
-      { id: "inv-1", number: "FT 2024/001", amount: 125.50, status: "PAID", date: new Date().toISOString() },
-      { id: "inv-2", number: "FT 2024/045", amount: 45.00, status: "PENDING", date: new Date().toISOString() }
+      { id: "inv-1", number: "FT 2024/001", amount: 125.50, status: "PAID", createdAt: new Date().toISOString() },
+      { id: "inv-2", number: "FT 2024/045", amount: 45.00, status: "PENDING", createdAt: new Date().toISOString() }
     ],
     subscriptions: [
       { id: "sub-1", status: "ACTIVE", plan: { name: "Plano Wellness Gold", price: 29.90 } }
@@ -62,7 +76,12 @@ export async function GET(
     });
 
     if (customer) {
-       return NextResponse.json(customer);
+       // Enrich real customer with stats if missing
+       const enriched = {
+         ...customer,
+         stats: (customer as any).stats || { outstandingBalance: 0, totalSpent: 0 }
+       };
+       return NextResponse.json(enriched);
     }
     
     // Demo fallback logic

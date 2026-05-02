@@ -335,7 +335,7 @@ export default function HospitalizationPage() {
                   </CardContent>
                 </Card>
               ))
-            : hospitalizations.map((hosp: any) => {
+            : (hospitalizations || []).map((hosp: any) => {
                 const tasks = hosp.tasks ?? [];
                 const completed = tasks.filter((t: any) => t.status === "COMPLETED").length;
                 const dotColor = vitalColor(tasks);
@@ -409,7 +409,7 @@ export default function HospitalizationPage() {
             ))}
         </div>
       ) : (
-        <HospitalizationMap hospitalizations={hospitalizations} />
+        <HospitalizationMap hospitalizations={hospitalizations || []} />
       )}
 
       {/* Detail Dialog */}

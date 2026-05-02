@@ -11,6 +11,7 @@ export async function GET() {
       name: "Bolinha",
       species: "Cão",
       breed: "Pastor Alemão",
+      ownerId: "demo-owner-1",
       owner: { name: "Marco Cândido", email: "marco@example.com" },
       lastVisit: new Date().toISOString()
     },
@@ -19,6 +20,7 @@ export async function GET() {
       name: "Rex",
       species: "Cão",
       breed: "Labrador",
+      ownerId: "demo-owner-2",
       owner: { name: "Ana Silva", email: "ana@vet.pt" },
       lastVisit: new Date().toISOString()
     },
@@ -27,7 +29,8 @@ export async function GET() {
       name: "Mimi",
       species: "Gato",
       breed: "Persa",
-      owner: { name: "João Silva", email: "joao@gmail.com" },
+      ownerId: "demo-owner-2",
+      owner: { name: "Ana Silva", email: "ana@vet.pt" },
       lastVisit: new Date().toISOString()
     }
   ];
