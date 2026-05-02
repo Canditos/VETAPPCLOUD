@@ -1,0 +1,75 @@
+export const dynamic = "force-dynamic";
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import { getTenantClient } from "@/lib/prisma";
+
+// GET /api/billing - List invoices for the current clinic
+export async function GET(req: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session || !(session.user as any).clinicId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const clinicId = (session.user as any).clinicId;
+  const tenantPrisma = getTenantClient(clinicId);
+  const { searchParams } = new URL(req.url);
+  const search = searchParams.get("q") || "";
+
+  try {
+    const invoices = await tenantPrisma.invoice.findMany({
+      include: {
+        consultation: {
+          include: {
+            patient: {
+              include: { owner: true },
+            },
+          },
+        },
+        items: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    // Filter by search term (client name or invoice id)
+    const filtered = search
+      ? invoices.filter((inv) => {
+          const ownerName = inv.consultation?.patient?.owner?.name?.toLowerCase() ?? "";
+          const invId = inv.id.toLowerCase();
+          const extId = (inv.externalId ?? "").toLowerCase();
+          const q = search.toLowerCase();
+          return ownerName.includes(q) || invId.includes(q) || extId.includes(q);
+        })
+      : invoices;
+
+    // Compute summary stats
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const todayInvoices = invoices.filter(
+      (inv) => new Date(inv.createdAt) >= today
+    );
+    const todayTotal = todayInvoices.reduce(
+      (sum, inv) => sum + Number(inv.total),
+      0
+    );
+    const pendingInvoices = invoices.filter((inv) => inv.status === "DRAFT");
+    const pendingTotal = pendingInvoices.reduce(
+      (sum, inv) => sum + Number(inv.total),
+      0
+    );
+
+    return NextResponse.json({
+      invoices: filtered,
+      stats: {
+        todayTotal,
+        todayCount: todayInvoices.length,
+        pendingTotal,
+        pendingCount: pendingInvoices.length,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching billing:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
