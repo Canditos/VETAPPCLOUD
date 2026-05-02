@@ -6,6 +6,10 @@ import prisma, { getTenantClient } from "@/lib/prisma";
 
 // GET /api/appointments - List appointments for the current clinic
 export async function GET(req: Request) {
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return NextResponse.json([]);
+  }
+  
   const session = await getServerSession(authOptions);
   if (!session || !(session.user as any).clinicId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -45,6 +49,10 @@ export async function GET(req: Request) {
 
 // POST /api/appointments - Create a new appointment
 export async function POST(req: Request) {
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return NextResponse.json({});
+  }
+  
   const session = await getServerSession(authOptions);
   if (!session || !(session.user as any).clinicId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

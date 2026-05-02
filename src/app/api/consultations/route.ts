@@ -7,6 +7,10 @@ import { JasminService } from "@/lib/jasmin-service";
 import { VendusService } from "@/lib/vendus-service";
 
 export async function POST(req: Request) {
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return NextResponse.json({});
+  }
+  
   const session = await getServerSession(authOptions);
   if (!session || !(session.user as any).clinicId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
