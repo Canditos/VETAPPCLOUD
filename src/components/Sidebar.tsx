@@ -19,6 +19,7 @@ import { signOut } from "next-auth/react";
 
 const menuItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Clientes", href: "/dashboard/customers", icon: Users },
   { name: "Pacientes", href: "/dashboard/patients", icon: PawPrint },
   { name: "Consultas", href: "/dashboard/consultations", icon: Stethoscope },
   { name: "Diagnósticos", href: "/dashboard/diagnostics", icon: Activity },

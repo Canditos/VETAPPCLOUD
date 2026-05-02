@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Clinic {
@@ -59,7 +60,9 @@ model Patient {
   breed            String?
   gender           String?
   birthDate        DateTime?
+  weight           Decimal?          @db.Decimal(10, 2)
   microchip        String?           @unique
+  allergies        String?           @db.Text
   clinicId         String
   clinic           Clinic            @relation(fields: [clinicId], references: [id])
   ownerId          String
@@ -71,6 +74,7 @@ model Patient {
   labResults       LabResult[]
   imagingStudies   ImagingStudy[]
   hospitalizations Hospitalization[]
+  budgets          Budget[]
 }
 
 model Owner {
@@ -80,11 +84,15 @@ model Owner {
   phone     String?
   vatNumber String?
   address   String?
+  notes     String?   @db.Text
   clinicId  String
   clinic    Clinic    @relation(fields: [clinicId], references: [id])
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   patients  Patient[]
+  invoices  Invoice[]
+  payments  Payment[]
+  budgets   Budget[]
 
   @@unique([clinicId, email])
 }
@@ -162,6 +170,8 @@ model Invoice {
   id               String       @id @default(uuid())
   clinicId         String
   clinic           Clinic       @relation(fields: [clinicId], references: [id])
+  ownerId          String
+  owner            Owner        @relation(fields: [ownerId], references: [id])
   consultationId   String?      @unique
   consultation     Consultation? @relation(fields: [consultationId], references: [id])
   jasminInvoiceId  String?      @unique
@@ -170,13 +180,54 @@ model Invoice {
   vatTotal6        Decimal      @default(0) @db.Decimal(10, 2)
   vatTotal13       Decimal      @default(0) @db.Decimal(10, 2)
   vatTotal23       Decimal      @default(0) @db.Decimal(10, 2)
-  paymentMethod    String? // MULTIBANCO, CASH, MBWAY
-  status           String       @default("DRAFT")
+  status           String       @default("DRAFT") // DRAFT, ISSUED, PAID, CANCELLED
   pdfUrl           String?
+  issuedAt         DateTime?
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
-  items InvoiceItem[]
+  items    InvoiceItem[]
+  payments Payment[]
+}
+
+model Payment {
+  id         String   @id @default(uuid())
+  clinicId   String
+  clinic     Clinic   @relation(fields: [clinicId], references: [id])
+  ownerId    String
+  owner      Owner    @relation(fields: [ownerId], references: [id])
+  invoiceId  String?
+  invoice    Invoice? @relation(fields: [invoiceId], references: [id])
+  amount     Decimal  @db.Decimal(10, 2)
+  method     String   // CASH, CARD, MBWAY, TRANSFER
+  paidAt     DateTime @default(now())
+  createdAt  DateTime @default(now())
+}
+
+model Budget {
+  id           String       @id @default(uuid())
+  clinicId     String
+  clinic       Clinic       @relation(fields: [clinicId], references: [id])
+  ownerId      String
+  owner      Owner        @relation(fields: [ownerId], references: [id])
+  patientId    String?
+  patient      Patient?     @relation(fields: [patientId], references: [id])
+  status       String       @default("DRAFT") // DRAFT, ACCEPTED, REJECTED
+  totalAmount  Decimal      @db.Decimal(10, 2)
+  notes        String?      @db.Text
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  items BudgetItem[]
+}
+
+model BudgetItem {
+  id          String @id @default(uuid())
+  budgetId    String
+  budget      Budget @relation(fields: [budgetId], references: [id])
+  description String
+  quantity    Int
+  price       Decimal @db.Decimal(10, 2)
 }
 
 model InvoiceItem {

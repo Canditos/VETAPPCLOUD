@@ -36,25 +36,32 @@ export async function POST(req: Request) {
   const clinicId = (session.user as any).clinicId;
   const body = await req.json();
 
-  const { name, species, breed, birthDate, ownerName, ownerEmail, ownerPhone } = body;
+  const { name, species, breed, birthDate, gender, weight, microchip, allergies, ownerId, ownerName, ownerEmail, ownerPhone } = body;
 
   try {
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Create or find owner
-      let owner = await tx.owner.findFirst({
-        where: { clinicId, email: ownerEmail },
-      });
-
-      if (!owner) {
-        owner = await tx.owner.create({
-          data: {
-            clinicId,
-            name: ownerName,
-            email: ownerEmail,
-            phone: ownerPhone,
-          },
+      // 1. Find or Create owner
+      let owner;
+      if (ownerId) {
+        owner = await tx.owner.findUnique({ where: { id: ownerId } });
+      } else {
+        owner = await tx.owner.findFirst({
+          where: { clinicId, email: ownerEmail },
         });
+
+        if (!owner) {
+          owner = await tx.owner.create({
+            data: {
+              clinicId,
+              name: ownerName,
+              email: ownerEmail,
+              phone: ownerPhone,
+            },
+          });
+        }
       }
+
+      if (!owner) throw new Error("Owner not found");
 
       // 2. Create patient
       const patient = await tx.patient.create({
@@ -64,6 +71,10 @@ export async function POST(req: Request) {
           name,
           species,
           breed,
+          gender,
+          weight: weight ? Number(weight) : null,
+          microchip,
+          allergies,
           birthDate: birthDate ? new Date(birthDate) : null,
         },
       });
