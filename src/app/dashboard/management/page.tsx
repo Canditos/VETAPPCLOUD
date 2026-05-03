@@ -1,440 +1,432 @@
 "use client";
 
 import { useState } from "react";
-import { 
-  BarChart3, 
-  FileText, 
-  Calendar, 
-  TrendingUp, 
-  Download, 
-  Filter,
-  PieChart,
-  ArrowUpRight,
-  ArrowDownRight,
-  CreditCard,
-  Banknote,
-  Smartphone,
-  Wallet,
-  Scale,
-  RefreshCw,
-  Search
-} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import {
+  Download, FileText, TrendingUp, TrendingDown,
+  CreditCard, Banknote, Smartphone, AlertCircle,
+  RefreshCw, ChevronLeft, ChevronRight, BarChart3,
+  Users, Receipt, Star,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const eur = (v: number) => `€${v.toFixed(2)}`;
+const MONTHS_PT = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+                   "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const METHOD_LABEL: Record<string, string> = {
+  MULTIBANCO:"Multibanco", CASH:"Numerário", MBWAY:"MB Way", OTHER:"Outro",
+};
+const METHOD_COLOR: Record<string, string> = {
+  MULTIBANCO:"text-blue-600 bg-blue-50", CASH:"text-emerald-600 bg-emerald-50",
+  MBWAY:"text-purple-600 bg-purple-50", OTHER:"text-slate-500 bg-slate-50",
+};
+const METHOD_ICON: Record<string, any> = {
+  MULTIBANCO:CreditCard, CASH:Banknote, MBWAY:Smartphone, OTHER:Receipt,
+};
+
+function MiniLineChart({ data }: { data: { date: string; total: number }[] }) {
+  if (!data || data.length < 2) return null;
+  const max = Math.max(...data.map((d) => d.total), 1);
+  const w = 640; const h = 100;
+  const pts = data.map((d, i) => {
+    const x = (i / (data.length - 1)) * w;
+    const y = h - (d.total / max) * h;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const area = `M${pts[0]} ` + pts.slice(1).map((p) => `L${p}`).join(" ") + ` L${w},${h} L0,${h} Z`;
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} width="100%" style={{ display:"block" }}>
+      <defs>
+        <linearGradient id="lg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#2563EB" stopOpacity="0.15" />
+          <stop offset="100%" stopColor="#2563EB" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={area} fill="url(#lg)" />
+      <polyline points={pts.join(" ")} fill="none" stroke="#2563EB" strokeWidth="2" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function MiniBarChart({ data, height = 100 }: { data: { label: string; value: number }[]; height?: number }) {
+  if (!data || data.length === 0) return null;
+  const max = Math.max(...data.map((d) => d.value), 1);
+  const w = 640;
+  const barW = Math.floor((w - (data.length - 1) * 4) / data.length);
+  return (
+    <svg viewBox={`0 0 ${w} ${height + 24}`} width="100%" style={{ display:"block" }}>
+      {data.map((d, i) => {
+        const bh = Math.max(4, Math.round((d.value / max) * height));
+        const x = i * (barW + 4);
+        const y = height - bh;
+        const isLast = i === data.length - 1;
+        return (
+          <g key={i}>
+            <rect x={x} y={y} width={barW} height={bh} rx={3} fill={isLast ? "#2563EB" : "#E2E8F0"} />
+            <text x={x + barW / 2} y={height + 16} textAnchor="middle" fontSize={9} fill="#94A3B8">{d.label}</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
 
 export default function ManagementPage() {
-  const [reportPeriod, setReportPeriod] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+  const now = new Date();
+  const [month, setMonth] = useState(now.getMonth() + 1);
+  const [year, setYear] = useState(now.getFullYear());
 
-  const { data: vatData, isLoading: loadingVat, refetch: refetchVat } = useQuery({
-    queryKey: ["vat-report", reportPeriod],
+  const { data, isLoading, isError, refetch, isRefetching } = useQuery({
+    queryKey: ["management", month, year],
     queryFn: async () => {
-      const res = await fetch(`/api/management/reports/vat?month=${reportPeriod}`);
-      if (!res.ok) throw new Error("Erro ao carregar mapa de IVA");
+      const res = await fetch(`/api/management?month=${month}&year=${year}`);
+      if (!res.ok) throw new Error("Erro");
       return res.json();
-    }
+    },
   });
 
-  const { data: dailyData, isLoading: loadingDaily } = useQuery({
-    queryKey: ["daily-report"],
-    queryFn: async () => {
-      const res = await fetch("/api/management/reports/daily");
-      if (!res.ok) throw new Error("Erro ao carregar fecho diário");
-      return res.json();
-    }
-  });
+  const prevMonth = () => {
+    if (month === 1) { setMonth(12); setYear(y => y - 1); }
+    else setMonth(m => m - 1);
+  };
+  const nextMonth = () => {
+    const atLimit = year === now.getFullYear() && month >= now.getMonth() + 1;
+    if (atLimit) return;
+    if (month === 12) { setMonth(1); setYear(y => y + 1); }
+    else setMonth(m => m + 1);
+  };
+
+  const vatBase  = (data?.vatBreakdown ?? []).reduce((s: number, v: any) => s + v.base, 0);
+  const vatTotal = (data?.vatBreakdown ?? []).reduce((s: number, v: any) => s + v.vat, 0);
+  const payMethods = Object.entries(data?.paymentBreakdown ?? {}) as [string, number][];
+  const payTotal = payMethods.reduce((s, [, v]) => s + v, 0);
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+    <div className="space-y-8 animate-in fade-in duration-700">
+      {/* Header */}
       <div className="flex flex-wrap justify-between items-end gap-4">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight">Gestão & Auditoria</h1>
-          <p className="text-slate-500 font-medium text-lg">Controlo financeiro rigoroso e relatórios para contabilidade.</p>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Gestão & Contabilidade</h1>
+          <p className="text-slate-500 font-medium">Relatórios financeiros, IVA e performance clínica.</p>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" className="rounded-xl gap-2 font-bold py-6 px-6 border-slate-200" onClick={() => refetchVat()}>
-            <RefreshCw size={18} /> Atualizar Dados
-          </Button>
-          <Button className="rounded-xl gap-2 bg-blue-600 hover:bg-blue-700 shadow-xl shadow-blue-100 font-black py-6 px-8 text-lg">
-            <Download size={20} /> Exportar SAF-T
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <Card className="border-none shadow-2xl shadow-blue-100 bg-blue-600 text-white rounded-[2rem] overflow-hidden">
-          <CardContent className="p-8">
-            <div className="flex justify-between items-start mb-6">
-              <div className="p-4 bg-blue-500/30 rounded-3xl backdrop-blur-sm">
-                <TrendingUp size={32} />
-              </div>
-              <Badge className="bg-blue-400/30 text-white border-none rounded-lg px-3 py-1 font-bold">Hoje</Badge>
-            </div>
-            <p className="text-blue-100 font-bold uppercase tracking-[0.2em] text-xs">Total Faturado (Bruto)</p>
-            <h3 className="text-5xl font-black mt-2">€{dailyData?.payments?.total?.toLocaleString('pt-PT', { minimumFractionDigits: 2 }) || "0.00"}</h3>
-            <div className="flex items-center gap-2 mt-4 text-blue-100 font-medium">
-              <ArrowUpRight size={20} className="text-green-300" />
-              <span>+12.5% em relação a ontem</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-xl bg-white rounded-[2rem] overflow-hidden border border-slate-50">
-          <CardContent className="p-8">
-            <div className="flex justify-between items-start mb-6">
-              <div className="p-4 bg-slate-50 text-slate-600 rounded-3xl">
-                <Scale size={32} />
-              </div>
-              <Badge variant="outline" className="border-slate-100 text-slate-400 rounded-lg px-3 py-1 font-bold">Mês Corrente</Badge>
-            </div>
-            <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-xs">IVA a Liquidar (Estimado)</p>
-            <h3 className="text-5xl font-black mt-2 text-slate-900">€{(vatData?.totalVat6 + vatData?.totalVat13 + vatData?.totalVat23)?.toLocaleString('pt-PT', { minimumFractionDigits: 2 }) || "0.00"}</h3>
-            <div className="flex items-center gap-2 mt-4 text-slate-400 font-medium">
-              <FileText size={20} />
-              <span>Cálculo baseado em faturação paga</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-xl bg-slate-900 text-white rounded-[2rem] overflow-hidden">
-          <CardContent className="p-8">
-            <div className="flex justify-between items-start mb-6">
-              <div className="p-4 bg-slate-800 text-amber-400 rounded-3xl">
-                <CreditCard size={32} />
-              </div>
-              <Badge className="bg-slate-800 text-slate-400 border-none rounded-lg px-3 py-1 font-bold">Eficiência</Badge>
-            </div>
-            <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-xs">Tickets Emitidos</p>
-            <h3 className="text-5xl font-black mt-2">{dailyData?.count || 0}</h3>
-            <div className="flex items-center gap-2 mt-4 text-slate-400 font-medium">
-              <PieChart size={20} />
-              <span>Ticket médio: €{(dailyData?.payments?.total / (dailyData?.count || 1))?.toFixed(2)}</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="vat" className="w-full">
-        <TabsList className="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 h-auto gap-2 mb-8">
-          <TabsTrigger value="vat" className="rounded-xl px-8 py-3 data-[state=active]:bg-blue-600 data-[state=active]:text-white font-black text-sm uppercase tracking-widest transition-all">
-            Mapa de IVA
-          </TabsTrigger>
-          <TabsTrigger value="daily" className="rounded-xl px-8 py-3 data-[state=active]:bg-blue-600 data-[state=active]:text-white font-black text-sm uppercase tracking-widest transition-all">
-            Fecho Diário
-          </TabsTrigger>
-          <TabsTrigger value="bi" className="rounded-xl px-8 py-3 data-[state=active]:bg-blue-600 data-[state=active]:text-white font-black text-sm uppercase tracking-widest transition-all">
-            Business Intelligence
-          </TabsTrigger>
-          <TabsTrigger value="plans" className="rounded-xl px-8 py-3 data-[state=active]:bg-blue-600 data-[state=active]:text-white font-black text-sm uppercase tracking-widest transition-all">
-            Planos de Saúde
-          </TabsTrigger>
-          <TabsTrigger value="invoices" className="rounded-xl px-8 py-3 data-[state=active]:bg-blue-600 data-[state=active]:text-white font-black text-sm uppercase tracking-widest transition-all">
-            Auditoria
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="vat">
-          <Card className="border-none shadow-xl rounded-[2rem] overflow-hidden bg-white">
-            <CardHeader className="p-8 border-b border-slate-50 flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-2xl font-black text-slate-900">Mapa de Imposto (Mensal)</CardTitle>
-                <CardDescription className="text-slate-400 font-medium">Resumo segregado por taxas de IVA para o TOC.</CardDescription>
-              </div>
-              <div className="flex items-center gap-4">
-                 <Label className="font-bold text-slate-500 uppercase text-[10px] tracking-widest">Período:</Label>
-                 <Input 
-                   type="month" 
-                   className="rounded-xl border-slate-100 bg-slate-50 font-bold" 
-                   value={reportPeriod}
-                   onChange={(e) => setReportPeriod(e.target.value)}
-                 />
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent border-slate-50">
-                    <TableHead className="px-8 py-6 text-slate-400 font-black text-[10px] uppercase tracking-[0.2em]">Taxa de IVA</TableHead>
-                    <TableHead className="px-8 py-6 text-slate-400 font-black text-[10px] uppercase tracking-[0.2em]">Base Tributável</TableHead>
-                    <TableHead className="px-8 py-6 text-slate-400 font-black text-[10px] uppercase tracking-[0.2em]">Montante IVA</TableHead>
-                    <TableHead className="px-8 py-6 text-right text-slate-400 font-black text-[10px] uppercase tracking-[0.2em]">Total Bruto</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow className="hover:bg-slate-50 transition-colors">
-                    <TableCell className="px-8 py-8">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center font-black">6%</div>
-                        <span className="font-bold text-slate-700">Taxa Reduzida</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-8 py-8 font-bold text-lg text-slate-900">€{vatData?.base6?.toLocaleString('pt-PT', { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell className="px-8 py-8 font-black text-lg text-blue-600">€{vatData?.totalVat6?.toLocaleString('pt-PT', { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell className="px-8 py-8 text-right font-black text-lg text-slate-900">€{(vatData?.base6 + vatData?.totalVat6)?.toLocaleString('pt-PT', { minimumFractionDigits: 2 })}</TableCell>
-                  </TableRow>
-                  <TableRow className="hover:bg-slate-50 transition-colors">
-                    <TableCell className="px-8 py-8">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center font-black">13%</div>
-                        <span className="font-bold text-slate-700">Taxa Intermédia</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-8 py-8 font-bold text-lg text-slate-900">€{vatData?.base13?.toLocaleString('pt-PT', { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell className="px-8 py-8 font-black text-lg text-blue-600">€{vatData?.totalVat13?.toLocaleString('pt-PT', { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell className="px-8 py-8 text-right font-black text-lg text-slate-900">€{(vatData?.base13 + vatData?.totalVat13)?.toLocaleString('pt-PT', { minimumFractionDigits: 2 })}</TableCell>
-                  </TableRow>
-                  <TableRow className="hover:bg-slate-50 transition-colors border-b-2 border-slate-100">
-                    <TableCell className="px-8 py-8">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center font-black">23%</div>
-                        <span className="font-bold text-slate-700">Taxa Normal</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-8 py-8 font-bold text-lg text-slate-900">€{vatData?.base23?.toLocaleString('pt-PT', { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell className="px-8 py-8 font-black text-lg text-blue-600">€{vatData?.totalVat23?.toLocaleString('pt-PT', { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell className="px-8 py-8 text-right font-black text-lg text-slate-900">€{(vatData?.base23 + vatData?.totalVat23)?.toLocaleString('pt-PT', { minimumFractionDigits: 2 })}</TableCell>
-                  </TableRow>
-                  <TableRow className="bg-slate-50/50">
-                    <TableCell className="px-8 py-8 font-black text-slate-900 uppercase tracking-widest">Totais Gerais</TableCell>
-                    <TableCell className="px-8 py-8 font-black text-xl text-slate-900">€{(vatData?.base6 + vatData?.base13 + vatData?.base23)?.toLocaleString('pt-PT', { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell className="px-8 py-8 font-black text-xl text-blue-700">€{(vatData?.totalVat6 + vatData?.totalVat13 + vatData?.totalVat23)?.toLocaleString('pt-PT', { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell className="px-8 py-8 text-right font-black text-2xl text-slate-900 underline decoration-blue-500 underline-offset-8">€{vatData?.totalGross?.toLocaleString('pt-PT', { minimumFractionDigits: 2 })}</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="bi">
-           <BIGraphicsSection />
-        </TabsContent>
-
-        <TabsContent value="plans">
-           <HealthPlansSection />
-        </TabsContent>
-
-        <TabsContent value="daily">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <Card className="border-none shadow-lg rounded-3xl bg-white p-8 group hover:scale-[1.02] transition-all">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="p-3 bg-slate-100 text-slate-900 rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                  <Banknote size={24} />
-                </div>
-                <span className="font-black text-slate-900 uppercase text-[10px] tracking-widest">Numerário</span>
-              </div>
-              <h4 className="text-3xl font-black text-slate-900">€{dailyData?.payments?.CASH?.toLocaleString('pt-PT', { minimumFractionDigits: 2 }) || "0.00"}</h4>
-            </Card>
-
-            <Card className="border-none shadow-lg rounded-3xl bg-white p-8 group hover:scale-[1.02] transition-all">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="p-3 bg-slate-100 text-slate-900 rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                  <CreditCard size={24} />
-                </div>
-                <span className="font-black text-slate-900 uppercase text-[10px] tracking-widest">Multibanco</span>
-              </div>
-              <h4 className="text-3xl font-black text-slate-900">€{dailyData?.payments?.MULTIBANCO?.toLocaleString('pt-PT', { minimumFractionDigits: 2 }) || "0.00"}</h4>
-            </Card>
-
-            <Card className="border-none shadow-lg rounded-3xl bg-white p-8 group hover:scale-[1.02] transition-all">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="p-3 bg-slate-100 text-slate-900 rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                  <Smartphone size={24} />
-                </div>
-                <span className="font-black text-slate-900 uppercase text-[10px] tracking-widest">MB Way</span>
-              </div>
-              <h4 className="text-3xl font-black text-slate-900">€{dailyData?.payments?.MBWAY?.toLocaleString('pt-PT', { minimumFractionDigits: 2 }) || "0.00"}</h4>
-            </Card>
-
-            <Card className="border-none shadow-lg rounded-3xl bg-white p-8 group hover:scale-[1.02] transition-all">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="p-3 bg-slate-100 text-slate-900 rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                  <Wallet size={24} />
-                </div>
-                <span className="font-black text-slate-900 uppercase text-[10px] tracking-widest">Transferência</span>
-              </div>
-              <h4 className="text-3xl font-black text-slate-900">€{dailyData?.payments?.TRANSFER?.toLocaleString('pt-PT', { minimumFractionDigits: 2 }) || "0.00"}</h4>
-            </Card>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1">
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={prevMonth}>
+              <ChevronLeft size={16} />
+            </Button>
+            <span className="text-sm font-bold text-slate-700 px-2 min-w-[120px] text-center">
+              {MONTHS_PT[month - 1]} {year}
+            </span>
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={nextMonth}
+              disabled={year === now.getFullYear() && month >= now.getMonth() + 1}>
+              <ChevronRight size={16} />
+            </Button>
           </div>
-          
-          <Card className="mt-8 border-none shadow-xl rounded-[2rem] bg-white overflow-hidden">
-             <CardHeader className="p-8 border-b border-slate-50">
-               <CardTitle className="text-xl font-black">Histórico de Fechos</CardTitle>
-               <CardDescription>Resumo dos últimos 7 dias de faturação.</CardDescription>
-             </CardHeader>
-             <CardContent className="p-8">
-               <div className="h-64 flex items-end justify-between gap-4">
-                 {[45, 62, 55, 80, 48, 95, 70].map((h, i) => (
-                   <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                     <div className="w-full bg-slate-50 rounded-t-xl relative overflow-hidden h-48">
-                        <div 
-                          className="absolute bottom-0 w-full bg-blue-600 rounded-t-xl transition-all duration-1000 ease-out"
-                          style={{ height: `${h}%` }}
-                        ></div>
-                     </div>
-                     <span className="text-[10px] font-bold text-slate-400 uppercase">{['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB', 'DOM'][i]}</span>
-                   </div>
-                 ))}
-               </div>
-             </CardContent>
-          </Card>
-        </TabsContent>
+          <Button variant="outline" className="rounded-xl gap-2"><Download size={16} /> SAF-T</Button>
+          <Button className="rounded-xl gap-2 bg-slate-900 hover:bg-slate-800 text-white"
+            onClick={() => refetch()} disabled={isRefetching}>
+            <RefreshCw size={16} className={isRefetching ? "animate-spin" : ""} /> Atualizar
+          </Button>
+        </div>
+      </div>
 
-        <TabsContent value="invoices">
-          <Card className="border-none shadow-xl rounded-[2rem] overflow-hidden bg-white">
-            <CardHeader className="p-8 border-b border-slate-50 flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-2xl font-black">Auditoria de Documentos</CardTitle>
-                <CardDescription className="font-medium">Lista detalhada de todas as faturas e recibos emitidos.</CardDescription>
-              </div>
-              <div className="flex gap-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                  <Input placeholder="Procurar fatura..." className="pl-10 rounded-xl bg-slate-50 border-none font-bold w-64" />
-                </div>
-                <Button variant="outline" className="rounded-xl border-slate-100 font-bold"><Filter size={16} className="mr-2" /> Filtros</Button>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent border-slate-50">
-                    <TableHead className="px-8 py-6 text-slate-400 font-black text-[10px] uppercase tracking-[0.2em]">Referência</TableHead>
-                    <TableHead className="px-8 py-6 text-slate-400 font-black text-[10px] uppercase tracking-[0.2em]">Data</TableHead>
-                    <TableHead className="px-8 py-6 text-slate-400 font-black text-[10px] uppercase tracking-[0.2em]">Cliente</TableHead>
-                    <TableHead className="px-8 py-6 text-slate-400 font-black text-[10px] uppercase tracking-[0.2em]">Base</TableHead>
-                    <TableHead className="px-8 py-6 text-slate-400 font-black text-[10px] uppercase tracking-[0.2em]">IVA</TableHead>
-                    <TableHead className="px-8 py-6 text-right text-slate-400 font-black text-[10px] uppercase tracking-[0.2em]">Total</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <TableRow key={i} className="hover:bg-slate-50 transition-colors">
-                      <TableCell className="px-8 py-6 font-black text-slate-900">FT 2024/{100+i}</TableCell>
-                      <TableCell className="px-8 py-6 font-bold text-slate-500">12/05/2026</TableCell>
-                      <TableCell className="px-8 py-6">
-                        <span className="font-black text-slate-900">Marco Candido</span>
-                        <p className="text-[10px] font-bold text-slate-400">912 345 678</p>
-                      </TableCell>
-                      <TableCell className="px-8 py-6 font-bold text-slate-900">€{(40 * i).toFixed(2)}</TableCell>
-                      <TableCell className="px-8 py-6 font-bold text-blue-600">€{(40 * i * 0.23).toFixed(2)}</TableCell>
-                      <TableCell className="px-8 py-6 text-right font-black text-slate-900">€{(40 * i * 1.23).toFixed(2)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              <div className="p-8 border-t border-slate-50 flex justify-center">
-                 <Button variant="ghost" className="font-black text-blue-600 hover:bg-blue-50 rounded-xl">Carregar Mais Documentos</Button>
+      {isError && (
+        <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-100 rounded-2xl text-red-700">
+          <AlertCircle size={18} />
+          <p className="font-bold text-sm">Erro ao carregar dados</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-auto">Tentar novamente</Button>
+        </div>
+      )}
+
+      {/* KPIs */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="border-none shadow-sm rounded-3xl bg-blue-600 text-white">
+          <CardContent className="p-6">
+            <p className="text-[10px] font-black uppercase tracking-widest opacity-70">Faturação Hoje</p>
+            <div className="flex justify-between items-end mt-2">
+              {isLoading ? <Skeleton className="h-9 w-28 bg-white/20" /> :
+                <h3 className="text-3xl font-black">{eur(data?.today?.total ?? 0)}</h3>}
+              {!isLoading && <span className="text-[10px] opacity-70">{data?.today?.count ?? 0} docs</span>}
+            </div>
+          </CardContent>
+        </Card>
+        {[
+          { label:"Faturação do Mês", value: eur(data?.month?.total ?? 0), growth: data?.month?.growth },
+          { label:"Ticket Médio", value: eur(data?.month?.avgTicket ?? 0) },
+          { label:"Consultas", value: data?.consultations?.count ?? 0, growth: data?.consultations?.growth },
+        ].map((kpi, i) => (
+          <Card key={i} className="border-none shadow-sm rounded-3xl">
+            <CardContent className="p-6">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{kpi.label}</p>
+              <div className="flex justify-between items-end mt-2">
+                {isLoading ? <Skeleton className="h-9 w-28" /> :
+                  <h3 className="text-3xl font-black text-slate-900">{kpi.value}</h3>}
+                {kpi.growth !== undefined && !isLoading && (
+                  <Badge className={`border-none text-[10px] gap-1 ${kpi.growth >= 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                    {kpi.growth >= 0 ? <TrendingUp size={10}/> : <TrendingDown size={10}/>}
+                    {kpi.growth >= 0 ? "+" : ""}{kpi.growth}%
+                  </Badge>
+                )}
               </div>
             </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-}
-
-function BIGraphicsSection() {
-  const { data: biData } = useQuery({
-    queryKey: ["bi-data"],
-    queryFn: async () => {
-      const res = await fetch("/api/management/bi");
-      return res.json();
-    }
-  });
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <Card className="border-none shadow-xl rounded-[2rem] bg-white p-8">
-        <CardTitle className="mb-8 font-black text-slate-900 uppercase text-xs tracking-widest">Tendência de Receita (6 Meses)</CardTitle>
-        <div className="h-64 flex items-end gap-2">
-          {biData?.revenueTrend?.map((m: any, i: number) => (
-            <div key={i} className="flex-1 flex flex-col items-center gap-3">
-              <div className="w-full bg-blue-50 rounded-2xl relative overflow-hidden h-48">
-                <div 
-                  className="absolute bottom-0 w-full bg-blue-600 rounded-2xl transition-all duration-1000"
-                  style={{ height: `${(m.revenue / 5000) * 100}%` }}
-                ></div>
-              </div>
-              <span className="font-black text-slate-400 text-[10px] uppercase">{m.month}</span>
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      <div className="grid grid-cols-2 gap-4">
-        <Card className="border-none shadow-lg rounded-3xl bg-slate-900 text-white p-8">
-           <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mb-2">Ticket Médio</p>
-           <h4 className="text-3xl font-black">€{biData?.stats?.avgTicket?.toFixed(2)}</h4>
-        </Card>
-        <Card className="border-none shadow-lg rounded-3xl bg-blue-600 text-white p-8">
-           <p className="text-blue-100 font-bold uppercase text-[10px] tracking-widest mb-2">Retenção</p>
-           <h4 className="text-3xl font-black">{biData?.stats?.patientRetention}%</h4>
-        </Card>
-        <Card className="border-none shadow-lg rounded-3xl bg-white p-8 border border-slate-50">
-           <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest mb-2">Receita Recorrente</p>
-           <h4 className="text-3xl font-black text-slate-900">€{biData?.stats?.mrr?.toFixed(2)}</h4>
-        </Card>
-        <Card className="border-none shadow-lg rounded-3xl bg-white p-8 border border-slate-50">
-           <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest mb-2">Assinaturas Ativas</p>
-           <h4 className="text-3xl font-black text-slate-900">{biData?.stats?.activeSubscriptions}</h4>
-        </Card>
-      </div>
-    </div>
-  );
-}
-
-function HealthPlansSection() {
-  const { data: plans } = useQuery({
-    queryKey: ["health-plans"],
-    queryFn: async () => {
-      const res = await fetch("/api/management/health-plans");
-      return res.json();
-    }
-  });
-
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h3 className="text-2xl font-black text-slate-900">Planos de Saúde Ativos</h3>
-        <Button className="rounded-xl bg-slate-900 font-black">+ Criar Novo Plano</Button>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {plans?.map((plan: any) => (
-          <Card key={plan.id} className="border-none shadow-xl rounded-[2rem] bg-white overflow-hidden group hover:shadow-2xl transition-all">
-            <div className="p-8 bg-slate-50 border-b border-white">
-               <Badge className="bg-blue-100 text-blue-700 border-none mb-4 uppercase font-black tracking-widest text-[10px]">{plan.billingCycle}</Badge>
-               <h4 className="text-2xl font-black text-slate-900">{plan.name}</h4>
-               <p className="text-slate-400 font-medium text-sm mt-2">{plan.description}</p>
-            </div>
-            <div className="p-8">
-               <div className="flex justify-between items-end mb-6">
-                  <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Preço/Mês</p>
-                    <h5 className="text-3xl font-black text-slate-900">€{Number(plan.price).toFixed(2)}</h5>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Assinantes</p>
-                    <h5 className="text-3xl font-black text-blue-600">{plan._count.subscriptions}</h5>
-                  </div>
-               </div>
-               <Button variant="outline" className="w-full rounded-xl border-slate-100 font-bold group-hover:bg-slate-900 group-hover:text-white transition-all">Gerir Assinantes</Button>
-            </div>
           </Card>
         ))}
       </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="border-none shadow-sm rounded-3xl overflow-hidden">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-black text-slate-700">Receita Diária (30 dias)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? <Skeleton className="h-28 w-full" /> : <MiniLineChart data={data?.dailyRevenue ?? []} />}
+          </CardContent>
+        </Card>
+        <Card className="border-none shadow-sm rounded-3xl overflow-hidden">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-black text-slate-700">Faturação Mensal (6 meses)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? <Skeleton className="h-28 w-full" /> : (
+              <MiniBarChart data={(data?.monthlyRevenue ?? []).map((m: any) => ({ label: m.month, value: m.total }))} />
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tabs */}
+      <Tabs defaultValue="vat" className="w-full">
+        <TabsList className="grid w-full grid-cols-4 mb-8 bg-slate-100/50 p-1 rounded-2xl">
+          {["vat:MAPA DE IVA","daily:FECHO DIÁRIO","services:SERVIÇOS","performance:PERFORMANCE"].map(t => {
+            const [val, label] = t.split(":");
+            return (
+              <TabsTrigger key={val} value={val}
+                className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm font-bold text-xs">
+                {label}
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
+
+        {/* VAT */}
+        <TabsContent value="vat">
+          <Card className="border-none shadow-sm rounded-3xl overflow-hidden">
+            <CardHeader className="bg-slate-50/50 flex flex-row justify-between items-center">
+              <div>
+                <CardTitle className="text-lg font-black">Mapa de IVA</CardTitle>
+                <CardDescription>{MONTHS_PT[month - 1]} {year}</CardDescription>
+              </div>
+              <Button variant="outline" size="sm" className="rounded-xl gap-2"><Download size={14}/> Exportar</Button>
+            </CardHeader>
+            <CardContent className="p-0">
+              {isLoading ? (
+                <div className="p-8 space-y-4">{[1,2,3].map(i => <Skeleton key={i} className="h-12 w-full"/>)}</div>
+              ) : (data?.vatBreakdown ?? []).length === 0 ? (
+                <div className="text-center py-20 text-slate-400">
+                  <Receipt size={32} strokeWidth={1.5} className="mx-auto mb-3"/>
+                  <p className="font-bold">Sem faturas neste período</p>
+                </div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                    <tr>
+                      <th className="px-8 py-4 text-left">Taxa IVA</th>
+                      <th className="px-8 py-4 text-right">Base Tributável</th>
+                      <th className="px-8 py-4 text-right">Valor IVA</th>
+                      <th className="px-8 py-4 text-right">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {(data?.vatBreakdown ?? []).map((v: any) => (
+                      <tr key={v.rate} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-8 py-6 font-bold">
+                          IVA {v.rate === 23 ? "Normal" : v.rate === 13 ? "Intermédio" : "Reduzido"} ({v.rate}%)
+                        </td>
+                        <td className="px-8 py-6 text-right font-medium">{eur(v.base)}</td>
+                        <td className="px-8 py-6 text-right font-black text-blue-600">{eur(v.vat)}</td>
+                        <td className="px-8 py-6 text-right font-bold">{eur(v.total)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="bg-slate-900 text-white">
+                    <tr>
+                      <td className="px-8 py-6 font-black uppercase text-[10px] tracking-widest">Totais</td>
+                      <td className="px-8 py-6 text-right font-bold">{eur(vatBase)}</td>
+                      <td className="px-8 py-6 text-right font-black text-blue-400">{eur(vatTotal)}</td>
+                      <td className="px-8 py-6 text-right font-black text-xl">{eur(vatBase + vatTotal)}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Daily close */}
+        <TabsContent value="daily">
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {isLoading ? [1,2,3].map(i => <Skeleton key={i} className="h-36 rounded-3xl"/>) :
+               payMethods.length === 0 ? (
+                <div className="col-span-3 text-center py-20 text-slate-400">
+                  <Banknote size={32} strokeWidth={1.5} className="mx-auto mb-3"/>
+                  <p className="font-bold">Sem movimentos hoje</p>
+                </div>
+              ) : payMethods.map(([method, total]) => {
+                  const Icon = METHOD_ICON[method] ?? Receipt;
+                  const [textColor, bgColor] = (METHOD_COLOR[method] ?? "text-slate-500 bg-slate-50").split(" ");
+                  return (
+                    <Card key={method} className="border-none shadow-sm rounded-3xl p-6 flex flex-col justify-between">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className={`p-3 ${bgColor} ${textColor} rounded-2xl`}><Icon size={24}/></div>
+                        <Badge variant="outline" className="text-xs">{METHOD_LABEL[method] ?? method}</Badge>
+                      </div>
+                      <div>
+                        <p className="text-3xl font-black text-slate-900">{eur(total)}</p>
+                        <p className="text-xs text-slate-500 font-medium mt-1">
+                          {Math.round((total / payTotal) * 100)}% do total de hoje
+                        </p>
+                      </div>
+                    </Card>
+                  );
+                })}
+            </div>
+            {!isLoading && data?.today && (
+              <Card className="border-none shadow-sm rounded-3xl">
+                <CardContent className="p-6 flex justify-between items-center">
+                  <div>
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Total Fecho Diário</p>
+                    <p className="text-4xl font-black text-slate-900 mt-1">{eur(data.today.total)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Documentos</p>
+                    <p className="text-4xl font-black text-slate-900 mt-1">{data.today.count}</p>
+                  </div>
+                  <Button className="rounded-xl bg-slate-900 text-white gap-2"><FileText size={16}/> Imprimir Fecho</Button>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* Top services */}
+        <TabsContent value="services">
+          <Card className="border-none shadow-sm rounded-3xl overflow-hidden">
+            <CardHeader className="bg-slate-50/50">
+              <CardTitle className="text-lg font-black">Top Serviços</CardTitle>
+              <CardDescription>Por receita — {MONTHS_PT[month - 1]} {year}</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              {isLoading ? (
+                <div className="p-8 space-y-4">{[1,2,3,4,5].map(i => <Skeleton key={i} className="h-14 w-full"/>)}</div>
+              ) : (data?.topServices ?? []).length === 0 ? (
+                <div className="text-center py-20 text-slate-400">
+                  <Star size={32} strokeWidth={1.5} className="mx-auto mb-3"/>
+                  <p className="font-bold">Sem serviços registados</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-50">
+                  {(data?.topServices ?? []).map((s: any, i: number) => {
+                    const maxRev = data.topServices[0]?.revenue ?? 1;
+                    const pct = Math.round((s.revenue / maxRev) * 100);
+                    return (
+                      <div key={i} className="px-8 py-5 flex items-center gap-6 hover:bg-slate-50/50 transition-colors">
+                        <span className="text-2xl font-black text-slate-200 w-8 text-center">{i + 1}</span>
+                        <div className="flex-1">
+                          <p className="font-bold text-slate-900 text-sm">{s.name}</p>
+                          <div className="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-500 rounded-full" style={{ width:`${pct}%` }}/>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-black text-slate-900">{eur(s.revenue)}</p>
+                          <p className="text-[10px] text-slate-400">{s.count}× realizados</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Performance */}
+        <TabsContent value="performance">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="border-none shadow-sm rounded-3xl overflow-hidden">
+              <CardHeader className="bg-slate-50/50">
+                <CardTitle className="text-lg font-black flex items-center gap-2"><Users size={18}/> Performance por Médico</CardTitle>
+                <CardDescription>{MONTHS_PT[month - 1]} {year}</CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                {isLoading ? (
+                  <div className="p-8 space-y-4">{[1,2,3].map(i => <Skeleton key={i} className="h-14 w-full"/>)}</div>
+                ) : (data?.vetPerformance ?? []).length === 0 ? (
+                  <div className="text-center py-16 text-slate-400">
+                    <Users size={32} strokeWidth={1.5} className="mx-auto mb-3"/>
+                    <p className="font-bold">Sem consultas registadas</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-slate-50">
+                    {(data?.vetPerformance ?? []).map((v: any, i: number) => {
+                      const maxC = data.vetPerformance[0]?.consultations ?? 1;
+                      const pct = Math.round((v.consultations / maxC) * 100);
+                      return (
+                        <div key={i} className="px-6 py-5 flex items-center gap-4 hover:bg-slate-50/50 transition-colors">
+                          <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-black text-sm shrink-0">
+                            {v.name.split(" ").map((n: string) => n[0]).join("").slice(0,2).toUpperCase()}
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-bold text-slate-900 text-sm">{v.name}</p>
+                            <div className="mt-1.5 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                              <div className="h-full bg-blue-500 rounded-full" style={{ width:`${pct}%` }}/>
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="font-black text-slate-900">{v.consultations}</p>
+                            <p className="text-[10px] text-slate-400">consultas</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="border-none shadow-sm rounded-3xl overflow-hidden">
+              <CardHeader className="bg-slate-50/50">
+                <CardTitle className="text-lg font-black flex items-center gap-2"><BarChart3 size={18}/> Resumo do Mês</CardTitle>
+                <CardDescription>{MONTHS_PT[month - 1]} {year}</CardDescription>
+              </CardHeader>
+              <CardContent className="p-6 space-y-5">
+                {isLoading ? [1,2,3,4].map(i => <Skeleton key={i} className="h-10 w-full"/>) : (
+                  [
+                    { label:"Total faturado", value: eur(data?.month?.total ?? 0), color:"text-slate-900" },
+                    { label:"Pendente no Jasmin", value: eur(data?.month?.pendingTotal ?? 0), color:"text-amber-600", sub:`${data?.month?.pendingCount ?? 0} rascunhos` },
+                    { label:"Ticket médio", value: eur(data?.month?.avgTicket ?? 0), color:"text-slate-900" },
+                    { label:"Consultas realizadas", value: data?.consultations?.count ?? 0, color:"text-blue-600" },
+                  ].map((row, i) => (
+                    <div key={i} className="flex justify-between items-center py-3 border-b border-slate-50 last:border-0">
+                      <p className="text-sm text-slate-500 font-medium">{row.label}</p>
+                      <div className="text-right">
+                        <p className={`font-black text-lg ${row.color}`}>{row.value}</p>
+                        {row.sub && <p className="text-[10px] text-amber-500">{row.sub}</p>}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
