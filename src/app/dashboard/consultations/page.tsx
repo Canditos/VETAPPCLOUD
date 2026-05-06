@@ -117,18 +117,18 @@ function ConsultationContent() {
     );
   };
 
-  if (!patientId) {
+  if (!patientId || patientId === "undefined" || (!isPatientLoading && !patient)) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400">
-           <Stethoscope size={32} />
+      <div className="flex flex-col items-center justify-center min-h-[600px] gap-6 animate-in fade-in duration-700">
+        <div className="w-24 h-24 bg-slate-50 dark:bg-slate-900 rounded-[2.5rem] flex items-center justify-center text-slate-200 dark:text-slate-800 border border-slate-100 dark:border-white/5">
+           <Stethoscope size={48} strokeWidth={1} />
         </div>
-        <div className="text-center">
-          <h2 className="text-xl font-bold text-slate-900">Nenhuma consulta ativa</h2>
-          <p className="text-slate-500">Selecione um paciente na agenda para iniciar.</p>
+        <div className="text-center space-y-2">
+          <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Nenhuma consulta ativa</h2>
+          <p className="text-slate-500 dark:text-slate-400 font-medium max-w-xs mx-auto">Selecione um paciente válido na agenda para iniciar o ambiente clínico.</p>
         </div>
-        <Button onClick={() => router.push("/dashboard/calendar")} className="rounded-xl bg-blue-600">
-          Ir para Agenda
+        <Button onClick={() => router.push("/dashboard/calendar")} className="h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 px-8 font-black shadow-xl shadow-blue-100 dark:shadow-none transition-all active:scale-95">
+          Ir para Agenda Mestre
         </Button>
       </div>
     );
@@ -136,36 +136,43 @@ function ConsultationContent() {
 
   if (isPatientLoading) {
     return (
-      <div className="space-y-8 animate-pulse">
+      <div className="space-y-10 animate-pulse p-8">
         <div className="flex justify-between">
-          <div className="flex gap-4">
-            <Skeleton className="h-16 w-16 rounded-2xl" />
-            <div className="space-y-2">
-              <Skeleton className="h-6 w-32" />
+          <div className="flex gap-6">
+            <Skeleton className="h-20 w-20 rounded-3xl" />
+            <div className="space-y-3">
+              <Skeleton className="h-8 w-64" />
               <Skeleton className="h-4 w-48" />
             </div>
           </div>
         </div>
-        <Skeleton className="h-12 w-full rounded-xl" />
+        <Skeleton className="h-[200px] w-full rounded-[2.5rem]" />
+        <div className="grid grid-cols-3 gap-6">
+           <Skeleton className="h-14 rounded-2xl" />
+           <Skeleton className="h-14 rounded-2xl" />
+           <Skeleton className="h-14 rounded-2xl" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 pb-10 animate-in fade-in duration-500">
+    <div className="space-y-8 pb-10 animate-in fade-in duration-500 max-w-[1600px] mx-auto">
       {/* Header Section */}
       <div className="flex flex-wrap justify-between items-start gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-lg ring-4 ring-blue-50">
-            {patient.name[0]}
+        <div className="flex items-center gap-5">
+          <div className="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center text-white font-black text-3xl shadow-2xl shadow-blue-200 dark:shadow-none ring-4 ring-blue-50 dark:ring-blue-900/20">
+            {patient?.name?.[0] || "?"}
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight">{patient.name}</h1>
-              <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-200 uppercase font-black text-[10px]">{patient.species}</Badge>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none">{patient?.name}</h1>
+              <Badge variant="secondary" className="bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-none font-black text-[10px] uppercase tracking-widest px-3 py-1 rounded-lg">
+                {patient?.species}
+              </Badge>
             </div>
-            <p className="text-slate-500 font-medium">
-              {patient.breed} • {patient.owner?.name} • {patient.owner?.phone}
+            <p className="text-slate-500 dark:text-slate-400 font-bold mt-2 text-lg">
+              {patient?.breed} <span className="mx-2 opacity-20">|</span> {patient?.owner?.name} <span className="mx-2 opacity-20">|</span> {patient?.owner?.phone}
             </p>
           </div>
         </div>
