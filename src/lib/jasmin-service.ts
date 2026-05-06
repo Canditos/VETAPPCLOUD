@@ -88,6 +88,33 @@ export class JasminService {
     }
   }
 
+  async createCustomer(data: { name: string; vatNumber: string; email?: string; phone?: string; address?: string }) {
+    await this.loadCredentials();
+    const headers = await this.getHeaders();
+    const url = `${JASMIN_BASE_URL}/${this.tenantKey}/${this.orgKey}/salesCore/customerParties`;
+
+    const customerPayload = {
+      name: data.name,
+      companyTaxID: data.vatNumber,
+      electronicMail: data.email,
+      telephone: data.phone,
+      address: data.address,
+      currency: "EUR",
+      customerGroup: "CLIENTES",
+      settlementDiscountPercent: 0,
+      paymentMethod: "NUM",
+      paymentTerm: "00",
+    };
+
+    try {
+      const response = await axios.post(url, customerPayload, { headers });
+      return response.data;
+    } catch (error: any) {
+      console.error("[JASMIN] createCustomer error:", error.response?.data ?? error.message);
+      throw new Error("Falha ao criar cliente no Jasmin ERP");
+    }
+  }
+
   async getInvoicePdf(invoiceId: string): Promise<Buffer> {
     await this.loadCredentials();
     const headers = await this.getHeaders();

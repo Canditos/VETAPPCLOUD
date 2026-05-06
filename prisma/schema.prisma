@@ -32,6 +32,7 @@ model Clinic {
   budgets          Budget[]
   healthPlans      HealthPlan[]
   subscriptions    Subscription[]
+  prescriptions    Prescription[]
 }
 
 model User {
@@ -39,6 +40,7 @@ model User {
   name                String
   email               String                @unique
   passwordHash        String
+  licenseNumber       String?               // OMV - Cédula Profissional
   role                Role                  @default(VETERINARIAN)
   clinicId            String
   clinic              Clinic                @relation(fields: [clinicId], references: [id])
@@ -47,6 +49,7 @@ model User {
   consultations       Consultation[]
   completedTasks      HospitalizationTask[]
   hospitalAdmission   Hospitalization[]     @relation("AdmissionBy")
+  prescriptions       Prescription[]        // Prescriptions issued by this vet
 }
 
 enum Role {
@@ -65,6 +68,10 @@ model Patient {
   birthDate        DateTime?
   weight           Decimal?          @db.Decimal(10, 2)
   microchip        String?           @unique
+  reproductiveStatus String?         // Neutered, Spayed, Intact
+  aggressionLevel  String?           // Low, Medium, High
+  coatColor        String?           // Pelagem
+  status           String            @default("ACTIVE") // ACTIVE, DECEASED, LOST
   allergies        String?           @db.Text
   clinicId         String
   clinic           Clinic            @relation(fields: [clinicId], references: [id])
@@ -79,6 +86,10 @@ model Patient {
   hospitalizations Hospitalization[]
   budgets          Budget[]
   subscriptions    Subscription[]
+  vitalSigns       VitalSign[]
+  vaccinations     Vaccination[]
+  dewormings       Deworming[]
+  prescriptions    Prescription[]
 }
 
 model Owner {
@@ -362,4 +373,67 @@ model Subscription {
   nextBilling  DateTime
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
+}
+
+model VitalSign {
+  id              String   @id @default(uuid())
+  patientId       String
+  patient         Patient  @relation(fields: [patientId], references: [id])
+  weight          Decimal? @db.Decimal(10, 2)
+  temperature     Decimal? @db.Decimal(4, 2)
+  heartRate       Int?     // BPM
+  respiratoryRate Int?     // RPM
+  notes           String?
+  recordedAt      DateTime @default(now())
+}
+
+model Vaccination {
+  id           String    @id @default(uuid())
+  patientId    String
+  patient      Patient   @relation(fields: [patientId], references: [id])
+  vaccineName  String
+  batchNumber  String?
+  appliedAt    DateTime  @default(now())
+  expiresAt    DateTime? // Next booster date
+  notes        String?
+}
+
+model Deworming {
+  id           String    @id @default(uuid())
+  patientId    String
+  patient      Patient   @relation(fields: [patientId], references: [id])
+  type         String    // Internal, External
+  productName  String
+  batchNumber  String?
+  appliedAt    DateTime  @default(now())
+  expiresAt    DateTime?
+  notes        String?
+}
+
+model Prescription {
+  id              String             @id @default(uuid())
+  clinicId        String
+  clinic          Clinic             @relation(fields: [clinicId], references: [id])
+  patientId       String
+  patient         Patient            @relation(fields: [patientId], references: [id])
+  veterinarianId  String
+  veterinarian    User               @relation(fields: [veterinarianId], references: [id])
+  consultationId  String?
+  date            DateTime           @default(now())
+  validUntil      DateTime?
+  status          String             @default("ACTIVE") // ACTIVE, VOID, EXPIRED
+  items           PrescriptionItem[]
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+}
+
+model PrescriptionItem {
+  id             String       @id @default(uuid())
+  prescriptionId String
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id])
+  medicineName   String
+  dosage         String
+  frequency      String
+  duration       String
+  notes          String?
 }

@@ -34,6 +34,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell
+} from "recharts";
 
 export default function ManagementPage() {
   const [reportPeriod, setReportPeriod] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
@@ -356,40 +368,67 @@ function BIGraphicsSection() {
   });
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <Card className="border-none shadow-xl rounded-[2rem] bg-white p-8">
-        <CardTitle className="mb-8 font-black text-slate-900 uppercase text-xs tracking-widest">Tendência de Receita (6 Meses)</CardTitle>
-        <div className="h-64 flex items-end gap-2">
-          {biData?.revenueTrend?.map((m: any, i: number) => (
-            <div key={i} className="flex-1 flex flex-col items-center gap-3">
-              <div className="w-full bg-blue-50 rounded-2xl relative overflow-hidden h-48">
-                <div 
-                  className="absolute bottom-0 w-full bg-blue-600 rounded-2xl transition-all duration-1000"
-                  style={{ height: `${(m.revenue / 5000) * 100}%` }}
-                ></div>
-              </div>
-              <span className="font-black text-slate-400 text-[10px] uppercase">{m.month}</span>
-            </div>
-          ))}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <Card className="md:col-span-2 border-none shadow-xl rounded-[2rem] bg-white p-8">
+        <div className="flex justify-between items-center mb-8">
+           <h3 className="font-black text-slate-900 uppercase text-xs tracking-widest">Tendência de Faturação (BI)</h3>
+           <Badge className="bg-blue-50 text-blue-600 border-none px-3 py-1 font-bold">CRESCIMENTO: +22%</Badge>
+        </div>
+        <div className="h-[300px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={biData?.revenueTrend || []}>
+              <defs>
+                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+              <XAxis 
+                dataKey="month" 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{fill: '#94a3b8', fontSize: 12, fontWeight: 700}}
+                dy={10}
+              />
+              <YAxis 
+                hide 
+              />
+              <Tooltip 
+                contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontWeight: 800 }}
+                formatter={(value: any) => [`€${value}`, "Receita"]}
+              />
+              <Area 
+                type="monotone" 
+                dataKey="revenue" 
+                stroke="#3b82f6" 
+                strokeWidth={4}
+                fillOpacity={1} 
+                fill="url(#colorRevenue)" 
+              />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
       </Card>
 
-      <div className="grid grid-cols-2 gap-4">
-        <Card className="border-none shadow-lg rounded-3xl bg-slate-900 text-white p-8">
-           <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mb-2">Ticket Médio</p>
-           <h4 className="text-3xl font-black">€{biData?.stats?.avgTicket?.toFixed(2)}</h4>
+      <div className="flex flex-col gap-4">
+        <Card className="flex-1 border-none shadow-lg rounded-3xl bg-slate-900 text-white p-8 flex flex-col justify-between">
+           <div>
+             <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mb-2">Ticket Médio</p>
+             <h4 className="text-4xl font-black">€{biData?.stats?.avgTicket?.toFixed(2) || "0.00"}</h4>
+           </div>
+           <div className="flex items-center gap-2 text-emerald-400 text-sm font-bold">
+              <ArrowUpRight size={16} /> +5.2% vs mês anterior
+           </div>
         </Card>
-        <Card className="border-none shadow-lg rounded-3xl bg-blue-600 text-white p-8">
-           <p className="text-blue-100 font-bold uppercase text-[10px] tracking-widest mb-2">Retenção</p>
-           <h4 className="text-3xl font-black">{biData?.stats?.patientRetention}%</h4>
-        </Card>
-        <Card className="border-none shadow-lg rounded-3xl bg-white p-8 border border-slate-50">
-           <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest mb-2">Receita Recorrente</p>
-           <h4 className="text-3xl font-black text-slate-900">€{biData?.stats?.mrr?.toFixed(2)}</h4>
-        </Card>
-        <Card className="border-none shadow-lg rounded-3xl bg-white p-8 border border-slate-50">
-           <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest mb-2">Assinaturas Ativas</p>
-           <h4 className="text-3xl font-black text-slate-900">{biData?.stats?.activeSubscriptions}</h4>
+        <Card className="flex-1 border-none shadow-lg rounded-3xl bg-blue-600 text-white p-8 flex flex-col justify-between">
+           <div>
+             <p className="text-blue-100 font-bold uppercase text-[10px] tracking-widest mb-2">Retenção de Pacientes</p>
+             <h4 className="text-4xl font-black">{biData?.stats?.patientRetention || 0}%</h4>
+           </div>
+           <div className="w-full bg-blue-500/30 h-2 rounded-full mt-4 overflow-hidden">
+              <div className="bg-white h-full" style={{ width: `${biData?.stats?.patientRetention}%` }}></div>
+           </div>
         </Card>
       </div>
     </div>

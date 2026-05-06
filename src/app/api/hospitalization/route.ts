@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -70,6 +72,10 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const session = await getServerSession(authOptions);
+  const clinicId = session ? (session.user as any).clinicId : "c1-demo-clinic";
+  const userId = session ? (session.user as any).id : "admin-id";
+
   try {
     const body = await req.json();
     const hospitalization = await prisma.hospitalization.create({
@@ -77,8 +83,8 @@ export async function POST(req: Request) {
         patientId: body.patientId,
         boxNumber: body.boxNumber,
         reason: body.reason,
-        clinicId: "c1-demo-clinic",
-        admissionById: "admin-id",
+        clinicId,
+        admissionById: userId,
         status: "ADMITTED",
       },
     });

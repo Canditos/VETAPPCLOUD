@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VetConnect SaaS — Premium Veterinary Ecosystem 🐾
 
-## Getting Started
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.0-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+[![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?style=for-the-badge&logo=prisma)](https://www.prisma.io/)
+[![Jasmin ERP](https://img.shields.io/badge/Jasmin-ERP_Integrated-orange?style=for-the-badge)](https://www.jasminsoftware.com/)
 
-First, run the development server:
+VetConnect is a high-performance, enterprise-grade SaaS platform designed for modern veterinary clinics. It combines clinical precision with financial automation through deep integration with the Jasmin ERP system.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 💎 Premium Design Language
+The interface follows a **"Premium Pro"** aesthetic, characterized by:
+- **Ultra-Deep Dark Mode**: Utilizing the `oklch` color space for superior contrast and legibility.
+- **Glassmorphism Components**: High-fidelity UI elements with multi-layered blur and border-glow effects.
+- **Kinetic Interactivity**: Smooth, physics-based animations (`premium-slide`) and responsive micro-interactions.
+- **Enterprise Typography**: Bold, black-weight typography for a authoritative yet modern feel.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 Key Modules
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 📅 Master Agenda (Calendar)
+- **Fluid Scheduling**: Optimized rendering logic (`O(N)` grouping) for zero-latency grid interactions.
+- **Clinical Views**: Interactive detail dialogs with one-click consultation starts.
+- **Visual Hierarchy**: Color-coded appointments by veterinarian and urgency icons.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 🏥 Clinical Records (Electronic Health Records)
+- **Advanced SOAP Documentation**: Structured clinical notes (Subjective, Objective, Assessment, Plan).
+- **Diagnostic Integration**: Direct HL7/DICOM communication with Lab (Fuji) and Imaging (Examion) systems.
+- **Interactive Timeline**: A chronological history of all patient interactions, weights, and treatments.
 
-## Learn More
+### 💰 Financial Hub (Jasmin ERP)
+- **Automated Billing**: Instant invoice generation in Jasmin ERP upon consultation closure.
+- **VAT Compliance**: Real-time validation of NIF (VAT numbers) and fiscal addresses.
+- **Inventory Sync**: Real-time deduction of clinical stock and pharmacy items.
 
-To learn more about Next.js, take a look at the following resources:
+## 🛠️ Technology Stack
+- **Frontend**: Next.js 15 (App Router), React 19, Tailwind CSS 4.
+- **State Management**: TanStack Query (React Query) for robust data synchronization.
+- **Backend**: Next.js API Routes, Prisma ORM, PostgreSQL.
+- **Integrations**: Jasmin ERP API, HL7/DICOM simulation layers.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📸 Interface Preview
+*(Screenshots to be added here)*
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Dashboard | Master Agenda | Clinical SOAP |
+| :---: | :---: | :---: |
+| ![Dashboard](https://placehold.co/600x400?text=Dashboard+Preview) | ![Agenda](https://placehold.co/600x400?text=Agenda+Preview) | ![SOAP](https://placehold.co/600x400?text=SOAP+Preview) |
 
-## Deploy on Vercel
+## 📦 Installation & Setup
+1. Clone the repository.
+2. Install dependencies: `npm install`.
+3. Configure `.env` with Prisma and Jasmin credentials.
+4. Run migrations: `npx prisma migrate dev`.
+5. Start development: `npm run dev`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+Developed with ❤️ by the VetConnect Engineering Team.

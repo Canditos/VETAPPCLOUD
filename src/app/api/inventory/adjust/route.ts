@@ -6,11 +6,9 @@ import prisma, { getTenantClient } from "@/lib/prisma";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session || !(session.user as any).clinicId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const clinicId = (session.user as any).clinicId;
+  
+  // Demo Fallback for stakeholders
+  const clinicId = session ? (session.user as any).clinicId : "c1-demo-clinic";
   const tenantPrisma = getTenantClient(clinicId);
   const body = await req.json();
 

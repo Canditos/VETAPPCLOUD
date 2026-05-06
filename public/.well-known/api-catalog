@@ -1,0 +1,29 @@
+{
+  "api-catalog": {
+    "version": "1.0.0",
+    "services": [
+      {
+        "id": "patients",
+        "name": "Patient Management API",
+        "description": "Create and manage animal records",
+        "endpoint": "/api/patients",
+        "methods": ["GET", "POST"]
+      },
+      {
+        "id": "appointments",
+        "name": "Agenda API",
+        "description": "Clinical scheduling and appointment management",
+        "endpoint": "/api/appointments",
+        "methods": ["GET", "POST"]
+      },
+      {
+        "id": "customers",
+        "name": "Customer Data API",
+        "description": "Manage client fiscal data and NIF information",
+        "endpoint": "/api/customers",
+        "methods": ["GET", "POST"]
+      }
+    ],
+    "documentation": "/docs/api"
+  }
+}

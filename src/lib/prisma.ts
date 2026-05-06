@@ -1,5 +1,31 @@
 import { PrismaClient } from '@prisma/client'
+import { PrismaPg } from '@prisma/adapter-pg'
+import { Pool } from 'pg'
 import { multiTenantExtension } from './prisma-tenant-ext'
+
+/**
+ * Extract the direct PostgreSQL URL from a prisma+postgres:// URL.
+ * The api_key is a base64-encoded JSON with a databaseUrl field.
+ */
+function getDirectPostgresUrl(): string {
+  const dbUrl = process.env.DATABASE_URL || '';
+  
+  if (dbUrl.startsWith('prisma+postgres://')) {
+    try {
+      const apiKey = dbUrl.split('api_key=')[1];
+      if (apiKey) {
+        const payload = Buffer.from(apiKey, 'base64').toString('utf-8');
+        const data = JSON.parse(payload);
+        return data.databaseUrl;
+      }
+    } catch (e) {
+      console.warn('Could not parse prisma+postgres URL, using as-is');
+    }
+  }
+  
+  // If it's already a direct postgres:// URL, use it
+  return dbUrl;
+}
 
 const prismaClientSingleton = () => {
   if (process.env.NEXT_PHASE === 'phase-production-build' && !process.env.DATABASE_URL) {
@@ -14,6 +40,7 @@ const prismaClientSingleton = () => {
           findFirst: async () => null,
           create: async () => ({}),
           update: async () => ({}),
+          upsert: async () => ({}),
           delete: async () => ({}),
           count: async () => 0,
           aggregate: async () => ({}),
@@ -22,9 +49,23 @@ const prismaClientSingleton = () => {
       }
     });
   }
-  return new PrismaClient({
-    datasourceUrl: process.env.DATABASE_URL,
-  });
+
+  try {
+    const directUrl = getDirectPostgresUrl();
+    const pool = new Pool({ 
+      connectionString: directUrl,
+      // Add some basic pool config for stability
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 2000,
+    });
+    const adapter = new PrismaPg(pool);
+    return new PrismaClient({ adapter });
+  } catch (err) {
+    console.error("Failed to initialize Prisma Client with Adapter:", err);
+    // Fallback to basic client if everything fails, though it might still error in v7
+    return new PrismaClient({} as any);
+  }
 }
 
 declare global {
@@ -43,7 +84,8 @@ const getPrisma = () => {
 // Lazy Export to prevent build-time initialization
 const prisma = new Proxy({} as any, {
   get: (target, prop) => {
-    return getPrisma()[prop];
+    const p = getPrisma();
+    return p[prop];
   }
 });
 

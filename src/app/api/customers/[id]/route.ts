@@ -5,56 +5,15 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params;
+  const { id } = await params;
   const clinicId = "c1-demo-clinic";
 
-  const mockCustomer = {
-    id: "demo-owner-1",
-    name: "Marco Cândido",
-    email: "marco@example.com",
-    phone: "912 345 678",
-    address: "Rua Principal, 123",
-    taxNumber: "123456789",
-    stats: {
-      outstandingBalance: 125.50,
-      totalSpent: 4250.00,
-      lastVisit: new Date().toISOString()
-    },
-    patients: [
-      { 
-        id: "p1", 
-        name: "Bolinha", 
-        species: "Cão", 
-        breed: "Pastor Alemão", 
-        birthDate: "2018-05-15",
-        weight: "32.5",
-        consultations: [
-          { id: "c1", date: new Date().toISOString(), type: "Check-up", status: "COMPLETED", notes: "Animal em excelente estado." }
-        ]
-      },
-      { 
-        id: "p2", 
-        name: "Rex", 
-        species: "Cão", 
-        breed: "Labrador", 
-        birthDate: "2020-01-10",
-        weight: "28.0",
-        consultations: []
-      }
-    ],
-    invoices: [
-      { id: "inv-1", number: "FT 2024/001", amount: 125.50, status: "PAID", createdAt: new Date().toISOString() },
-      { id: "inv-2", number: "FT 2024/045", amount: 45.00, status: "PENDING", createdAt: new Date().toISOString() }
-    ],
-    subscriptions: [
-      { id: "sub-1", status: "ACTIVE", plan: { name: "Plano Wellness Gold", price: 29.90 } }
-    ]
-  };
+  const mockCustomer = generateMockCustomer(id);
 
   try {
-    let customer = await prisma.owner.findUnique({
+    const customer = await prisma.owner.findUnique({
       where: { id, clinicId },
       include: {
         patients: {
@@ -76,22 +35,69 @@ export async function GET(
     });
 
     if (customer) {
-       // Enrich real customer with stats if missing
+       // Defensive check for financial fields
        const enriched = {
          ...customer,
-         stats: (customer as any).stats || { outstandingBalance: 0, totalSpent: 0 }
+         totalInvoiced: (customer as any).totalInvoiced || 0,
+         totalPaid: (customer as any).totalPaid || 0,
+         balance: (customer as any).balance || 0,
        };
        return NextResponse.json(enriched);
     }
     
     // Demo fallback logic
-    if (id.startsWith("demo-") || id === "demo-owner-1") {
-        return NextResponse.json(mockCustomer);
-    }
-
-    return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+    return NextResponse.json(mockCustomer);
   } catch (error) {
     console.error("Hub error, returning mock:", error);
     return NextResponse.json(mockCustomer);
   }
+}
+
+function generateMockCustomer(id: string) {
+  const isDemo1 = id === "demo-owner-1" || id === "c1" || id === "1";
+  return {
+    id,
+    name: isDemo1 ? "Ricardo Fonseca" : "Ana Martins",
+    email: isDemo1 ? "ricardo.fonseca@email.com" : "ana.martins@email.com",
+    phone: isDemo1 ? "910 000 001" : "960 000 002",
+    address: isDemo1 ? "Rua dos Animais, 45, Setúbal" : "Urbanização das Flores, Palmela",
+    vatNumber: isDemo1 ? "234567890" : "123123123",
+    totalInvoiced: isDemo1 ? 1250.80 : 450.00,
+    totalPaid: isDemo1 ? 1100.00 : 400.00,
+    balance: isDemo1 ? -150.80 : -50.00,
+    patients: isDemo1 ? [
+      { 
+        id: "p1", 
+        name: "Bolinha", 
+        species: "Gato", 
+        breed: "Siamês",
+        gender: "F",
+        weight: 4.2,
+        birthDate: "2021-02-10",
+        microchip: "900123456789012",
+        _count: { consultations: 12 }
+      }
+    ] : [
+      { 
+        id: "p2", 
+        name: "Rex", 
+        species: "Cão", 
+        breed: "Pastor Alemão",
+        gender: "M",
+        weight: 32.5,
+        birthDate: "2019-11-20",
+        microchip: "900123456789013",
+        _count: { consultations: 5 }
+      }
+    ],
+    invoices: [
+      { id: "inv1", jasminInvoiceId: "FT 2026/1", total: 70.0, status: "PAID", createdAt: new Date().toISOString() }
+    ],
+    payments: [
+      { id: "pay-1", amount: 70.0, method: "MBWAY", paidAt: new Date().toISOString() }
+    ],
+    subscriptions: [
+      { id: "sub-1", status: "ACTIVE", plan: { name: "Plano Wellness Gold", price: 29.90 } }
+    ]
+  };
 }

@@ -52,12 +52,12 @@ export function CommandMenu() {
   return (
     <>
       <div 
-        className="hidden lg:flex items-center gap-2 px-3 py-1.5 text-xs text-slate-400 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors"
+        className="hidden lg:flex items-center gap-2 px-3 py-1.5 text-xs text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors"
         onClick={() => setOpen(true)}
       >
         <Search size={14} />
-        <span>Procurar ou executar...</span>
-        <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-white px-1.5 font-mono text-[10px] font-medium text-slate-400 opacity-100">
+        <span className="font-medium">Procurar ou executar...</span>
+        <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border dark:border-slate-800 bg-white dark:bg-slate-900 px-1.5 font-mono text-[10px] font-bold text-slate-400 dark:text-slate-500 opacity-100 shadow-sm">
           <span className="text-xs">⌘</span>K
         </kbd>
       </div>

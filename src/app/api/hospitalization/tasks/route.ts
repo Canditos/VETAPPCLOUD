@@ -7,11 +7,11 @@ import prisma from "@/lib/prisma";
 // PATCH /api/hospitalization/tasks - Mark a task as completed or skipped
 export async function PATCH(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session || !(session.user as any).clinicId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  
+  // Demo Fallback for stakeholders
+  const clinicId = session ? (session.user as any).clinicId : "c1-demo-clinic";
+  const userId = session ? (session.user as any).id : "admin-id";
 
-  const userId = (session.user as any).id;
   const body = await req.json();
   const { taskId, status, notes } = body;
 

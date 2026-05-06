@@ -11,16 +11,14 @@ export async function GET(req: Request) {
   }
   
   const session = await getServerSession(authOptions);
-  if (!session || !(session.user as any).clinicId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  
+  // Demo Fallback for stakeholders
+  const clinicId = session ? (session.user as any).clinicId : "c1-demo-clinic";
+  const tenantPrisma = getTenantClient(clinicId);
 
   const { searchParams } = new URL(req.url);
   const start = searchParams.get("start");
   const end = searchParams.get("end");
-
-  const clinicId = (session.user as any).clinicId;
-  const tenantPrisma = getTenantClient(clinicId);
 
   try {
     const appointments = await tenantPrisma.appointment.findMany({
@@ -40,7 +38,68 @@ export async function GET(req: Request) {
       orderBy: { startTime: "asc" },
     });
 
-    return NextResponse.json(appointments);
+    if (appointments && appointments.length > 0) {
+      return NextResponse.json(appointments);
+    }
+
+    // Dynamic Mock injection for current day
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    
+    return NextResponse.json([
+      {
+        id: "app-1",
+        startTime: `${todayStr}T10:00:00Z`,
+        type: "VACINA",
+        status: "SCHEDULED",
+        veterinarianId: "v1",
+        vetName: "Dr. Marco Cândido",
+        patient: { 
+          id: "p1", 
+          name: "Bolinha", 
+          owner: { name: "Maria Alice" } 
+        }
+      },
+      {
+        id: "app-2",
+        startTime: `${todayStr}T11:00:00Z`,
+        type: "CIRURGIA",
+        status: "SCHEDULED",
+        veterinarianId: "v2",
+        vetName: "Dra. Ana Silva",
+        patient: { 
+          id: "p2", 
+          name: "Rex", 
+          owner: { name: "Ricardo Fonseca" } 
+        }
+      },
+      {
+        id: "app-3",
+        startTime: `${todayStr}T15:00:00Z`,
+        type: "CONSULTA",
+        status: "SCHEDULED",
+        veterinarianId: "v1",
+        vetName: "Dr. Marco Cândido",
+        patient: { 
+          id: "p3", 
+          name: "Luna", 
+          owner: { name: "José Pedro" } 
+        }
+      },
+      {
+        id: "app-4",
+        startTime: `${todayStr}T16:00:00Z`,
+        type: "URGÊNCIA",
+        status: "SCHEDULED",
+        veterinarianId: "v3",
+        vetName: "Dr. Roberto",
+        patient: { 
+          id: "p4", 
+          name: "Miau", 
+          owner: { name: "Carla Antunes" } 
+        }
+      }
+    ]);
   } catch (error) {
     console.error("Error fetching appointments:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

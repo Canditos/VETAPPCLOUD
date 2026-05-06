@@ -13,6 +13,19 @@ const nextConfig: NextConfig = {
     // !! WARN !!
     ignoreBuildErrors: true,
   },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Link',
+            value: '</.well-known/api-catalog>; rel="api-catalog", </docs/api>; rel="service-doc"',
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

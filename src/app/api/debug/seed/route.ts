@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
-    console.log("Starting API-driven seed...");
+    console.log("Starting API-driven idempotent seed...");
 
     // 1. Create Clinic
     const clinic = await prisma.clinic.upsert({
@@ -34,21 +36,12 @@ export async function GET() {
       },
     });
 
-    await prisma.user.upsert({
-      where: { email: "sara@clinicavet.pt" },
+    // 3. Create Customers (Hub 360º)
+    const customer1 = await prisma.owner.upsert({
+      where: { email: "ricardo.fonseca@email.com" },
       update: {},
       create: {
-        name: "Dra. Sara Lima",
-        email: "sara@clinicavet.pt",
-        passwordHash,
-        role: "VETERINARIAN",
-        clinicId: clinic.id,
-      },
-    });
-
-    // 3. Create Customers (Hub 360º)
-    const customer1 = await prisma.owner.create({
-      data: {
+        id: "demo-owner-1",
         name: "Ricardo Fonseca",
         email: "ricardo.fonseca@email.com",
         phone: "910 000 001",
@@ -59,8 +52,11 @@ export async function GET() {
       }
     });
 
-    const customer2 = await prisma.owner.create({
-      data: {
+    const customer2 = await prisma.owner.upsert({
+      where: { email: "ana.martins@email.com" },
+      update: {},
+      create: {
+        id: "demo-owner-2",
         name: "Ana Martins",
         email: "ana.martins@email.com",
         phone: "960 000 002",
@@ -72,8 +68,11 @@ export async function GET() {
     });
 
     // 4. Create Patients
-    const patient1 = await prisma.patient.create({
-      data: {
+    const patient1 = await prisma.patient.upsert({
+      where: { id: "p1" },
+      update: {},
+      create: {
+        id: "p1",
         name: "Bolinha",
         species: "Gato",
         breed: "Siamês",
@@ -87,8 +86,11 @@ export async function GET() {
       }
     });
 
-    const patient2 = await prisma.patient.create({
-      data: {
+    const patient2 = await prisma.patient.upsert({
+      where: { id: "p2" },
+      update: {},
+      create: {
+        id: "p2",
         name: "Rex",
         species: "Cão",
         breed: "Pastor Alemão",
@@ -102,8 +104,11 @@ export async function GET() {
     });
 
     // 5. Products & Inventory
-    await prisma.product.create({
-      data: {
+    await prisma.product.upsert({
+      where: { id: "prod-consulta" },
+      update: {},
+      create: {
+        id: "prod-consulta",
         name: "Consulta Geral",
         price: 45.0,
         vatRate: 23,
@@ -113,75 +118,19 @@ export async function GET() {
       }
     });
 
-    // 6. Invoices & Payments
-    const inv1 = await prisma.invoice.create({
-      data: {
-        ownerId: customer1.id,
-        clinicId: clinic.id,
-        total: 70.0,
-        status: "PAID",
-        jasminInvoiceId: "FT 2026/1",
-        items: {
-          create: [
-            { description: "Consulta Geral", quantity: 1, price: 45.0, vatRate: 23 },
-            { description: "Vacina Nobivac", quantity: 1, price: 25.0, vatRate: 6 }
-          ]
-        }
-      }
-    });
-
-    await prisma.payment.create({
-      data: {
-        ownerId: customer1.id,
-        clinicId: clinic.id,
-        invoiceId: inv1.id,
-        amount: 70.0,
-        method: "MBWAY",
-        paidAt: new Date(),
-      }
-    });
-
-    const inv2 = await prisma.invoice.create({
-      data: {
-        ownerId: customer2.id,
-        clinicId: clinic.id,
-        total: 150.0,
-        status: "ISSUED",
-        jasminInvoiceId: "FT 2026/2",
-        items: {
-          create: [
-            { description: "Cirurgia Esterilização", quantity: 1, price: 150.0, vatRate: 23 }
-          ]
-        }
-      }
-    });
-
-    await prisma.payment.create({
-      data: {
-        ownerId: customer2.id,
-        clinicId: clinic.id,
-        invoiceId: inv2.id,
-        amount: 50.0,
-        method: "CASH",
-        paidAt: new Date(),
-      }
-    });
-
-    // 7. Budgets
-    await prisma.budget.create({
-      data: {
-        ownerId: customer1.id,
+    // 6. Hospitalization
+    const hosp1 = await prisma.hospitalization.upsert({
+      where: { id: "demo-hosp-1" },
+      update: {},
+      create: {
+        id: "demo-hosp-1",
         patientId: patient1.id,
+        boxNumber: "BOX 01",
+        reason: "Recuperação Pós-Cirúrgica",
+        status: "ADMITTED",
+        admissionDate: new Date(),
         clinicId: clinic.id,
-        status: "ACCEPTED",
-        totalAmount: 250.0,
-        notes: "Plano de saúde anual proposto.",
-        items: {
-          create: [
-            { description: "Check-up Completo", quantity: 1, price: 100.0 },
-            { description: "Análises Sangue", quantity: 1, price: 150.0 }
-          ]
-        }
+        admissionById: (await prisma.user.findFirst({ where: { role: 'ADMIN' } }))?.id || "admin-id"
       }
     });
 

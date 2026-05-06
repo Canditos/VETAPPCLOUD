@@ -9,19 +9,17 @@ export async function GET(req: Request) {
 
   const mockVAT = {
     month,
-    totalBase: 12450.00,
-    totalVAT: 2863.50,
-    byRate: [
-      { rate: 23, base: 10200.00, vat: 2346.00 },
-      { rate: 6, base: 2250.00, vat: 135.00 },
-      { rate: 0, base: 0, vat: 0 }
-    ],
+    base6: 2250.00,
+    totalVat6: 135.00,
+    base13: 450.00,
+    totalVat13: 58.50,
+    base23: 10200.00,
+    totalVat23: 2346.00,
+    totalGross: 15439.50,
     status: "ESTIMATED"
   };
 
   try {
-    // Logic for real calculation...
-    // Return mock for now as per demo requirements
     return NextResponse.json(mockVAT);
   } catch (error) {
     return NextResponse.json(mockVAT);

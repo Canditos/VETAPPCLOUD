@@ -13,7 +13,10 @@ import {
   Receipt,
   FlaskConical,
   ChevronLeft,
-  Stethoscope
+  Stethoscope,
+  Image as ImageIcon,
+  Thermometer,
+  Weight
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -215,13 +218,32 @@ function ConsultationContent() {
                         placeholder="Anamnese..."
                       />
                     </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-blue-50/30 rounded-[2rem] border border-blue-100/50 mb-6">
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-1"><Weight size={10} /> Peso (kg)</Label>
+                        <input type="number" step="0.01" className="w-full p-3 rounded-xl border border-blue-100 focus:ring-2 focus:ring-blue-500 outline-none font-black text-blue-900" placeholder="0.00" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-1"><Thermometer size={10} /> Temp (ºC)</Label>
+                        <input type="number" step="0.1" className="w-full p-3 rounded-xl border border-blue-100 focus:ring-2 focus:ring-blue-500 outline-none font-black text-blue-900" placeholder="38.5" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-1"><Activity size={10} /> FC (BPM)</Label>
+                        <input type="number" className="w-full p-3 rounded-xl border border-blue-100 focus:ring-2 focus:ring-blue-500 outline-none font-black text-blue-900" placeholder="100" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-1"><Activity size={10} /> FR (RPM)</Label>
+                        <input type="number" className="w-full p-3 rounded-xl border border-blue-100 focus:ring-2 focus:ring-blue-500 outline-none font-black text-blue-900" placeholder="24" />
+                      </div>
+                    </div>
+
                     <div className="grid gap-2">
                       <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">O: Objective (Exame Físico)</Label>
                       <textarea 
                         className="w-full min-h-[80px] p-4 rounded-2xl border border-slate-100 bg-slate-50/50 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm outline-none font-medium"
                         value={notes.objective}
                         onChange={(e) => setNotes({ ...notes, objective: e.target.value })}
-                        placeholder="Sinais vitais..."
+                        placeholder="Observações do exame..."
                       />
                     </div>
                     <div className="grid gap-2">
