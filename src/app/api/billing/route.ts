@@ -19,11 +19,10 @@ export async function GET(req: Request) {
   try {
     const invoices = await tenantPrisma.invoice.findMany({
       include: {
+        owner: true,
         consultation: {
           include: {
-            patient: {
-              include: { owner: true },
-            },
+            patient: true,
           },
         },
         items: true,
@@ -34,7 +33,7 @@ export async function GET(req: Request) {
     // Filter by search term (client name or invoice id)
     const filtered = search
       ? invoices.filter((inv) => {
-          const ownerName = inv.consultation?.patient?.owner?.name?.toLowerCase() ?? "";
+          const ownerName = (inv.owner?.name ?? inv.consultation?.patient?.owner?.name ?? "").toLowerCase();
           const invId = inv.id.toLowerCase();
           const extId = (inv.externalId ?? "").toLowerCase();
           const q = search.toLowerCase();

@@ -33,6 +33,9 @@ model Clinic {
   healthPlans      HealthPlan[]
   subscriptions    Subscription[]
   prescriptions    Prescription[]
+  labResults       LabResult[]
+  imagingStudies   ImagingStudy[]
+  stockMovements   StockMovement[]
 }
 
 model User {
@@ -279,6 +282,8 @@ model Product {
 
 model StockMovement {
   id        String       @id @default(uuid())
+  clinicId  String
+  clinic    Clinic       @relation(fields: [clinicId], references: [id])
   productId String
   product   Product      @relation(fields: [productId], references: [id])
   type      MovementType
@@ -295,6 +300,8 @@ enum MovementType {
 
 model LabResult {
   id            String   @id @default(uuid())
+  clinicId      String
+  clinic        Clinic   @relation(fields: [clinicId], references: [id])
   patientId     String
   patient       Patient  @relation(fields: [patientId], references: [id])
   source        String   @default("FUJI")
@@ -305,6 +312,8 @@ model LabResult {
 
 model ImagingStudy {
   id           String   @id @default(uuid())
+  clinicId     String
+  clinic       Clinic   @relation(fields: [clinicId], references: [id])
   patientId    String
   patient      Patient  @relation(fields: [patientId], references: [id])
   dicomUrl     String

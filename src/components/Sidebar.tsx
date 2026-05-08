@@ -33,7 +33,7 @@ const menuGroups = [
     items: [
       { name: "Pacientes", href: "/dashboard/patients", icon: PawPrint },
       { name: "Clientes", href: "/dashboard/customers", icon: Users },
-      { name: "Internamento", href: "/dashboard/hospitalization", icon: Bed },
+      { name: "Internamento", href: "/dashboard/internamento", icon: Bed },
       { name: "Diagnósticos", href: "/dashboard/diagnostics", icon: Activity },
     ]
   },
@@ -61,7 +61,7 @@ export default function Sidebar() {
   return (
     <div className="w-64 h-screen bg-slate-50 dark:bg-background border-r border-slate-200/50 dark:border-white/5 flex flex-col fixed left-0 top-0 z-50">
       {/* Brand Header */}
-      <div className="p-8 pb-6">
+      <Link href="/dashboard" className="p-8 pb-6 block">
         <div className="flex items-center gap-3 group cursor-pointer">
           <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-200 dark:shadow-none group-hover:rotate-12 transition-transform duration-500">
             <Heart size={22} fill="white" strokeWidth={0} />
@@ -71,7 +71,7 @@ export default function Sidebar() {
             <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] mt-1 block">Clinic Pro</span>
           </div>
         </div>
-      </div>
+      </Link>
 
       {/* Navigation */}
       <nav className="flex-1 px-4 py-4 space-y-8 overflow-y-auto no-scrollbar">

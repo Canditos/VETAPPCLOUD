@@ -12,6 +12,7 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -137,7 +138,7 @@ export function AddPatientForm({ onSuccess }: { onSuccess?: () => void }) {
   };
 
   return (
-    <DialogContent className="sm:max-w-[700px] rounded-[3rem] border-none shadow-3xl p-0 overflow-hidden bg-white dark:bg-slate-900">
+    <DialogContent className="sm:max-w-[700px] rounded-[3rem] border-none shadow-xl p-0 overflow-hidden bg-white dark:bg-slate-900">
       <div className="bg-blue-600 p-10 text-white relative">
         <DialogTitle className="text-4xl font-black tracking-tight">Novo Registo Clínico</DialogTitle>
         <DialogDescription className="text-blue-100 font-medium mt-2 text-lg">
@@ -232,7 +233,7 @@ export function AddPatientForm({ onSuccess }: { onSuccess?: () => void }) {
                      className={cn(
                        "p-4 rounded-2xl text-left transition-all border-2",
                        !watch("healthPlanId") 
-                         ? "bg-white dark:bg-slate-800 border-emerald-500 shadow-lg" 
+                         ? "bg-white dark:bg-slate-800 border-emerald-500 shadow-sm" 
                          : "bg-slate-50 dark:bg-slate-900 border-transparent text-slate-400"
                      )}
                    >
@@ -245,7 +246,7 @@ export function AddPatientForm({ onSuccess }: { onSuccess?: () => void }) {
                      className={cn(
                        "p-4 rounded-2xl text-left transition-all border-2",
                        watch("healthPlanId") === "plan-premium" 
-                         ? "bg-white dark:bg-slate-800 border-emerald-500 shadow-lg" 
+                         ? "bg-white dark:bg-slate-800 border-emerald-500 shadow-sm" 
                          : "bg-slate-50 dark:bg-slate-900 border-transparent text-slate-400"
                      )}
                    >
@@ -283,7 +284,7 @@ export function AddPatientForm({ onSuccess }: { onSuccess?: () => void }) {
                         className={cn(
                           "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all",
                           watch("reproductiveStatus") === status 
-                            ? "bg-indigo-600 text-white shadow-md" 
+                            ? "bg-indigo-600 text-white shadow-sm" 
                             : "bg-white dark:bg-slate-800 text-indigo-400 border border-indigo-100 dark:border-indigo-800"
                         )}
                       >{status}</button>
@@ -305,7 +306,7 @@ export function AddPatientForm({ onSuccess }: { onSuccess?: () => void }) {
                         className={cn(
                           "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all",
                           watch("aggressionLevel") === lvl 
-                            ? (lvl === "Alto" ? "bg-rose-600 text-white" : "bg-amber-600 text-white") + " shadow-md" 
+                            ? (lvl === "Alto" ? "bg-rose-600 text-white" : "bg-amber-600 text-white") + " shadow-sm" 
                             : "bg-white dark:bg-slate-800 text-amber-400 border border-amber-100 dark:border-amber-800"
                         )}
                       >{lvl}</button>
@@ -351,7 +352,7 @@ export function AddPatientForm({ onSuccess }: { onSuccess?: () => void }) {
                   {selectedOwner ? (
                     <div className="flex items-center justify-between p-8 rounded-[2.5rem] bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 group animate-in zoom-in-95 duration-300">
                       <div className="flex items-center gap-6">
-                        <div className="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-xl shadow-blue-200 dark:shadow-none">
+                        <div className="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-sm">
                           <User size={32} strokeWidth={2.5} />
                         </div>
                         <div>
@@ -433,7 +434,7 @@ export function AddPatientForm({ onSuccess }: { onSuccess?: () => void }) {
         <DialogFooter className="p-10 pt-0">
           <Button 
             type="submit" 
-            className="w-full h-20 rounded-[2rem] bg-blue-600 hover:bg-blue-700 text-white text-2xl font-black shadow-2xl shadow-blue-200 dark:shadow-none transition-all active:scale-[0.98] disabled:opacity-50"
+            className="w-full h-20 rounded-[2rem] bg-blue-600 hover:bg-blue-700 text-white text-2xl font-black shadow-sm transition-all active:scale-[0.98] disabled:opacity-50"
             disabled={mutation.isPending || (!isNewOwner && !selectedOwner)}
           >
             {mutation.isPending ? "A processar..." : "Finalizar Registo Clínico"}

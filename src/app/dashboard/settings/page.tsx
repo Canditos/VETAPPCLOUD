@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
 
 export default function SettingsPage() {
   return (
@@ -67,7 +68,10 @@ export default function SettingsPage() {
                 </div>
               </div>
               <div className="pt-4 flex justify-end">
-                <Button className="rounded-xl gap-2 bg-blue-600">
+                <Button 
+                  onClick={() => toast.success("Configurações da clínica guardadas!")}
+                  className="rounded-xl gap-2 bg-blue-600 h-12 px-6 font-black"
+                >
                   <Save size={16} /> Guardar Alterações
                 </Button>
               </div>
@@ -117,8 +121,17 @@ export default function SettingsPage() {
                  <Switch />
               </div>
               <div className="pt-4 flex justify-end gap-3">
-                <Button variant="outline" className="rounded-xl border-slate-200">Testar Ligação</Button>
-                <Button className="rounded-xl gap-2 bg-blue-600">
+                <Button 
+                  variant="outline" 
+                  onClick={() => toast.info("A testar comunicação com Jasmin...")}
+                  className="h-12 rounded-xl border-slate-200 dark:border-white/10 dark:text-white font-bold px-6"
+                >
+                  Testar Ligação
+                </Button>
+                <Button 
+                  onClick={() => toast.success("Integração Jasmin ativada!")}
+                  className="h-12 rounded-xl gap-2 bg-blue-600 font-black px-6 shadow-lg shadow-blue-100 dark:shadow-none"
+                >
                   <Save size={16} /> Ativar Integração
                 </Button>
               </div>

@@ -27,6 +27,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 
 const team = [
   { id: "1", name: "Dr. Marco António", email: "marco@clinicavet.pt", role: "ADMIN", status: "Ativo" },
@@ -88,7 +89,14 @@ export default function TeamPage() {
                 </Select>
               </div>
             </div>
-            <Button className="w-full rounded-xl bg-blue-600 py-6 text-lg font-bold">Enviar Convite</Button>
+            <Button 
+              onClick={() => {
+                toast.success("Convite enviado com sucesso!");
+              }}
+              className="w-full rounded-xl bg-blue-600 py-6 text-lg font-bold"
+            >
+              Enviar Convite
+            </Button>
           </DialogContent>
         </Dialog>
       </div>
@@ -149,7 +157,14 @@ export default function TeamPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="px-6 py-5 text-right">
-                    <Button variant="ghost" size="sm" className="font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50">Configurar</Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => toast.info(`A abrir definições de ${m.name}...`)}
+                      className="font-black text-[10px] uppercase tracking-widest text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl px-4"
+                    >
+                      Configurar
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

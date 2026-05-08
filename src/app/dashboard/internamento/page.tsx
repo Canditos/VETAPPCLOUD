@@ -19,7 +19,8 @@ import {
   List,
   Users,
   Package,
-  PawPrint
+  PawPrint,
+  Stethoscope
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -54,27 +55,27 @@ function vitalLabel(tasks: any[]) {
   const pending = tasks.filter((t) => t.status === "PENDING");
   const ratio = pending.length / tasks.length;
   if (ratio > 0.5) return "Crítico";
-  if (ratio > 0) return "Em tratamento";
+  if (ratio > 0) return "Monitorização";
   return "Estável";
 }
 
-function StatCard({ label, value, icon: Icon, trend, color }: any) {
+function StatCard({ label, value, icon: Icon, trend, color, bg }: any) {
   return (
-    <Card className="border-none shadow-sm rounded-3xl bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-slate-800">
-      <CardContent className="p-6">
+    <Card className="border-none shadow-sm transition-all duration-300 group overflow-hidden bg-white dark:bg-card ring-1 ring-slate-100 dark:ring-white/10 rounded-[2rem]">
+      <CardContent className="p-7">
         <div className="flex justify-between items-start">
-          <div className={`p-3 rounded-2xl ${color} bg-opacity-10 dark:bg-opacity-20`}>
-            <Icon className={color.replace('bg-', 'text-')} size={24} />
+          <div className={`p-4 rounded-2xl ${bg || 'bg-blue-50'} dark:bg-blue-500/10 ${color || 'text-blue-600'} group-hover:scale-110 group-hover:rotate-3 transition-all duration-500`}>
+            <Icon size={26} strokeWidth={2.5} />
           </div>
           {trend && (
-            <span className={`text-xs font-black ${trend.startsWith('+') ? 'text-emerald-500' : 'text-rose-500'}`}>
+            <Badge variant="outline" className="text-[10px] font-black border-slate-100 dark:border-white/10 text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2 py-1">
               {trend}
-            </span>
+            </Badge>
           )}
         </div>
-        <div className="mt-4">
-          <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{label}</h4>
-          <p className="text-3xl font-black text-slate-900 dark:text-slate-100 mt-1 tracking-tight">{value}</p>
+        <div className="mt-6">
+          <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{label}</p>
+          <p className="text-4xl font-black text-slate-900 dark:text-slate-100 mt-2 tracking-tighter">{value}</p>
         </div>
       </CardContent>
     </Card>
@@ -129,7 +130,7 @@ function AdmitDialog({
     onError: () => toast.error("Erro ao internar paciente"),
   });
 
-  const filteredPatients = (patients ?? []).filter((p: any) =>
+  const filteredPatients = (patients?.data ?? []).filter((p: any) =>
     p.name.toLowerCase().includes(patientSearch.toLowerCase())
   );
 
@@ -159,20 +160,27 @@ function AdmitDialog({
               />
             </div>
             {patientSearch && !selectedPatient && filteredPatients.length > 0 && (
-              <div className="border border-slate-100 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm bg-white dark:bg-slate-950">
+              <div className="border-none shadow-2xl rounded-2xl overflow-hidden bg-white dark:bg-slate-950 ring-1 ring-slate-100 dark:ring-white/5 animate-in fade-in zoom-in-95 duration-200">
                 {filteredPatients.slice(0, 5).map((p: any) => (
                   <button
                     key={p.id}
-                    className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors text-sm border-b border-slate-50 dark:border-slate-800 last:border-0"
+                    className="w-full text-left px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all text-sm border-b border-slate-50 dark:border-white/5 last:border-0 group"
                     onClick={() => {
                       setSelectedPatient(p);
                       setPatientSearch(p.name);
                     }}
                   >
-                    <span className="font-bold text-slate-800 dark:text-slate-200">{p.name}</span>
-                    <span className="text-slate-400 dark:text-slate-500 ml-2 text-xs">
-                      {p.species} • {p.owner?.name}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-black text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                        {p.name[0]}
+                      </div>
+                      <div>
+                        <p className="font-black text-slate-900 dark:text-slate-200 leading-none mb-1">{p.name}</p>
+                        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">
+                          {p.species} <span className="mx-1 opacity-20">|</span> {p.owner?.name}
+                        </p>
+                      </div>
+                    </div>
                   </button>
                 ))}
               </div>
@@ -242,11 +250,11 @@ function TaskItem({ task, onComplete }: { task: any; onComplete: (id: string) =>
   );
 }
 
-export default function HospitalizationPage() {
+export default function InternamentoPage() {
   const queryClient = useQueryClient();
   const [selectedHosp, setSelectedHosp] = useState<any>(null);
   const [admitBox, setAdmitBox] = useState<string | null>(null);
-  const [view, setView] = useState<"grid" | "map">("grid");
+  const [view, setView] = useState<"grid" | "list" | "map">("grid");
   const [selectedZone, setSelectedZone] = useState<string>("TODAS");
 
   const zones = [
@@ -301,6 +309,13 @@ export default function HospitalizationPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard label="Ocupação" value={`${hospitalizations.length}/${TOTAL_BOXES}`} icon={Bed} color="text-blue-600" bg="bg-blue-50" trend="85% Capacidade" />
+        <StatCard label="Críticos" value={hospitalizations.filter((h:any) => vitalLabel(h.tasks || []) === "Crítico").length} icon={AlertCircle} color="text-rose-600" bg="bg-rose-50" trend="Atenção" />
+        <StatCard label="Tratamentos Hoje" value="24" icon={Activity} color="text-emerald-600" bg="bg-emerald-50" trend="+12% vs Ontem" />
+        <StatCard label="Aguardando" value="2" icon={Clock} color="text-amber-600" bg="bg-amber-50" trend="Em espera" />
+      </div>
+
       <div className="flex flex-wrap justify-between items-end gap-4">
         <div>
           <h1 className="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Internamento</h1>
@@ -316,7 +331,15 @@ export default function HospitalizationPage() {
               className={`rounded-lg font-black text-[10px] uppercase gap-2 ${view === "grid" ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm hover:bg-white dark:hover:bg-slate-700' : 'text-slate-400 dark:text-slate-500'}`}
               onClick={() => setView("grid")}
             >
-              <LayoutGrid size={14} /> Boxes
+              <LayoutGrid size={14} /> Grelha
+            </Button>
+            <Button
+              variant={view === "list" ? "default" : "ghost"}
+              size="sm"
+              className={`rounded-lg font-black text-[10px] uppercase gap-2 ${view === "list" ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm hover:bg-white dark:hover:bg-slate-700' : 'text-slate-400 dark:text-slate-500'}`}
+              onClick={() => setView("list")}
+            >
+              <List size={14} /> Lista
             </Button>
             <Button
               variant={view === "map" ? "default" : "ghost"}
@@ -324,7 +347,7 @@ export default function HospitalizationPage() {
               className={`rounded-lg font-black text-[10px] uppercase gap-2 ${view === "map" ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm hover:bg-white dark:hover:bg-slate-700' : 'text-slate-400 dark:text-slate-500'}`}
               onClick={() => setView("map")}
             >
-              <List size={14} /> Mapa
+              <Activity size={14} /> Mapa
             </Button>
           </div>
           <Button
@@ -376,7 +399,7 @@ export default function HospitalizationPage() {
           {/* Occupied boxes */}
           {isLoading
             ? Array.from({ length: 4 }).map((_, i) => (
-                <Card key={i} className="border-none shadow-sm rounded-3xl overflow-hidden">
+                <Card key={i} className="border-none shadow-sm rounded-3xl overflow-hidden bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/5">
                   <CardHeader className="pb-3">
                     <Skeleton className="h-5 w-16 rounded-full" />
                   </CardHeader>
@@ -395,47 +418,63 @@ export default function HospitalizationPage() {
                 return (
                   <Card
                     key={hosp.id}
-                    className="border-none shadow-sm transition-all rounded-3xl overflow-hidden group cursor-pointer ring-1 ring-slate-100 dark:ring-slate-800 bg-white dark:bg-slate-900 hover:ring-blue-100 dark:hover:ring-blue-900"
+                    className="border-none shadow-sm transition-all rounded-[2.5rem] overflow-hidden group cursor-pointer ring-1 ring-slate-100 dark:ring-white/10 bg-white dark:bg-slate-900 hover:ring-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/5 duration-500"
                     onClick={() => setSelectedHosp(hosp)}
                   >
                     <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
-                      <Badge className="font-black text-[10px] uppercase bg-blue-100 text-blue-700 border-none">
+                      <Badge className="font-black text-[10px] uppercase bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-none px-3 h-7 rounded-xl">
                         {hosp.boxNumber ?? "Box —"}
                       </Badge>
-                      <div className={`w-2 h-2 rounded-full ${dotColor}`} />
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
+                        <div className={`w-2.5 h-2.5 rounded-full ${dotColor} ring-4 ring-white dark:ring-slate-900 shadow-sm`} />
+                      </div>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
-                        <div>
-                          <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">{hosp.patient.name}</h3>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-tight">
-                            {hosp.patient.species}
-                            {hosp.patient.breed ? ` • ${hosp.patient.breed}` : ""}
-                          </p>
+                        <div className="flex items-center gap-4">
+                           <div className="w-14 h-14 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-900 dark:text-white font-black text-xl shadow-inner">
+                             {hosp.patient.name[0]}
+                           </div>
+                           <div>
+                             <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-none mb-1">{hosp.patient.name}</h3>
+                             <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-tight">
+                               {hosp.patient.species}
+                               {hosp.patient.breed ? ` • ${hosp.patient.breed}` : ""}
+                             </p>
+                           </div>
                         </div>
                         {tasks.length > 0 && (
-                          <div className="space-y-2">
-                            <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                          <div className="space-y-2 bg-slate-50/50 dark:bg-slate-800/30 p-4 rounded-2xl border border-slate-100/50 dark:border-white/5">
+                            <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">
                               <span>Tratamentos</span>
                               <span>{completed}/{tasks.length}</span>
                             </div>
                             <Progress
                               value={(completed / tasks.length) * 100}
-                              className="h-1.5 bg-slate-100"
+                              className="h-1.5 bg-slate-100 dark:bg-slate-800"
                             />
                           </div>
                         )}
                         <div className="flex items-center justify-between pt-2">
-                          <div className="flex gap-2">
-                            <Thermometer size={14} className="text-slate-300" />
-                            <Heart size={14} className="text-slate-300" />
+                          <div className="flex gap-3">
+                            <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-400">
+                              <Thermometer size={14} />
+                            </div>
+                            <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-400">
+                              <Stethoscope size={14} />
+                            </div>
                           </div>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 text-[10px] font-black uppercase text-blue-600 hover:bg-blue-50 rounded-lg"
+                            className="h-8 text-[10px] font-black uppercase text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl px-4"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedHosp(hosp);
+                            }}
                           >
-                            Ver Plano <ChevronRight size={12} />
+                            Detalhes <ChevronRight size={12} className="ml-1" />
                           </Button>
                         </div>
                       </div>
@@ -449,17 +488,90 @@ export default function HospitalizationPage() {
             emptyBoxes.map((boxLabel) => (
               <Card
                 key={boxLabel}
-                className="border-none bg-slate-50/50 dark:bg-slate-800/10 border-2 border-dashed border-slate-200 dark:border-slate-800 shadow-none rounded-3xl overflow-hidden cursor-pointer hover:border-blue-200 dark:hover:border-blue-900 transition-colors"
+                className="border-none bg-slate-50/30 dark:bg-slate-800/10 border-2 border-dashed border-slate-200 dark:border-white/5 shadow-none rounded-[2.5rem] overflow-hidden cursor-pointer hover:border-blue-500/30 hover:bg-blue-50/20 dark:hover:bg-blue-900/5 transition-all duration-500"
                 onClick={() => setAdmitBox(boxLabel)}
               >
-                <CardContent className="flex flex-col items-center justify-center py-12 text-slate-300 space-y-2">
-                  <Bed size={32} strokeWidth={1.5} />
-                  <p className="text-xs font-bold uppercase tracking-widest">{boxLabel}</p>
-                  <p className="text-xs text-slate-400">Disponível</p>
+                <CardContent className="flex flex-col items-center justify-center py-12 text-slate-300 dark:text-slate-700 space-y-4">
+                  <div className="w-16 h-16 rounded-[2rem] bg-white dark:bg-slate-900 shadow-sm flex items-center justify-center ring-1 ring-slate-100 dark:ring-white/5">
+                    <Bed size={28} strokeWidth={1.5} className="text-slate-200 dark:text-slate-800" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-600">{boxLabel}</p>
+                    <p className="text-[10px] font-bold text-slate-300 dark:text-slate-700 uppercase tracking-widest mt-1">Disponível</p>
+                  </div>
                 </CardContent>
               </Card>
             ))}
         </div>
+      ) : view === "list" ? (
+        <Card className="border-none shadow-sm rounded-[2.5rem] overflow-hidden bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/10">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-50 dark:border-white/5 bg-slate-50/50 dark:bg-slate-900">
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Status</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Box</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Paciente</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Proprietário</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Tratamentos</th>
+                  <th className="px-8 py-5 text-right"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {hospitalizations.map((hosp: any) => (
+                  <tr 
+                    key={hosp.id} 
+                    className="border-b border-slate-50 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors cursor-pointer group"
+                    onClick={() => setSelectedHosp(hosp)}
+                  >
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${vitalColor(hosp.tasks || [])}`} />
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{vitalLabel(hosp.tasks || [])}</span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                       <Badge variant="outline" className="rounded-lg font-black text-[10px] border-slate-200 dark:border-white/10 text-slate-500 uppercase tracking-tighter">
+                         {hosp.boxNumber}
+                       </Badge>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-black text-slate-900 dark:text-white">
+                          {hosp.patient.name[0]}
+                        </div>
+                        <div>
+                          <p className="font-black text-slate-900 dark:text-white leading-none mb-1">{hosp.patient.name}</p>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase">{hosp.patient.species} • {hosp.patient.breed}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{hosp.patient.owner?.name}</p>
+                      <p className="text-[10px] text-slate-400 font-medium">{hosp.patient.owner?.phone}</p>
+                    </td>
+                    <td className="px-8 py-6">
+                       <div className="flex items-center gap-3">
+                          <Progress 
+                            value={((hosp.tasks?.filter((t:any) => t.status === "COMPLETED").length || 0) / (hosp.tasks?.length || 1)) * 100} 
+                            className="w-24 h-1.5" 
+                          />
+                          <span className="text-[10px] font-black text-slate-400 uppercase">
+                            {hosp.tasks?.filter((t:any) => t.status === "COMPLETED").length || 0}/{hosp.tasks?.length || 0}
+                          </span>
+                       </div>
+                    </td>
+                    <td className="px-8 py-6 text-right">
+                       <Button variant="ghost" size="icon" className="rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-300 group-hover:text-blue-500 transition-colors">
+                         <ChevronRight size={18} />
+                       </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
       ) : (
         <HospitalizationMap hospitalizations={hospitalizations || []} />
       )}
@@ -516,10 +628,17 @@ export default function HospitalizationPage() {
                 )}
 
                 <div className="flex gap-3">
-                  <Button className="flex-1 rounded-xl bg-blue-600 font-black h-12">
+                  <Button 
+                    className="flex-1 rounded-xl bg-blue-600 font-black h-12"
+                    onClick={() => toast.success("A abrir painel de prescrição...")}
+                  >
                     Nova Medicação
                   </Button>
-                  <Button variant="outline" className="flex-1 rounded-xl font-black h-12">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1 rounded-xl font-black h-12 border-slate-200 dark:border-white/10 dark:text-white"
+                    onClick={() => toast.info("A preparar registo de biometria...")}
+                  >
                     Registar Biométricos
                   </Button>
                 </div>

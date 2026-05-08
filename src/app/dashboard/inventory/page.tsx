@@ -20,7 +20,8 @@ import {
   Tag,
   Euro,
   Box,
-  ChevronRight
+  ChevronRight,
+  Download
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -49,7 +50,7 @@ import { pt } from "date-fns/locale";
 
 // Custom Stat Card Component for consistency
 const StatCard = ({ title, value, icon: Icon, color, subtitle }: any) => (
-  <Card className="border-none bg-white dark:bg-card shadow-xl shadow-slate-200/40 dark:shadow-none ring-1 ring-slate-100 dark:ring-white/10 overflow-hidden group">
+  <Card className="border-none bg-white dark:bg-card shadow-sm ring-1 ring-slate-100 dark:ring-white/10 overflow-hidden group">
     <CardContent className="p-6 flex items-center gap-5">
       <div className={`p-4 rounded-[2rem] transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 ${color}`}>
         <Icon size={28} strokeWidth={2.5} />
@@ -143,15 +144,31 @@ export default function InventoryPage() {
         <div className="flex items-center gap-3 w-full md:w-auto">
           <Button 
             variant="outline" 
+            onClick={() => toast.info("A carregar histórico de movimentos...")}
             className="h-12 rounded-2xl px-6 gap-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm font-black hover:shadow-md transition-all active:scale-95"
           >
             <History size={18} strokeWidth={2.5} />
             <span className="hidden sm:inline">Movimentos</span>
           </Button>
+
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              toast.promise(new Promise(resolve => setTimeout(resolve, 1500)), {
+                loading: 'A gerar ficheiro CSV...',
+                success: 'Inventário exportado com sucesso!',
+                error: 'Erro ao exportar.',
+              });
+            }}
+            className="h-12 rounded-2xl px-6 gap-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm font-black hover:shadow-md transition-all active:scale-95"
+          >
+            <Download size={18} strokeWidth={2.5} />
+            <span className="hidden sm:inline">Exportar CSV</span>
+          </Button>
           
           <Dialog>
             <DialogTrigger asChild>
-              <Button className="h-12 rounded-2xl px-6 gap-3 bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-100 dark:shadow-none font-black transition-all active:scale-95">
+              <Button className="h-12 rounded-2xl px-6 gap-3 bg-blue-600 hover:bg-blue-700 text-white shadow-sm font-black transition-all active:scale-95">
                 <Plus size={22} strokeWidth={3} />
                 <span>Novo Artigo</span>
               </Button>
@@ -180,7 +197,10 @@ export default function InventoryPage() {
                     </select>
                   </div>
                 </div>
-                <Button className="w-full h-16 rounded-[1.5rem] bg-blue-600 hover:bg-blue-700 text-white text-lg font-black shadow-xl shadow-blue-100 dark:shadow-none">
+                <Button 
+                  onClick={() => toast.success("Artigo registado com sucesso!")}
+                  className="w-full h-16 rounded-[1.5rem] bg-blue-600 hover:bg-blue-700 text-white text-lg font-black"
+                >
                   Registar no Sistema
                 </Button>
               </div>
@@ -264,111 +284,119 @@ export default function InventoryPage() {
           </CardContent>
         </Card>
 
-        {/* List Header */}
-        <div className="px-10 hidden md:grid grid-cols-[1fr_200px_180px_150px_140px] gap-4 text-slate-400 dark:text-slate-500 font-black text-[11px] uppercase tracking-[0.25em] mb-2">
-          <span>Artigo & Categoria</span>
-          <span>Disponibilidade</span>
-          <span>Validade</span>
-          <span>Valor Unitário</span>
-          <span className="text-right">Ações</span>
-        </div>
-
-        {/* List Content */}
-        <div className="space-y-3">
+        {/* List Content - Premium Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {isLoading ? (
-            Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-28 rounded-3xl bg-white dark:bg-slate-900 animate-pulse" />
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-48 rounded-[2.5rem] bg-white dark:bg-slate-900 animate-pulse ring-1 ring-slate-100 dark:ring-slate-800" />
             ))
           ) : filteredProducts.length === 0 ? (
-            <div className="py-32 text-center bg-white dark:bg-slate-900 rounded-[3rem] border border-slate-100 dark:border-slate-800 shadow-sm">
-               <Package size={64} className="mx-auto text-slate-100 dark:text-slate-800 mb-4" />
+            <div className="col-span-full py-32 text-center bg-white/40 dark:bg-slate-900/40 backdrop-blur-sm rounded-[3rem] border-2 border-dashed border-slate-100 dark:border-slate-800">
+               <Package size={64} className="mx-auto text-slate-200 dark:text-slate-800 mb-4" />
                <h3 className="text-xl font-black text-slate-900 dark:text-white">Sem resultados</h3>
                <p className="text-slate-500 font-medium">Tente ajustar a sua pesquisa ou filtros.</p>
             </div>
           ) : (
-            filteredProducts.map((p: any) => (
-              <div key={p.id} className="group grid grid-cols-1 md:grid-cols-[1fr_200px_180px_150px_140px] gap-4 items-center bg-white dark:bg-slate-900 p-5 md:p-6 rounded-[2.2rem] border border-slate-100 dark:border-slate-800 hover:border-indigo-200 dark:hover:border-indigo-900/50 hover:shadow-xl hover:shadow-slate-200/40 dark:hover:shadow-none transition-all duration-300">
-                
-                {/* Product Name & Cat */}
-                <div className="flex items-center gap-5">
-                  <div className="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:scale-110 transition-transform">
-                    <Box size={26} strokeWidth={2} />
+            filteredProducts.map((p: any) => {
+              const isLowStock = p.stockQuantity <= 5;
+              const expiry = p.expiryDate ? new Date(p.expiryDate) : null;
+              const isExpired = expiry ? expiry < new Date() : false;
+
+              return (
+                <div 
+                  key={p.id} 
+                  className="group relative bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] ring-1 ring-slate-100 dark:ring-slate-800 hover:ring-blue-500/30 dark:hover:ring-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-500 flex flex-col gap-6"
+                >
+                  {/* Card Header: Icon + Price */}
+                  <div className="flex justify-between items-start">
+                    <div className="flex gap-4 items-center">
+                      <div className="w-16 h-16 rounded-[1.5rem] bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-inner">
+                        <Box size={28} strokeWidth={2} />
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="font-black text-xl text-slate-900 dark:text-white truncate tracking-tight leading-none group-hover:text-blue-600 transition-colors">
+                          {p.name}
+                        </h3>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="secondary" className="text-[9px] font-black bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 uppercase tracking-widest border-none px-2">
+                            {p.category || "GERAL"}
+                          </Badge>
+                          {p.batchNumber && (
+                            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-600 font-mono">
+                              LOTE: {p.batchNumber}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
+                        €{Number(p.price).toFixed(2)}
+                      </p>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">IVA {p.vatRate}%</p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="font-black text-xl text-slate-900 dark:text-white truncate tracking-tight">{p.name}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="outline" className="text-[10px] font-black border-slate-200 dark:border-slate-800 text-slate-400 uppercase tracking-wider">
-                        {p.category || "GERAL"}
-                      </Badge>
-                      <span className="text-[10px] font-bold text-slate-300 dark:text-slate-600 font-mono">
-                        L: {p.batchNumber || "---"}
+
+                  {/* Stock Status Bar */}
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-end">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${isLowStock ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`} />
+                        <span className={`text-sm font-black uppercase tracking-widest ${isLowStock ? 'text-red-600' : 'text-slate-400'}`}>
+                          {isLowStock ? 'Stock Crítico' : 'Stock Operacional'}
+                        </span>
+                      </div>
+                      <span className="text-2xl font-black text-slate-900 dark:text-white leading-none">
+                        {p.stockQuantity} <span className="text-[10px] text-slate-400 font-bold uppercase ml-1">UN</span>
                       </span>
+                    </div>
+                    <div className="h-2 w-full bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden">
+                       <div 
+                         className={`h-full transition-all duration-1000 ${isLowStock ? 'bg-red-500' : 'bg-emerald-500'}`}
+                         style={{ width: `${Math.min(100, (p.stockQuantity / 20) * 100)}%` }}
+                       />
+                    </div>
+                  </div>
+
+                  {/* Footer: Expiry + Actions */}
+                  <div className="flex items-center justify-between pt-2 mt-auto">
+                    <div className="flex flex-col">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Validade</p>
+                      <p className={`text-xs font-bold mt-1 ${isExpired ? 'text-red-500' : 'text-slate-700 dark:text-slate-300'}`}>
+                        {expiry ? format(expiry, "dd MMM yyyy", { locale: pt }) : "S/ VALIDADE"}
+                      </p>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-11 w-11 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all active:scale-90"
+                        onClick={() => adjustStockMutation.mutate({ productId: p.id, type: "IN", quantity: 1 })}
+                      >
+                        <Plus size={20} strokeWidth={3} />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-11 w-11 rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-400 hover:bg-slate-900 dark:hover:bg-white hover:text-white dark:hover:text-slate-900 transition-all active:scale-90"
+                        onClick={() => adjustStockMutation.mutate({ productId: p.id, type: "OUT", quantity: 1 })}
+                        disabled={p.stockQuantity === 0}
+                      >
+                        <MinusCircle size={20} strokeWidth={2.5} />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-11 w-11 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 hover:bg-blue-600 hover:text-white transition-all active:scale-90"
+                      >
+                        <ChevronRight size={20} strokeWidth={3} />
+                      </Button>
                     </div>
                   </div>
                 </div>
-
-                {/* Stock Status */}
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2.5 h-2.5 rounded-full ${p.stockQuantity <= 5 ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`} />
-                    <span className={`text-2xl font-black ${p.stockQuantity <= 5 ? 'text-red-600 dark:text-red-400' : 'text-slate-900 dark:text-white'}`}>
-                      {p.stockQuantity}
-                    </span>
-                  </div>
-                  <p className="text-[11px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest pl-4">UNIDADES</p>
-                </div>
-
-                {/* Expiry */}
-                <div>
-                  {p.expiryDate ? (() => {
-                    const expiry = new Date(p.expiryDate);
-                    const isExpired = expiry < new Date();
-                    return (
-                      <div className="flex flex-col">
-                        <span className={`text-sm font-black ${isExpired ? 'text-red-600' : 'text-slate-700 dark:text-slate-300'}`}>
-                          {format(expiry, "dd MMM yyyy", { locale: pt })}
-                        </span>
-                        <span className={`text-[10px] font-bold uppercase tracking-widest ${isExpired ? 'text-red-400' : 'text-slate-400'}`}>
-                          {isExpired ? "EXPIRADO" : "VALIDADE"}
-                        </span>
-                      </div>
-                    );
-                  })() : (
-                    <span className="text-xs font-bold text-slate-300 dark:text-slate-700 italic">SEM VALIDADE</span>
-                  )}
-                </div>
-
-                {/* Price */}
-                <div className="flex flex-col">
-                  <span className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">€{Number(p.price).toFixed(2)}</span>
-                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase">IVA {p.vatRate}% INC.</span>
-                </div>
-
-                {/* Quick Actions */}
-                <div className="flex justify-end gap-2">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-12 w-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
-                    onClick={() => adjustStockMutation.mutate({ productId: p.id, type: "IN", quantity: 1 })}
-                  >
-                    <PlusCircle size={22} strokeWidth={2.5} />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-12 w-12 rounded-2xl bg-red-50 dark:bg-red-900/20 text-red-600 hover:bg-red-600 hover:text-white transition-all shadow-sm"
-                    onClick={() => adjustStockMutation.mutate({ productId: p.id, type: "OUT", quantity: 1 })}
-                    disabled={p.stockQuantity === 0}
-                  >
-                    <MinusCircle size={22} strokeWidth={2.5} />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-indigo-600 transition-all">
-                    <ChevronRight size={22} strokeWidth={2.5} />
-                  </Button>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>

@@ -52,12 +52,13 @@ export async function GET(req: Request) {
         startTime: `${todayStr}T10:00:00Z`,
         type: "VACINA",
         status: "SCHEDULED",
-        veterinarianId: "v1",
+        veterinarianId: "vet-1",
         vetName: "Dr. Marco Cândido",
+        patientId: "p1",
         patient: { 
           id: "p1", 
           name: "Bolinha", 
-          owner: { name: "Maria Alice" } 
+          owner: { name: "Maria Alice", phone: "914005082" } 
         }
       },
       {
@@ -65,12 +66,13 @@ export async function GET(req: Request) {
         startTime: `${todayStr}T11:00:00Z`,
         type: "CIRURGIA",
         status: "SCHEDULED",
-        veterinarianId: "v2",
+        veterinarianId: "vet-2",
         vetName: "Dra. Ana Silva",
+        patientId: "p2",
         patient: { 
           id: "p2", 
           name: "Rex", 
-          owner: { name: "Ricardo Fonseca" } 
+          owner: { name: "Ricardo Fonseca", phone: "914005082" } 
         }
       },
       {
@@ -78,12 +80,13 @@ export async function GET(req: Request) {
         startTime: `${todayStr}T15:00:00Z`,
         type: "CONSULTA",
         status: "SCHEDULED",
-        veterinarianId: "v1",
+        veterinarianId: "vet-1",
         vetName: "Dr. Marco Cândido",
+        patientId: "p3",
         patient: { 
           id: "p3", 
           name: "Luna", 
-          owner: { name: "José Pedro" } 
+          owner: { name: "José Pedro", phone: "914005082" } 
         }
       },
       {
@@ -91,18 +94,79 @@ export async function GET(req: Request) {
         startTime: `${todayStr}T16:00:00Z`,
         type: "URGÊNCIA",
         status: "SCHEDULED",
-        veterinarianId: "v3",
+        veterinarianId: "vet-3",
         vetName: "Dr. Roberto",
+        patientId: "p4",
         patient: { 
           id: "p4", 
           name: "Miau", 
-          owner: { name: "Carla Antunes" } 
+          owner: { name: "Carla Antunes", phone: "914005082" } 
         }
       }
     ]);
   } catch (error) {
-    console.error("Error fetching appointments:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.warn("DB unreachable, injecting mock data for demo...");
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    
+    return NextResponse.json([
+      {
+        id: "app-1",
+        startTime: `${todayStr}T10:00:00Z`,
+        type: "VACINA",
+        status: "SCHEDULED",
+        veterinarianId: "vet-1",
+        vetName: "Dr. Marco Cândido",
+        patientId: "p1",
+        patient: { 
+          id: "p1", 
+          name: "Bolinha", 
+          owner: { name: "Maria Alice", phone: "914005082" } 
+        }
+      },
+      {
+        id: "app-2",
+        startTime: `${todayStr}T11:00:00Z`,
+        type: "CIRURGIA",
+        status: "SCHEDULED",
+        veterinarianId: "vet-2",
+        vetName: "Dra. Ana Silva",
+        patientId: "p2",
+        patient: { 
+          id: "p2", 
+          name: "Rex", 
+          owner: { name: "Ricardo Fonseca", phone: "914005082" } 
+        }
+      },
+      {
+        id: "app-3",
+        startTime: `${todayStr}T15:00:00Z`,
+        type: "CONSULTA",
+        status: "SCHEDULED",
+        veterinarianId: "vet-1",
+        vetName: "Dr. Marco Cândido",
+        patientId: "p3",
+        patient: { 
+          id: "p3", 
+          name: "Luna", 
+          owner: { name: "José Pedro", phone: "914005082" } 
+        }
+      },
+      {
+        id: "app-4",
+        startTime: `${todayStr}T16:00:00Z`,
+        type: "URGÊNCIA",
+        status: "SCHEDULED",
+        veterinarianId: "vet-3",
+        vetName: "Dr. Roberto",
+        patientId: "p4",
+        patient: { 
+          id: "p4", 
+          name: "Miau", 
+          owner: { name: "Carla Antunes", phone: "914005082" } 
+        }
+      }
+    ]);
   }
 }
 

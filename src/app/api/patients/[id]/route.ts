@@ -65,7 +65,7 @@ export async function GET(
 
     return NextResponse.json(enrichedPatient);
   } catch (error) {
-    console.error("Error fetching patient, returning mock:", error);
+    console.warn("DB unreachable, injecting mock patient data for demo...");
     return NextResponse.json(generateMockPatient(id));
   }
 }
@@ -81,7 +81,7 @@ function generateMockPatient(id: string) {
     weight: id === "p1" ? "32.5" : "28.0",
     microchip: "628090001234567",
     ownerId: "demo-owner-1",
-    owner: { id: "demo-owner-1", name: "Marco Cândido" },
+    owner: { id: "demo-owner-1", name: "Marco Cândido", phone: "914005082" },
     vitalSigns: generateMockVitals(),
     vaccinations: generateMockVaccines(),
     dewormings: [],

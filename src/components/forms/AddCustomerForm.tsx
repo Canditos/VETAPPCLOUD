@@ -153,7 +153,7 @@ export function AddCustomerForm({ onSuccess }: { onSuccess?: () => void }) {
         <DialogFooter className="pt-4">
           <Button 
             type="submit" 
-            className="w-full h-16 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xl font-black shadow-2xl shadow-blue-100 dark:shadow-none transition-all active:scale-[0.98] disabled:opacity-50"
+            className="w-full h-16 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xl font-black shadow-sm transition-all active:scale-[0.98] disabled:opacity-50"
             disabled={mutation.isPending}
           >
             {mutation.isPending ? "A registar..." : "Finalizar Registo de Cliente"}

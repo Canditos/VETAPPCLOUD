@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 const mockDiagnostics = [
   {
@@ -104,12 +106,19 @@ export default function DiagnosticsPage() {
                         <p className="text-sm text-slate-500 font-bold tracking-tight">{dx.summary} • <span className="text-blue-600">{dx.source}</span></p>
                      </div>
 
-                     <div className="flex flex-col items-end gap-2">
+                      <div className="flex flex-col items-end gap-2">
                         <p className="text-[10px] font-black text-slate-400 uppercase">{new Date(dx.createdAt).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}</p>
-                        <Button variant="outline" className="rounded-xl font-bold h-9 gap-2 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => {
+                            toast.info(`A carregar relatório ${dx.id}...`);
+                            // In a real app: router.push(`/dashboard/diagnostics/${dx.id}`);
+                          }}
+                          className="rounded-xl font-bold h-9 gap-2 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm border-slate-200 dark:border-white/10"
+                        >
                            Visualizar <ChevronRight size={16} />
                         </Button>
-                     </div>
+                      </div>
                   </div>
                </CardContent>
              </Card>
@@ -148,13 +157,25 @@ export default function DiagnosticsPage() {
                  <CardTitle className="text-sm font-black text-slate-400 uppercase tracking-widest">Ações Rápidas</CardTitle>
               </CardHeader>
               <CardContent className="p-4 space-y-2">
-                 <Button variant="ghost" className="w-full justify-start gap-3 font-bold h-12 rounded-xl hover:bg-blue-50 hover:text-blue-600">
+                 <Button 
+                   variant="ghost" 
+                   onClick={() => toast.success("Pedido de Laboratório iniciado.")}
+                   className="w-full justify-start gap-3 font-bold h-12 rounded-xl hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-900/20"
+                 >
                     <FlaskConical size={18} /> Novo Pedido Laboratório
                  </Button>
-                 <Button variant="ghost" className="w-full justify-start gap-3 font-bold h-12 rounded-xl hover:bg-emerald-50 hover:text-emerald-600">
+                 <Button 
+                   variant="ghost" 
+                   onClick={() => toast.success("Solicitação de RX Digital aberta.")}
+                   className="w-full justify-start gap-3 font-bold h-12 rounded-xl hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20"
+                 >
                     <ImageIcon size={18} /> Solicitar RX Digital
                  </Button>
-                 <Button variant="ghost" className="w-full justify-start gap-3 font-bold h-12 rounded-xl hover:bg-slate-50">
+                 <Button 
+                   variant="ghost" 
+                   onClick={() => toast.info("A preparar lote para exportação...")}
+                   className="w-full justify-start gap-3 font-bold h-12 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5"
+                 >
                     <Download size={18} /> Exportar Lote de Resultados
                  </Button>
               </CardContent>

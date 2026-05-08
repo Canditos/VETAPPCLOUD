@@ -23,7 +23,9 @@ import {
   Printer,
   RefreshCw,
   Bed,
-  ShieldCheck
+  ShieldCheck,
+  MessageSquare,
+  Copy,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -49,17 +51,51 @@ import Link from "next/link";
 
 export default function PatientProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const [isValidatingSIAC, setIsValidatingSIAC] = useState(false);
-  const [siacStatus, setSiacStatus] = useState<"IDLE" | "SUCCESS" | "ERROR">("IDLE");
+  const [isEditingChip, setIsEditingChip] = useState(false);
+  const [chipValue, setChipValue] = useState("");
 
-  const validateSIAC = () => {
-    setIsValidatingSIAC(true);
-    setSiacStatus("IDLE");
-    setTimeout(() => {
-      setIsValidatingSIAC(false);
-      setSiacStatus("SUCCESS");
-      toast.success("SIAC: Animal validado com sucesso na base de dados nacional.");
-    }, 2000);
+  const handleUpdateChip = async () => {
+    try {
+      const res = await fetch(`/api/patients/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ microchip: chipValue }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Microchip atualizado com sucesso!");
+      setIsEditingChip(false);
+      // Aqui idealmente faríamos refetch da query, mas para demo o toast basta
+    } catch (error) {
+      toast.error("Erro ao atualizar microchip.");
+    }
+  };
+
+  const sendQuickSMS = () => {
+    if (!patient?.owner?.phone) {
+      toast.error("Tutor sem número de telefone registado.");
+      return;
+    }
+
+    toast.promise(
+      fetch("/api/notifications/send", {
+        method: "POST",
+        body: JSON.stringify({
+          type: "SMS",
+          patientName: patient.name,
+          ownerPhone: patient.owner.phone,
+          customMessage: `Olá ${patient.owner.name}, aqui é da VetConnect. Tudo bem com o ${patient.name}?`
+        }),
+        headers: { "Content-Type": "application/json" },
+      }).then(res => {
+        if (!res.ok) throw new Error();
+        return res.json();
+      }),
+      {
+        loading: "A enviar SMS de teste...",
+        success: (data) => data.message || "SMS enviada com sucesso!",
+        error: "Erro ao enviar SMS. Verifica as credenciais.",
+      }
+    );
   };
   const { data: patient, isLoading } = useQuery({
     queryKey: ["patient-hub", id],
@@ -86,17 +122,30 @@ export default function PatientProfilePage({ params }: { params: Promise<{ id: s
           </Button>
         </Link>
         <div className="flex gap-3">
-          <Link href={`/dashboard/hospitalization`}>
+          <Link href={`/dashboard/internamento`}>
             <Button variant="outline" className="rounded-xl font-bold gap-2 border-amber-200 dark:border-amber-900/50 text-amber-600 dark:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20">
               <Bed size={16} /> Internar
             </Button>
           </Link>
-          <Button variant="outline" className="rounded-xl font-bold gap-2 border-slate-200 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800">
+          <Button 
+            variant="outline" 
+            className="rounded-xl font-bold gap-2 border-slate-200 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800"
+            onClick={() => toast.info("A gerar PDF da ficha clínica...")}
+          >
             <Printer size={16} /> Imprimir Ficha
           </Button>
-          <Button className="rounded-xl bg-blue-600 hover:bg-blue-700 font-black gap-2 shadow-lg shadow-blue-100 dark:shadow-none">
-            <Plus size={16} /> Nova Consulta
+          <Button 
+            variant="outline" 
+            className="rounded-xl font-bold gap-2 border-indigo-200 dark:border-indigo-900/50 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+            onClick={sendQuickSMS}
+          >
+            <MessageSquare size={16} /> Enviar SMS
           </Button>
+          <Link href={`/dashboard/consultations?patientId=${id}`}>
+            <Button className="rounded-xl bg-blue-600 hover:bg-blue-700 font-black gap-2 shadow-lg shadow-blue-100 dark:shadow-none">
+              <Plus size={16} /> Nova Consulta
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -267,7 +316,14 @@ export default function PatientProfilePage({ params }: { params: Promise<{ id: s
                 </CardTitle>
                 <CardDescription className="dark:text-slate-400 font-medium">SOAP Notes e Observações Clínicas.</CardDescription>
               </div>
-              <Button variant="outline" className="rounded-xl font-bold border-slate-200 dark:border-slate-800 dark:text-slate-300">Ver Tudo</Button>
+              <Link href={`/dashboard/consultations?patientId=${id}`}>
+                <Button 
+                  variant="outline" 
+                  className="rounded-xl font-bold border-slate-200 dark:border-slate-800 dark:text-slate-300"
+                >
+                  Ver Tudo
+                </Button>
+              </Link>
             </CardHeader>
             <div className="divide-y divide-slate-50 dark:divide-slate-800">
               {patient.consultations?.map((consult: any) => (
@@ -349,9 +405,14 @@ export default function PatientProfilePage({ params }: { params: Promise<{ id: s
                     </div>
                   );
                 })}
-                <Button variant="outline" className="w-full rounded-2xl py-6 border-dashed border-slate-200 text-slate-400 font-black hover:border-blue-300 hover:text-blue-600 transition-all">
-                  <Plus size={16} className="mr-2" /> Registar Vacina
-                </Button>
+                <Link href={`/dashboard/consultations?patientId=${id}&tab=vaccines`}>
+                  <Button 
+                    variant="outline" 
+                    className="w-full rounded-2xl py-6 border-dashed border-slate-200 text-slate-400 font-black hover:border-blue-300 hover:text-blue-600 transition-all"
+                  >
+                    <Plus size={16} className="mr-2" /> Registar Vacina
+                  </Button>
+                </Link>
               </div>
             </CardContent>
           </Card>
@@ -392,41 +453,90 @@ export default function PatientProfilePage({ params }: { params: Promise<{ id: s
                     </div>
                   </div>
                 ))}
-                <Button className="w-full rounded-2xl py-6 bg-slate-100 dark:bg-slate-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 font-black transition-all">
-                  Nova Prescrição
-                </Button>
+                <Link href={`/dashboard/consultations?patientId=${id}&tab=billing`}>
+                  <Button className="w-full rounded-2xl py-6 bg-slate-100 dark:bg-slate-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 font-black transition-all">
+                    Nova Prescrição
+                  </Button>
+                </Link>
               </div>
             </CardContent>
           </Card>
 
-          {/* SIAC / Identification Mock */}
-          <Card className="border-none shadow-xl shadow-slate-200/50 dark:shadow-none rounded-[2.5rem] bg-gradient-to-br from-blue-600 to-blue-800 text-white p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <ShieldCheck size={24} className="text-blue-300" />
-              <h3 className="text-xl font-black">Registo SIAC</h3>
+          {/* Identificação & Microchip Section */}
+          <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-indigo-600/20 to-blue-900/40 p-8 backdrop-blur-md shadow-2xl transition-all hover:shadow-indigo-500/10">
+            <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-indigo-500/10 blur-3xl" />
+            <div className="relative flex flex-col gap-6">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/20 text-indigo-400 shadow-inner">
+                  <ShieldCheck size={28} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black tracking-tight text-white uppercase">Identificação</h3>
+                  <p className="text-sm text-indigo-200/60 font-medium">Registo de Microchip</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <p className="text-sm leading-relaxed text-indigo-100/80 font-medium opacity-70">
+                  Campo oficial para o número do transponder/microchip do animal para fins de identificação legal e clínica.
+                </p>
+
+                <div className="group relative rounded-2xl border border-white/5 bg-black/30 p-5 transition-all hover:bg-black/40">
+                  <span className="block text-[10px] font-bold uppercase tracking-widest text-indigo-400/70 mb-2">NÚMERO DO MICROCHIP</span>
+                  <div className="flex items-center justify-between gap-3">
+                    {isEditingChip ? (
+                      <input 
+                        type="text"
+                        value={chipValue}
+                        onChange={(e) => setChipValue(e.target.value)}
+                        className="bg-transparent text-2xl font-black tracking-tighter text-white font-mono outline-none border-b border-indigo-500 w-full"
+                        autoFocus
+                      />
+                    ) : (
+                      <span className="text-2xl font-black tracking-tighter text-white font-mono leading-none">
+                        {patient.microchip || "Sem registo"}
+                      </span>
+                    )}
+                    
+                    <div className="flex gap-1">
+                      {isEditingChip ? (
+                        <button 
+                          onClick={handleUpdateChip}
+                          className="p-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
+                        >
+                          <CheckCircle2 size={16} />
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={() => {
+                            setChipValue(patient.microchip || "");
+                            setIsEditingChip(true);
+                          }}
+                          className="p-2 text-indigo-400/50 hover:text-indigo-300 transition-colors"
+                          title="Editar Microchip"
+                        >
+                          <Plus size={16} />
+                        </button>
+                      )}
+                      <button 
+                        onClick={() => {
+                          navigator.clipboard.writeText(patient.microchip || "");
+                          toast.success("Copiado!");
+                        }}
+                        className="p-2 text-indigo-400/50 hover:text-indigo-300 transition-colors"
+                      >
+                        <Copy size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-xl bg-white/5 border border-white/5 text-[11px] text-indigo-200/50 leading-relaxed italic">
+                  * Este número é utilizado para comunicações oficiais e rastreio em caso de perda.
+                </div>
+              </div>
             </div>
-            <p className="text-blue-100 text-sm font-medium leading-relaxed opacity-80">
-              Animal identificado eletronicamente e registado na base de dados nacional.
-            </p>
-            <div className="mt-6 p-4 bg-white/10 rounded-2xl border border-white/10">
-              <p className="text-[9px] font-black uppercase tracking-widest text-blue-300">Número do Microchip</p>
-              <p className="text-lg font-black tracking-wider mt-1">{patient.microchip || "628090001234567"}</p>
-            </div>
-            <Button 
-              variant="ghost" 
-              className="w-full mt-6 rounded-xl text-white font-black text-xs hover:bg-white/10 border border-white/20 gap-2"
-              onClick={validateSIAC}
-              disabled={isValidatingSIAC}
-            >
-               {isValidatingSIAC ? (
-                 <>Validando no SIAC... <RefreshCw className="animate-spin" size={14} /></>
-               ) : siacStatus === "SUCCESS" ? (
-                 <>Validado com Sucesso <CheckCircle2 size={14} className="text-emerald-400" /></>
-               ) : (
-                 <>Validar no SIAC <ChevronRight size={14} /></>
-               )}
-            </Button>
-          </Card>
+          </div>
         </div>
       </div>
     </div>
