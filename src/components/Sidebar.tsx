@@ -16,7 +16,8 @@ import {
   BarChart3,
   Heart,
   ChevronRight,
-  User
+  User,
+  Pill
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 
@@ -34,6 +35,7 @@ const menuGroups = [
       { name: "Pacientes", href: "/dashboard/patients", icon: PawPrint },
       { name: "Clientes", href: "/dashboard/customers", icon: Users },
       { name: "Internamento", href: "/dashboard/internamento", icon: Bed },
+      { name: "Prescrições", href: "/dashboard/prescricoes", icon: Pill },
       { name: "Diagnósticos", href: "/dashboard/diagnostics", icon: Activity },
     ]
   },
