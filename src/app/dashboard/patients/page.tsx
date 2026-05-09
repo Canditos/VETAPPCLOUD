@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { 
   Plus, 
@@ -45,7 +45,7 @@ const PatientAvatar = ({ name, species }: { name: string, species: string }) => 
   );
 };
 
-export default function PatientsPage() {
+function PatientsPageContent() {
   const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [speciesFilter, setSpeciesFilter] = useState("");
@@ -284,5 +284,23 @@ export default function PatientsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function PatientsPage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-[1600px] mx-auto space-y-10 p-4 md:p-8 animate-pulse">
+        <div className="h-12 w-48 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
+        <div className="h-24 w-full bg-slate-100 dark:bg-slate-800 rounded-[2.5rem]" />
+        <div className="space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-24 w-full bg-slate-50 dark:bg-slate-900 rounded-3xl" />
+          ))}
+        </div>
+      </div>
+    }>
+      <PatientsPageContent />
+    </Suspense>
   );
 }
