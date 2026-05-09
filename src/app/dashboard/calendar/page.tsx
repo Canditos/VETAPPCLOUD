@@ -48,7 +48,7 @@ function DraggableAppointment({ app, hour, config, vetColor, onClick, isOverlay 
   });
 
   if (isDragging && !isOverlay) {
-    return <div ref={setNodeRef} className="h-full w-full rounded-lg border-2 border-dashed border-blue-300 bg-blue-50/50" />;
+    return <div ref={setNodeRef} className="opacity-20 h-full w-full rounded-2xl border-2 border-dashed border-blue-500/50 bg-blue-50/50 dark:bg-blue-500/10" />;
   }
 
   return (
@@ -56,26 +56,30 @@ function DraggableAppointment({ app, hour, config, vetColor, onClick, isOverlay 
       ref={setNodeRef} style={style} {...attributes} {...listeners}
       onClick={(e) => { e.stopPropagation(); onClick(app); }}
       className={cn(
-        "p-2.5 rounded-lg h-full border-l-[3px] transition-all cursor-grab active:cursor-grabbing group relative overflow-hidden mb-1.5 last:mb-0 shadow-sm hover:shadow-md",
-        isOverlay ? "scale-105 shadow-lg ring-2 ring-blue-400/30 z-50" : "hover:-translate-y-0.5 active:scale-[0.98]"
+        "p-3 rounded-xl h-full border-l-4 transition-all cursor-grab active:cursor-grabbing group relative overflow-hidden mb-1.5 last:mb-0 shadow-sm",
+        isOverlay ? "scale-105 rotate-1 shadow-2xl cursor-grabbing ring-4 ring-blue-500/20 z-[1000]" : "hover:shadow-md hover:-translate-y-0.5 active:scale-95"
       )}
       style={{
         borderLeftColor: config.color,
-        backgroundColor: config.bg,
+        backgroundColor: `color-mix(in srgb, ${config.color}, transparent 92%)`,
       }}
     >
       <div className="flex justify-between items-start relative z-10">
         <div className="flex items-center gap-1.5">
-          <div className="p-1 rounded bg-white/60">
-            <config.icon size={10} strokeWidth={2.5} style={{ color: config.color }} />
+          <div className="p-1 rounded-md bg-white/60 dark:bg-black/40 shadow-sm">
+            <config.icon size={11} strokeWidth={3} style={{ color: config.color }} />
           </div>
-          <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: config.color }}>{config.label}</span>
+          <span className="text-[8px] font-black uppercase tracking-[0.15em]" style={{ color: config.color }}>{config.label}</span>
         </div>
-        <span className="text-[9px] font-medium text-slate-400 tabular-nums">{hour}</span>
+        <span className="text-[8px] font-black opacity-40 tabular-nums dark:text-white/60">{hour}</span>
       </div>
-      <div className="mt-1.5 relative z-10">
-        <p className="font-semibold text-sm text-slate-800 line-clamp-1 leading-tight">{app.patient?.name}</p>
-        <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5">{app.patient?.owner?.name}</p>
+      <div className="mt-2 relative z-10">
+        <p className="font-black text-[12px] tracking-tight line-clamp-1 leading-tight text-slate-900 dark:text-white">{app.patient?.name}</p>
+        <p className="text-[9px] font-bold opacity-60 uppercase tracking-tighter line-clamp-1 mt-0.5 text-slate-500 dark:text-slate-400">{app.patient?.owner?.name}</p>
+      </div>
+      {/* Background Micro-Icon */}
+      <div className="absolute -bottom-1 -right-1 opacity-10 group-hover:opacity-20 transition-all duration-700 pointer-events-none -rotate-12 group-hover:rotate-0">
+        <config.icon size={45} strokeWidth={1.5} style={{ color: config.color }} />
       </div>
     </div>
   );
@@ -88,18 +92,18 @@ function DroppableSlot({ id, children, day, hour, isToday, onAddClick }: any) {
     <div
       ref={setNodeRef}
       className={cn(
-        "p-1.5 border-l border-slate-100 transition-all min-h-[90px] flex flex-col gap-1.5 relative group/slot",
-        isToday && "bg-blue-50/30",
-        isOver && "bg-blue-100/50 ring-2 ring-inset ring-blue-400/30 rounded-md"
+        "p-2 border-l border-slate-100 dark:border-white/[0.04] transition-all duration-300 min-h-[110px] flex flex-col gap-1.5 relative group/slot",
+        isToday && "bg-blue-600/[0.015] dark:bg-blue-400/[0.01]",
+        isOver && "bg-blue-600/10 ring-2 ring-inset ring-blue-600/30 z-40 scale-[1.01] rounded-lg shadow-lg shadow-blue-500/10 dark:shadow-none"
       )}
     >
       {children}
       {!children?.length && (
         <button
           onClick={() => onAddClick?.({ day, hour })}
-          className="flex-1 opacity-0 group-hover/slot:opacity-100 flex items-center justify-center text-slate-300 hover:text-blue-500 hover:bg-blue-50 transition-all rounded-md border border-dashed border-slate-200"
+          className="flex-1 opacity-0 group-hover/slot:opacity-100 flex items-center justify-center text-blue-400/40 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all active:scale-90 rounded-xl border-2 border-dashed border-slate-100 dark:border-white/5"
         >
-          <Plus size={16} />
+          <Plus size={24} strokeWidth={2.5} />
         </button>
       )}
     </div>
@@ -123,6 +127,12 @@ export default function CalendarPage() {
   const [newVetId, setNewVetId] = useState("");
   const [newType, setNewType] = useState("CONSULTA");
   const [newDuration, setNewDuration] = useState("30");
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
@@ -290,122 +300,148 @@ export default function CalendarPage() {
       modifiers={[restrictToFirstScrollableAncestor]}
       collisionDetection={closestCorners}
     >
-      <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-white">
-
-        {/* ── Top bar ──────────────────────────────────────────────────── */}
-        <div className="bg-white border-b border-slate-200 p-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50">
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center text-white">
-                <CalendarDays size={18} />
+      <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-slate-50/30 dark:bg-slate-950">
+        {/* ── Top Bar ─────────────────────────────────────────────────── */}
+        <div className="bg-white/80 dark:bg-slate-900/50 backdrop-blur-xl border-b border-slate-200/60 dark:border-white/5 p-5 flex flex-wrap items-center justify-between gap-6 sticky top-0 z-50 shadow-sm">
+          <div className="flex items-center gap-8">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 ring-4 ring-blue-500/10">
+                <Stethoscope size={24} strokeWidth={2.5} />
               </div>
               <div>
-                <h1 className="text-base font-semibold text-slate-900 leading-none">Agenda</h1>
-                <p className="text-xs text-slate-500 mt-0.5">Gestão de Marcações</p>
+                <h1 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none">Agenda Clínica</h1>
+                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mt-1.5">Gestão de Marcações e Fluxo</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-lg">
-              <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md" onClick={() => {
-                const d = new Date(currentDate);
-                d.setDate(d.getDate() - (view === "week" ? 7 : 1));
-                setCurrentDate(d);
-              }}><ChevronLeft size={14} /></Button>
-              <Button variant="ghost" size="sm" className="h-7 px-3 rounded-md text-xs font-medium"
-                onClick={() => setCurrentDate(new Date())}>Hoje</Button>
-              <span className="px-2 font-medium text-xs text-slate-700">
+            <div className="flex items-center gap-4 bg-slate-100/50 dark:bg-white/5 p-1.5 rounded-2xl border border-slate-200/50 dark:border-white/5 shadow-inner">
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="icon" onClick={() => {
+                  const d = new Date(currentDate);
+                  d.setDate(d.getDate() - (view === "week" ? 7 : 1));
+                  setCurrentDate(d);
+                }} className="h-9 w-9 rounded-xl hover:bg-white dark:hover:bg-white/10 transition-all text-slate-600 dark:text-slate-400">
+                  <ChevronLeft size={18} strokeWidth={3} />
+                </Button>
+                <Button variant="ghost" onClick={() => setCurrentDate(new Date())} className="h-9 px-4 font-black text-[10px] uppercase tracking-widest hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all text-slate-900 dark:text-white">
+                  Hoje
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => {
+                  const d = new Date(currentDate);
+                  d.setDate(d.getDate() + (view === "week" ? 7 : 1));
+                  setCurrentDate(d);
+                }} className="h-9 w-9 rounded-xl hover:bg-white dark:hover:bg-white/10 transition-all text-slate-600 dark:text-slate-400">
+                  <ChevronRight size={18} strokeWidth={3} />
+                </Button>
+              </div>
+              <div className="h-4 w-px bg-slate-200 dark:bg-white/10 mx-2" />
+              <span className="text-[11px] font-black text-slate-900 dark:text-white uppercase tracking-widest px-2 min-w-[140px] text-center">
                 {format(currentDate, "MMMM yyyy", { locale: pt })}
               </span>
-              <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md" onClick={() => {
-                const d = new Date(currentDate);
-                d.setDate(d.getDate() + (view === "week" ? 7 : 1));
-                setCurrentDate(d);
-              }}><ChevronRight size={14} /></Button>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex gap-1.5 border-r border-slate-200 pr-4 overflow-x-auto max-w-[400px]">
+          <div className="flex items-center gap-4">
+            {/* Vet filters */}
+            <div className="flex gap-2 border-r border-slate-200/60 dark:border-white/10 pr-6 overflow-x-auto max-w-[500px] no-scrollbar">
               <button
                 onClick={() => setSelectedVet("all")}
-                className={cn("px-3 h-8 rounded-lg text-xs font-medium transition-all",
-                  selectedVet === "all" ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200")}
+                className={cn("px-5 h-10 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-sm",
+                  selectedVet === "all" ? "bg-blue-600 text-white" : "bg-white dark:bg-white/5 text-slate-400 hover:bg-slate-50 dark:hover:bg-white/10")}
               >Todos</button>
               {vets.map((vet: any) => (
                 <button key={vet.id} onClick={() => setSelectedVet(vet.id)}
-                  className={cn("px-3 h-8 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 whitespace-nowrap",
-                    selectedVet === vet.id ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200")}
+                  className={cn("px-5 h-10 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap shadow-sm border border-transparent",
+                    selectedVet === vet.id ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white" : "bg-white dark:bg-white/5 text-slate-400 hover:bg-slate-50 dark:hover:bg-white/10")}
                 >
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: vet.color }} />
+                  <div className="w-2 h-2 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.1)]" style={{ backgroundColor: vet.color }} />
                   {vet.name.split(" ").slice(-1)[0]}
                 </button>
               ))}
             </div>
 
-            <div className="flex bg-slate-100 p-0.5 rounded-lg">
-              {(["day", "week"] as const).map(v => (
-                <Button key={v} variant="ghost"
-                  className={cn("h-7 rounded-md px-3 text-xs font-medium",
-                    view === v && "bg-white shadow-sm text-blue-600")}
-                  onClick={() => setView(v)}>{v === "day" ? "Dia" : "Semana"}</Button>
-              ))}
+            <div className="flex bg-slate-100/50 dark:bg-white/5 p-1.5 rounded-2xl border border-slate-200/50 dark:border-white/5">
+              <button onClick={() => setView("day")} className={cn("px-5 h-9 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all", view === "day" ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300")}>Dia</button>
+              <button onClick={() => setView("week")} className={cn("px-5 h-9 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all", view === "week" ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300")}>Semana</button>
             </div>
 
-            <Button
-              onClick={() => { setNewSlot(null); setIsAddOpen(true); }}
-              className="h-8 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 gap-1.5 text-xs"
-            >
-              <Plus size={14} />
-              <span>Agendar</span>
+            <Button onClick={() => { setNewSlot(null); setIsAddOpen(true); }} className="h-12 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-blue-500/25 active:scale-95 transition-all flex items-center gap-2">
+              <Plus size={18} strokeWidth={3} />
+              Agendar
             </Button>
           </div>
         </div>
 
         {/* ── Calendar grid ─────────────────────────────────────────────── */}
-        <div className="flex-1 overflow-auto bg-white">
+        <div className="flex-1 overflow-auto bg-white/50 dark:bg-slate-950/50">
+          {/* Day headers */}
           <div 
-            className="grid sticky top-0 z-40 bg-white border-b border-slate-200"
-            style={{ gridTemplateColumns: `60px repeat(${colCount}, 1fr)` }}
+            className="grid sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border-b border-slate-200/60 dark:border-white/10 shadow-sm"
+            style={{ gridTemplateColumns: `80px repeat(${colCount}, 1fr)` }}
           >
-            <div className="h-16 flex items-center justify-center border-r border-slate-100">
-              <RefreshCw className={cn("w-3.5 h-3.5 text-slate-400", isLoading && "animate-spin")} />
+            <div className="h-24 flex items-center justify-center border-r border-slate-200/60 dark:border-white/10 bg-slate-50/50 dark:bg-slate-900/50">
+              <RefreshCw className={cn("w-4 h-4 text-slate-400 dark:text-slate-600", isLoading && "animate-spin")} />
             </div>
             {activeDays.map(day => (
               <div key={day.fullDate}
-                className={cn("h-16 flex flex-col items-center justify-center border-l border-slate-100 transition-all relative",
-                  day.isToday && "bg-blue-50/50",
-                  day.isSunday && "bg-slate-50/50")}
+                className={cn("h-24 flex flex-col items-center justify-center border-l border-slate-200/40 dark:border-white/5 transition-all relative overflow-hidden",
+                  day.isToday && "bg-blue-600/[0.04] dark:bg-blue-400/[0.02]",
+                  day.isSunday && "bg-slate-50/50 dark:bg-white/[0.02]")}
               >
                 {day.isToday && (
-                  <div className="absolute top-0 left-0 right-0 h-0.5 bg-blue-600" />
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-blue-600 shadow-[0_2px_8px_rgba(37,99,235,0.4)]" />
                 )}
-                <span className={cn("text-[10px] font-medium uppercase tracking-wide mb-0.5",
-                  day.isToday ? "text-blue-600" : "text-slate-500")}>
-                  {day.shortName}
+                <span className={cn("text-[10px] font-black uppercase tracking-[0.25em] mb-2",
+                  day.isToday ? "text-blue-600" : "text-slate-400 dark:text-slate-500")}>
+                  {day.name}
                 </span>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                   <div className={cn(
-                    "flex items-center justify-center rounded-full w-7 h-7",
-                    day.isToday ? "bg-blue-600 text-white" : ""
+                    "flex items-center justify-center rounded-2xl transition-all duration-500",
+                    day.isToday ? "bg-blue-600 text-white w-12 h-12 shadow-lg shadow-blue-500/30" : ""
                   )}>
-                    <span className={cn("text-sm font-semibold",
-                      day.isToday ? "text-white" : "text-slate-800")}>
+                    <span className={cn("text-2xl font-black tracking-tighter leading-none",
+                      day.isToday ? "text-white" : "text-slate-900 dark:text-white")}>
                       {day.date}
                     </span>
                   </div>
+                  <span className={cn("text-[10px] font-black uppercase tracking-widest",
+                    day.isToday ? "text-blue-600" : "text-slate-400 dark:text-slate-600")}>
+                    {day.month}
+                  </span>
                 </div>
               </div>
             ))}
           </div>
 
           <div className="relative">
+            {/* Now Indicator Line */}
+            {activeDays.some(d => d.isToday) && (
+              <div 
+                className="absolute left-0 right-0 z-30 pointer-events-none transition-all duration-1000"
+                style={{ 
+                  top: `${((now.getHours() - 8) * 60 + now.getMinutes()) * (121 / 60) + 1}px`,
+                  display: now.getHours() >= 8 && now.getHours() < 24 ? "block" : "none"
+                }}
+              >
+                <div className="flex items-center">
+                  <div className="w-20 pr-3 flex justify-end">
+                    <span className="bg-rose-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full shadow-lg shadow-rose-500/30 animate-pulse uppercase tracking-widest">Agora</span>
+                  </div>
+                  <div className="flex-1 h-0.5 bg-rose-500/40 relative">
+                    <div className="absolute -left-1 -top-1.5 w-3.5 h-3.5 rounded-full bg-rose-500 ring-4 ring-rose-500/20 shadow-lg shadow-rose-500/40" />
+                  </div>
+                </div>
+              </div>
+            )}
+
             {hours.map(hour => (
               <div 
                 key={hour} 
-                className="grid border-b border-slate-100"
-                style={{ gridTemplateColumns: `60px repeat(${colCount}, 1fr)` }}
+                className="grid border-b border-slate-200/40 dark:border-white/[0.03] group/row"
+                style={{ gridTemplateColumns: `80px repeat(${colCount}, 1fr)` }}
               >
-                <div className="py-6 px-2 text-xs font-medium text-slate-400 text-right pr-3 flex items-start justify-end sticky left-0 bg-white z-10 border-r border-slate-100">
+                <div className="py-12 px-2 text-[10px] font-black text-slate-400 dark:text-slate-600 text-right pr-6 flex items-start justify-end sticky left-0 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md z-10 border-r border-slate-200/60 dark:border-white/10 group-hover/row:bg-slate-100 dark:group-hover/row:bg-slate-800/80 transition-colors shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] dark:shadow-none">
                   {hour}
                 </div>
                 {activeDays.map(day => {
@@ -454,29 +490,29 @@ export default function CalendarPage() {
 
         {/* ── New appointment modal ─────────────────────────────────────── */}
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <DialogContent className="sm:max-w-[420px] rounded-xl p-6 bg-white border-none shadow-xl">
-            <DialogHeader>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
-                  <CalendarDays size={18} />
+          <DialogContent className="sm:max-w-[420px] rounded-3xl p-0 overflow-hidden bg-white dark:bg-slate-900 border-none shadow-2xl">
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-6 border-b border-slate-200 dark:border-white/5">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                  <CalendarDays size={22} strokeWidth={2.5} />
                 </div>
                 <div>
-                  <DialogTitle className="text-lg font-semibold">Nova Marcação</DialogTitle>
-                  <p className="text-xs text-slate-500">
+                  <DialogTitle className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter">Nova Marcação</DialogTitle>
+                  <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">
                     {newSlot ? `${newSlot.day} às ${newSlot.hour}` : "Selecione o horário"}
                   </p>
                 </div>
               </div>
-            </DialogHeader>
+            </div>
 
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-slate-600">Paciente</label>
+            <div className="p-6 space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1">Paciente</label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600" size={16} />
                   <input
-                    className="w-full h-10 pl-9 pr-3 rounded-lg bg-slate-50 border border-slate-200 font-medium text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 outline-none"
-                    placeholder="Nome do paciente ou tutor..."
+                    className="w-full h-12 pl-12 pr-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 font-bold text-sm text-slate-900 dark:text-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-400 outline-none transition-all"
+                    placeholder="Procurar paciente..."
                     value={patientSearch}
                     onChange={(e) => { setPatientSearch(e.target.value); setSelectedPatient(null); }}
                   />
@@ -581,39 +617,39 @@ export default function CalendarPage() {
 
         {/* ── Appointment detail modal ──────────────────────────────────── */}
         <Dialog open={!!selectedApp} onOpenChange={() => setSelectedApp(null)}>
-          <DialogContent className="sm:max-w-[480px] rounded-xl border-none shadow-xl p-0 overflow-hidden bg-white">
+          <DialogContent className="sm:max-w-[480px] rounded-3xl border-none shadow-2xl p-0 overflow-hidden bg-white dark:bg-slate-900">
             {selectedApp && (() => {
               const config = getTypeConfig(selectedApp.type);
               const vet = vets.find((v: any) => v.id === selectedApp.veterinarianId);
               return (
                 <div>
-                  <div className="bg-slate-50 p-6 border-b border-slate-200">
+                  <div className="bg-slate-50 dark:bg-slate-800/50 p-8 border-b border-slate-200 dark:border-white/10">
                     <div className="flex justify-between items-start">
-                      <div className="space-y-1.5">
-                        <Badge className="font-medium text-xs px-2.5 py-0.5 rounded-full" style={{ backgroundColor: config.bg, color: config.color }}>
+                      <div className="space-y-3">
+                        <Badge className="font-black text-[9px] px-3 py-1 rounded-full uppercase tracking-widest shadow-sm" style={{ backgroundColor: config.color, color: "#fff" }}>
                           {selectedApp.type ?? "Geral"}
                         </Badge>
-                        <h2 className="text-xl font-semibold text-slate-900">{selectedApp.patient?.name}</h2>
-                        <p className="text-slate-500 font-medium text-sm flex items-center gap-1.5">
-                          <UserIcon size={12} /> {selectedApp.patient?.owner?.name}
+                        <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{selectedApp.patient?.name}</h2>
+                        <p className="text-slate-500 dark:text-slate-400 font-bold text-xs flex items-center gap-2 uppercase tracking-wide">
+                          <UserIcon size={14} strokeWidth={3} className="text-blue-600" /> {selectedApp.patient?.owner?.name}
                         </p>
                       </div>
-                      <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
-                        <config.icon size={18} style={{ color: config.color }} />
+                      <div className="w-14 h-14 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center shadow-xl ring-1 ring-slate-200 dark:ring-white/10">
+                        <config.icon size={24} strokeWidth={2.5} style={{ color: config.color }} />
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-6 space-y-4">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="p-4 rounded-lg bg-slate-50 border border-slate-100">
-                        <span className="text-xs font-medium text-slate-500 block mb-1">Horário</span>
-                        <p className="text-lg font-semibold text-slate-900">{format(new Date(selectedApp.startTime), "HH:mm")}</p>
-                        <p className="text-xs text-slate-500 mt-0.5">{format(new Date(selectedApp.startTime), "EEEE, dd MMM", { locale: pt })}</p>
+                  <div className="p-8 space-y-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 shadow-inner">
+                        <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-2">Horário</span>
+                        <p className="text-xl font-black text-slate-900 dark:text-white tabular-nums">{format(new Date(selectedApp.startTime), "HH:mm")}</p>
+                        <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-tighter">{format(new Date(selectedApp.startTime), "EEEE, dd MMM", { locale: pt })}</p>
                       </div>
-                      <div className="p-4 rounded-lg bg-slate-50 border border-slate-100">
-                        <span className="text-xs font-medium text-slate-500 block mb-1">Médico</span>
-                        <p className="text-sm font-semibold text-slate-900 line-clamp-2">{vet?.name ?? "—"}</p>
+                      <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 shadow-inner">
+                        <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-2">Médico</span>
+                        <p className="text-sm font-black text-slate-900 dark:text-white line-clamp-2 uppercase tracking-tight">{vet?.name ?? "—"}</p>
                       </div>
                     </div>
 
