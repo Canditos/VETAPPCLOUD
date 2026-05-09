@@ -62,25 +62,26 @@ export async function POST(req: Request) {
       const vendusKey = clinic?.vendusApiKey;
 
       if (vendusKey) {
+        // Validation: NIF is mandatory for invoicing
+        if (!patient?.owner?.vatNumber) {
+          return NextResponse.json({ error: "Cliente sem NIF. Por favor atualize os dados do cliente antes de faturar." }, { status: 400 });
+        }
+
         const vendus = new VendusService(vendusKey);
         try {
           // Construct client object with real data
           const clientData: any = {
-            name: patient?.owner?.name || "Consumidor Final",
+            name: patient.owner.name,
+            vat: patient.owner.vatNumber,
           };
           
-          // Add VAT/NIF if available
-          if (patient?.owner?.vatNumber) {
-            clientData.vat = patient.owner.vatNumber;
-          }
-          
-          // Add email for automatic sending later
-          if (patient?.owner?.email) {
+          // Add email for automatic sending
+          if (patient.owner.email) {
             clientData.email = patient.owner.email;
           }
 
           // Add address if available
-          if (patient?.owner?.address) {
+          if (patient.owner.address) {
             clientData.address = patient.owner.address;
           }
 
@@ -97,8 +98,22 @@ export async function POST(req: Request) {
           });
           externalInvoiceId = vendusDoc.id;
           provider = "VENDUS";
+
+          // Automatic Email Sending via Vendus API
+          if (patient.owner.email) {
+            try {
+              await vendus.sendDocument(externalInvoiceId, patient.owner.email);
+            } catch (emailErr) {
+              console.warn("Failed to auto-send email via Vendus:", emailErr);
+              // We don't fail the invoice creation if email fails, just log it
+            }
+          } else {
+            console.warn("No email found for client, skipping auto-send.");
+          }
+
         } catch (vError) {
           console.error("Vendus Error:", vError);
+          return NextResponse.json({ error: "Erro ao comunicar com Vendus. Verifique a API Key." }, { status: 500 });
         }
       } else if (clinic?.jasminApiKey) {
         // Fallback to Jasmin (Legacy)

@@ -55,4 +55,21 @@ export class VendusService {
       return [];
     }
   }
+
+  /**
+   * Send document via email
+   */
+  async sendDocument(documentId: string | number, email: string) {
+    try {
+      const response = await axios.post(`${this.baseUrl}documents/${documentId}/send`, {
+        email: email
+      }, {
+        params: { api_key: this.apiKey }
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("Vendus Send Email Error:", error.response?.data || error.message);
+      throw new Error("Erro ao enviar fatura por email");
+    }
+  }
 }
