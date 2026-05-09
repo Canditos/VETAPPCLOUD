@@ -52,19 +52,27 @@ const prismaClientSingleton = () => {
 
   try {
     const directUrl = getDirectPostgresUrl();
-    const pool = new Pool({ 
+    
+    if (!directUrl) {
+      throw new Error("DATABASE_URL is not defined or is empty");
+    }
+
+    // Serverless optimization: limit pool size for Vercel
+    const isServerless = process.env.VERCEL === '1';
+    const poolConfig = { 
       connectionString: directUrl,
-      // Add some basic pool config for stability
-      max: 10,
+      max: isServerless ? 5 : 10, // Reduce max connections in serverless
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000,
-    });
+      connectionTimeoutMillis: 5000, // Increase timeout for serverless cold starts
+    };
+
+    const pool = new Pool(poolConfig);
     const adapter = new PrismaPg(pool);
     return new PrismaClient({ adapter });
   } catch (err) {
     console.error("Failed to initialize Prisma Client with Adapter:", err);
-    // Fallback to basic client if everything fails, though it might still error in v7
-    return new PrismaClient({} as any);
+    // Re-throw the error instead of returning a broken client
+    throw err;
   }
 }
 
