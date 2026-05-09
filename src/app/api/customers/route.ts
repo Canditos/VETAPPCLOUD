@@ -63,11 +63,17 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    
+    if (!session) {
+      return NextResponse.json({ error: "Sessão expirada. Por favor faz login novamente." }, { status: 401 });
+    }
+    
+    const user = session.user as any;
+    if (!user.clinicId) {
+      return NextResponse.json({ error: "Utilizador sem clínica associada. Contacta o administrador." }, { status: 401 });
     }
 
-    const clinicId = (session.user as any).clinicId;
+    const clinicId = user.clinicId;
     const tenantPrisma = getTenantClient(clinicId);
 
     const body = await req.json();
