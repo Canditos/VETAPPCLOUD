@@ -52,16 +52,42 @@ export async function POST(req: Request) {
     let provider = "VENDUS";
 
     if (billNow && items && items.length > 0) {
+      // Fetch Patient and Owner details for the invoice
+      const patient = await tenantPrisma.patient.findUnique({ 
+        where: { id: patientId },
+        include: { owner: true }
+      });
+
       const clinic = await tenantPrisma.clinic.findUnique({ where: { id: clinicId } });
       const vendusKey = clinic?.vendusApiKey;
 
       if (vendusKey) {
         const vendus = new VendusService(vendusKey);
         try {
+          // Construct client object with real data
+          const clientData: any = {
+            name: patient?.owner?.name || "Consumidor Final",
+          };
+          
+          // Add VAT/NIF if available
+          if (patient?.owner?.vatNumber) {
+            clientData.vat = patient.owner.vatNumber;
+          }
+          
+          // Add email for automatic sending later
+          if (patient?.owner?.email) {
+            clientData.email = patient.owner.email;
+          }
+
+          // Add address if available
+          if (patient?.owner?.address) {
+            clientData.address = patient.owner.address;
+          }
+
           const vendusDoc = await vendus.createDocument({
             type: "FT", // Fatura
             date: new Date().toISOString().split('T')[0],
-            client: { name: "Consumidor Final" }, // Placeholder
+            client: clientData,
             items: items.map((it: any) => ({
               description: it.name || it.description,
               qty: it.quantity,
@@ -84,7 +110,6 @@ export async function POST(req: Request) {
       const { paymentMethod = "CASH" } = body;
 
       if (externalInvoiceId) {
-        const patient = await tenantPrisma.patient.findUnique({ where: { id: patientId } });
         await tenantPrisma.invoice.create({
           data: {
             consultationId: consultation.id,
