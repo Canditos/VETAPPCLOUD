@@ -15,15 +15,24 @@ export function PrescriptionDownloadButton({ prescription, clinic }: Prescriptio
     <PDFDownloadLink
       document={<PrescriptionPDF prescription={prescription} clinic={clinic} />}
       fileName={`Prescricao_${prescription.id.slice(-8)}.pdf`}
+      className="flex-1"
     >
       {({ loading }) => (
         <Button 
-          size="icon" 
-          variant="ghost" 
-          className="h-8 w-8 rounded-lg hover:bg-white/10 text-white"
+          className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-[10px] tracking-widest shadow-lg shadow-blue-500/20 gap-2"
           disabled={loading}
         >
-          {loading ? <Loader2 size={14} className="animate-spin" /> : <Printer size={14} />}
+          {loading ? (
+            <>
+              <Loader2 size={16} className="animate-spin" />
+              A Gerar...
+            </>
+          ) : (
+            <>
+              <Printer size={16} strokeWidth={3} />
+              Imprimir PDF
+            </>
+          )}
         </Button>
       )}
     </PDFDownloadLink>

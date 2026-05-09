@@ -44,7 +44,10 @@ import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClinicalTimeline } from "@/components/ClinicalTimeline";
 import { ConsultationBilling } from "@/components/ConsultationBilling";
+import { ClinicalVaccines } from "@/components/ClinicalVaccines";
+import { PrescriptionForm } from "@/components/forms/PrescriptionForm";
 import { cn } from "@/lib/utils";
+import { Pill } from "lucide-react";
 
 function ConsultationContent() {
   const searchParams = useSearchParams();
@@ -268,10 +271,11 @@ function ConsultationContent() {
 
       {/* Main Clinical Navigation */}
       <Tabs value={activeTab} onValueChange={updateTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-10 bg-slate-100/50 dark:bg-slate-900/50 p-1.5 rounded-[2.5rem] ring-1 ring-slate-200/50 dark:ring-white/5 overflow-x-auto no-scrollbar">
+        <TabsList className="grid w-full grid-cols-5 mb-10 bg-slate-100/50 dark:bg-slate-900/50 p-1.5 rounded-[2.5rem] ring-1 ring-slate-200/50 dark:ring-white/5 overflow-x-auto no-scrollbar">
           {[
             { val: "clinical", label: "Histórico & SOAP", icon: ClipboardCheck },
             { val: "vaccines", label: "Vacinação & Prevenção", icon: Syringe },
+            { val: "prescriptions", label: "Prescrições", icon: Pill },
             { val: "exams", label: "Meios Complementares", icon: FlaskConical },
             { val: "billing", label: "Farmácia & Faturação", icon: Receipt }
           ].map(t => (
@@ -379,67 +383,45 @@ function ConsultationContent() {
 
         {/* VACCINES TAB */}
         <TabsContent value="vaccines" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+           {patientId && <ClinicalVaccines patientId={patientId} />}
+        </TabsContent>
+
+        {/* PRESCRIPTIONS TAB */}
+        <TabsContent value="prescriptions" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-8">
                  <Card className="border-none shadow-xl rounded-[3rem] bg-white dark:bg-slate-900 p-10 ring-1 ring-slate-100 dark:ring-white/5">
-                    <div className="flex justify-between items-center mb-10">
-                       <div>
-                          <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Registo de Vacinação</h3>
-                          <p className="text-sm text-slate-400 font-medium">Protocolo preventivo e registo oficial de imunidade.</p>
-                       </div>
-                       <Button className="rounded-2xl gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase text-[10px] tracking-widest px-6 h-12 shadow-xl shadow-emerald-500/20">
-                          <Plus size={16} strokeWidth={3} /> Nova Vacina
-                       </Button>
+                    <div className="mb-10">
+                       <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Emissão de Prescrição</h3>
+                       <p className="text-sm text-slate-400 font-medium">Registo de medicamentos e protocolos de tratamento.</p>
                     </div>
-                    
-                    <div className="space-y-6">
-                       <div className="p-8 rounded-[2.5rem] bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 flex items-center justify-between group hover:scale-[1.01] transition-transform">
-                          <div className="flex items-center gap-6">
-                             <div className="w-16 h-16 rounded-[1.5rem] bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600">
-                                <Syringe size={28} />
-                             </div>
-                             <div>
-                                <h4 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">Vacina Polivalente (Vanguard)</h4>
-                                <p className="text-sm text-slate-500 font-medium italic">Lote: 73294-A | Exp: 12/2026</p>
-                             </div>
-                          </div>
-                          <div className="text-right">
-                             <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-none font-black text-[9px] uppercase tracking-widest px-4 py-1.5 rounded-lg mb-2">Administrada</Badge>
-                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Próxima: 12 Maio 2027</p>
-                          </div>
-                       </div>
-                       
-                       <div className="p-8 rounded-[2.5rem] bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100/50 dark:border-amber-900/20 flex items-center justify-between group">
-                          <div className="flex items-center gap-6">
-                             <div className="w-16 h-16 rounded-[1.5rem] bg-amber-100 dark:bg-amber-500/10 flex items-center justify-center text-amber-600">
-                                <AlertCircle size={28} />
-                             </div>
-                             <div>
-                                <h4 className="text-lg font-black text-amber-900 dark:text-amber-200 uppercase tracking-tight">Vacina da Raiva (Rabisin)</h4>
-                                <p className="text-sm text-amber-700/60 dark:text-amber-400/60 font-black uppercase text-[10px] tracking-widest mt-1">ATENÇÃO: EXPIROU HÁ 14 DIAS</p>
-                             </div>
-                          </div>
-                          <Button className="rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black uppercase text-[9px] tracking-widest px-6 h-10 shadow-lg shadow-amber-500/20">
-                             Renovar Agora
-                          </Button>
-                       </div>
-                    </div>
+                    {patientId && (
+                      <PrescriptionForm 
+                        patientId={patientId} 
+                        consultationId={appointmentId || undefined} 
+                      />
+                    )}
                  </Card>
               </div>
               <div className="space-y-8">
                  <Card className="border-none shadow-2xl rounded-[3rem] bg-slate-900 text-white p-10 overflow-hidden relative">
                     <div className="absolute top-0 right-0 p-8 opacity-10">
-                       <ShieldAlert size={100} />
+                       <Pill size={100} />
                     </div>
                     <div className="relative z-10">
-                       <h3 className="text-xl font-black uppercase tracking-tighter mb-4">Estado Imunitário</h3>
-                       <div className="flex items-end gap-3 mb-8">
-                          <h4 className="text-6xl font-black tracking-tighter">75%</h4>
-                          <span className="text-xs font-black text-amber-400 uppercase tracking-widest mb-2">Médio Risco</span>
-                       </div>
-                       <p className="text-slate-400 text-sm leading-relaxed mb-8">O paciente tem o protocolo de Raiva em atraso. Recomenda-se a administração imediata.</p>
-                       <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
-                          <div className="bg-amber-400 h-full w-[75%]" />
+                       <h3 className="text-xl font-black uppercase tracking-tighter mb-4">Notas Legais</h3>
+                       <p className="text-slate-400 text-sm leading-relaxed mb-6">
+                         As prescrições de antibióticos requerem o preenchimento de todos os campos para conformidade legal em Portugal.
+                       </p>
+                       <div className="space-y-4">
+                         <div className="flex items-start gap-3">
+                           <div className="mt-1 w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                           <p className="text-xs text-slate-300">Válido por 30 dias por defeito.</p>
+                         </div>
+                         <div className="flex items-start gap-3">
+                           <div className="mt-1 w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                           <p className="text-xs text-slate-300">Gera PDF assinado digitalmente.</p>
+                         </div>
                        </div>
                     </div>
                  </Card>

@@ -7,12 +7,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Pill, Plus, Trash2, Calendar as CalendarIcon, FileText, ChevronDown } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { pt } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { PrescriptionDownloadButton } from "@/components/clinical/PrescriptionDownloadButton";
+import { Printer } from "lucide-react";
 
 interface PrescriptionItem {
   medicineName: string;
@@ -30,12 +33,22 @@ interface PrescriptionFormProps {
 
 export function PrescriptionForm({ patientId, consultationId, onSuccess }: PrescriptionFormProps) {
   const queryClient = useQueryClient();
+  const [createdPrescription, setCreatedPrescription] = useState<any>(null);
   const [validUntil, setValidUntil] = useState<Date | undefined>(
     new Date(Date.now() + 30 * 86400000) // Default 30 days
   );
   const [items, setItems] = useState<PrescriptionItem[]>([
     { medicineName: "", dosage: "", frequency: "", duration: "", notes: "" }
   ]);
+
+  const { data: clinic } = useQuery({
+    queryKey: ["clinic"],
+    queryFn: async () => {
+      const res = await fetch("/api/clinic");
+      if (!res.ok) throw new Error("Erro ao carregar dados da clínica");
+      return res.json();
+    }
+  });
 
   const mutation = useMutation({
     mutationFn: async (data: any) => {
@@ -47,8 +60,9 @@ export function PrescriptionForm({ patientId, consultationId, onSuccess }: Presc
       if (!res.ok) throw new Error("Erro ao criar prescrição");
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["patient-hub", patientId] });
+      setCreatedPrescription(data);
       toast.success("Prescrição criada com sucesso!");
       onSuccess?.();
     },
@@ -203,17 +217,45 @@ export function PrescriptionForm({ patientId, consultationId, onSuccess }: Presc
         </Button>
       </div>
 
-      <Button 
-        type="submit" 
-        className="w-full h-16 rounded-[2rem] bg-slate-900 dark:bg-blue-600 text-white font-black text-sm uppercase tracking-[0.2em] shadow-2xl transition-all active:scale-95 group"
-        disabled={mutation.isPending}
-      >
-        {mutation.isPending ? "A Gerar Prescrição..." : (
-          <span className="flex items-center gap-3">
-            Finalizar e Emitir Prescrição <Pill size={20} className="group-hover:rotate-12 transition-transform" />
-          </span>
-        )}
-      </Button>
+      {createdPrescription ? (
+        <div className="p-8 rounded-[2rem] bg-emerald-50 dark:bg-emerald-500/10 border-2 border-emerald-100 dark:border-emerald-500/20 flex flex-col items-center text-center space-y-4 animate-in zoom-in-95 duration-500">
+          <div className="w-16 h-16 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
+            <Printer size={32} />
+          </div>
+          <div>
+            <h3 className="text-xl font-black text-emerald-900 dark:text-emerald-400 uppercase tracking-tight">Prescrição Pronta!</h3>
+            <p className="text-sm text-emerald-700 dark:text-emerald-500 font-medium">O documento legal foi gerado e está pronto para impressão.</p>
+          </div>
+          <div className="flex gap-4 w-full max-w-xs">
+            <PrescriptionDownloadButton 
+              prescription={createdPrescription} 
+              clinic={clinic} 
+            />
+            <Button 
+              variant="outline" 
+              className="flex-1 rounded-xl font-black uppercase text-[10px] tracking-widest h-12"
+              onClick={() => {
+                setCreatedPrescription(null);
+                setItems([{ medicineName: "", dosage: "", frequency: "", duration: "", notes: "" }]);
+              }}
+            >
+              Nova Prescrição
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <Button 
+          type="submit" 
+          className="w-full h-16 rounded-[2rem] bg-slate-900 dark:bg-blue-600 text-white font-black text-sm uppercase tracking-[0.2em] shadow-2xl transition-all active:scale-95 group"
+          disabled={mutation.isPending}
+        >
+          {mutation.isPending ? "A Gerar Prescrição..." : (
+            <span className="flex items-center gap-3">
+              Finalizar e Emitir Prescrição <Pill size={20} className="group-hover:rotate-12 transition-transform" />
+            </span>
+          )}
+        </Button>
+      )}
     </form>
   );
 }
