@@ -197,19 +197,24 @@ export default function CalendarPage() {
     return map;
   }, [rawAppointments, selectedVet]);
 
-  const { data: allPatients = [] } = useQuery({
+  const { data: patientsResponse } = useQuery({
     queryKey: ["patients"],
     queryFn: async () => {
-      const res = await fetch("/api/patients");
-      if (!res.ok) return [];
+      const res = await fetch("/api/patients?limit=200");
+      if (!res.ok) return { data: [] };
       return res.json();
     },
     staleTime: 60000,
   });
 
+  // API returns { data: [], pagination: {} } — extract the array safely
+  const allPatients: any[] = Array.isArray(patientsResponse)
+    ? patientsResponse
+    : (patientsResponse?.data ?? []);
+
   const filteredPatients = patientSearch.length > 1
     ? allPatients.filter((p: any) =>
-        p.name.toLowerCase().includes(patientSearch.toLowerCase()) ||
+        p.name?.toLowerCase().includes(patientSearch.toLowerCase()) ||
         p.owner?.name?.toLowerCase().includes(patientSearch.toLowerCase())
       ).slice(0, 6)
     : [];
@@ -499,7 +504,9 @@ export default function CalendarPage() {
                 <div>
                   <DialogTitle className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter">Nova Marcação</DialogTitle>
                   <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">
-                    {newSlot ? `${newSlot.day} às ${newSlot.hour}` : "Selecione o horário"}
+                    {newSlot
+                      ? `${format(new Date(newSlot.day), "d 'de' MMMM", { locale: pt })} às ${newSlot.hour}`
+                      : "Selecione o horário"}
                   </p>
                 </div>
               </div>
