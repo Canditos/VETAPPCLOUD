@@ -1,60 +1,71 @@
-export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import bcrypt from "bcryptjs";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
-// GET /api/team - List clinic staff
+export const dynamic = "force-dynamic";
+
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const clinicId = (session.user as any).clinicId;
-
-  const staff = await prisma.user.findMany({
-    where: { clinicId },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      createdAt: true,
-    },
-  });
-
-  return NextResponse.json(staff);
-}
-
-// POST /api/team - Add new staff member
-export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-  
-  // Only ADMINs can add staff
-  if (!session || (session.user as any).role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  const clinicId = (session.user as any).clinicId;
-  const body = await req.json();
-
-  const { name, email, password, role } = body;
-
   try {
-    const passwordHash = await bcrypt.hash(password, 10);
+    const session = await getServerSession(authOptions);
+    if (!session || !(session.user as any).clinicId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    
+    const clinicId = (session.user as any).clinicId;
 
-    const user = await prisma.user.create({
-      data: {
-        clinicId,
-        name,
-        email,
-        passwordHash,
-        role,
+    const users = await prisma.user.findMany({
+      where: { clinicId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
       },
+      orderBy: { name: "asc" }
     });
 
-    return NextResponse.json({ id: user.id, name: user.name, email: user.email });
+    return NextResponse.json(users);
   } catch (error) {
-    return NextResponse.json({ error: "User creation failed" }, { status: 500 });
+    console.error("[TEAM_GET]", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !(session.user as any).clinicId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const clinicId = (session.user as any).clinicId;
+    const body = await req.json();
+    const { name, email, role } = body;
+
+    if (!name || !email || !role) {
+      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+    }
+
+    // Note: In a real app, we would send an invite email
+    // For now, we'll create the user with a temporary password or just the record
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        role,
+        clinicId,
+        passwordHash: "TEMPORARY_INVITE", // This should be handled by an invite flow
+      }
+    });
+
+    return NextResponse.json(user);
+  } catch (error: any) {
+    if (error.code === 'P2002') {
+      return NextResponse.json({ error: "Email já registado" }, { status: 400 });
+    }
+    console.error("[TEAM_POST]", error);
+    return new NextResponse("Internal Error", { status: 500 });
   }
 }

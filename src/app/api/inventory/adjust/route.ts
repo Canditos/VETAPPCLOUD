@@ -5,20 +5,22 @@ import { authOptions } from "@/lib/auth";
 import prisma, { getTenantClient } from "@/lib/prisma";
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-  
-  // Demo Fallback for stakeholders
-  const clinicId = session ? (session.user as any).clinicId : "c1-demo-clinic";
-  const tenantPrisma = getTenantClient(clinicId);
-  const body = await req.json();
-
-  const { productId, type, quantity, source } = body;
-
-  if (!productId || !type || !quantity) {
-    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-  }
-
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || !(session.user as any).clinicId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    
+    const clinicId = (session.user as any).clinicId;
+    const tenantPrisma = getTenantClient(clinicId);
+    const body = await req.json();
+
+    const { productId, type, quantity, source } = body;
+
+    if (!productId || !type || !quantity) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
     const result = await tenantPrisma.$transaction(async (tx) => {
       // 1. Update product stock
       const product = await tx.product.update({
@@ -45,7 +47,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Stock adjustment error:", error);
-    return NextResponse.json({ error: "Failed to adjust stock" }, { status: 500 });
+    console.error("[INVENTORY_ADJUST_POST]", error);
+    return new NextResponse("Internal Error", { status: 500 });
   }
 }

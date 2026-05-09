@@ -159,7 +159,7 @@ export default function PatientProfilePage({ params }: { params: Promise<{ id: s
             {/* Profile Picture / Icon */}
             <div className="relative">
               <div className="h-32 w-32 sm:h-40 sm:w-40 rounded-[2.5rem] bg-slate-900 dark:bg-blue-600 flex items-center justify-center text-white shadow-2xl ring-4 ring-white dark:ring-slate-800">
-                <PawPrint size={64} sm:size={80} />
+                <PawPrint size={64} />
               </div>
               <div className="absolute -bottom-2 -right-2 h-10 w-10 rounded-2xl bg-emerald-500 border-4 border-white dark:border-slate-900 flex items-center justify-center text-white shadow-lg">
                 <ShieldCheck size={20} strokeWidth={3} />
@@ -485,12 +485,6 @@ export default function PatientProfilePage({ params }: { params: Promise<{ id: s
               </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
         </div>
       </div>
     </div>

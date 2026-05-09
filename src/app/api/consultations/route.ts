@@ -49,10 +49,11 @@ export async function POST(req: Request) {
 
     // 2. Handle Billing (Jasmin or Vendus Integration)
     let externalInvoiceId = null;
+    let provider = "VENDUS";
+
     if (billNow && items && items.length > 0) {
-      // Priority: Vendus (since user just provided the key)
       const clinic = await tenantPrisma.clinic.findUnique({ where: { id: clinicId } });
-      const vendusKey = clinic?.vendusApiKey || "30727f657ce7768f31799399ec8b912d"; // Fallback from screenshot
+      const vendusKey = clinic?.vendusApiKey;
 
       if (vendusKey) {
         const vendus = new VendusService(vendusKey);
@@ -69,23 +70,50 @@ export async function POST(req: Request) {
             }))
           });
           externalInvoiceId = vendusDoc.id;
+          provider = "VENDUS";
         } catch (vError) {
           console.error("Vendus Error:", vError);
         }
       } else if (clinic?.jasminApiKey) {
-        // Fallback to Jasmin
+        // Fallback to Jasmin (Legacy)
         const jasmin = new JasminService(clinicId);
-        // ... (Jasmin logic)
+        // ... Jasmin logic would go here if still supported
+        provider = "JASMIN";
       }
 
+      const { paymentMethod = "CASH" } = body;
+
       if (externalInvoiceId) {
+        const patient = await tenantPrisma.patient.findUnique({ where: { id: patientId } });
         await tenantPrisma.invoice.create({
           data: {
             consultationId: consultation.id,
             clinicId,
-            jasminInvoiceId: externalInvoiceId.toString(),
+            ownerId: patient?.ownerId || "",
+            vendusId: provider === "VENDUS" ? externalInvoiceId.toString() : null,
+            jasminInvoiceId: provider === "JASMIN" ? externalInvoiceId.toString() : null,
+            paymentMethod,
             total: items.reduce((acc: number, curr: any) => acc + (Number(curr.price) * curr.quantity), 0),
-            status: "PAID"
+            status: "PAID",
+            items: {
+              create: items.map((it: any) => ({
+                description: it.name || it.description,
+                quantity: it.quantity,
+                price: it.price,
+                vatRate: it.vatRate
+              }))
+            }
+          }
+        });
+
+        // Also record a payment record for the dashboard stats
+        await tenantPrisma.payment.create({
+          data: {
+            clinicId,
+            ownerId: patient?.ownerId || "",
+            amount: items.reduce((acc: number, curr: any) => acc + (Number(curr.price) * curr.quantity), 0),
+            method: paymentMethod,
+            paidAt: new Date()
           }
         });
       }
@@ -102,7 +130,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ 
       success: true, 
       consultationId: consultation.id,
-      jasminInvoiceId
+      invoiceId: externalInvoiceId
     });
   } catch (error) {
     console.error("Error creating consultation:", error);

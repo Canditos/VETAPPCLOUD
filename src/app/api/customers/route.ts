@@ -1,17 +1,33 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  const clinicId = "c1-demo-clinic";
-  const { searchParams } = new URL(req.url);
-  const search = searchParams.get("search") || "";
-  const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "50");
-  const skip = (page - 1) * limit;
-
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { clinicId: true }
+    });
+
+    if (!user?.clinicId) {
+      return new NextResponse("Clinic not found", { status: 404 });
+    }
+
+    const clinicId = user.clinicId;
+    const { searchParams } = new URL(req.url);
+    const search = searchParams.get("search") || "";
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "50");
+    const skip = (page - 1) * limit;
+
     const where: any = { clinicId };
     
     if (search) {
@@ -36,55 +52,39 @@ export async function GET(req: Request) {
       prisma.owner.count({ where }),
     ]);
 
-    if (customers.length > 0) {
-      return NextResponse.json({
-        data: customers,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-        },
-      });
-    }
-
-    // Fallback: return demo data if database is empty
     return NextResponse.json({
-      data: [
-        {
-          id: "demo-owner-1",
-          name: "Ricardo Fonseca",
-          email: "ricardo.fonseca@email.com",
-          phone: "910 000 001",
-          vatNumber: "234567890",
-          address: "Rua dos Animais, 45, Setúbal",
-          _count: { patients: 1, invoices: 1 },
-        },
-        {
-          id: "demo-owner-2",
-          name: "Ana Martins",
-          email: "ana.martins@email.com",
-          phone: "960 000 002",
-          vatNumber: "123123123",
-          address: "Urbanização das Flores, Palmela",
-          _count: { patients: 1, invoices: 1 },
-        },
-      ],
-      pagination: { page: 1, limit: 50, total: 2, totalPages: 1 },
+      data: customers,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
-    console.error("Error fetching customers:", error);
-    return NextResponse.json({
-      data: [],
-      pagination: { page: 1, limit: 50, total: 0, totalPages: 0 },
-    });
+    console.error("[CUSTOMERS_GET]", error);
+    return new NextResponse("Internal Error", { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { clinicId: true }
+    });
+
+    if (!user?.clinicId) {
+      return new NextResponse("Clinic not found", { status: 404 });
+    }
+
     const body = await req.json();
-    const clinicId = "c1-demo-clinic";
+    const clinicId = user.clinicId;
 
     if (!body.name) {
       return NextResponse.json({ error: "Nome é obrigatório" }, { status: 400 });
@@ -102,28 +102,12 @@ export async function POST(req: Request) {
       },
     });
 
-    // Sincronização opcional com Jasmin se houver NIF
-    if (body.vatNumber) {
-      try {
-        const { JasminService } = await import("@/lib/jasmin-service");
-        const jasmin = new JasminService(clinicId);
-        await jasmin.createCustomer({
-          name: body.name,
-          vatNumber: body.vatNumber,
-          email: body.email,
-          phone: body.phone,
-          address: body.address
-        });
-        console.log(`[JASMIN] Cliente ${body.name} sincronizado com sucesso.`);
-      } catch (err) {
-        console.error("[JASMIN] Erro na sincronização automática:", err);
-        // Não bloqueamos a criação local se o Jasmin falhar, mas logamos
-      }
-    }
+    // Nota: Sincronização com ERP (Vendus) pode ser feita aqui se necessário
+    // No momento estamos focados na criação local e faturação via consulta.
 
     return NextResponse.json(customer);
   } catch (error) {
-    console.error("Error creating customer:", error);
-    return NextResponse.json({ error: "Erro ao criar cliente" }, { status: 500 });
+    console.error("[CUSTOMERS_POST]", error);
+    return new NextResponse("Internal Error", { status: 500 });
   }
 }

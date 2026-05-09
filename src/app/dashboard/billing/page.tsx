@@ -61,7 +61,7 @@ export default function BillingPage() {
             <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">Faturação & Finanças</h1>
             <div className="flex items-center gap-2 text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em]">
                <Receipt size={14} className="text-blue-600" />
-               <span>Controlo Legal via Jasmin ERP & Vendas Locais</span>
+               <span>Controlo Legal via Vendus ERP & Vendas Locais</span>
             </div>
           </div>
 

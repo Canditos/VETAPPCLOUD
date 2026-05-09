@@ -48,18 +48,19 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
     }
   });
 
+  const { data: clinic } = useQuery({
+    queryKey: ["clinic-settings"],
+    queryFn: async () => {
+      const res = await fetch("/api/clinic");
+      if (!res.ok) throw new Error("Erro ao carregar clínica");
+      return res.json();
+    }
+  });
+
   if (isLoading) return <div className="p-12 text-center font-black text-slate-300 animate-pulse">A carregar Hub 360º...</div>;
   if (!customer) return <div className="p-12 text-center text-red-500 font-bold">Cliente não encontrado.</div>;
 
   const balance = customer.stats?.outstandingBalance || 0;
-
-  const mockClinic = {
-    name: "Clínica Veterinária Gato Escondido",
-    address: "Rua do Miado, 123, Lisboa",
-    phone: "210 000 000",
-    email: "clinica@gatoescondido.pt",
-    vatNumber: "500123456"
-  };
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
@@ -203,7 +204,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                         </TableCell>
                         <TableCell className="px-8 py-6 text-right">
                           <div className="flex justify-end items-center gap-4">
-                            <InvoiceDownloadBtn invoice={inv} clinic={mockClinic} owner={customer} />
+                            <InvoiceDownloadBtn invoice={inv} clinic={clinic} owner={customer} />
                             <Button variant="ghost" size="icon" className="rounded-xl text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400">
                                <ExternalLink size={18} />
                             </Button>

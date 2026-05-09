@@ -1,5 +1,5 @@
 generator client {
-  provider   = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -20,85 +20,79 @@ model Clinic {
   vendusApiKey     String?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
-  users            User[]
+  vendusToken      String?
+  appointments     Appointment[]
+  budgets          Budget[]
+  consultations    Consultation[]
+  healthPlans      HealthPlan[]
+  hospitalizations Hospitalization[]
+  imagingStudies   ImagingStudy[]
+  invoices         Invoice[]
+  labResults       LabResult[]
   owners           Owner[]
   patients         Patient[]
-  consultations    Consultation[]
-  appointments     Appointment[]
-  invoices         Invoice[]
-  products         Product[]
-  hospitalizations Hospitalization[]
   payments         Payment[]
-  budgets          Budget[]
-  healthPlans      HealthPlan[]
-  subscriptions    Subscription[]
   prescriptions    Prescription[]
-  labResults       LabResult[]
-  imagingStudies   ImagingStudy[]
+  products         Product[]
   stockMovements   StockMovement[]
+  subscriptions    Subscription[]
+  users            User[]
 
   @@index([name])
 }
 
 model User {
-  id                  String                @id @default(uuid())
-  name                String
-  email               String                @unique
-  passwordHash        String
-  licenseNumber       String?               // OMV - Cédula Profissional
-  role                Role                  @default(VETERINARIAN)
-  clinicId            String
-  clinic              Clinic                @relation(fields: [clinicId], references: [id])
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime              @updatedAt
-  consultations       Consultation[]
-  completedTasks      HospitalizationTask[]
-  hospitalAdmission   Hospitalization[]     @relation("AdmissionBy")
-  prescriptions       Prescription[]        // Prescriptions issued by this vet
+  id                String                @id @default(uuid())
+  name              String
+  email             String                @unique
+  passwordHash      String
+  licenseNumber     String?
+  role              Role                  @default(VETERINARIAN)
+  clinicId          String
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  consultations     Consultation[]
+  hospitalAdmission Hospitalization[]     @relation("AdmissionBy")
+  completedTasks    HospitalizationTask[]
+  prescriptions     Prescription[]
+  clinic            Clinic                @relation(fields: [clinicId], references: [id])
 
   @@index([clinicId])
   @@index([email])
   @@index([role])
 }
 
-enum Role {
-  ADMIN
-  VETERINARIAN
-  ASSISTANT
-  RECEPTIONIST
-}
-
 model Patient {
-  id               String            @id @default(uuid())
-  name             String
-  species          String
-  breed            String?
-  gender           String?
-  birthDate        DateTime?
-  weight           Decimal?          @db.Decimal(10, 2)
-  microchip        String?           @unique
-  reproductiveStatus String?         // Neutered, Spayed, Intact
-  aggressionLevel  String?           // Low, Medium, High
-  coatColor        String?           // Pelagem
-  status           String            @default("ACTIVE") // ACTIVE, DECEASED, LOST
-  allergies        String?           @db.Text
-  clinicId         String
-  clinic           Clinic            @relation(fields: [clinicId], references: [id])
-  ownerId          String
-  owner            Owner             @relation(fields: [ownerId], references: [id])
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  consultations    Consultation[]
-  appointments     Appointment[]
-  labResults       LabResult[]
-  imagingStudies   ImagingStudy[]
-  hospitalizations Hospitalization[]
-  budgets          Budget[]
-  subscriptions    Subscription[]
-  vitalSigns       VitalSign[]
-  vaccinations     Vaccination[]
-  dewormings       Deworming[]
-  prescriptions    Prescription[]
+  id                 String            @id @default(uuid())
+  name               String
+  species            String
+  breed              String?
+  gender             String?
+  birthDate          DateTime?
+  weight             Decimal?          @db.Decimal(10, 2)
+  microchip          String?           @unique
+  reproductiveStatus String?
+  aggressionLevel    String?
+  coatColor          String?
+  status             String            @default("ACTIVE")
+  allergies          String?
+  clinicId           String
+  ownerId            String
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  appointments       Appointment[]
+  budgets            Budget[]
+  consultations      Consultation[]
+  dewormings         Deworming[]
+  hospitalizations   Hospitalization[]
+  imagingStudies     ImagingStudy[]
+  labResults         LabResult[]
+  clinic             Clinic            @relation(fields: [clinicId], references: [id])
+  owner              Owner             @relation(fields: [ownerId], references: [id])
+  prescriptions      Prescription[]
+  subscriptions      Subscription[]
+  vaccinations       Vaccination[]
+  vitalSigns         VitalSign[]
 
   @@index([clinicId])
   @@index([ownerId])
@@ -109,21 +103,21 @@ model Patient {
 }
 
 model Owner {
-  id        String    @id @default(uuid())
-  name      String
-  email     String?
-  phone     String?
-  vatNumber String?
-  address   String?
-  notes     String?   @db.Text
-  clinicId  String
-  clinic    Clinic    @relation(fields: [clinicId], references: [id])
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  patients  Patient[]
-  invoices  Invoice[]
-  payments  Payment[]
-  budgets   Budget[]
+  id            String         @id @default(uuid())
+  name          String
+  email         String?
+  phone         String?
+  vatNumber     String?
+  address       String?
+  notes         String?
+  clinicId      String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  budgets       Budget[]
+  invoices      Invoice[]
+  clinic        Clinic         @relation(fields: [clinicId], references: [id])
+  patients      Patient[]
+  payments      Payment[]
   subscriptions Subscription[]
 
   @@index([clinicId])
@@ -134,20 +128,19 @@ model Owner {
 model Consultation {
   id             String             @id @default(uuid())
   clinicId       String
-  clinic         Clinic             @relation(fields: [clinicId], references: [id])
   patientId      String
-  patient        Patient            @relation(fields: [patientId], references: [id])
   veterinarianId String
-  veterinarian   User               @relation(fields: [veterinarianId], references: [id])
   date           DateTime           @default(now())
   status         ConsultationStatus @default(IN_PROGRESS)
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
-
-  notes       ClinicalNote?
-  attachments Attachment[]
-  invoice     Invoice?
-  appointment Appointment?
+  appointment    Appointment?
+  attachments    Attachment[]
+  notes          ClinicalNote?
+  clinic         Clinic             @relation(fields: [clinicId], references: [id])
+  patient        Patient            @relation(fields: [patientId], references: [id])
+  veterinarian   User               @relation(fields: [veterinarianId], references: [id])
+  invoice        Invoice?
 
   @@index([clinicId])
   @@index([patientId])
@@ -156,29 +149,21 @@ model Consultation {
   @@index([status])
 }
 
-enum ConsultationStatus {
-  SCHEDULED
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
-}
-
 model Appointment {
   id             String             @id @default(uuid())
   clinicId       String
-  clinic         Clinic             @relation(fields: [clinicId], references: [id])
   patientId      String
-  patient        Patient            @relation(fields: [patientId], references: [id])
   veterinarianId String
   startTime      DateTime
   endTime        DateTime
-  type           String? // e.g., "Check-up", "Surgery"
+  type           String?
   status         ConsultationStatus @default(SCHEDULED)
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
-
-  consultation   Consultation? @relation(fields: [consultationId], references: [id])
-  consultationId String?       @unique
+  consultationId String?            @unique
+  clinic         Clinic             @relation(fields: [clinicId], references: [id])
+  consultation   Consultation?      @relation(fields: [consultationId], references: [id])
+  patient        Patient            @relation(fields: [patientId], references: [id])
 
   @@index([clinicId])
   @@index([patientId])
@@ -190,50 +175,45 @@ model Appointment {
 model ClinicalNote {
   id             String       @id @default(uuid())
   consultationId String       @unique
+  subjective     String?
+  objective      String?
+  assessment     String?
+  plan           String?
   consultation   Consultation @relation(fields: [consultationId], references: [id])
-  subjective     String?      @db.Text
-  objective      String?      @db.Text
-  assessment     String?      @db.Text
-  plan           String?      @db.Text
 }
 
 model Attachment {
   id             String         @id @default(uuid())
   consultationId String
-  consultation   Consultation   @relation(fields: [consultationId], references: [id])
   fileUrl        String
   type           AttachmentType @default(IMAGE)
   createdAt      DateTime       @default(now())
-}
-
-enum AttachmentType {
-  IMAGE
-  PDF
-  DICOM
+  consultation   Consultation   @relation(fields: [consultationId], references: [id])
 }
 
 model Invoice {
-  id               String       @id @default(uuid())
-  clinicId         String
-  clinic           Clinic       @relation(fields: [clinicId], references: [id])
-  ownerId          String
-  owner            Owner        @relation(fields: [ownerId], references: [id])
-  consultationId   String?      @unique
-  consultation     Consultation? @relation(fields: [consultationId], references: [id])
-  jasminInvoiceId  String?      @unique
-  externalId       String?      @unique
-  total            Decimal      @db.Decimal(10, 2)
-  vatTotal6        Decimal      @default(0) @db.Decimal(10, 2)
-  vatTotal13       Decimal      @default(0) @db.Decimal(10, 2)
-  vatTotal23       Decimal      @default(0) @db.Decimal(10, 2)
-  status           String       @default("DRAFT") // DRAFT, ISSUED, PAID, CANCELLED
-  pdfUrl           String?
-  issuedAt         DateTime?
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
-
-  items    InvoiceItem[]
-  payments Payment[]
+  id              String        @id @default(uuid())
+  clinicId        String
+  ownerId         String
+  consultationId  String?       @unique
+  jasminInvoiceId String?       @unique
+  externalId      String?       @unique
+  total           Decimal       @db.Decimal(10, 2)
+  vatTotal6       Decimal       @default(0) @db.Decimal(10, 2)
+  vatTotal13      Decimal       @default(0) @db.Decimal(10, 2)
+  vatTotal23      Decimal       @default(0) @db.Decimal(10, 2)
+  status          String        @default("DRAFT")
+  pdfUrl          String?
+  issuedAt        DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  paymentMethod   String?
+  vendusId        String?       @unique
+  clinic          Clinic        @relation(fields: [clinicId], references: [id])
+  consultation    Consultation? @relation(fields: [consultationId], references: [id])
+  owner           Owner         @relation(fields: [ownerId], references: [id])
+  items           InvoiceItem[]
+  payments        Payment[]
 
   @@index([clinicId])
   @@index([ownerId])
@@ -242,74 +222,72 @@ model Invoice {
 }
 
 model Payment {
-  id         String   @id @default(uuid())
-  clinicId   String
-  clinic     Clinic   @relation(fields: [clinicId], references: [id])
-  ownerId    String
-  owner      Owner    @relation(fields: [ownerId], references: [id])
-  invoiceId  String?
-  invoice    Invoice? @relation(fields: [invoiceId], references: [id])
-  amount     Decimal  @db.Decimal(10, 2)
-  method     String   // CASH, CARD, MBWAY, TRANSFER
-  paidAt     DateTime @default(now())
-  createdAt  DateTime @default(now())
+  id        String   @id @default(uuid())
+  clinicId  String
+  ownerId   String
+  invoiceId String?
+  amount    Decimal  @db.Decimal(10, 2)
+  method    String
+  paidAt    DateTime @default(now())
+  createdAt DateTime @default(now())
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+  invoice   Invoice? @relation(fields: [invoiceId], references: [id])
+  owner     Owner    @relation(fields: [ownerId], references: [id])
 }
 
 model Budget {
-  id           String       @id @default(uuid())
-  clinicId     String
-  clinic       Clinic       @relation(fields: [clinicId], references: [id])
-  ownerId      String
-  owner      Owner        @relation(fields: [ownerId], references: [id])
-  patientId    String?
-  patient      Patient?     @relation(fields: [patientId], references: [id])
-  status       String       @default("DRAFT") // DRAFT, ACCEPTED, REJECTED
-  totalAmount  Decimal      @db.Decimal(10, 2)
-  notes        String?      @db.Text
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-
-  items BudgetItem[]
+  id          String       @id @default(uuid())
+  clinicId    String
+  ownerId     String
+  patientId   String?
+  status      String       @default("DRAFT")
+  totalAmount Decimal      @db.Decimal(10, 2)
+  notes       String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  clinic      Clinic       @relation(fields: [clinicId], references: [id])
+  owner       Owner        @relation(fields: [ownerId], references: [id])
+  patient     Patient?     @relation(fields: [patientId], references: [id])
+  items       BudgetItem[]
 }
 
 model BudgetItem {
-  id          String @id @default(uuid())
+  id          String  @id @default(uuid())
   budgetId    String
-  budget      Budget @relation(fields: [budgetId], references: [id])
   description String
   quantity    Int
   price       Decimal @db.Decimal(10, 2)
+  budget      Budget  @relation(fields: [budgetId], references: [id])
 }
 
 model InvoiceItem {
-  id          String  @id @default(uuid())
+  id          String   @id @default(uuid())
   invoiceId   String
-  invoice     Invoice @relation(fields: [invoiceId], references: [id])
   productId   String?
-  product     Product? @relation(fields: [productId], references: [id])
   description String
   quantity    Int
-  price       Decimal @db.Decimal(10, 2)
-  vatRate     Int     @default(23)
+  price       Decimal  @db.Decimal(10, 2)
+  vatRate     Int      @default(23)
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id])
+  product     Product? @relation(fields: [productId], references: [id])
 }
 
 model Product {
-  id            String   @id @default(uuid())
+  id            String          @id @default(uuid())
   clinicId      String
-  clinic        Clinic   @relation(fields: [clinicId], references: [id])
   name          String
-  price         Decimal  @db.Decimal(10, 2)
-  vatRate       Int      @default(23)
-  stockQuantity Int      @default(0)
+  price         Decimal         @db.Decimal(10, 2)
+  vatRate       Int             @default(23)
+  stockQuantity Int             @default(0)
   barcode       String?
-  batchNumber   String?  // Added for medical traceability
-  expiryDate    DateTime? // Added for medical traceability
-  category      String?   // Medications, Consumables, Pet Food, etc.
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  movements    StockMovement[]
-  invoiceItems InvoiceItem[]
+  batchNumber   String?
+  expiryDate    DateTime?
+  category      String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  invoiceItems  InvoiceItem[]
+  clinic        Clinic          @relation(fields: [clinicId], references: [id])
+  movements     StockMovement[]
 
   @@index([clinicId])
   @@index([category])
@@ -319,13 +297,13 @@ model Product {
 model StockMovement {
   id        String       @id @default(uuid())
   clinicId  String
-  clinic    Clinic       @relation(fields: [clinicId], references: [id])
   productId String
-  product   Product      @relation(fields: [productId], references: [id])
   type      MovementType
   quantity  Int
-  source    String? // e.g., "consultation_id"
+  source    String?
   createdAt DateTime     @default(now())
+  clinic    Clinic       @relation(fields: [clinicId], references: [id])
+  product   Product      @relation(fields: [productId], references: [id])
 
   @@index([clinicId])
   @@index([productId])
@@ -333,22 +311,16 @@ model StockMovement {
   @@index([createdAt])
 }
 
-enum MovementType {
-  IN
-  OUT
-  ADJUSTMENT
-}
-
 model LabResult {
   id            String   @id @default(uuid())
   clinicId      String
-  clinic        Clinic   @relation(fields: [clinicId], references: [id])
   patientId     String
-  patient       Patient  @relation(fields: [patientId], references: [id])
   source        String   @default("FUJI")
   dataJson      Json
   abnormalFlags Boolean  @default(false)
   createdAt     DateTime @default(now())
+  clinic        Clinic   @relation(fields: [clinicId], references: [id])
+  patient       Patient  @relation(fields: [patientId], references: [id])
 
   @@index([clinicId])
   @@index([patientId])
@@ -358,12 +330,12 @@ model LabResult {
 model ImagingStudy {
   id           String   @id @default(uuid())
   clinicId     String
-  clinic       Clinic   @relation(fields: [clinicId], references: [id])
   patientId    String
-  patient      Patient  @relation(fields: [patientId], references: [id])
   dicomUrl     String
   metadataJson Json?
   createdAt    DateTime @default(now())
+  clinic       Clinic   @relation(fields: [clinicId], references: [id])
+  patient      Patient  @relation(fields: [patientId], references: [id])
 
   @@index([clinicId])
   @@index([patientId])
@@ -371,22 +343,21 @@ model ImagingStudy {
 }
 
 model Hospitalization {
-  id            String    @id @default(uuid())
+  id            String                @id @default(uuid())
   clinicId      String
-  clinic        Clinic    @relation(fields: [clinicId], references: [id])
   patientId     String
-  patient       Patient   @relation(fields: [patientId], references: [id])
-  admissionDate DateTime  @default(now())
+  admissionDate DateTime              @default(now())
   dischargeDate DateTime?
   boxNumber     String?
   reason        String
-  status        String    @default("ADMITTED") // ADMITTED, DISCHARGED
+  status        String                @default("ADMITTED")
   admissionById String
-  admissionBy   User      @relation("AdmissionBy", fields: [admissionById], references: [id])
-  
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  admissionBy   User                  @relation("AdmissionBy", fields: [admissionById], references: [id])
+  clinic        Clinic                @relation(fields: [clinicId], references: [id])
+  patient       Patient               @relation(fields: [patientId], references: [id])
   tasks         HospitalizationTask[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
 
   @@index([clinicId])
   @@index([patientId])
@@ -397,14 +368,14 @@ model Hospitalization {
 model HospitalizationTask {
   id                String          @id @default(uuid())
   hospitalizationId String
-  hospitalization   Hospitalization @relation(fields: [hospitalizationId], references: [id])
   description       String
   scheduledTime     DateTime
   completedAt       DateTime?
   completedById     String?
-  completedBy       User?           @relation(fields: [completedById], references: [id])
-  status            String          @default("PENDING") // PENDING, COMPLETED, SKIPPED
+  status            String          @default("PENDING")
   notes             String?
+  completedBy       User?           @relation(fields: [completedById], references: [id])
+  hospitalization   Hospitalization @relation(fields: [hospitalizationId], references: [id])
 
   @@index([hospitalizationId])
   @@index([status])
@@ -414,102 +385,128 @@ model HospitalizationTask {
 model HealthPlan {
   id            String         @id @default(uuid())
   clinicId      String
-  clinic        Clinic         @relation(fields: [clinicId], references: [id])
   name          String
-  description   String?        @db.Text
+  description   String?
   price         Decimal        @db.Decimal(10, 2)
-  billingCycle  String         @default("MONTHLY") // MONTHLY, YEARLY
+  billingCycle  String         @default("MONTHLY")
   isActive      Boolean        @default(true)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+  clinic        Clinic         @relation(fields: [clinicId], references: [id])
   subscriptions Subscription[]
 }
 
 model Subscription {
-  id           String     @id @default(uuid())
-  clinicId     String
-  clinic       Clinic     @relation(fields: [clinicId], references: [id])
-  ownerId      String
-  owner        Owner      @relation(fields: [ownerId], references: [id])
-  patientId    String
-  patient      Patient    @relation(fields: [patientId], references: [id])
-  planId       String
-  plan         HealthPlan @relation(fields: [planId], references: [id])
-  status       String     @default("ACTIVE") // ACTIVE, CANCELLED, PAST_DUE
-  startDate    DateTime   @default(now())
-  nextBilling  DateTime
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id          String     @id @default(uuid())
+  clinicId    String
+  ownerId     String
+  patientId   String
+  planId      String
+  status      String     @default("ACTIVE")
+  startDate   DateTime   @default(now())
+  nextBilling DateTime
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  clinic      Clinic     @relation(fields: [clinicId], references: [id])
+  owner       Owner      @relation(fields: [ownerId], references: [id])
+  patient     Patient    @relation(fields: [patientId], references: [id])
+  plan        HealthPlan @relation(fields: [planId], references: [id])
 }
 
 model VitalSign {
   id              String   @id @default(uuid())
   patientId       String
-  patient         Patient  @relation(fields: [patientId], references: [id])
   weight          Decimal? @db.Decimal(10, 2)
   temperature     Decimal? @db.Decimal(4, 2)
-  heartRate       Int?     // BPM
-  respiratoryRate Int?     // RPM
+  heartRate       Int?
+  respiratoryRate Int?
   notes           String?
   recordedAt      DateTime @default(now())
+  patient         Patient  @relation(fields: [patientId], references: [id])
 
   @@index([patientId])
   @@index([recordedAt])
 }
 
 model Vaccination {
-  id           String    @id @default(uuid())
-  patientId    String
-  patient      Patient   @relation(fields: [patientId], references: [id])
-  vaccineName  String
-  batchNumber  String?
-  appliedAt    DateTime  @default(now())
-  expiresAt    DateTime? // Next booster date
-  notes        String?
+  id          String    @id @default(uuid())
+  patientId   String
+  vaccineName String
+  batchNumber String?
+  appliedAt   DateTime  @default(now())
+  expiresAt   DateTime?
+  notes       String?
+  patient     Patient   @relation(fields: [patientId], references: [id])
 
   @@index([patientId])
   @@index([appliedAt])
 }
 
 model Deworming {
-  id           String    @id @default(uuid())
-  patientId    String
-  patient      Patient   @relation(fields: [patientId], references: [id])
-  type         String    // Internal, External
-  productName  String
-  batchNumber  String?
-  appliedAt    DateTime  @default(now())
-  expiresAt    DateTime?
-  notes        String?
+  id          String    @id @default(uuid())
+  patientId   String
+  type        String
+  productName String
+  batchNumber String?
+  appliedAt   DateTime  @default(now())
+  expiresAt   DateTime?
+  notes       String?
+  patient     Patient   @relation(fields: [patientId], references: [id])
 
   @@index([patientId])
   @@index([appliedAt])
 }
 
 model Prescription {
-  id              String             @id @default(uuid())
-  clinicId        String
-  clinic          Clinic             @relation(fields: [clinicId], references: [id])
-  patientId       String
-  patient         Patient            @relation(fields: [patientId], references: [id])
-  veterinarianId  String
-  veterinarian    User               @relation(fields: [veterinarianId], references: [id])
-  consultationId  String?
-  date            DateTime           @default(now())
-  validUntil      DateTime?
-  status          String             @default("ACTIVE") // ACTIVE, VOID, EXPIRED
-  items           PrescriptionItem[]
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  id             String             @id @default(uuid())
+  clinicId       String
+  patientId      String
+  veterinarianId String
+  consultationId String?
+  date           DateTime           @default(now())
+  validUntil     DateTime?
+  status         String             @default("ACTIVE")
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  clinic         Clinic             @relation(fields: [clinicId], references: [id])
+  patient        Patient            @relation(fields: [patientId], references: [id])
+  veterinarian   User               @relation(fields: [veterinarianId], references: [id])
+  items          PrescriptionItem[]
 }
 
 model PrescriptionItem {
   id             String       @id @default(uuid())
   prescriptionId String
-  prescription   Prescription @relation(fields: [prescriptionId], references: [id])
   medicineName   String
   dosage         String
   frequency      String
   duration       String
   notes          String?
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id])
+}
+
+enum Role {
+  ADMIN
+  VETERINARIAN
+  ASSISTANT
+  RECEPTIONIST
+}
+
+enum ConsultationStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum AttachmentType {
+  IMAGE
+  PDF
+  DICOM
+}
+
+enum MovementType {
+  IN
+  OUT
+  ADJUSTMENT
 }

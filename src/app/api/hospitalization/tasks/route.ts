@@ -6,20 +6,20 @@ import prisma from "@/lib/prisma";
 
 // PATCH /api/hospitalization/tasks - Mark a task as completed or skipped
 export async function PATCH(req: Request) {
-  const session = await getServerSession(authOptions);
-  
-  // Demo Fallback for stakeholders
-  const clinicId = session ? (session.user as any).clinicId : "c1-demo-clinic";
-  const userId = session ? (session.user as any).id : "admin-id";
-
-  const body = await req.json();
-  const { taskId, status, notes } = body;
-
-  if (!taskId || !["COMPLETED", "SKIPPED"].includes(status)) {
-    return NextResponse.json({ error: "taskId e status válido são obrigatórios" }, { status: 400 });
-  }
-
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || !(session.user as any).clinicId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    
+    const userId = (session.user as any).id;
+    const body = await req.json();
+    const { taskId, status, notes } = body;
+
+    if (!taskId || !["COMPLETED", "SKIPPED"].includes(status)) {
+      return NextResponse.json({ error: "taskId e status válido são obrigatórios" }, { status: 400 });
+    }
+
     const task = await prisma.hospitalizationTask.update({
       where: { id: taskId },
       data: {
@@ -32,7 +32,7 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json(task);
   } catch (error) {
-    console.error("Error updating task:", error);
-    return NextResponse.json({ error: "Falha ao atualizar tarefa" }, { status: 500 });
+    console.error("[HOSPITALIZATION_TASK_PATCH]", error);
+    return new NextResponse("Internal Error", { status: 500 });
   }
 }

@@ -6,21 +6,19 @@ import prisma, { getTenantClient } from "@/lib/prisma";
 
 // GET /api/appointments - List appointments for the current clinic
 export async function GET(req: Request) {
-  if (process.env.NEXT_PHASE === 'phase-production-build') {
-    return NextResponse.json([]);
-  }
-  
-  const session = await getServerSession(authOptions);
-  
-  // Demo Fallback for stakeholders
-  const clinicId = session ? (session.user as any).clinicId : "c1-demo-clinic";
-  const tenantPrisma = getTenantClient(clinicId);
-
-  const { searchParams } = new URL(req.url);
-  const start = searchParams.get("start");
-  const end = searchParams.get("end");
-
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || !(session.user as any).clinicId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    
+    const clinicId = (session.user as any).clinicId;
+    const tenantPrisma = getTenantClient(clinicId);
+
+    const { searchParams } = new URL(req.url);
+    const start = searchParams.get("start");
+    const end = searchParams.get("end");
+
     const appointments = await tenantPrisma.appointment.findMany({
       where: {
         startTime: {
@@ -38,135 +36,10 @@ export async function GET(req: Request) {
       orderBy: { startTime: "asc" },
     });
 
-    if (appointments && appointments.length > 0) {
-      return NextResponse.json(appointments);
-    }
-
-    // Dynamic Mock injection for current day
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
-    
-    return NextResponse.json([
-      {
-        id: "app-1",
-        startTime: `${todayStr}T10:00:00Z`,
-        type: "VACINA",
-        status: "SCHEDULED",
-        veterinarianId: "vet-1",
-        vetName: "Dr. Marco Cândido",
-        patientId: "p1",
-        patient: { 
-          id: "p1", 
-          name: "Bolinha", 
-          owner: { name: "Maria Alice", phone: "914005082" } 
-        }
-      },
-      {
-        id: "app-2",
-        startTime: `${todayStr}T11:00:00Z`,
-        type: "CIRURGIA",
-        status: "SCHEDULED",
-        veterinarianId: "vet-2",
-        vetName: "Dra. Ana Silva",
-        patientId: "p2",
-        patient: { 
-          id: "p2", 
-          name: "Rex", 
-          owner: { name: "Ricardo Fonseca", phone: "914005082" } 
-        }
-      },
-      {
-        id: "app-3",
-        startTime: `${todayStr}T15:00:00Z`,
-        type: "CONSULTA",
-        status: "SCHEDULED",
-        veterinarianId: "vet-1",
-        vetName: "Dr. Marco Cândido",
-        patientId: "p3",
-        patient: { 
-          id: "p3", 
-          name: "Luna", 
-          owner: { name: "José Pedro", phone: "914005082" } 
-        }
-      },
-      {
-        id: "app-4",
-        startTime: `${todayStr}T16:00:00Z`,
-        type: "URGÊNCIA",
-        status: "SCHEDULED",
-        veterinarianId: "vet-3",
-        vetName: "Dr. Roberto",
-        patientId: "p4",
-        patient: { 
-          id: "p4", 
-          name: "Miau", 
-          owner: { name: "Carla Antunes", phone: "914005082" } 
-        }
-      }
-    ]);
+    return NextResponse.json(appointments);
   } catch (error) {
-    console.warn("DB unreachable, injecting mock data for demo...");
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
-    
-    return NextResponse.json([
-      {
-        id: "app-1",
-        startTime: `${todayStr}T10:00:00Z`,
-        type: "VACINA",
-        status: "SCHEDULED",
-        veterinarianId: "vet-1",
-        vetName: "Dr. Marco Cândido",
-        patientId: "p1",
-        patient: { 
-          id: "p1", 
-          name: "Bolinha", 
-          owner: { name: "Maria Alice", phone: "914005082" } 
-        }
-      },
-      {
-        id: "app-2",
-        startTime: `${todayStr}T11:00:00Z`,
-        type: "CIRURGIA",
-        status: "SCHEDULED",
-        veterinarianId: "vet-2",
-        vetName: "Dra. Ana Silva",
-        patientId: "p2",
-        patient: { 
-          id: "p2", 
-          name: "Rex", 
-          owner: { name: "Ricardo Fonseca", phone: "914005082" } 
-        }
-      },
-      {
-        id: "app-3",
-        startTime: `${todayStr}T15:00:00Z`,
-        type: "CONSULTA",
-        status: "SCHEDULED",
-        veterinarianId: "vet-1",
-        vetName: "Dr. Marco Cândido",
-        patientId: "p3",
-        patient: { 
-          id: "p3", 
-          name: "Luna", 
-          owner: { name: "José Pedro", phone: "914005082" } 
-        }
-      },
-      {
-        id: "app-4",
-        startTime: `${todayStr}T16:00:00Z`,
-        type: "URGÊNCIA",
-        status: "SCHEDULED",
-        veterinarianId: "vet-3",
-        vetName: "Dr. Roberto",
-        patientId: "p4",
-        patient: { 
-          id: "p4", 
-          name: "Miau", 
-          owner: { name: "Carla Antunes", phone: "914005082" } 
-        }
-      }
-    ]);
+    console.error("[APPOINTMENTS_GET]", error);
+    return new NextResponse("Internal Error", { status: 500 });
   }
 }
 

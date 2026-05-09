@@ -113,19 +113,28 @@ interface InvoicePDFProps {
   patient?: any;
 }
 
-const MyDocument = ({ invoice, clinic, owner, patient }: InvoicePDFProps) => (
+const MyDocument = ({ invoice, clinic, owner, patient }: InvoicePDFProps) => {
+  const clinicData = clinic || {
+    name: "Clínica Veterinária",
+    address: "---",
+    phone: "---",
+    email: "---",
+    vatNumber: "---"
+  };
+
+  return (
   <Document>
     <Page size="A4" style={styles.page}>
       <View style={styles.header}>
         <View style={styles.clinicInfo}>
-          <Text style={styles.clinicName}>{clinic.name}</Text>
-          <Text>{clinic.address}</Text>
-          <Text>{clinic.phone} | {clinic.email}</Text>
-          <Text>NIF: {clinic.vatNumber}</Text>
+          <Text style={styles.clinicName}>{clinicData.name}</Text>
+          <Text>{clinicData.address}</Text>
+          <Text>{clinicData.phone} | {clinicData.email}</Text>
+          <Text>NIF: {clinicData.vatNumber}</Text>
         </View>
         <View>
           <Text style={styles.invoiceTitle}>FATURA</Text>
-          <Text style={{ textAlign: 'right', marginTop: 4 }}>#{invoice.jasminInvoiceId || 'PROVISÓRIA'}</Text>
+          <Text style={{ textAlign: 'right', marginTop: 4 }}>#{invoice.vendusId || invoice.jasminInvoiceId || 'PROVISÓRIA'}</Text>
           <Text style={{ textAlign: 'right', color: '#94a3b8' }}>{new Date().toLocaleDateString('pt-PT')}</Text>
         </View>
       </View>
@@ -133,9 +142,9 @@ const MyDocument = ({ invoice, clinic, owner, patient }: InvoicePDFProps) => (
       <View style={styles.grid}>
         <View style={styles.col}>
           <Text style={styles.sectionTitle}>Faturar a:</Text>
-          <Text style={{ fontWeight: 'bold', color: '#0f172a' }}>{owner.name}</Text>
-          <Text>{owner.address || 'Sem morada'}</Text>
-          <Text>NIF: {owner.vatNumber || '999999990'}</Text>
+          <Text style={{ fontWeight: 'bold', color: '#0f172a' }}>{owner?.name || 'Consumidor Final'}</Text>
+          <Text>{owner?.address || 'Sem morada'}</Text>
+          <Text>NIF: {owner?.vatNumber || '999999990'}</Text>
         </View>
         <View style={styles.col}>
           <Text style={styles.sectionTitle}>Paciente:</Text>
@@ -180,11 +189,12 @@ const MyDocument = ({ invoice, clinic, owner, patient }: InvoicePDFProps) => (
 
       <Text style={styles.footer}>
         Processado por VetConnect SaaS. Este documento não serve de fatura legal perante a Autoridade Tributária 
-        se não contiver o selo de certificação do software de faturação integrado (Jasmin).
+        se não contiver o selo de certificação do software de faturação integrado (Vendus).
       </Text>
     </Page>
   </Document>
-);
+  );
+};
 
 export const InvoiceDownloadBtn = ({ invoice, clinic, owner, patient }: InvoicePDFProps) => {
   return (

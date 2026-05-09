@@ -1,18 +1,34 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  const clinicId = "c1-demo-clinic";
-  const { searchParams } = new URL(req.url);
-  const search = searchParams.get("search") || "";
-  const species = searchParams.get("species") || "";
-  const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "50");
-  const skip = (page - 1) * limit;
-
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { clinicId: true }
+    });
+
+    if (!user?.clinicId) {
+      return new NextResponse("Clinic not found", { status: 404 });
+    }
+
+    const clinicId = user.clinicId;
+    const { searchParams } = new URL(req.url);
+    const search = searchParams.get("search") || "";
+    const species = searchParams.get("species") || "";
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "50");
+    const skip = (page - 1) * limit;
+
     const where: any = { clinicId };
     
     if (search) {
@@ -40,74 +56,39 @@ export async function GET(req: Request) {
       prisma.patient.count({ where }),
     ]);
 
-    if (patients.length > 0) {
-      return NextResponse.json({
-        data: patients,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-        },
-      });
-    }
-
-    // Fallback for empty database
     return NextResponse.json({
-      data: [
-        {
-          id: "p1",
-          name: "Bolinha",
-          species: "Gato",
-          breed: "Siamês",
-          gender: "F",
-          ownerId: "demo-owner-1",
-          owner: { id: "demo-owner-1", name: "Ricardo Fonseca", phone: "910 000 001" },
-        },
-        {
-          id: "p2",
-          name: "Rex",
-          species: "Cão",
-          breed: "Pastor Alemão",
-          gender: "M",
-          ownerId: "demo-owner-2",
-          owner: { id: "demo-owner-2", name: "Ana Martins", phone: "960 000 002" },
-        },
-      ],
-      pagination: { page: 1, limit: 50, total: 2, totalPages: 1 },
+      data: patients,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
-    console.warn("DB unreachable, injecting mock patients list for demo...");
-    return NextResponse.json({
-      data: [
-        {
-          id: "p1",
-          name: "Bolinha",
-          species: "Gato",
-          breed: "Siamês",
-          gender: "F",
-          ownerId: "demo-owner-1",
-          owner: { id: "demo-owner-1", name: "Ricardo Fonseca", phone: "914005082" },
-        },
-        {
-          id: "p2",
-          name: "Rex",
-          species: "Cão",
-          breed: "Pastor Alemão",
-          gender: "M",
-          ownerId: "demo-owner-2",
-          owner: { id: "demo-owner-2", name: "Ana Martins", phone: "914005082" },
-        },
-      ],
-      pagination: { page: 1, limit: 50, total: 2, totalPages: 1 },
-    });
+    console.error("[PATIENTS_GET]", error);
+    return new NextResponse("Internal Error", { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { clinicId: true }
+    });
+
+    if (!user?.clinicId) {
+      return new NextResponse("Clinic not found", { status: 404 });
+    }
+
     const body = await req.json();
-    const clinicId = "c1-demo-clinic";
+    const clinicId = user.clinicId;
 
     let ownerId = body.ownerId;
 
@@ -137,7 +118,7 @@ export async function POST(req: Request) {
         breed: body.breed,
         gender: body.gender,
         birthDate: body.birthDate ? new Date(body.birthDate) : null,
-        weight: body.weight ? parseFloat(body.weight.replace(",", ".")) : null,
+        weight: body.weight ? parseFloat(body.weight.toString().replace(",", ".")) : null,
         microchip: body.microchip || null,
         reproductiveStatus: body.reproductiveStatus,
         aggressionLevel: body.aggressionLevel,
@@ -148,7 +129,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(patient);
   } catch (error) {
-    console.error("Error creating patient:", error);
-    return NextResponse.json({ error: "Failed to create patient and/or owner" }, { status: 500 });
+    console.error("[PATIENTS_POST]", error);
+    return new NextResponse("Internal Error", { status: 500 });
   }
 }

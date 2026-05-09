@@ -277,26 +277,26 @@ export default function ManagementCockpit() {
                  <div className="space-y-1">
                     <p className="text-[10px] font-black uppercase tracking-widest text-blue-200/60 mb-2">Retenção de Pacientes</p>
                     <div className="flex items-end gap-3">
-                       <h4 className="text-6xl font-black tracking-tighter leading-none">{data?.bi?.stats?.patientRetention || 84}%</h4>
+                       <h4 className="text-6xl font-black tracking-tighter leading-none">{data?.bi?.stats?.patientRetention ?? "84"}%</h4>
                        <div className="flex items-center gap-1 text-emerald-400 mb-1">
                           <TrendingUp size={16} />
-                          <span className="text-[10px] font-black">+2.4%</span>
+                          <span className="text-[10px] font-black">+{data?.bi?.stats?.retentionGrowth ?? "2.4"}%</span>
                        </div>
                     </div>
                  </div>
               </div>
               <div className="space-y-6 relative z-10">
                  <div className="w-full bg-white/10 h-3 rounded-full overflow-hidden">
-                    <div className="bg-white h-full shadow-[0_0_15px_rgba(255,255,255,0.5)] transition-all duration-[2s]" style={{ width: `${data?.bi?.stats?.patientRetention || 84}%` }}></div>
+                    <div className="bg-white h-full shadow-[0_0_15px_rgba(255,255,255,0.5)] transition-all duration-[2s]" style={{ width: `${data?.bi?.stats?.patientRetention ?? 84}%` }}></div>
                  </div>
                  <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 bg-white/5 rounded-[1.5rem] border border-white/10">
                        <p className="text-[8px] font-black uppercase tracking-widest text-blue-200 mb-1">Churn Rate</p>
-                       <p className="text-lg font-black tracking-tighter">4.1%</p>
+                       <p className="text-lg font-black tracking-tighter">{data?.bi?.stats?.churnRate ?? "4.1"}%</p>
                     </div>
                     <div className="p-4 bg-white/5 rounded-[1.5rem] border border-white/10">
                        <p className="text-[8px] font-black uppercase tracking-widest text-blue-200 mb-1">LTV Est.</p>
-                       <p className="text-lg font-black tracking-tighter">€1,420</p>
+                       <p className="text-lg font-black tracking-tighter">{eur(data?.bi?.stats?.ltv ?? 1420)}</p>
                     </div>
                  </div>
               </div>
@@ -401,7 +401,7 @@ export default function ManagementCockpit() {
                   <tr>
                     <td className="px-10 py-10">
                        <p className="font-black uppercase text-[12px] tracking-[0.2em]">Totais de Período</p>
-                       <p className="text-[9px] font-bold opacity-50 uppercase tracking-widest mt-1">Sincronizado com Jasmin ERP</p>
+                       <p className="text-[9px] font-bold opacity-50 uppercase tracking-widest mt-1">Sincronizado com Vendus ERP</p>
                     </td>
                     <td className="px-10 py-10 text-right font-black font-mono text-lg">{eur(vatBase)}</td>
                     <td className="px-10 py-10 text-right font-black font-mono text-lg text-blue-400 dark:text-blue-600">{eur(vatTotal)}</td>

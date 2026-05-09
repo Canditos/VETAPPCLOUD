@@ -17,7 +17,7 @@ Welcome to the VetConnect Agent Interface.
 - [Customers](/dashboard/customers) - Manage client data
 
 ## API Documentation
-Documentation is available at [/docs/api](https://gatoescondido.net/docs/api).
+Documentation is available at [/docs/api](/docs/api).
 
 ---
 *VetConnect SaaS - Premium Veterinary Management*
