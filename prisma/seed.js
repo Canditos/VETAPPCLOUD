@@ -47,6 +47,18 @@ async function main() {
     },
   });
 
+  const vet2 = await prisma.user.upsert({
+    where: { email: "ricardo@clinicavet.pt" },
+    update: {},
+    create: {
+      name: "Dr. Ricardo Santos",
+      email: "ricardo@clinicavet.pt",
+      passwordHash,
+      role: "VETERINARIAN",
+      clinicId: clinic.id,
+    },
+  });
+
   // 3. Create Customers (Hub 360º)
   const customer1 = await prisma.owner.create({
     data: {
