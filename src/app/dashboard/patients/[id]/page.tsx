@@ -74,7 +74,7 @@ export default function PatientDetailPage() {
 
   const isDog = patient.species?.toLowerCase().includes("cão") || patient.species?.toLowerCase().includes("can");
   const isCat = patient.species?.toLowerCase().includes("gato") || patient.species?.toLowerCase().includes("fel");
-  const speciesIcon = isDog ? Dog : isCat ? Cat : PawPrint;
+  const SpeciesIcon = isDog ? Dog : isCat ? Cat : PawPrint;
 
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-8">
@@ -108,7 +108,7 @@ export default function PatientDetailPage() {
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center">
-                  {speciesIcon({ size: 20 })}
+                  <SpeciesIcon size={20} />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-500">Espécie</p>

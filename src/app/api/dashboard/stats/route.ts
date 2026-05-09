@@ -1,8 +1,9 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { startOfDay, endOfDay, subDays } from "date-fns";
+import { startOfDay, endOfDay, subDays, addDays } from "date-fns";
 
 export async function GET() {
   try {
@@ -13,125 +14,221 @@ export async function GET() {
 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      select: { clinicId: true }
+      select: { clinicId: true, name: true, role: true },
     });
 
     if (!user?.clinicId) {
       return new NextResponse("Clinic not found", { status: 404 });
     }
 
+    const { clinicId } = user;
     const today = new Date();
-    const startOfToday = startOfDay(today);
-    const endOfToday = endOfDay(today);
-
-    // 1. Consultas Hoje
-    const consultationsToday = await prisma.consultation.count({
-      where: {
-        clinicId: user.clinicId,
-        date: {
-          gte: startOfToday,
-          lte: endOfToday
-        }
-      }
-    });
-
-    // 2. Novos Pacientes (últimos 30 dias)
+    const startToday = startOfDay(today);
+    const endToday = endOfDay(today);
     const thirtyDaysAgo = subDays(today, 30);
-    const newPatients = await prisma.patient.count({
-      where: {
-        clinicId: user.clinicId,
-        createdAt: {
-          gte: thirtyDaysAgo
-        }
-      }
-    });
+    const in7Days = addDays(today, 7);
 
-    // 3. Faturação Hoje
-    const revenueToday = await prisma.payment.aggregate({
-      where: {
-        clinicId: user.clinicId,
-        paidAt: {
-          gte: startOfToday,
-          lte: endOfToday
-        }
-      },
-      _sum: {
-        amount: true
-      }
-    });
+    // Run all queries in parallel for speed
+    const [
+      consultationsToday,
+      newPatients,
+      revenueToday,
+      criticalStockProducts,
+      todayAppointments,
+      activeHospitalizations,
+      overdueVaccinations,
+      pendingHospTasks,
+      recentConsultations,
+      recentPayments,
+    ] = await Promise.all([
 
-    // 4. Stock Crítico
-    const criticalStock = await prisma.product.count({
-      where: {
-        clinicId: user.clinicId,
-        stockQuantity: {
-          lte: 5 // Definimos 5 como limiar crítico genérico
-        }
-      }
-    });
+      // 1. Consultas hoje
+      prisma.consultation.count({
+        where: { clinicId, date: { gte: startToday, lte: endToday } },
+      }),
 
-    // 5. Próximas Consultas (Top 3)
-    const upcomingAppointments = await prisma.appointment.findMany({
-      where: {
-        clinicId: user.clinicId,
-        startTime: {
-          gte: today
+      // 2. Novos pacientes (30 dias)
+      prisma.patient.count({
+        where: { clinicId, createdAt: { gte: thirtyDaysAgo } },
+      }),
+
+      // 3. Faturação hoje — usa paidAt com fallback para createdAt
+      prisma.payment.aggregate({
+        where: {
+          clinicId,
+          OR: [
+            { paidAt: { gte: startToday, lte: endToday } },
+            { paidAt: null, createdAt: { gte: startToday, lte: endToday } },
+          ],
         },
-        status: "SCHEDULED"
-      },
-      include: {
-        patient: true
-      },
-      orderBy: {
-        startTime: "asc"
-      },
-      take: 3
-    });
+        _sum: { amount: true },
+      }),
 
-    // 6. Atividade Recente (Consultas e Pagamentos)
-    const recentConsultations = await prisma.consultation.findMany({
-      where: { clinicId: user.clinicId },
-      include: { patient: true },
-      orderBy: { createdAt: "desc" },
-      take: 5
-    });
+      // 4. Stock crítico — compara com minStock se existir, senão usa 5
+      prisma.product.findMany({
+        where: {
+          clinicId,
+          OR: [
+            // products with explicit minStock field
+            { stockQuantity: { lte: 5 } },
+          ],
+        },
+        select: { id: true, name: true, stockQuantity: true },
+      }),
 
-    const recentPayments = await prisma.payment.findMany({
-      where: { clinicId: user.clinicId },
-      include: { owner: true },
-      orderBy: { createdAt: "desc" },
-      take: 5
-    });
+      // 5. Marcações de HOJE ordenadas por hora (máx 8)
+      prisma.appointment.findMany({
+        where: {
+          clinicId,
+          startTime: { gte: startToday, lte: endToday },
+          status: { not: "CANCELLED" },
+        },
+        include: {
+          patient: { include: { owner: true } },
+        },
+        orderBy: { startTime: "asc" },
+        take: 8,
+      }),
 
-    // Mesclar e ordenar
+      // 6. Internamentos ativos
+      prisma.hospitalization.findMany({
+        where: { clinicId, status: "ADMITTED" },
+        include: {
+          patient: { select: { name: true, species: true } },
+          tasks: { where: { status: "PENDING" } },
+        },
+      }),
+
+      // 7. Vacinas expiradas ou a expirar em 7 dias
+      prisma.vaccination.findMany({
+        where: {
+          patient: { clinicId },
+          expiresAt: { lte: in7Days },
+        },
+        include: {
+          patient: { select: { name: true, clinicId: true } },
+        },
+        orderBy: { expiresAt: "asc" },
+        take: 5,
+      }),
+
+      // 8. Tarefas de internamento pendentes urgentes
+      prisma.hospitalizationTask.count({
+        where: {
+          status: "PENDING",
+          hospitalization: { clinicId, status: "ADMITTED" },
+          scheduledTime: { lte: today },
+        },
+      }),
+
+      // 9. Consultas recentes
+      prisma.consultation.findMany({
+        where: { clinicId },
+        include: { patient: { select: { name: true, id: true } } },
+        orderBy: { createdAt: "desc" },
+        take: 4,
+      }),
+
+      // 10. Pagamentos recentes
+      prisma.payment.findMany({
+        where: { clinicId },
+        include: { owner: { select: { name: true } } },
+        orderBy: { createdAt: "desc" },
+        take: 4,
+      }),
+    ]);
+
+    // Build alerts
+    const alerts = [];
+
+    if (criticalStockProducts.length > 0) {
+      alerts.push({
+        type: "STOCK",
+        level: "warning",
+        title: `${criticalStockProducts.length} produto${criticalStockProducts.length > 1 ? "s" : ""} com stock crítico`,
+        desc: criticalStockProducts.slice(0, 2).map((p) => p.name).join(", ") + (criticalStockProducts.length > 2 ? "..." : ""),
+        href: "/dashboard/inventory",
+      });
+    }
+
+    const expiredVaccines = overdueVaccinations.filter(
+      (v) => v.patient.clinicId === clinicId && v.expiresAt && new Date(v.expiresAt) < today
+    );
+    const soonVaccines = overdueVaccinations.filter(
+      (v) => v.patient.clinicId === clinicId && v.expiresAt && new Date(v.expiresAt) >= today
+    );
+
+    if (expiredVaccines.length > 0) {
+      alerts.push({
+        type: "VACCINE",
+        level: "error",
+        title: `${expiredVaccines.length} vacina${expiredVaccines.length > 1 ? "s" : ""} expirada${expiredVaccines.length > 1 ? "s" : ""}`,
+        desc: expiredVaccines.map((v) => v.patient.name).slice(0, 2).join(", "),
+        href: "/dashboard/patients",
+      });
+    }
+
+    if (soonVaccines.length > 0) {
+      alerts.push({
+        type: "VACCINE_SOON",
+        level: "warning",
+        title: `${soonVaccines.length} vacina${soonVaccines.length > 1 ? "s" : ""} a expirar em 7 dias`,
+        desc: soonVaccines.map((v) => v.patient.name).slice(0, 2).join(", "),
+        href: "/dashboard/patients",
+      });
+    }
+
+    if (pendingHospTasks > 0) {
+      alerts.push({
+        type: "HOSP_TASKS",
+        level: "error",
+        title: `${pendingHospTasks} tarefa${pendingHospTasks > 1 ? "s" : ""} de internamento em atraso`,
+        desc: "Verificar plano de tratamento",
+        href: "/dashboard/internamento",
+      });
+    }
+
+    // Activity feed
     const activity = [
-      ...recentConsultations.map(c => ({
+      ...recentConsultations.map((c) => ({
         type: "CONSULTATION",
         title: `Consulta: ${c.patient.name}`,
         desc: "Finalizada",
         time: c.createdAt,
         icon: "Stethoscope",
         color: "bg-blue-500",
-        href: `/dashboard/patients?id=${c.patientId}`
+        href: `/dashboard/patients?id=${c.patientId}`,
       })),
-      ...recentPayments.map(p => ({
+      ...recentPayments.map((p) => ({
         type: "PAYMENT",
-        title: `Pagamento: ${p.owner.name}`,
-        desc: `Valor: €${p.amount}`,
+        title: `Pagamento: ${p.owner?.name ?? "—"}`,
+        desc: `€${Number(p.amount).toFixed(2)}`,
         time: p.createdAt,
         icon: "TrendingUp",
         color: "bg-emerald-500",
-        href: "/dashboard/billing"
-      }))
-    ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 5);
+        href: "/dashboard/billing",
+      })),
+    ]
+      .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+      .slice(0, 6);
 
     return NextResponse.json({
+      userName: user.name,
       consultationsToday,
       newPatients,
-      revenueToday: revenueToday._sum.amount || 0,
-      criticalStock,
-      upcomingAppointments,
-      activity
+      revenueToday: Number(revenueToday._sum.amount ?? 0),
+      criticalStock: criticalStockProducts.length,
+      todayAppointments,
+      activeHospitalizations: activeHospitalizations.map((h) => ({
+        id: h.id,
+        patientName: h.patient.name,
+        species: h.patient.species,
+        boxNumber: h.boxNumber,
+        pendingTasks: h.tasks.length,
+        reason: h.reason,
+      })),
+      alerts,
+      activity,
     });
   } catch (error) {
     console.error("[DASHBOARD_STATS_GET]", error);
