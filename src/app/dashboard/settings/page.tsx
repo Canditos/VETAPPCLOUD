@@ -195,7 +195,7 @@ export default function SettingsPage() {
                     placeholder="Introduza a sua API Key do Vendus" 
                     className="rounded-xl font-mono" 
                   />
-                  <p className="text-[10px] text-slate-400 font-medium">Pode encontrar a sua chave em Definições > API no painel do Vendus.</p>
+                  <p className="text-[10px] text-slate-400 font-medium">Pode encontrar a sua chave em Definições &gt; API no painel do Vendus.</p>
                 </div>
               </div>
               <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">

@@ -10,8 +10,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 
 export async function GET() {
-  try {
-    const session = await getServerSession(authOptions);
+  const session = await getServerSession(authOptions);
     if (!session || !(session.user as any).clinicId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -101,6 +100,7 @@ export async function GET() {
       ...results,
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[INVENTORY_IMPORT_ERROR]", error);
+    return NextResponse.json({ error: error.message || "Internal Error" }, { status: 500 });
   }
 }
