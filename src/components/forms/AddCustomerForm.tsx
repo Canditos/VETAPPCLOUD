@@ -29,7 +29,7 @@ const customerSchema = z.object({
   name: z.string().min(2, "Nome completo é obrigatório"),
   email: z.string().email("Email inválido").or(z.literal("")),
   phone: z.string().min(9, "Telemóvel inválido").or(z.literal("")),
-  vatNumber: z.string().length(9, "NIF deve ter 9 dígitos").regex(/^\d+$/, "NIF inválido"),
+  vatNumber: z.string().length(9, "NIF deve ter 9 dígitos").regex(/^\d+$/, "NIF inválido").optional().or(z.literal("")),
   address: z.string().min(5, "Morada fiscal completa é obrigatória"),
   notes: z.string().optional(),
 });

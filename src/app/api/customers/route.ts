@@ -91,6 +91,7 @@ export async function POST(req: Request) {
     return NextResponse.json(customer);
   } catch (error) {
     console.error("[CUSTOMERS_POST]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : "Internal Error";
+    return new NextResponse(JSON.stringify({ error: errorMessage }), { status: 500, headers: { "Content-Type": "application/json" } });
   }
 }
