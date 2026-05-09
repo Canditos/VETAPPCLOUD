@@ -218,15 +218,12 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                 </CardContent>
               </Card>
             ))}
-            <button 
-              onClick={() => toast.info("Funcionalidade de adicionar animal em desenvolvimento")}
-              className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 flex flex-col items-center justify-center gap-4 text-slate-300 dark:text-slate-700 hover:border-blue-300 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-all group"
-            >
+            <Link href={`/dashboard/patients?new=true&ownerId=${id}`} className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 flex flex-col items-center justify-center gap-4 text-slate-300 dark:text-slate-700 hover:border-blue-300 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-all group">
               <div className="p-6 bg-slate-50 dark:bg-slate-800 rounded-full group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
                 <Plus size={32} />
               </div>
               <span className="font-black text-sm uppercase tracking-[0.2em]">Adicionar Animal</span>
-            </button>
+            </Link>
           </div>
         </TabsContent>
 

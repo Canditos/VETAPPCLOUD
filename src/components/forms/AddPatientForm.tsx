@@ -63,7 +63,7 @@ const patientSchema = z.object({
 
 type PatientFormValues = z.infer<typeof patientSchema>;
 
-export function AddPatientForm({ onSuccess }: { onSuccess?: () => void }) {
+export function AddPatientForm({ onSuccess, defaultOwnerId }: { onSuccess?: () => void; defaultOwnerId?: string }) {
   const queryClient = useQueryClient();
   const [isNewOwner, setIsNewOwner] = useState(false);
   const [ownerSearch, setOwnerSearch] = useState("");
@@ -71,6 +71,27 @@ export function AddPatientForm({ onSuccess }: { onSuccess?: () => void }) {
   const [selectedOwner, setSelectedOwner] = useState<any>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [activeTab, setActiveTab] = useState("patient");
+
+  // Pre-select owner if defaultOwnerId is provided
+  useEffect(() => {
+    if (defaultOwnerId) {
+      const fetchOwner = async () => {
+        try {
+          const res = await fetch(`/api/customers/${defaultOwnerId}`);
+          if (res.ok) {
+            const owner = await res.json();
+            setSelectedOwner(owner);
+            setValue("ownerId", owner.id);
+            setIsNewOwner(false);
+            setActiveTab("patient");
+          }
+        } catch (err) {
+          console.error("Error fetching default owner:", err);
+        }
+      };
+      fetchOwner();
+    }
+  }, [defaultOwnerId, setValue]);
 
   const { register, handleSubmit, formState: { errors }, reset, setValue, watch } = useForm<PatientFormValues>({
     resolver: zodResolver(patientSchema),

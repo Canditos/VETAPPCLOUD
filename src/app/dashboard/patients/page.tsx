@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { 
   Plus, 
   Search, 
@@ -45,11 +46,18 @@ const PatientAvatar = ({ name, species }: { name: string, species: string }) => 
 };
 
 export default function PatientsPage() {
+  const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [speciesFilter, setSpeciesFilter] = useState("");
   const [page, setPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const limit = 30;
+
+  useEffect(() => {
+    if (searchParams.get("new") === "true") {
+      setIsModalOpen(true);
+    }
+  }, [searchParams]);
 
   const { data: response, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ["patients", searchTerm, speciesFilter, page],
@@ -108,7 +116,10 @@ export default function PatientsPage() {
                 <span>Novo Registo</span>
               </Button>
             </DialogTrigger>
-            <AddPatientForm onSuccess={() => setIsModalOpen(false)} />
+            <AddPatientForm 
+              onSuccess={() => setIsModalOpen(false)} 
+              defaultOwnerId={searchParams.get("ownerId") || undefined}
+            />
           </Dialog>
         </div>
       </div>
