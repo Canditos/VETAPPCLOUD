@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { getTenantClient } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -13,9 +13,10 @@ export async function GET() {
     }
     
     const clinicId = (session.user as any).clinicId;
+    const tenantPrisma = getTenantClient(clinicId);
 
-    const hospitalizations = await prisma.hospitalization.findMany({
-      where: { status: "ADMITTED", clinicId },
+    const hospitalizations = await tenantPrisma.hospitalization.findMany({
+      where: { status: "ADMITTED" },
       include: {
         patient: { include: { owner: true } },
         admissionBy: { select: { name: true } },
@@ -43,14 +44,18 @@ export async function POST(req: Request) {
 
     const clinicId = (session.user as any).clinicId;
     const userId = (session.user as any).id;
+    const tenantPrisma = getTenantClient(clinicId);
     const body = await req.json();
 
-    const hospitalization = await prisma.hospitalization.create({
+    if (!body.patientId || !body.reason) {
+      return NextResponse.json({ error: "patientId e reason são obrigatórios" }, { status: 400 });
+    }
+
+    const hospitalization = await tenantPrisma.hospitalization.create({
       data: {
         patientId: body.patientId,
         boxNumber: body.boxNumber,
         reason: body.reason,
-        clinicId,
         admissionById: userId,
         status: "ADMITTED",
       },

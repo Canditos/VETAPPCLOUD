@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   Bed, 
@@ -20,7 +20,9 @@ import {
   Users,
   Package,
   PawPrint,
-  Stethoscope
+  Stethoscope,
+  ArrowUpRight,
+  DoorOpen
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,10 +36,13 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { HospitalizationMap } from "@/components/HospitalizationMap";
+import Link from "next/link";
 
 const TOTAL_BOXES = 8;
 
@@ -250,12 +255,92 @@ function TaskItem({ task, onComplete }: { task: any; onComplete: (id: string) =>
   );
 }
 
+function AddTaskDialog({
+  open,
+  onClose,
+  hospitalizationId,
+}: {
+  open: boolean;
+  onClose: () => void;
+  hospitalizationId: string;
+}) {
+  const queryClient = useQueryClient();
+  const [description, setDescription] = useState("");
+  const [scheduledHour, setScheduledHour] = useState("08:00");
+
+  const createTask = useMutation({
+    mutationFn: async () => {
+      const today = new Date();
+      const [h, m] = scheduledHour.split(":");
+      const scheduledTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), parseInt(h), parseInt(m)).toISOString();
+      const res = await fetch("/api/hospitalization/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hospitalizationId, description, scheduledTime }),
+      });
+      if (!res.ok) throw new Error("Falha");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["hospitalization"] });
+      toast.success("Tarefa adicionada ao plano");
+      onClose();
+      setDescription("");
+      setScheduledHour("08:00");
+    },
+    onError: () => toast.error("Erro ao criar tarefa"),
+  });
+
+  const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0") + ":00");
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[420px] rounded-3xl border-none shadow-2xl bg-white dark:bg-slate-900">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-black text-slate-900 dark:text-slate-100">Nova Tarefa</DialogTitle>
+          <DialogDescription className="text-slate-400">Adicionar ao plano de tratamento.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-5 mt-2">
+          <div className="space-y-2">
+            <Label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Descrição</Label>
+            <Textarea
+              className="rounded-xl resize-none"
+              placeholder="Ex: Administrar Amoxicilina 50mg..."
+              rows={2}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Hora Agendada</Label>
+            <select
+              value={scheduledHour}
+              onChange={(e) => setScheduledHour(e.target.value)}
+              className="w-full h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none ring-1 ring-slate-100 dark:ring-white/10 font-bold text-sm px-4 outline-none"
+            >
+              {hours.map((h) => <option key={h} value={h}>{h}</option>)}
+            </select>
+          </div>
+          <Button
+            className="w-full h-12 rounded-xl bg-blue-600 font-black"
+            disabled={!description || createTask.isPending}
+            onClick={() => createTask.mutate()}
+          >
+            {createTask.isPending ? "A criar..." : "Adicionar Tarefa"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function InternamentoPage() {
   const queryClient = useQueryClient();
   const [selectedHosp, setSelectedHosp] = useState<any>(null);
   const [admitBox, setAdmitBox] = useState<string | null>(null);
   const [view, setView] = useState<"grid" | "list" | "map">("grid");
   const [selectedZone, setSelectedZone] = useState<string>("TODAS");
+  const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
 
   const zones = [
     { id: "TODAS", name: "Todas as Zonas", icon: LayoutGrid },
@@ -271,7 +356,7 @@ export default function InternamentoPage() {
       if (!res.ok) throw new Error("Falha ao carregar internamentos");
       return res.json();
     },
-    refetchInterval: 30000, // refresh every 30s
+    refetchInterval: 30000,
   });
 
   const completeTask = useMutation({
@@ -286,34 +371,84 @@ export default function InternamentoPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["hospitalization"] });
-      // Also refresh the selected hosp detail
-      if (selectedHosp) {
-        const updated = hospitalizations.find((h: any) => h.id === selectedHosp.id);
-        if (updated) setSelectedHosp(updated);
-      }
       toast.success("Tarefa concluída");
     },
     onError: () => toast.error("Erro ao registar tarefa"),
   });
 
-  // Build a grid: occupied boxes + empty slots up to TOTAL_BOXES
-  const occupiedBoxNumbers = hospitalizations.map((h: any) => h.boxNumber).filter(Boolean);
-  const emptyBoxes = Array.from({ length: TOTAL_BOXES - hospitalizations.length }, (_, i) => {
-    let num = i + 1;
-    while (occupiedBoxNumbers.includes(`Box ${String(num).padStart(2, "0")}`)) num++;
-    return `Box ${String(hospitalizations.length + i + 1).padStart(2, "0")}`;
+  const dischargePatient = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/hospitalization/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "DISCHARGED" }),
+      });
+      if (!res.ok) throw new Error("Falha");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["hospitalization"] });
+      toast.success(`${data.patient.name} teve alta com sucesso`);
+      setSelectedHosp(null);
+    },
+    onError: () => toast.error("Erro ao dar alta"),
   });
 
-  // After task completion, sync selected dialog
-  const selectedHospLive = hospitalizations.find((h: any) => h.id === selectedHosp?.id) ?? selectedHosp;
+  // Filter by zone (species-based)
+  const filteredHospitalizations = useMemo(() => {
+    if (selectedZone === "TODAS") return hospitalizations;
+    if (selectedZone === "CANIL") return hospitalizations.filter((h: any) => h.patient?.species?.toLowerCase().includes("cão") || h.patient?.species?.toLowerCase().includes("can"));
+    if (selectedZone === "GATIL") return hospitalizations.filter((h: any) => h.patient?.species?.toLowerCase().includes("gato") || h.patient?.species?.toLowerCase().includes("fel"));
+    return hospitalizations;
+  }, [hospitalizations, selectedZone]);
+
+  // Real stats
+  const stats = useMemo(() => {
+    const filtered = selectedZone === "TODAS" ? hospitalizations : filteredHospitalizations;
+    const criticos = filtered.filter((h: any) => vitalLabel(h.tasks || []) === "Crítico").length;
+    const today = new Date().toISOString().split("T")[0];
+    const tratamentosHoje = filtered.reduce((acc: number, h: any) => {
+      return acc + (h.tasks || []).filter((t: any) => {
+        if (t.status !== "COMPLETED") return false;
+        const taskDate = new Date(t.completedAt || t.scheduledTime).toISOString().split("T")[0];
+        return taskDate === today;
+      }).length;
+    }, 0);
+    const aguardando = filtered.reduce((acc: number, h: any) => {
+      return acc + (h.tasks || []).filter((t: any) => t.status === "PENDING").length;
+    }, 0);
+    return { criticos, tratamentosHoje, aguardando };
+  }, [hospitalizations, filteredHospitalizations, selectedZone]);
+
+  // Box calculation: track real occupied boxes
+  const occupiedBoxNumbers = useMemo(() => {
+    return hospitalizations.map((h: any) => h.boxNumber).filter(Boolean);
+  }, [hospitalizations]);
+
+  const emptyBoxes = useMemo(() => {
+    const result: string[] = [];
+    for (let i = 1; i <= TOTAL_BOXES; i++) {
+      const label = `Box ${String(i).padStart(2, "0")}`;
+      if (!occupiedBoxNumbers.includes(label)) result.push(label);
+    }
+    return result;
+  }, [occupiedBoxNumbers]);
+
+  const firstAvailableBox = emptyBoxes[0] || "Box 01";
+
+  // Live sync for detail dialog
+  const selectedHospLive = useMemo(() => {
+    if (!selectedHosp) return null;
+    return hospitalizations.find((h: any) => h.id === selectedHosp.id) ?? selectedHosp;
+  }, [hospitalizations, selectedHosp]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard label="Ocupação" value={`${hospitalizations.length}/${TOTAL_BOXES}`} icon={Bed} color="text-blue-600" bg="bg-blue-50" trend="85% Capacidade" />
-        <StatCard label="Críticos" value={hospitalizations.filter((h:any) => vitalLabel(h.tasks || []) === "Crítico").length} icon={AlertCircle} color="text-rose-600" bg="bg-rose-50" trend="Atenção" />
-        <StatCard label="Tratamentos Hoje" value="24" icon={Activity} color="text-emerald-600" bg="bg-emerald-50" trend="+12% vs Ontem" />
-        <StatCard label="Aguardando" value="2" icon={Clock} color="text-amber-600" bg="bg-amber-50" trend="Em espera" />
+        <StatCard label="Ocupação" value={`${hospitalizations.length}/${TOTAL_BOXES}`} icon={Bed} color="text-blue-600" bg="bg-blue-50" trend={`${Math.round((hospitalizations.length / TOTAL_BOXES) * 100)}% Capacidade`} />
+        <StatCard label="Críticos" value={stats.criticos} icon={AlertCircle} color="text-rose-600" bg="bg-rose-50" trend="Atenção" />
+        <StatCard label="Tratamentos Hoje" value={stats.tratamentosHoje} icon={Activity} color="text-emerald-600" bg="bg-emerald-50" trend="Concluídos" />
+        <StatCard label="Aguardando" value={stats.aguardando} icon={Clock} color="text-amber-600" bg="bg-amber-50" trend="Pendentes" />
       </div>
 
       <div className="flex flex-wrap justify-between items-end gap-4">
@@ -359,7 +494,7 @@ export default function InternamentoPage() {
           </Button>
           <Button
             className="rounded-xl bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-100 dark:shadow-none font-black gap-2"
-            onClick={() => setAdmitBox("Box 01")}
+            onClick={() => setAdmitBox(firstAvailableBox)}
           >
             <Plus size={20} /> Admitir Paciente
           </Button>
@@ -396,7 +531,6 @@ export default function InternamentoPage() {
 
       {view === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {/* Occupied boxes */}
           {isLoading
             ? Array.from({ length: 4 }).map((_, i) => (
                 <Card key={i} className="border-none shadow-sm rounded-3xl overflow-hidden bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/5">
@@ -410,7 +544,7 @@ export default function InternamentoPage() {
                   </CardContent>
                 </Card>
               ))
-            : (hospitalizations || []).map((hosp: any) => {
+            : filteredHospitalizations.map((hosp: any) => {
                 const tasks = hosp.tasks ?? [];
                 const completed = tasks.filter((t: any) => t.status === "COMPLETED").length;
                 const dotColor = vitalColor(tasks);
@@ -458,9 +592,9 @@ export default function InternamentoPage() {
                         )}
                         <div className="flex items-center justify-between pt-2">
                           <div className="flex gap-3">
-                            <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-400">
-                              <Thermometer size={14} />
-                            </div>
+                            <Link href={`/dashboard/patients/${hosp.patientId}`} onClick={(e) => e.stopPropagation()} className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
+                              <ArrowUpRight size={14} />
+                            </Link>
                             <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-400">
                               <Stethoscope size={14} />
                             </div>
@@ -483,7 +617,6 @@ export default function InternamentoPage() {
                 );
               })}
 
-          {/* Empty boxes */}
           {!isLoading &&
             emptyBoxes.map((boxLabel) => (
               <Card
@@ -518,7 +651,7 @@ export default function InternamentoPage() {
                 </tr>
               </thead>
               <tbody>
-                {hospitalizations.map((hosp: any) => (
+                {filteredHospitalizations.map((hosp: any) => (
                   <tr 
                     key={hosp.id} 
                     className="border-b border-slate-50 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors cursor-pointer group"
@@ -573,7 +706,7 @@ export default function InternamentoPage() {
           </div>
         </Card>
       ) : (
-        <HospitalizationMap hospitalizations={hospitalizations || []} />
+        <HospitalizationMap hospitalizations={filteredHospitalizations} />
       )}
 
       {/* Detail Dialog */}
@@ -597,28 +730,39 @@ export default function InternamentoPage() {
                         {selectedHospLive.reason}
                       </p>
                     </div>
-                    <div className="bg-white/10 p-3 rounded-2xl backdrop-blur-md">
-                      <Activity className="text-blue-200" size={24} />
-                    </div>
+                    <Link href={`/dashboard/patients/${selectedHospLive.patientId}`}>
+                      <div className="bg-white/10 p-3 rounded-2xl backdrop-blur-md hover:bg-white/20 transition-colors">
+                        <ArrowUpRight className="text-blue-200" size={24} />
+                      </div>
+                    </Link>
                   </div>
                 </DialogHeader>
               </div>
 
               <div className="p-8 space-y-6">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                    Plano de Tratamento
+                  </h4>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 rounded-lg text-[10px] font-black uppercase text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                    onClick={() => setIsAddTaskOpen(true)}
+                  >
+                    <Plus size={14} className="mr-1" /> Adicionar
+                  </Button>
+                </div>
+
                 {selectedHospLive.tasks?.length > 0 ? (
-                  <div>
-                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">
-                      Plano de Tratamento
-                    </h4>
-                    <div className="space-y-3">
-                      {selectedHospLive.tasks.map((task: any) => (
-                        <TaskItem
-                          key={task.id}
-                          task={task}
-                          onComplete={(id) => completeTask.mutate(id)}
-                        />
-                      ))}
-                    </div>
+                  <div className="space-y-3">
+                    {selectedHospLive.tasks.map((task: any) => (
+                      <TaskItem
+                        key={task.id}
+                        task={task}
+                        onComplete={(id) => completeTask.mutate(id)}
+                      />
+                    ))}
                   </div>
                 ) : (
                   <div className="text-center py-8 text-slate-400">
@@ -629,15 +773,17 @@ export default function InternamentoPage() {
 
                 <div className="flex gap-3">
                   <Button 
-                    className="flex-1 rounded-xl bg-blue-600 font-black h-12"
-                    onClick={() => toast.success("A abrir painel de prescrição...")}
+                    className="flex-1 rounded-xl bg-rose-600 hover:bg-rose-700 font-black h-12 gap-2"
+                    disabled={dischargePatient.isPending}
+                    onClick={() => dischargePatient.mutate(selectedHospLive.id)}
                   >
-                    Nova Medicação
+                    <DoorOpen size={18} />
+                    {dischargePatient.isPending ? "A processar..." : "Dar Alta"}
                   </Button>
                   <Button 
                     variant="outline" 
                     className="flex-1 rounded-xl font-black h-12 border-slate-200 dark:border-white/10 dark:text-white"
-                    onClick={() => toast.info("A preparar registo de biometria...")}
+                    onClick={() => toast.info("Funcionalidade de biométricos em desenvolvimento")}
                   >
                     Registar Biométricos
                   </Button>
@@ -654,6 +800,15 @@ export default function InternamentoPage() {
           open={!!admitBox}
           onClose={() => setAdmitBox(null)}
           boxNumber={admitBox}
+        />
+      )}
+
+      {/* Add Task Dialog */}
+      {selectedHospLive && (
+        <AddTaskDialog
+          open={isAddTaskOpen}
+          onClose={() => setIsAddTaskOpen(false)}
+          hospitalizationId={selectedHospLive.id}
         />
       )}
     </div>
