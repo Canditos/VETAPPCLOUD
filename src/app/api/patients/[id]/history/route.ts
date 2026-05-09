@@ -18,7 +18,7 @@ export async function GET(
 
   try {
     // Fetch all related entities for a complete history
-    const [consultations, labResults, imagingStudies] = await Promise.all([
+    const [consultations, labResults, imagingStudies, vaccinations, dewormings, prescriptions, vitals] = await Promise.all([
       tenantPrisma.consultation.findMany({
         where: { patientId: params.id },
         include: {
@@ -35,6 +35,23 @@ export async function GET(
       tenantPrisma.imagingStudy.findMany({
         where: { patientId: params.id },
         orderBy: { createdAt: "desc" },
+      }),
+      tenantPrisma.vaccination.findMany({
+        where: { patientId: params.id },
+        orderBy: { appliedAt: "desc" },
+      }),
+      tenantPrisma.deworming.findMany({
+        where: { patientId: params.id },
+        orderBy: { appliedAt: "desc" },
+      }),
+      tenantPrisma.prescription.findMany({
+        where: { patientId: params.id },
+        include: { items: true, veterinarian: { select: { name: true } } },
+        orderBy: { createdAt: "desc" },
+      }),
+      tenantPrisma.vitalSign.findMany({
+        where: { patientId: params.id },
+        orderBy: { recordedAt: "desc" },
       }),
     ]);
 
@@ -66,6 +83,42 @@ export async function GET(
         subtitle: "RX / Ecografia",
         status: "COMPLETED",
         data: i
+      })),
+      ...vaccinations.map(v => ({
+        type: "VACCINATION",
+        id: v.id,
+        date: v.appliedAt,
+        title: `Vacinação: ${v.vaccineName}`,
+        subtitle: v.batchNumber ? `Lote: ${v.batchNumber}` : "Sem lote registado",
+        status: "COMPLETED",
+        data: v
+      })),
+      ...dewormings.map(d => ({
+        type: "DEWORMING",
+        id: d.id,
+        date: d.appliedAt,
+        title: `Desparasitação ${d.type}`,
+        subtitle: d.productName,
+        status: "COMPLETED",
+        data: d
+      })),
+      ...prescriptions.map(p => ({
+        type: "PRESCRIPTION",
+        id: p.id,
+        date: p.createdAt,
+        title: "Prescrição Médica",
+        subtitle: `Emitida por Dr. ${p.veterinarian?.name || "VetConnect"}`,
+        status: "ACTIVE",
+        data: p
+      })),
+      ...vitals.map(v => ({
+        type: "VITALS",
+        id: v.id,
+        date: v.recordedAt,
+        title: "Sinais Vitais",
+        subtitle: `${v.weight ? v.weight + "kg" : ""} ${v.temperature ? v.temperature + "ºC" : ""}`,
+        status: "COMPLETED",
+        data: v
       }))
     ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 

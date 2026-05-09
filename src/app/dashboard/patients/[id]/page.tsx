@@ -30,11 +30,19 @@ import {
   Heart
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
+} from "@/components/ui/dialog";
+import { VaccinationForm } from "@/components/forms/VaccinationForm";
+import { DewormingForm } from "@/components/forms/DewormingForm";
+import { VitalSignsForm } from "@/components/forms/VitalSignsForm";
+import { PrescriptionForm } from "@/components/forms/PrescriptionForm";
+import { PrescriptionDownloadButton } from "@/components/clinical/PrescriptionDownloadButton";
 import { toast } from "sonner";
 import { format, differenceInYears, differenceInMonths } from "date-fns";
 import { pt } from "date-fns/locale";
@@ -108,6 +116,15 @@ export default function PatientProfilePage({ params }: { params: Promise<{ id: s
     }
   });
 
+  const { data: clinic } = useQuery({
+    queryKey: ["clinic-settings"],
+    queryFn: async () => {
+      const res = await fetch("/api/clinic");
+      if (!res.ok) throw new Error("Erro ao carregar dados da clínica");
+      return res.json();
+    }
+  });
+
   if (isLoading) return <div className="p-12 text-center font-black text-slate-300 dark:text-slate-700 animate-pulse uppercase tracking-[0.3em]">Sincronizando Hub Clínico 360º...</div>;
   if (!patient) return <div className="p-12 text-center text-red-500 font-bold">Paciente não encontrado.</div>;
 
@@ -138,6 +155,22 @@ export default function PatientProfilePage({ params }: { params: Promise<{ id: s
           >
             <MessageSquare size={14} /> SMS
           </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="flex-1 sm:flex-none rounded-xl font-black gap-2 border-emerald-200 dark:border-emerald-900/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 uppercase text-[10px] tracking-widest">
+                <Activity size={14} /> Sinais Vitais
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[450px] rounded-[3rem] border-none shadow-3xl p-0 overflow-hidden bg-white dark:bg-slate-900">
+              <div className="bg-emerald-600 p-8 text-white">
+                <DialogTitle className="text-2xl font-black tracking-tight">Sinais Vitais</DialogTitle>
+                <p className="text-emerald-100 text-xs font-bold uppercase tracking-widest mt-1 opacity-80">Registe os parâmetros biométricos do paciente.</p>
+              </div>
+              <div className="p-8">
+                <VitalSignsForm patientId={id} onSuccess={() => {}} />
+              </div>
+            </DialogContent>
+          </Dialog>
           <Link href={`/dashboard/consultations?patientId=${id}`} className="flex-1 sm:flex-none">
             <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black gap-2 shadow-lg shadow-blue-500/20 dark:shadow-none uppercase text-[10px] tracking-widest">
               <Plus size={14} strokeWidth={3} /> Nova Consulta
@@ -347,14 +380,47 @@ export default function PatientProfilePage({ params }: { params: Promise<{ id: s
                   <p className="text-xs font-black uppercase tracking-widest">Sem vacinas</p>
                 </div>
               )}
-              <Link href={`/dashboard/consultations?patientId=${id}&tab=clinical`} className="block">
-                <Button 
-                  variant="outline" 
-                  className="w-full rounded-2xl py-6 border-dashed border-slate-200 dark:border-white/10 text-slate-400 dark:text-slate-600 font-black uppercase text-[9px] tracking-widest hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all bg-transparent"
-                >
-                  <Plus size={14} className="mr-2" /> Registar Vacinação
-                </Button>
-              </Link>
+              <div className="grid grid-cols-2 gap-2">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className="w-full rounded-2xl py-6 border-dashed border-slate-200 dark:border-white/10 text-slate-400 dark:text-slate-600 font-black uppercase text-[9px] tracking-widest hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all bg-transparent"
+                    >
+                      <Plus size={14} className="mr-1" /> Vacina
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[500px] rounded-[3rem] border-none shadow-3xl p-0 overflow-hidden bg-white dark:bg-slate-900">
+                    <div className="bg-amber-500 p-8 text-white">
+                      <DialogTitle className="text-2xl font-black tracking-tight">Nova Vacinação</DialogTitle>
+                      <p className="text-amber-100 text-xs font-bold uppercase tracking-widest mt-1 opacity-80">Registe a aplicação e validade do reforço.</p>
+                    </div>
+                    <div className="p-8">
+                      <VaccinationForm patientId={id} onSuccess={() => {}} />
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className="w-full rounded-2xl py-6 border-dashed border-slate-200 dark:border-white/10 text-slate-400 dark:text-slate-600 font-black uppercase text-[9px] tracking-widest hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all bg-transparent"
+                    >
+                      <Plus size={14} className="mr-1" /> Desp.
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[500px] rounded-[3rem] border-none shadow-3xl p-0 overflow-hidden bg-white dark:bg-slate-900">
+                    <div className="bg-indigo-600 p-8 text-white">
+                      <DialogTitle className="text-2xl font-black tracking-tight">Nova Desparasitação</DialogTitle>
+                      <p className="text-indigo-100 text-xs font-bold uppercase tracking-widest mt-1 opacity-80">Registe o tratamento interno ou externo.</p>
+                    </div>
+                    <div className="p-8">
+                      <DewormingForm patientId={id} onSuccess={() => {}} />
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </CardContent>
           </Card>
 
@@ -394,9 +460,7 @@ export default function PatientProfilePage({ params }: { params: Promise<{ id: s
                     </div>
                     <div className="pt-4 border-t border-white/10 flex justify-between items-center relative z-10">
                        <p className="text-[9px] font-bold text-slate-500 italic">Dr. {pr.veterinarian?.name.split(' ')[0]}</p>
-                       <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg hover:bg-white/10 text-white">
-                         <Printer size={14} />
-                       </Button>
+                       <PrescriptionDownloadButton prescription={pr} clinic={clinic} />
                     </div>
                   </div>
                 ))
@@ -406,11 +470,22 @@ export default function PatientProfilePage({ params }: { params: Promise<{ id: s
                   <p className="text-xs font-black uppercase tracking-widest">Sem medicação activa</p>
                 </div>
               )}
-              <Link href={`/dashboard/consultations?patientId=${id}&tab=billing`} className="block">
-                <Button className="w-full rounded-2xl py-6 bg-slate-100 dark:bg-white/5 hover:bg-blue-100 dark:hover:bg-blue-500/20 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-black uppercase text-[9px] tracking-widest transition-all">
-                  Nova Prescrição
-                </Button>
-              </Link>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button className="w-full rounded-2xl py-6 bg-slate-100 dark:bg-white/5 hover:bg-blue-100 dark:hover:bg-blue-500/20 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-black uppercase text-[9px] tracking-widest transition-all">
+                    Nova Prescrição
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[700px] rounded-[3rem] border-none shadow-3xl p-0 overflow-hidden bg-white dark:bg-slate-900 max-h-[90vh] overflow-y-auto">
+                  <div className="bg-slate-900 p-8 text-white">
+                    <DialogTitle className="text-2xl font-black tracking-tight">Emitir Prescrição Médica</DialogTitle>
+                    <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1 opacity-80">Documento oficial com validade legal.</p>
+                  </div>
+                  <div className="p-8">
+                    <PrescriptionForm patientId={id} onSuccess={() => {}} />
+                  </div>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
 

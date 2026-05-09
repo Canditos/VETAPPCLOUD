@@ -13,7 +13,8 @@ import {
   Receipt,
   Syringe,
   Pill,
-  Activity
+  Activity,
+  Bug
 } from "lucide-react";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,7 +34,8 @@ function HistoryEvent({ event }: HistoryEventProps) {
       case "CONSULTATION": return <Stethoscope className="text-blue-600 dark:text-blue-400" size={16} strokeWidth={2.5} />;
       case "LAB_RESULT": return <FlaskConical className="text-purple-600 dark:text-purple-400" size={16} strokeWidth={2.5} />;
       case "IMAGING": return <ImageIcon className="text-emerald-600 dark:text-emerald-400" size={16} strokeWidth={2.5} />;
-      case "VACCINE": return <Syringe className="text-amber-600 dark:text-amber-400" size={16} strokeWidth={2.5} />;
+      case "VACCINATION": return <Syringe className="text-amber-600 dark:text-amber-400" size={16} strokeWidth={2.5} />;
+      case "DEWORMING": return <Bug className="text-indigo-600 dark:text-indigo-400" size={16} strokeWidth={2.5} />;
       case "PRESCRIPTION": return <Pill className="text-rose-600 dark:text-rose-400" size={16} strokeWidth={2.5} />;
       case "VITALS": return <Activity className="text-indigo-600 dark:text-indigo-400" size={16} strokeWidth={2.5} />;
       default: return <FileText className="text-slate-600 dark:text-slate-400" size={16} strokeWidth={2.5} />;
@@ -42,6 +44,7 @@ function HistoryEvent({ event }: HistoryEventProps) {
 
   const getStatusBadge = () => {
     if (event.status === "COMPLETED") return <Badge className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-none text-[9px] font-black uppercase">Concluído</Badge>;
+    if (event.status === "ACTIVE") return <Badge className="bg-blue-600 text-white border-none text-[9px] font-black uppercase shadow-lg shadow-blue-500/20">Ativo</Badge>;
     if (event.status === "SCHEDULED") return <Badge className="bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-none text-[9px] font-black uppercase">Agendado</Badge>;
     return <Badge variant="outline" className="text-[9px] font-black uppercase border-slate-200 dark:border-white/10">{event.status}</Badge>;
   };
@@ -119,44 +122,76 @@ function HistoryEvent({ event }: HistoryEventProps) {
                   </div>
                 )}
 
-                {event.type === "LAB_RESULT" && (
-                  <div className="bg-white dark:bg-slate-950/60 p-4 rounded-xl border border-slate-100 dark:border-white/5">
-                     <div className="flex justify-between items-center mb-3">
-                        <p className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-tight">Análise de Sangue</p>
-                        {event.data?.abnormalFlags && <Badge className="bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border-none text-[8px] font-black uppercase">Crítico</Badge>}
-                     </div>
-                     <div className="space-y-1">
-                        <div className="flex justify-between text-[10px] py-1.5 border-b border-slate-50 dark:border-white/5">
-                          <span className="text-slate-500 dark:text-slate-400 font-bold">WBC</span>
-                          <span className="font-black text-slate-800 dark:text-slate-200">12.4 x10³/µL</span>
+                {event.type === "VACCINATION" && (
+                  <div className="bg-amber-50/30 dark:bg-amber-500/5 p-4 rounded-xl border border-amber-100 dark:border-amber-500/10">
+                     <div className="flex justify-between items-start">
+                        <div>
+                           <p className="text-sm font-black text-slate-900 dark:text-white">{event.data?.vaccineName}</p>
+                           <p className="text-[10px] text-slate-500 font-bold mt-1">Lote: {event.data?.batchNumber || "N/A"}</p>
                         </div>
-                        <div className="flex justify-between text-[10px] py-1.5">
-                          <span className="text-slate-500 dark:text-slate-400 font-bold">RBC</span>
-                          <span className="font-black text-slate-800 dark:text-slate-200">6.8 x10⁶/µL</span>
-                        </div>
+                        {event.data?.expiresAt && (
+                           <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 border-none text-[9px] font-black">
+                              Reforço: {format(new Date(event.data.expiresAt), "dd/MM/yyyy")}
+                           </Badge>
+                        )}
                      </div>
-                     <Button variant="outline" className="w-full mt-3 h-8 text-[9px] font-black uppercase tracking-widest rounded-lg border-slate-200 dark:border-white/10 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5">
-                       Abrir Relatório Completo
-                     </Button>
+                     {event.data?.notes && (
+                        <p className="mt-3 text-xs text-slate-600 dark:text-slate-400 leading-relaxed italic">"{event.data.notes}"</p>
+                     )}
                   </div>
                 )}
 
-                {event.type === "IMAGING" && (
-                  <div className="space-y-2">
-                     <div className="aspect-video bg-slate-900 dark:bg-black rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/5 shadow-inner overflow-hidden relative group">
-                        <div className="flex flex-col items-center gap-2 opacity-40 group-hover:opacity-60 transition-opacity">
-                          <ImageIcon size={32} className="text-slate-400" />
-                          <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest">DICOM Media Preview</p>
+                {event.type === "DEWORMING" && (
+                  <div className="bg-indigo-50/30 dark:bg-indigo-500/5 p-4 rounded-xl border border-indigo-100 dark:border-indigo-500/10">
+                     <div className="flex justify-between items-start">
+                        <div>
+                           <p className="text-sm font-black text-slate-900 dark:text-white">{event.data?.productName}</p>
+                           <p className="text-[10px] text-slate-500 font-bold mt-1">Tipo: {event.data?.type}</p>
                         </div>
-                        <div className="absolute inset-0 bg-slate-900/80 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-sm">
-                           <Button className="bg-white text-black hover:bg-slate-100 rounded-xl h-9 px-4 text-[10px] font-black uppercase tracking-widest gap-2 shadow-2xl scale-90 group-hover:scale-100 transition-transform">
-                              <ImageIcon size={14} strokeWidth={3} /> Visualizar Imagem
-                           </Button>
-                        </div>
+                        {event.data?.expiresAt && (
+                           <Badge className="bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400 border-none text-[9px] font-black">
+                              Próxima dose: {format(new Date(event.data.expiresAt), "dd/MM/yyyy")}
+                           </Badge>
+                        )}
                      </div>
-                     <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold italic text-center">RX Tórax Lateral • Protocolo DICOM</p>
                   </div>
                 )}
+
+                {event.type === "PRESCRIPTION" && (
+                  <div className="bg-slate-900 dark:bg-black p-5 rounded-xl border border-slate-800 space-y-4">
+                     <div className="flex justify-between items-center pb-3 border-b border-white/5">
+                        <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Itens Prescritos</p>
+                        <Badge className="bg-blue-600/20 text-blue-400 border border-blue-500/30 text-[8px]">OFICIAL</Badge>
+                     </div>
+                     <div className="space-y-3">
+                        {event.data?.items?.map((item: any, i: number) => (
+                           <div key={i} className="flex justify-between items-center group/item">
+                              <div>
+                                 <p className="text-xs font-black text-white">{item.medicineName}</p>
+                                 <p className="text-[9px] text-slate-500 mt-0.5">{item.dosage} • {item.frequency} • {item.duration}</p>
+                              </div>
+                           </div>
+                        ))}
+                     </div>
+                  </div>
+                )}
+
+                {event.type === "VITALS" && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {[
+                      { label: "Peso", value: event.data?.weight ? `${event.data.weight} kg` : "---", color: "text-blue-500" },
+                      { label: "Temp", value: event.data?.temperature ? `${event.data.temperature} ºC` : "---", color: "text-orange-500" },
+                      { label: "FC", value: event.data?.heartRate || "---", color: "text-rose-500" },
+                      { label: "FR", value: event.data?.respiratoryRate || "---", color: "text-indigo-500" },
+                    ].map((v, i) => (
+                      <div key={i} className="p-3 bg-white dark:bg-slate-950/60 rounded-xl border border-slate-100 dark:border-white/5 text-center">
+                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">{v.label}</p>
+                        <p className={cn("text-xs font-black", v.color)}>{v.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
               </div>
             </div>
           )}
