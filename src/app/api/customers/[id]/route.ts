@@ -74,3 +74,52 @@ export async function GET(
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
+
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const session = await getServerSession(authOptions);
+    
+    if (!session || !(session.user as any).clinicId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const clinicId = (session.user as any).clinicId;
+    const tenantPrisma = getTenantClient(clinicId);
+
+    const existing = await tenantPrisma.owner.findUnique({
+      where: { id },
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+    }
+
+    if (existing.clinicId !== clinicId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const body = await req.json();
+    const { name, email, phone, vatNumber, address, notes } = body;
+
+    const customer = await tenantPrisma.owner.update({
+      where: { id },
+      data: {
+        ...(name !== undefined && { name }),
+        ...(email !== undefined && { email }),
+        ...(phone !== undefined && { phone }),
+        ...(vatNumber !== undefined && { vatNumber }),
+        ...(address !== undefined && { address }),
+        ...(notes !== undefined && { notes }),
+      },
+    });
+
+    return NextResponse.json(customer);
+  } catch (error) {
+    console.error("[CUSTOMER_PATCH]", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}

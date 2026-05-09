@@ -24,9 +24,12 @@ import {
   Smartphone,
   ShieldCheck,
   ArrowRight,
-  Calendar
+  Calendar,
+  Edit3,
+  Save,
+  X
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -36,9 +39,17 @@ import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import Link from "next/link";
 import { InvoiceDownloadBtn } from "@/components/InvoicePDF";
+import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 export default function CustomerProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const queryClient = useQueryClient();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ name: "", email: "", phone: "", vatNumber: "", address: "", notes: "" });
+
   const { data: customer, isLoading } = useQuery({
     queryKey: ["customer-hub", id],
     queryFn: async () => {
@@ -57,6 +68,47 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
     }
   });
 
+  const updateCustomer = useMutation({
+    mutationFn: async (data: typeof editForm) => {
+      const res = await fetch(`/api/customers/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Erro ao atualizar cliente");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customer-hub", id] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      toast.success("Cliente atualizado com sucesso!");
+      setIsEditing(false);
+    },
+    onError: () => toast.error("Erro ao atualizar cliente"),
+  });
+
+  const handleEdit = () => {
+    if (customer) {
+      setEditForm({
+        name: customer.name || "",
+        email: customer.email || "",
+        phone: customer.phone || "",
+        vatNumber: customer.vatNumber || "",
+        address: customer.address || "",
+        notes: customer.notes || "",
+      });
+      setIsEditing(true);
+    }
+  };
+
+  const handleSave = () => {
+    if (!editForm.name.trim()) {
+      toast.error("Nome é obrigatório");
+      return;
+    }
+    updateCustomer.mutate(editForm);
+  };
+
   if (isLoading) return <div className="p-12 text-center font-black text-slate-300 animate-pulse">A carregar Hub 360º...</div>;
   if (!customer) return <div className="p-12 text-center text-red-500 font-bold">Cliente não encontrado.</div>;
 
@@ -74,6 +126,9 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
             <div className="flex items-center gap-3">
               <h1 className="text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">{customer.name}</h1>
               <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-none font-black text-[10px] uppercase">Cliente Ativo</Badge>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-400 hover:text-blue-600" onClick={handleEdit}>
+                <Edit3 size={16} />
+              </Button>
             </div>
             <div className="flex flex-wrap gap-6 mt-3 text-slate-500 dark:text-slate-400 font-bold">
               <span className="flex items-center gap-2"><Phone size={16} className="text-slate-300 dark:text-slate-600" /> {customer.phone || "Sem telefone"}</span>
@@ -93,10 +148,13 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
           </Card>
           
           <div className="grid grid-cols-2 gap-3 h-fit">
-            <Button className="rounded-2xl h-full py-6 font-black bg-slate-900 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-700 transition-all gap-2 shadow-xl shadow-slate-200 dark:shadow-none">
-              <Plus size={18} /> Nova Consulta
-            </Button>
-            <Button variant="outline" className="rounded-2xl h-full py-6 font-black border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all gap-2 dark:text-slate-200">
+            <Link href={`/dashboard/consultations?customerId=${id}`} className="flex-1">
+              <Button className="w-full rounded-2xl h-full py-6 font-black bg-slate-900 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-700 transition-all gap-2 shadow-xl shadow-slate-200 dark:shadow-none">
+                <Plus size={18} /> Nova Consulta
+              </Button>
+            </Link>
+            <Button variant="outline" className="rounded-2xl h-full py-6 font-black border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all gap-2 dark:text-slate-200"
+              onClick={() => toast.info("Funcionalidade de faturação em desenvolvimento")}>
               <FilePlus size={18} /> Criar Fatura
             </Button>
           </div>
@@ -140,7 +198,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
                       <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Peso Atual</p>
-                      <p className="text-lg font-black text-slate-900 dark:text-slate-100 mt-1">{animal.weight ? `${animal.weight} kg` : "---"}</p>
+                      <p className="text-lg font-black text-slate-900 dark:text-slate-100 mt-1">{animal.weight ? `${Number(animal.weight).toFixed(1)} kg` : "---"}</p>
                     </div>
                     <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
                       <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Consultas</p>
@@ -160,7 +218,10 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                 </CardContent>
               </Card>
             ))}
-            <button className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 flex flex-col items-center justify-center gap-4 text-slate-300 dark:text-slate-700 hover:border-blue-300 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-all group">
+            <button 
+              onClick={() => toast.info("Funcionalidade de adicionar animal em desenvolvimento")}
+              className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 flex flex-col items-center justify-center gap-4 text-slate-300 dark:text-slate-700 hover:border-blue-300 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-all group"
+            >
               <div className="p-6 bg-slate-50 dark:bg-slate-800 rounded-full group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
                 <Plus size={32} />
               </div>
@@ -179,7 +240,8 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                     <CardTitle className="text-2xl font-black text-slate-900 dark:text-slate-100">Histórico de Faturação</CardTitle>
                     <CardDescription className="dark:text-slate-400 font-medium">Últimos documentos emitidos no sistema.</CardDescription>
                   </div>
-                  <Button variant="outline" className="rounded-xl font-bold border-slate-100 dark:border-slate-800 dark:text-slate-200">Ver Todas</Button>
+                  <Button variant="outline" className="rounded-xl font-bold border-slate-100 dark:border-slate-800 dark:text-slate-200"
+                    onClick={() => toast.info("Funcionalidade de histórico completo em desenvolvimento")}>Ver Todas</Button>
                 </CardHeader>
                 <Table>
                   <TableHeader>
@@ -235,7 +297,10 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                     <p className="text-3xl font-black text-emerald-400">€{(customer.stats?.totalPaid || 0).toFixed(2)}</p>
                   </div>
                   <div className="pt-8 border-t border-white/5">
-                    <Button className="w-full rounded-2xl py-7 bg-blue-600 hover:bg-blue-700 font-black text-lg gap-2 shadow-2xl shadow-blue-500/20">
+                    <Button 
+                      className="w-full rounded-2xl py-7 bg-blue-600 hover:bg-blue-700 font-black text-lg gap-2 shadow-2xl shadow-blue-500/20"
+                      onClick={() => toast.info("Funcionalidade de liquidação em desenvolvimento")}
+                    >
                        Liquidar Dívida
                     </Button>
                   </div>
@@ -272,24 +337,42 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
         {/* History Tab */}
         <TabsContent value="history" className="animate-in fade-in slide-in-from-top-2 duration-500">
            <Card className="border-none shadow-xl shadow-slate-200/50 dark:shadow-none rounded-[2rem] p-8 bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-slate-800">
-              <div className="space-y-12 relative before:absolute before:left-10 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-100 dark:before:bg-slate-800">
-                <div className="relative pl-24 group">
-                  <div className="absolute left-6 top-0 h-8 w-8 rounded-full bg-blue-600 border-4 border-white dark:border-slate-900 shadow-lg z-10 group-hover:scale-125 transition-transform"></div>
-                  <div className="space-y-2">
-                    <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2"><Clock size={12} /> 12 Maio 2026 • 14:30</p>
-                    <h4 className="text-xl font-black text-slate-900 dark:text-slate-100">Consulta de Rotina - Bolinha</h4>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium max-w-2xl leading-relaxed bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl italic">"Paciente apresenta bom estado geral. Vacinação em dia. Recomendado reforço de desparasitação interna."</p>
-                    <div className="flex gap-2 pt-2">
-                      <Badge className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-none font-black text-[9px]">VACINAÇÃO</Badge>
-                      <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-none font-black text-[9px]">CHECK-UP</Badge>
-                    </div>
+              <CardHeader className="px-0 pt-0">
+                <CardTitle className="text-xl font-black text-slate-900 dark:text-white">Histórico Clínico</CardTitle>
+                <CardDescription className="dark:text-slate-400">Consultas de todos os animais deste cliente.</CardDescription>
+              </CardHeader>
+              {customer.patients?.some((p: any) => p._count?.consultations > 0) ? (
+                <div className="space-y-4 mt-4">
+                  {customer.patients
+                    .filter((p: any) => p._count?.consultations > 0)
+                    .map((patient: any) => (
+                      <div key={patient.id} className="p-6 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                            <PawPrint size={20} />
+                          </div>
+                          <div>
+                            <p className="font-black text-slate-900 dark:text-white">{patient.name}</p>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase">{patient._count?.consultations || 0} consultas</p>
+                          </div>
+                        </div>
+                        <Link href={`/dashboard/patients/${patient.id}`}>
+                          <Button variant="ghost" className="text-blue-600 dark:text-blue-400 font-black text-[10px] uppercase tracking-widest gap-1">
+                            Ver histórico completo <ArrowRight size={14} />
+                          </Button>
+                        </Link>
+                      </div>
+                    ))}
+                </div>
+              ) : (
+                <div className="text-center py-16 border-2 border-dashed border-slate-100 dark:border-white/5 rounded-[2rem] bg-slate-50/30 dark:bg-transparent mt-4">
+                  <div className="h-16 w-16 bg-slate-100 dark:bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <Clock size={28} className="text-slate-300 dark:text-slate-700" />
                   </div>
+                  <p className="text-slate-400 dark:text-slate-600 font-black text-xs uppercase tracking-widest">Sem registos clínicos</p>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Nenhum animal deste cliente tem consultas registadas.</p>
                 </div>
-                {/* Timeline content would be dynamic based on consultations linked via patients */}
-                <div className="text-center py-20">
-                  <p className="text-slate-300 dark:text-slate-700 font-bold">Timeline clínica completa em desenvolvimento...</p>
-                </div>
-              </div>
+              )}
            </Card>
         </TabsContent>
         
@@ -302,7 +385,12 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                       <CardTitle className="text-2xl font-black text-slate-900 dark:text-slate-100">Orçamentos e Planos</CardTitle>
                       <CardDescription className="dark:text-slate-400 font-medium">Propostas clínicas aceites e pendentes.</CardDescription>
                     </div>
-                    <Button className="rounded-xl gap-2 bg-slate-900 dark:bg-blue-600 font-black"><Plus size={18} /> Novo Orçamento</Button>
+                    <Button 
+                      className="rounded-xl gap-2 bg-slate-900 dark:bg-blue-600 font-black"
+                      onClick={() => toast.info("Funcionalidade de orçamentos em desenvolvimento")}
+                    >
+                      <Plus size={18} /> Novo Orçamento
+                    </Button>
                  </div>
               </CardHeader>
               <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -318,9 +406,12 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                          </Badge>
                       </div>
                       <div className="pt-4 border-t border-slate-50 dark:border-slate-800 flex gap-2">
-                         <Button className="flex-1 rounded-xl py-5 bg-blue-600 font-black text-xs gap-2 shadow-xl shadow-blue-100 dark:shadow-none opacity-0 group-hover:opacity-100 transition-all">
-                            Converter em Fatura
-                         </Button>
+                     <Button 
+                       className="flex-1 rounded-xl py-5 bg-blue-600 font-black text-xs gap-2 shadow-xl shadow-blue-100 dark:shadow-none opacity-0 group-hover:opacity-100 transition-all"
+                       onClick={() => toast.info("Funcionalidade de conversão em desenvolvimento")}
+                     >
+                        Converter em Fatura
+                     </Button>
                       </div>
                    </div>
                  ))}
@@ -333,7 +424,56 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
               </div>
            </Card>
         </TabsContent>
-      </Tabs>
+       </Tabs>
+
+      {/* Edit Customer Dialog */}
+      <Dialog open={isEditing} onOpenChange={setIsEditing}>
+        <DialogContent className="sm:max-w-[560px] rounded-[2rem] border-none shadow-2xl bg-white dark:bg-slate-900">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black tracking-tight">Editar Cliente</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-5 py-4">
+            <div className="grid gap-2">
+              <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nome Completo</Label>
+              <Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none ring-1 ring-slate-100 dark:ring-white/10 font-bold" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">NIF</Label>
+                <Input value={editForm.vatNumber} onChange={(e) => setEditForm({ ...editForm, vatNumber: e.target.value })} className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none ring-1 ring-slate-100 dark:ring-white/10 font-mono font-bold" />
+              </div>
+              <div className="grid gap-2">
+                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Telemóvel</Label>
+                <Input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none ring-1 ring-slate-100 dark:ring-white/10 font-bold" />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Email</Label>
+              <Input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none ring-1 ring-slate-100 dark:ring-white/10 font-bold" />
+            </div>
+            <div className="grid gap-2">
+              <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Morada</Label>
+              <Input value={editForm.address} onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none ring-1 ring-slate-100 dark:ring-white/10 font-bold" />
+            </div>
+            <div className="grid gap-2">
+              <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Observações</Label>
+              <textarea
+                value={editForm.notes}
+                onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                className="w-full h-20 rounded-xl bg-slate-50 dark:bg-white/5 border-none ring-1 ring-slate-100 dark:ring-white/10 p-4 font-medium text-sm resize-none outline-none"
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" className="rounded-xl font-black" onClick={() => setIsEditing(false)}>
+              <X size={16} className="mr-2" /> Cancelar
+            </Button>
+            <Button className="rounded-xl font-black bg-blue-600 hover:bg-blue-700" onClick={handleSave} disabled={updateCustomer.isPending}>
+              {updateCustomer.isPending ? "A guardar..." : <><Save size={16} className="mr-2" /> Guardar</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
