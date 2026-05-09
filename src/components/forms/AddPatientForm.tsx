@@ -72,6 +72,16 @@ export function AddPatientForm({ onSuccess, defaultOwnerId }: { onSuccess?: () =
   const [isSearching, setIsSearching] = useState(false);
   const [activeTab, setActiveTab] = useState("patient");
 
+  const { register, handleSubmit, formState: { errors }, reset, setValue, watch } = useForm<PatientFormValues>({
+    resolver: zodResolver(patientSchema),
+    defaultValues: {
+      species: "Gato",
+      gender: "F",
+      reproductiveStatus: "Intacto",
+      aggressionLevel: "Baixo"
+    }
+  });
+
   // Pre-select owner if defaultOwnerId is provided
   useEffect(() => {
     if (defaultOwnerId) {
@@ -92,16 +102,6 @@ export function AddPatientForm({ onSuccess, defaultOwnerId }: { onSuccess?: () =
       fetchOwner();
     }
   }, [defaultOwnerId, setValue]);
-
-  const { register, handleSubmit, formState: { errors }, reset, setValue, watch } = useForm<PatientFormValues>({
-    resolver: zodResolver(patientSchema),
-    defaultValues: {
-      species: "Gato",
-      gender: "F",
-      reproductiveStatus: "Intacto",
-      aggressionLevel: "Baixo"
-    }
-  });
 
   // Fetch owners when searching
   useEffect(() => {
