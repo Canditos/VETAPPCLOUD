@@ -35,11 +35,15 @@ export default function PatientDetailPage() {
   const router = useRouter();
   const patientId = params.id as string;
 
-  const { data: patient, isLoading, isError } = useQuery({
+  const { data: patient, isLoading, isError, error } = useQuery({
     queryKey: ["patient", patientId],
     queryFn: async () => {
+      if (!patientId) throw new Error("ID do paciente não encontrado");
       const res = await fetch(`/api/patients/${patientId}`);
-      if (!res.ok) throw new Error("Erro ao carregar paciente");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Erro ao carregar paciente");
+      }
       return res.json();
     },
   });
@@ -57,11 +61,12 @@ export default function PatientDetailPage() {
   }
 
   if (isError || !patient) {
+    console.error("Patient detail error:", error);
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
         <AlertCircle size={48} className="text-red-500" />
-        <h2 className="text-2xl font-bold text-slate-900">Paciente não encontrado</h2>
-        <p className="text-slate-500">Não foi possível carregar os dados deste paciente.</p>
+        <h2 className="text-2xl font-bold text-slate-900">Erro ao carregar paciente</h2>
+        <p className="text-slate-500 max-w-md">{error instanceof Error ? error.message : "Não foi possível carregar os dados."}</p>
         <Button onClick={() => router.push("/dashboard/patients")}>Voltar para Lista</Button>
       </div>
     );
