@@ -6,17 +6,18 @@ import {
   ChevronRight, 
   Clock, 
   Plus,
-  MoreVertical,
   Stethoscope,
   RefreshCw,
   Activity,
   Syringe,
   Scissors,
   Zap,
-  CheckCircle2,
   CalendarDays,
   PawPrint,
-  User as UserIcon
+  User as UserIcon,
+  Search,
+  CheckCircle2,
+  AlertCircle
 } from "lucide-react";
 import { 
   DndContext, 
@@ -33,21 +34,25 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogHeader } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { format } from "date-fns";
+import { format, startOfWeek, addDays } from "date-fns";
 import { pt } from "date-fns/locale";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const hours = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"];
+// Extended hours until midnight for full clinical coverage
+const hours = [
+  "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", 
+  "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00", "00:00"
+];
 
 const VETS = [
-  { id: "v1", name: "Dr. Marco Cândido", color: "blue" },
-  { id: "v2", name: "Dra. Ana Silva", color: "purple" },
-  { id: "v3", name: "Dr. Roberto", color: "emerald" },
+  { id: "v1", name: "Dr. Marco Cândido", color: "blue", specialty: "Clinical Lead" },
+  { id: "v2", name: "Dra. Ana Silva", color: "purple", specialty: "Surgery" },
+  { id: "v3", name: "Dr. João Pedro", color: "emerald", specialty: "Internal Med" },
 ];
 
 const getTypeConfig = (type: string) => {
@@ -63,10 +68,10 @@ const getTypeConfig = (type: string) => {
 const getVetColor = (vetId: string) => {
   const vet = VETS.find(v => v.id === vetId);
   switch (vet?.color) {
-    case "blue": return "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-950 dark:text-blue-50";
-    case "purple": return "border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-950 dark:text-purple-50";
-    case "emerald": return "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-950 dark:text-emerald-50";
-    default: return "border-slate-500 bg-slate-50 dark:bg-slate-900/20 text-slate-950 dark:text-slate-50";
+    case "blue": return "border-blue-600 bg-blue-50/80 dark:bg-blue-900/40 text-blue-950 dark:text-blue-50 ring-1 ring-blue-200 dark:ring-blue-800/50";
+    case "purple": return "border-purple-600 bg-purple-50/80 dark:bg-purple-900/40 text-purple-950 dark:text-purple-50 ring-1 ring-purple-200 dark:ring-purple-800/50";
+    case "emerald": return "border-emerald-600 bg-emerald-50/80 dark:bg-emerald-900/40 text-emerald-950 dark:text-emerald-50 ring-1 ring-emerald-200 dark:ring-emerald-800/50";
+    default: return "border-slate-500 bg-slate-50 dark:bg-slate-900/20 text-slate-950 dark:text-slate-50 ring-1 ring-slate-200";
   }
 };
 
@@ -77,7 +82,7 @@ function DraggableAppointment({ app, hour, config, onClick, isOverlay }: any) {
   });
 
   if (isDragging && !isOverlay) {
-    return <div ref={setNodeRef} className="opacity-10 grayscale scale-95 h-full w-full rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-slate-800" />;
+    return <div ref={setNodeRef} className="opacity-10 h-full w-full rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800" />;
   }
 
   return (
@@ -91,56 +96,41 @@ function DraggableAppointment({ app, hour, config, onClick, isOverlay }: any) {
         onClick(app);
       }}
       className={cn(
-        "p-4 rounded-[2rem] h-full border-l-[4px] transition-all cursor-grab active:cursor-grabbing group relative overflow-hidden backdrop-blur-sm mb-2 last:mb-0 shadow-sm",
+        "p-3 rounded-2xl h-full border-l-[4px] transition-all cursor-grab active:cursor-grabbing group relative overflow-hidden mb-1 last:mb-0",
         getVetColor(app.veterinarianId),
         isOverlay 
-          ? "scale-105 rotate-1 shadow-md bg-white dark:bg-slate-800 border-blue-600 ring-2 ring-blue-500/20 z-[1000] cursor-grabbing" 
-          : "hover:scale-[1.01] active:scale-95 ring-1 ring-inset ring-black/5 dark:ring-white/5"
+          ? "scale-105 rotate-1 shadow-2xl bg-white dark:bg-slate-800 border-blue-600 ring-4 ring-blue-500/20 z-[1000] cursor-grabbing" 
+          : "hover:brightness-95 active:scale-95"
       )}
     >
       <div className="flex justify-between items-start relative z-10">
-          <div className="flex items-center gap-2">
-             <div className={cn("p-2 rounded-xl shadow-inner bg-white bg-opacity-20 dark:bg-slate-900 dark:bg-opacity-40")}>
-               <config.icon size={16} strokeWidth={3} className={cn({
-                 "text-blue-600 dark:text-blue-400": config.color === "blue",
-                 "text-rose-600 dark:text-rose-400": config.color === "rose",
-                 "text-emerald-600 dark:text-emerald-400": config.color === "emerald",
-                 "text-orange-600 dark:text-orange-400": config.color === "orange",
-               })} />
-             </div>
-             <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">{config.label}</span>
+          <div className="flex items-center gap-1.5">
+             <config.icon size={12} strokeWidth={4} className={cn({
+               "text-blue-600 dark:text-blue-400": config.color === "blue",
+               "text-rose-600 dark:text-rose-400": config.color === "rose",
+               "text-emerald-600 dark:text-emerald-400": config.color === "emerald",
+               "text-orange-600 dark:text-orange-400": config.color === "orange",
+             })} />
+             <span className="text-[8px] font-black uppercase tracking-widest">{config.label}</span>
           </div>
-          <div className="flex items-center gap-1 bg-black bg-opacity-5 dark:bg-white dark:bg-opacity-10 px-3 py-1 rounded-full">
-            <Clock size={12} strokeWidth={3} className="opacity-60" />
-            <span className="text-[10px] font-black">{hour}</span>
-          </div>
+          <span className="text-[8px] font-black opacity-60">{hour}</span>
       </div>
 
-      <div className="mt-4 space-y-1 relative z-10">
-        <p className="font-black text-slate-900 dark:text-white text-xl tracking-tight leading-tight line-clamp-1">{app.patient?.name}</p>
-        <p className="text-[11px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-[0.1em] opacity-70 line-clamp-1">
+      <div className="mt-1 relative z-10">
+        <p className="font-black text-slate-900 dark:text-white text-xs tracking-tight line-clamp-1">{app.patient?.name}</p>
+        <p className="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-tighter opacity-80 line-clamp-1">
           {app.patient?.owner?.name}
         </p>
       </div>
 
-      <div className="mt-4 pt-4 border-t border-black border-opacity-5 dark:border-white dark:border-opacity-10 flex items-center justify-between relative z-10">
-         <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded-lg bg-blue-600 text-white flex items-center justify-center text-[10px] font-black shadow-sm">
-               {app.vetName?.charAt(0)}
-            </div>
-            <span className="text-[10px] font-black uppercase tracking-widest opacity-80">{app.vetName || "Médico N-D"}</span>
-         </div>
-         <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-      </div>
-
-      <div className="absolute -bottom-4 -right-4 opacity-[0.03] dark:opacity-[0.08] group-hover:scale-125 transition-transform duration-700 pointer-events-none">
-         <config.icon size={120} strokeWidth={1} />
+      <div className="absolute -bottom-2 -right-2 opacity-5 dark:opacity-10 group-hover:scale-110 transition-transform duration-500 pointer-events-none">
+         <config.icon size={60} strokeWidth={2} />
       </div>
     </div>
   );
 }
 
-function DroppableSlot({ id, children, day, hour, isToday }: any) {
+function DroppableSlot({ id, children, day, hour, isToday, onAddClick }: any) {
   const { setNodeRef, isOver } = useDroppable({
     id: id,
     data: { day, hour }
@@ -150,18 +140,18 @@ function DroppableSlot({ id, children, day, hour, isToday }: any) {
     <div 
       ref={setNodeRef}
       className={cn(
-        "p-2 border-l border-slate-100 dark:border-slate-800 transition-all duration-300 min-h-[140px] flex flex-col gap-2 relative",
-        isToday ? "bg-blue-600/5 dark:bg-blue-400/5" : "bg-transparent",
-        isOver && "bg-blue-600/10 dark:bg-blue-400/20 ring-2 ring-inset ring-blue-600/20 scale-[0.99] rounded-2xl z-40"
+        "p-1 border-l border-slate-100 dark:border-slate-800/50 transition-all duration-200 min-h-[100px] flex flex-col gap-1 relative group/slot",
+        isToday ? "bg-blue-600/[0.02] dark:bg-blue-400/[0.02]" : "bg-transparent",
+        isOver && "bg-blue-600/10 dark:bg-blue-400/10 ring-2 ring-inset ring-blue-600/20 z-40"
       )}
     >
-      {isToday && (
-        <div className="absolute top-0 right-0 w-1 h-1 bg-blue-600 rounded-full m-1 animate-ping" />
-      )}
       {children}
       {!children?.length && (
-        <button className="flex-1 opacity-0 group-hover:opacity-100 flex items-center justify-center text-blue-400 dark:text-blue-600 hover:text-blue-600 transition-all active:scale-95 bg-blue-50 dark:bg-slate-800 dark:bg-opacity-50 rounded-2xl border-2 border-dashed border-blue-200 dark:border-slate-700">
-          <Plus size={24} strokeWidth={3} />
+        <button 
+          onClick={() => onAddClick?.({ day, hour })}
+          className="flex-1 opacity-0 group-hover/slot:opacity-100 flex items-center justify-center text-blue-400 hover:text-blue-600 transition-all active:scale-95 bg-slate-50 dark:bg-white/5 rounded-xl border border-dashed border-slate-200 dark:border-white/10"
+        >
+          <Plus size={20} strokeWidth={3} />
         </button>
       )}
     </div>
@@ -175,6 +165,8 @@ export default function CalendarPage() {
   const [view, setView] = useState<"week" | "day">("week");
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newAppSlot, setNewAppSlot] = useState<{ day: string; hour: string } | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -185,26 +177,22 @@ export default function CalendarPage() {
   );
 
   const weekDays = useMemo(() => {
-    const startOfWeek = new Date(currentDate);
-    const day = startOfWeek.getDay();
-    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
-    startOfWeek.setDate(diff);
-    
+    // Start of week (Monday)
+    const start = startOfWeek(currentDate, { weekStartsOn: 1 });
     return Array.from({ length: 6 }).map((_, i) => {
-      const d = new Date(startOfWeek);
-      d.setDate(startOfWeek.getDate() + i);
+      const d = addDays(start, i);
       return {
-        name: d.toLocaleDateString('pt-PT', { weekday: 'long' }),
-        shortName: d.toLocaleDateString('pt-PT', { weekday: 'short' }),
-        date: d.toLocaleDateString('pt-PT', { day: '2-digit' }),
-        month: d.toLocaleDateString('pt-PT', { month: 'short' }),
-        fullDate: d.toISOString().split('T')[0],
-        isToday: d.toISOString().split('T')[0] === new Date().toISOString().split('T')[0]
+        name: format(d, 'EEEE', { locale: pt }),
+        shortName: format(d, 'EEE', { locale: pt }),
+        date: format(d, 'dd'),
+        month: format(d, 'MMM', { locale: pt }),
+        fullDate: format(d, 'yyyy-MM-dd'),
+        isToday: format(d, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')
       };
     });
   }, [currentDate]);
 
-  const activeDays = view === "day" ? [weekDays.find(d => d.fullDate === currentDate.toISOString().split('T')[0]) || weekDays[0]] : weekDays;
+  const activeDays = view === "day" ? [weekDays.find(d => d.fullDate === format(currentDate, 'yyyy-MM-dd')) || weekDays[0]] : weekDays;
 
   const { data: rawAppointments, isLoading, refetch } = useQuery({
     queryKey: ["appointments", weekDays[0].fullDate, selectedVet],
@@ -222,7 +210,12 @@ export default function CalendarPage() {
 
     rawAppointments.forEach((app: any) => {
       if (selectedVet !== "all" && app.veterinarianId !== selectedVet) return;
-      const key = `${app.startDate}-${app.startTime}`;
+      
+      const date = new Date(app.startTime);
+      const dayKey = format(date, 'yyyy-MM-dd');
+      const hourKey = format(date, 'HH:00');
+      
+      const key = `${dayKey}-${hourKey}`;
       if (!map.has(key)) map.set(key, []);
       map.get(key).push(app);
     });
@@ -238,12 +231,12 @@ export default function CalendarPage() {
       const [newDate, newHour] = over.id.split('-');
       
       try {
+        const fullStartTime = `${newDate}T${newHour}:00Z`;
         const res = await fetch(`/api/appointments/${appointmentId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
-            startDate: newDate,
-            startTime: newHour
+            startTime: fullStartTime
           }),
         });
 
@@ -254,31 +247,6 @@ export default function CalendarPage() {
         toast.error("Erro ao reagendar marcação");
       }
     }
-  };
-
-  const handleUpdateVet = async (appointmentId: string, vetId: string) => {
-    try {
-      const newVet = VETS.find(v => v.id === vetId);
-      const res = await fetch(`/api/appointments/${appointmentId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          veterinarianId: vetId,
-          vetName: newVet?.name
-        }),
-      });
-
-      if (!res.ok) throw new Error();
-      toast.success(`Médico atualizado para ${newVet?.name}`);
-      setSelectedAppointment(prev => prev ? { ...prev, veterinarianId: vetId, vetName: newVet?.name } : null);
-      refetch();
-    } catch (error) {
-      toast.error("Erro ao atualizar médico");
-    }
-  };
-
-  const handleSendNotification = async (type: string) => {
-    toast.success(`Notificação ${type} enviada para o proprietário`);
   };
 
   const handleStartConsultation = (appointmentId: string, patientId: any) => {
@@ -296,205 +264,168 @@ export default function CalendarPage() {
       modifiers={[restrictToFirstScrollableAncestor]}
       collisionDetection={closestCorners}
     >
-      <div className="max-w-full mx-auto space-y-6 p-4 md:p-6 animate-premium">
-        {/* Header Superior - Consolidado */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white dark:bg-slate-900 p-8 rounded-[3rem] shadow-sm ring-1 ring-slate-100 dark:ring-white/5">
-          <div className="space-y-1">
-            <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">Agenda Mestre</h1>
-            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-widest">
-               <CalendarDays size={14} className="text-blue-600" />
-               <span>Controlo Total de Consultórios</span>
+      <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden">
+        
+        {/* TOP BAR: Controls and Filters (Optimized for Total Space) */}
+        <div className="bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-white/5 p-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                <CalendarDays size={20} strokeWidth={2.5} />
+              </div>
+              <div>
+                <h1 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none">Agenda Clínica</h1>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Medical Management System</p>
+              </div>
+            </div>
+
+            <div className="hidden xl:flex items-center gap-1 bg-slate-50 dark:bg-white/5 p-1 rounded-xl">
+               <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => {
+                  const d = new Date(currentDate);
+                  d.setDate(d.getDate() - (view === "week" ? 7 : 1));
+                  setCurrentDate(d);
+                }}>
+                  <ChevronLeft size={16} strokeWidth={3} />
+               </Button>
+               <span className="px-4 font-black text-[10px] uppercase tracking-widest text-slate-900 dark:text-slate-300">
+                  {format(currentDate, "MMMM yyyy", { locale: pt })}
+               </span>
+               <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => {
+                  const d = new Date(currentDate);
+                  d.setDate(d.getDate() + (view === "week" ? 7 : 1));
+                  setCurrentDate(d);
+                }}>
+                  <ChevronRight size={16} strokeWidth={3} />
+               </Button>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            {/* View Toggle */}
-            <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl">
-              <Button 
-                variant="ghost"
-                className={cn("rounded-xl px-5 font-black text-[10px] uppercase tracking-widest h-10", view === "day" ? "bg-white dark:bg-slate-700 shadow-sm text-blue-600" : "text-slate-400")}
-                onClick={() => setView("day")}
-              >
-                Dia
-              </Button>
-              <Button 
-                variant="ghost"
-                className={cn("rounded-xl px-5 font-black text-[10px] uppercase tracking-widest h-10", view === "week" ? "bg-white dark:bg-slate-700 shadow-sm text-blue-600" : "text-slate-400")}
-                onClick={() => setView("week")}
-              >
-                Semana
-              </Button>
-            </div>
-
-            {/* Date Navigation */}
-            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl">
-              <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-white dark:hover:bg-slate-700 text-slate-500" onClick={() => {
-                const d = new Date(currentDate);
-                d.setDate(d.getDate() - (view === "week" ? 7 : 1));
-                setCurrentDate(d);
-              }}>
-                <ChevronLeft size={20} strokeWidth={3} />
-              </Button>
-              <span className="px-4 font-black text-xs uppercase tracking-tighter min-w-[120px] text-center text-slate-700 dark:text-slate-300">
-                {currentDate.toLocaleDateString('pt-PT', { month: 'short', year: 'numeric' })}
-              </span>
-              <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-white dark:hover:bg-slate-700 text-slate-500" onClick={() => {
-                const d = new Date(currentDate);
-                d.setDate(d.getDate() + (view === "week" ? 7 : 1));
-                setCurrentDate(d);
-              }}>
-                <ChevronRight size={20} strokeWidth={3} />
-              </Button>
-            </div>
-
-            <Button className="h-12 rounded-2xl gap-2 bg-blue-600 hover:bg-blue-700 text-white font-black px-6 shadow-sm transition-all active:scale-95">
-              <Plus size={18} strokeWidth={3} />
-              <span className="text-xs uppercase tracking-widest">Nova Marcação</span>
-            </Button>
-          </div>
-        </div>
-
-        {/* Filtros e Legenda - Compacto e Integrado */}
-        <div className="grid lg:grid-cols-4 gap-4">
-          <Card className="lg:col-span-3 border-none shadow-sm bg-white dark:bg-slate-900 rounded-[2rem] p-4 ring-1 ring-slate-100 dark:ring-white/5 flex items-center gap-4">
-            <div className="flex items-center gap-2 px-3 border-r border-slate-100 dark:border-slate-800 py-1 shrink-0">
-              <UserIcon size={16} className="text-blue-600" />
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Médicos</span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button 
-                onClick={() => setSelectedVet("all")}
-                className={cn(
-                  "px-4 py-2 rounded-xl transition-all font-black text-[9px] uppercase tracking-widest flex items-center gap-2 ring-1",
-                  selectedVet === "all" ? "bg-blue-600 text-white ring-blue-600 shadow-sm" : "bg-slate-50 dark:bg-slate-800 text-slate-500 ring-slate-100 dark:ring-slate-800"
-                )}
-              >
-                Todos
-              </button>
-              {VETS.map(vet => (
+          <div className="flex items-center gap-3">
+             {/* Vet Filters in Top Bar */}
+             <div className="flex gap-2 mr-4 border-r border-slate-100 dark:border-white/5 pr-4 overflow-x-auto no-scrollbar max-w-[400px]">
                 <button 
-                  key={vet.id}
-                  onClick={() => setSelectedVet(vet.id)}
+                  onClick={() => setSelectedVet("all")}
                   className={cn(
-                    "px-4 py-2 rounded-xl transition-all font-black text-[9px] uppercase tracking-widest flex items-center gap-2 ring-1",
-                    selectedVet === vet.id ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 ring-slate-900 dark:ring-white shadow-sm" : "bg-slate-50 dark:bg-slate-800 text-slate-500 ring-slate-100 dark:ring-slate-800"
+                    "px-4 h-9 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all",
+                    selectedVet === "all" ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "bg-slate-50 dark:bg-white/5 text-slate-400"
                   )}
                 >
-                  <div className={cn("w-1.5 h-1.5 rounded-full", {
-                    "bg-blue-500": vet.color === "blue",
-                    "bg-purple-500": vet.color === "purple",
-                    "bg-emerald-500": vet.color === "emerald",
-                  })} />
-                  {vet.name}
+                  Todos
                 </button>
-              ))}
-            </div>
-          </Card>
+                {VETS.map(vet => (
+                  <button 
+                    key={vet.id}
+                    onClick={() => setSelectedVet(vet.id)}
+                    className={cn(
+                      "px-4 h-9 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all flex items-center gap-2",
+                      selectedVet === vet.id ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "bg-slate-50 dark:bg-white/5 text-slate-400"
+                    )}
+                  >
+                    <div className={cn("w-1.5 h-1.5 rounded-full", {
+                      "bg-blue-500": vet.color === "blue",
+                      "bg-purple-500": vet.color === "purple",
+                      "bg-emerald-500": vet.color === "emerald",
+                    })} />
+                    {vet.name.split(' ')[1]}
+                  </button>
+                ))}
+             </div>
 
-          <Card className="border-none shadow-sm bg-white dark:bg-slate-900 rounded-[2rem] p-4 ring-1 ring-slate-100 dark:ring-white/5 flex items-center justify-around">
-            {["Consulta", "Cirurgia", "Vacina", "Urgência"].map(type => {
-              const config = getTypeConfig(type);
-              return (
-                <div key={type} className="group relative cursor-help">
-                  <config.icon size={18} className={cn({
-                    "text-blue-500": config.color === "blue",
-                    "text-rose-500": config.color === "rose",
-                    "text-emerald-500": config.color === "emerald",
-                    "text-orange-500": config.color === "orange",
-                  })} />
-                  <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-900 dark:bg-slate-800 text-white text-[8px] font-black rounded-md opacity-0 group-hover:opacity-100 transition-all scale-75 group-hover:scale-100 pointer-events-none whitespace-nowrap ring-1 ring-white/10">
-                    {type}
-                  </div>
-                </div>
-              );
-            })}
-          </Card>
+             <div className="flex bg-slate-50 dark:bg-white/5 p-1 rounded-xl">
+               <Button 
+                  variant="ghost" 
+                  className={cn("h-8 rounded-lg px-4 text-[9px] font-black uppercase tracking-widest", view === "day" && "bg-white dark:bg-slate-800 shadow-sm text-blue-600")}
+                  onClick={() => setView("day")}
+               >Dia</Button>
+               <Button 
+                  variant="ghost" 
+                  className={cn("h-8 rounded-lg px-4 text-[9px] font-black uppercase tracking-widest", view === "week" && "bg-white dark:bg-slate-800 shadow-sm text-blue-600")}
+                  onClick={() => setView("week")}
+               >Semana</Button>
+             </div>
+
+             <Button 
+                onClick={() => setIsAddModalOpen(true)}
+                className="h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black px-6 shadow-lg shadow-blue-500/20 gap-2 transition-all active:scale-95"
+             >
+                <Plus size={16} strokeWidth={3} />
+                <span className="text-[10px] uppercase tracking-widest">Agendar</span>
+             </Button>
+          </div>
         </div>
 
-        {/* Main Calendar Grid */}
-        <Card className="border-none shadow-sm overflow-hidden bg-white dark:bg-slate-900 rounded-[3rem] ring-1 ring-slate-100 dark:ring-white/5">
-            <div className="p-0">
-              {/* Header Dias */}
-              <div className={cn(
-                "grid border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 backdrop-blur-sm sticky top-0 z-30",
-                view === "week" ? "grid-cols-[80px_repeat(6,1fr)]" : "grid-cols-[80px_1fr]"
-              )}>
-                <div className="p-4 border-r border-slate-100 dark:border-slate-800 flex items-center justify-center">
-                  <button onClick={() => refetch()} className="text-slate-400 hover:text-blue-600 transition-colors p-2 rounded-xl hover:bg-white dark:hover:bg-slate-800">
-                    <RefreshCw className={cn("w-4 h-4", isLoading && "animate-spin")} />
-                  </button>
+        {/* CALENDAR GRID CORE */}
+        <div className="flex-1 overflow-auto bg-white dark:bg-slate-950 no-scrollbar">
+           <div className={cn(
+             "grid sticky top-0 z-40 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-100 dark:border-white/5",
+             view === "week" ? "grid-cols-[70px_repeat(6,1fr)]" : "grid-cols-[70px_1fr]"
+           )}>
+              <div className="h-16 flex items-center justify-center border-r border-slate-100 dark:border-white/5">
+                 <RefreshCw className={cn("w-3.5 h-3.5 text-slate-300", isLoading && "animate-spin")} />
+              </div>
+              {activeDays.map(day => (
+                <div key={day.fullDate} className={cn(
+                  "h-16 flex flex-col items-center justify-center border-l border-slate-100 dark:border-white/5",
+                  day.isToday && "bg-blue-600/[0.03]"
+                )}>
+                   <span className={cn("text-[8px] font-black uppercase tracking-widest mb-0.5", day.isToday ? "text-blue-600" : "text-slate-400")}>
+                      {day.name}
+                   </span>
+                   <div className="flex items-center gap-1.5">
+                      <span className={cn("text-xl font-black tracking-tighter", day.isToday ? "text-blue-600" : "text-slate-900 dark:text-white")}>
+                        {day.date}
+                      </span>
+                      <span className="text-[9px] font-bold text-slate-300 uppercase">{day.month}</span>
+                   </div>
                 </div>
-                {activeDays.map((day: any) => (
-                  <div key={day.fullDate} className={cn(
-                    "p-4 text-center border-l border-slate-100 dark:border-slate-800 transition-all",
-                    day.isToday ? "bg-blue-600 bg-opacity-5" : ""
-                  )}>
-                    <p className={cn(
-                      "text-[9px] font-black uppercase tracking-[0.2em] mb-1",
-                      day.isToday ? "text-blue-600" : "text-slate-400 dark:text-slate-500"
-                    )}>{day.name}</p>
-                    <div className="flex items-center justify-center gap-2">
-                      <span className={cn(
-                        "text-2xl font-black tracking-tighter leading-none",
-                        day.isToday ? "text-blue-600" : "text-slate-900 dark:text-white"
-                      )}>{day.date}</span>
-                      <span className="text-[9px] font-bold text-slate-400 uppercase">{day.month}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              ))}
+           </div>
 
-              {/* Grid Body */}
-              <div className="relative max-h-[900px] overflow-y-auto no-scrollbar scroll-smooth">
-                {isLoading ? (
-                  <div className="p-10 space-y-4">
-                    <Skeleton className="h-20 w-full rounded-3xl" />
-                    <Skeleton className="h-40 w-full rounded-3xl" />
-                    <Skeleton className="h-40 w-full rounded-3xl" />
-                  </div>
-                ) : hours.map((hour) => (
-                  <div key={hour} className={cn(
-                    "grid border-b border-slate-50 dark:border-slate-800/50 group/row",
-                    view === "week" ? "grid-cols-[80px_repeat(6,1fr)]" : "grid-cols-[80px_1fr]"
-                  )}>
-                    <div className="p-4 text-[10px] font-black text-slate-400 dark:text-slate-600 text-right bg-slate-50 dark:bg-slate-950 flex flex-col justify-center border-r border-slate-100 dark:border-slate-800">
-                      <span>{hour}</span>
-                    </div>
-                    {activeDays.map((day: any) => {
-                      const slotAppointments = groupedAppointments.get(`${day.fullDate}-${hour}`);
+           {/* Grid Body */}
+           <div className="relative">
+              {hours.map(hour => (
+                <div key={hour} className={cn(
+                  "grid border-b border-slate-50 dark:border-white/[0.02]",
+                  view === "week" ? "grid-cols-[70px_repeat(6,1fr)]" : "grid-cols-[70px_1fr]"
+                )}>
+                   <div className="py-8 px-2 text-[9px] font-black text-slate-300 dark:text-slate-700 text-right pr-4 flex items-start justify-end sticky left-0 bg-white dark:bg-slate-950 z-10 border-r border-slate-50 dark:border-white/[0.02]">
+                      {hour}
+                   </div>
+                   {activeDays.map(day => {
+                     const slotAppointments = groupedAppointments.get(`${day.fullDate}-${hour}`);
+                     return (
+                       <DroppableSlot 
+                         key={`${day.fullDate}-${hour}`} 
+                         id={`${day.fullDate}-${hour}`}
+                         day={day.fullDate}
+                         hour={hour}
+                         isToday={day.isToday}
+                         onAddClick={(slot: any) => {
+                           setNewAppSlot(slot);
+                           setIsAddModalOpen(true);
+                         }}
+                       >
+                         {slotAppointments?.map((app: any) => (
+                           <DraggableAppointment 
+                             key={app.id}
+                             app={app}
+                             hour={hour}
+                             config={getTypeConfig(app.type)}
+                             onClick={setSelectedAppointment}
+                           />
+                         ))}
+                       </DroppableSlot>
+                     );
+                   })}
+                </div>
+              ))}
+           </div>
+        </div>
 
-                      return (
-                        <DroppableSlot 
-                          key={`${day.fullDate}-${hour}`} 
-                          id={`${day.fullDate}-${hour}`}
-                          day={day.fullDate}
-                          hour={hour}
-                          isToday={day.isToday}
-                        >
-                          {slotAppointments?.map((app: any) => {
-                            const config = getTypeConfig(app.type);
-                            return (
-                              <DraggableAppointment 
-                                key={app.id}
-                                app={app}
-                                hour={hour}
-                                config={config}
-                                onClick={setSelectedAppointment}
-                              />
-                            );
-                          })}
-                        </DroppableSlot>
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Card>
-
+        {/* Drag Overlay */}
         <DragOverlay>
           {activeApp && (
-            <div className="w-[300px] pointer-events-none opacity-90 drop-shadow-md">
+            <div className="w-[200px] pointer-events-none opacity-90">
               <DraggableAppointment 
                 app={activeApp}
                 hour={activeApp.startTime}
@@ -505,121 +436,127 @@ export default function CalendarPage() {
           )}
         </DragOverlay>
 
+        {/* Modals */}
+        <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+          <DialogContent className="sm:max-w-[450px] rounded-[2.5rem] p-10 bg-white dark:bg-slate-900 border-none shadow-2xl">
+            <DialogHeader>
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-14 h-14 bg-blue-50 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center text-blue-600">
+                  <CalendarDays size={28} />
+                </div>
+                <div>
+                  <DialogTitle className="text-2xl font-black tracking-tighter uppercase">Nova Marcação</DialogTitle>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    {newAppSlot ? `${newAppSlot.day} @ ${newAppSlot.hour}` : "Selecione horário"}
+                  </p>
+                </div>
+              </div>
+            </DialogHeader>
+
+            <div className="space-y-6">
+               <div className="space-y-2">
+                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Identificar Paciente</label>
+                 <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                    <input className="w-full h-14 pl-12 pr-6 rounded-2xl bg-slate-50 dark:bg-white/5 border-none ring-1 ring-slate-100 dark:ring-white/10 font-bold text-sm focus:ring-2 focus:ring-blue-500/20 outline-none" placeholder="Nome do paciente ou proprietário..." />
+                 </div>
+               </div>
+
+               <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Médico Responsável</label>
+                    <Select>
+                      <SelectTrigger className="h-14 rounded-2xl bg-slate-50 dark:bg-white/5 border-none ring-1 ring-slate-100 dark:ring-white/10 font-bold text-xs uppercase tracking-tighter">
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-2xl border-none shadow-2xl">
+                        {VETS.map(v => <SelectItem key={v.id} value={v.id} className="font-bold">{v.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Tipo de Serviço</label>
+                    <Select>
+                      <SelectTrigger className="h-14 rounded-2xl bg-slate-50 dark:bg-white/5 border-none ring-1 ring-slate-100 dark:ring-white/10 font-bold text-xs uppercase tracking-tighter">
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-2xl border-none shadow-2xl">
+                        <SelectItem value="CONSULTA" className="font-bold">CONSULTA GERAL</SelectItem>
+                        <SelectItem value="VACINA" className="font-bold">VACINAÇÃO</SelectItem>
+                        <SelectItem value="CIRURGIA" className="font-bold">CIRURGIA</SelectItem>
+                        <SelectItem value="URGÊNCIA" className="font-bold">URGÊNCIA</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+               </div>
+
+               <Button className="w-full h-16 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-500/20" onClick={() => {
+                 toast.error("Integração com PatientDB pendente.");
+                 setIsAddModalOpen(false);
+               }}>
+                 Confirmar Agendamento
+               </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         <Dialog open={!!selectedAppointment} onOpenChange={() => setSelectedAppointment(null)}>
-          <DialogContent className="sm:max-w-[700px] rounded-[3rem] border-none shadow-xl p-0 overflow-hidden bg-white dark:bg-slate-900 ring-1 ring-black ring-opacity-10">
+          <DialogContent className="sm:max-w-[600px] rounded-[3rem] border-none shadow-2xl p-0 overflow-hidden bg-white dark:bg-slate-900 ring-1 ring-black/5">
             {selectedAppointment && (
-              <>
-                <div className="bg-slate-900 dark:bg-slate-950 p-10 text-white relative overflow-hidden">
-                  <div className="flex justify-between items-start relative z-10">
-                    <div className="space-y-4">
-                      <Badge className="bg-blue-600 text-white border-none font-black text-[10px] uppercase tracking-widest px-4 py-1.5 rounded-full">
-                        {selectedAppointment.type}
-                      </Badge>
-                      <DialogTitle className="text-5xl font-black tracking-tighter leading-none">
-                        {selectedAppointment.patient?.name}
-                      </DialogTitle>
-                      <p className="text-slate-400 font-bold text-xl flex items-center gap-2">
-                        <UserIcon size={20} className="text-blue-500" /> {selectedAppointment.patient?.owner?.name}
-                      </p>
-                    </div>
-                    <div className="bg-white/10 p-6 rounded-[2rem]">
-                      <Clock size={40} className="text-blue-500" />
-                    </div>
-                  </div>
-                  <div className="absolute -bottom-10 -right-10 opacity-10 pointer-events-none">
-                    <PawPrint size={300} strokeWidth={1} />
-                  </div>
-                </div>
-
-                <div className="p-10 space-y-10">
-                  <div className="grid grid-cols-2 gap-8">
-                    <div className="space-y-2">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Horário & Data</span>
-                      <div className="p-6 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 space-y-1">
-                        <p className="font-black text-3xl text-slate-900 dark:text-white">
-                          {selectedAppointment.startTime}
-                        </p>
-                        <p className="text-xs font-bold text-slate-400 uppercase">
-                          {format(new Date(selectedAppointment.startDate), "dd 'de' MMMM yyyy", { locale: pt })}
-                        </p>
+              <div className="animate-in fade-in zoom-in-95 duration-300">
+                <div className="bg-slate-900 p-10 text-white relative">
+                   <div className="flex justify-between items-start">
+                      <div className="space-y-3">
+                         <Badge className="bg-blue-600 text-white border-none font-black text-[9px] uppercase px-4 py-1.5 rounded-full">{selectedAppointment.type}</Badge>
+                         <h2 className="text-4xl font-black tracking-tighter leading-none">{selectedAppointment.patient?.name}</h2>
+                         <p className="text-slate-400 font-bold text-lg flex items-center gap-2">
+                           <UserIcon size={16} className="text-blue-500" /> {selectedAppointment.patient?.owner?.name}
+                         </p>
                       </div>
-                    </div>
-                    <div className="space-y-2">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Médico Responsável</span>
-                      <Select 
-                        defaultValue={selectedAppointment.veterinarianId} 
-                        onValueChange={(val) => handleUpdateVet(selectedAppointment.id, val)}
-                      >
-                        <SelectTrigger className="h-20 rounded-2xl bg-slate-50 dark:bg-slate-800 font-bold text-lg text-slate-900 dark:text-white flex items-center gap-3 border-none ring-1 ring-slate-100 dark:ring-slate-700">
-                          <div className="flex items-center gap-3">
-                            <div className={cn("w-3 h-3 rounded-full", {
-                              "bg-blue-500": VETS.find(v => v.id === selectedAppointment.veterinarianId)?.color === "blue",
-                              "bg-purple-500": VETS.find(v => v.id === selectedAppointment.veterinarianId)?.color === "purple",
-                              "bg-emerald-500": VETS.find(v => v.id === selectedAppointment.veterinarianId)?.color === "emerald",
-                            })} />
-                            <SelectValue placeholder="Selecionar Médico" />
-                          </div>
-                        </SelectTrigger>
-                        <SelectContent className="rounded-2xl border-none shadow-2xl bg-white dark:bg-slate-800 p-2">
-                          {VETS.map(vet => (
-                            <SelectItem key={vet.id} value={vet.id} className="rounded-xl font-bold py-3">
-                              <div className="flex items-center gap-3">
-                                <div className={cn("w-2 h-2 rounded-full", {
-                                  "bg-blue-500": vet.color === "blue",
-                                  "bg-purple-500": vet.color === "purple",
-                                  "bg-emerald-500": vet.color === "emerald",
-                                })} />
-                                {vet.name}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="p-8 rounded-[2.5rem] bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-500/20 space-y-6">
-                    <div className="flex items-center justify-between">
-                       <h4 className="text-[11px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
-                          Notificações ao Cliente
-                       </h4>
-                       <Badge variant="outline" className="border-indigo-200 text-indigo-600 text-[9px] font-black">AUTO-RECALL</Badge>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                       <Button 
-                         onClick={() => handleSendNotification("SMS")}
-                         className="h-14 rounded-2xl bg-white dark:bg-slate-800 border-2 border-transparent hover:border-indigo-500 text-slate-900 dark:text-white font-black flex items-center gap-3 shadow-sm transition-all"
-                       >
-                          <Zap size={18} className="text-indigo-500" /> SMS Alerta
-                       </Button>
-                       <Button 
-                         onClick={() => handleSendNotification("EMAIL")}
-                         className="h-14 rounded-2xl bg-white dark:bg-slate-800 border-2 border-transparent hover:border-indigo-500 text-slate-900 dark:text-white font-black flex items-center gap-3 shadow-sm transition-all"
-                       >
-                          <Activity size={18} className="text-indigo-500" /> Email Memo
-                       </Button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <Button 
-                      className="w-full h-16 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-lg gap-3 shadow-xl shadow-blue-200 dark:shadow-none transition-all active:scale-[0.98]"
-                      onClick={() => handleStartConsultation(selectedAppointment.id, selectedAppointment.patientId)}
-                    >
-                      <Activity size={24} />
-                      Iniciar Consulta Médica
-                    </Button>
-                    <div className="grid grid-cols-2 gap-4">
-                      <Button variant="outline" className="h-14 rounded-2xl border-slate-200 dark:border-slate-700 font-black uppercase text-[10px] tracking-widest dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800">
-                        Remarcar
-                      </Button>
-                      <Button variant="outline" className="h-14 rounded-2xl border-slate-200 dark:border-slate-700 font-black uppercase text-[10px] tracking-widest text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30">
-                        Cancelar Marcação
-                      </Button>
-                    </div>
-                  </div>
+                      <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center">
+                         <Clock size={32} className="text-blue-500" />
+                      </div>
+                   </div>
                 </div>
-              </>
+
+                <div className="p-10 space-y-8">
+                   <div className="grid grid-cols-2 gap-6">
+                      <div className="p-6 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10">
+                         <span className="text-[9px] font-black text-slate-400 uppercase block mb-1 tracking-widest">Horário Marcado</span>
+                         <p className="text-2xl font-black text-slate-900 dark:text-white">{format(new Date(selectedAppointment.startTime), "HH:mm")}</p>
+                         <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">{format(new Date(selectedAppointment.startTime), "EEEE, dd MMM", { locale: pt })}</p>
+                      </div>
+                      <div className="p-6 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10">
+                         <span className="text-[9px] font-black text-slate-400 uppercase block mb-1 tracking-widest">Médico</span>
+                         <p className="text-xl font-black text-slate-900 dark:text-white line-clamp-1">{selectedAppointment.vetName || "N/A"}</p>
+                         <Badge variant="ghost" className="text-[8px] font-bold text-blue-500 p-0">Ver Perfil Médico</Badge>
+                      </div>
+                   </div>
+
+                   <div className="p-8 rounded-[2.5rem] bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-500/20">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 mb-4 flex items-center gap-2">
+                         <Zap size={14} /> Telemetria de Notificações
+                      </h4>
+                      <div className="grid grid-cols-2 gap-3">
+                         <Button variant="outline" className="h-12 rounded-xl bg-white dark:bg-slate-800 border-none shadow-sm text-[10px] font-black uppercase tracking-widest">Enviar SMS Lembrete</Button>
+                         <Button variant="outline" className="h-12 rounded-xl bg-white dark:bg-slate-800 border-none shadow-sm text-[10px] font-black uppercase tracking-widest">Mandar Email</Button>
+                      </div>
+                   </div>
+
+                   <div className="space-y-4">
+                      <Button 
+                        className="w-full h-16 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm uppercase tracking-widest gap-3 shadow-xl shadow-blue-500/20 transition-all active:scale-95"
+                        onClick={() => handleStartConsultation(selectedAppointment.id, selectedAppointment.patientId)}
+                      >
+                         <Activity size={20} strokeWidth={3} /> Iniciar Procedimento Clínico
+                      </Button>
+                      <div className="grid grid-cols-2 gap-4">
+                         <Button variant="outline" className="h-14 rounded-2xl border-slate-100 dark:border-white/10 font-black text-[10px] uppercase tracking-widest dark:text-white">Remarcar</Button>
+                         <Button variant="outline" className="h-14 rounded-2xl border-slate-100 dark:border-white/10 font-black text-[10px] uppercase tracking-widest text-rose-500 hover:bg-rose-50">Cancelar</Button>
+                      </div>
+                   </div>
+                </div>
+              </div>
             )}
           </DialogContent>
         </Dialog>

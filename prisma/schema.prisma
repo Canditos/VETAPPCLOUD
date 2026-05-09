@@ -36,6 +36,8 @@ model Clinic {
   labResults       LabResult[]
   imagingStudies   ImagingStudy[]
   stockMovements   StockMovement[]
+
+  @@index([name])
 }
 
 model User {
@@ -53,6 +55,10 @@ model User {
   completedTasks      HospitalizationTask[]
   hospitalAdmission   Hospitalization[]     @relation("AdmissionBy")
   prescriptions       Prescription[]        // Prescriptions issued by this vet
+
+  @@index([clinicId])
+  @@index([email])
+  @@index([role])
 }
 
 enum Role {
@@ -93,6 +99,13 @@ model Patient {
   vaccinations     Vaccination[]
   dewormings       Deworming[]
   prescriptions    Prescription[]
+
+  @@index([clinicId])
+  @@index([ownerId])
+  @@index([species])
+  @@index([status])
+  @@index([name])
+  @@index([microchip])
 }
 
 model Owner {
@@ -113,7 +126,9 @@ model Owner {
   budgets   Budget[]
   subscriptions Subscription[]
 
-  @@unique([clinicId, email])
+  @@index([clinicId])
+  @@index([email])
+  @@index([phone])
 }
 
 model Consultation {
@@ -133,6 +148,12 @@ model Consultation {
   attachments Attachment[]
   invoice     Invoice?
   appointment Appointment?
+
+  @@index([clinicId])
+  @@index([patientId])
+  @@index([veterinarianId])
+  @@index([date])
+  @@index([status])
 }
 
 enum ConsultationStatus {
@@ -158,6 +179,12 @@ model Appointment {
 
   consultation   Consultation? @relation(fields: [consultationId], references: [id])
   consultationId String?       @unique
+
+  @@index([clinicId])
+  @@index([patientId])
+  @@index([veterinarianId])
+  @@index([startTime])
+  @@index([status])
 }
 
 model ClinicalNote {
@@ -207,6 +234,11 @@ model Invoice {
 
   items    InvoiceItem[]
   payments Payment[]
+
+  @@index([clinicId])
+  @@index([ownerId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Payment {
@@ -278,6 +310,10 @@ model Product {
 
   movements    StockMovement[]
   invoiceItems InvoiceItem[]
+
+  @@index([clinicId])
+  @@index([category])
+  @@index([barcode])
 }
 
 model StockMovement {
@@ -290,6 +326,11 @@ model StockMovement {
   quantity  Int
   source    String? // e.g., "consultation_id"
   createdAt DateTime     @default(now())
+
+  @@index([clinicId])
+  @@index([productId])
+  @@index([type])
+  @@index([createdAt])
 }
 
 enum MovementType {
@@ -308,6 +349,10 @@ model LabResult {
   dataJson      Json
   abnormalFlags Boolean  @default(false)
   createdAt     DateTime @default(now())
+
+  @@index([clinicId])
+  @@index([patientId])
+  @@index([source])
 }
 
 model ImagingStudy {
@@ -319,6 +364,10 @@ model ImagingStudy {
   dicomUrl     String
   metadataJson Json?
   createdAt    DateTime @default(now())
+
+  @@index([clinicId])
+  @@index([patientId])
+  @@index([createdAt])
 }
 
 model Hospitalization {
@@ -338,6 +387,11 @@ model Hospitalization {
   tasks         HospitalizationTask[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  @@index([clinicId])
+  @@index([patientId])
+  @@index([status])
+  @@index([admissionDate])
 }
 
 model HospitalizationTask {
@@ -351,6 +405,10 @@ model HospitalizationTask {
   completedBy       User?           @relation(fields: [completedById], references: [id])
   status            String          @default("PENDING") // PENDING, COMPLETED, SKIPPED
   notes             String?
+
+  @@index([hospitalizationId])
+  @@index([status])
+  @@index([scheduledTime])
 }
 
 model HealthPlan {
@@ -394,6 +452,9 @@ model VitalSign {
   respiratoryRate Int?     // RPM
   notes           String?
   recordedAt      DateTime @default(now())
+
+  @@index([patientId])
+  @@index([recordedAt])
 }
 
 model Vaccination {
@@ -405,6 +466,9 @@ model Vaccination {
   appliedAt    DateTime  @default(now())
   expiresAt    DateTime? // Next booster date
   notes        String?
+
+  @@index([patientId])
+  @@index([appliedAt])
 }
 
 model Deworming {
@@ -417,6 +481,9 @@ model Deworming {
   appliedAt    DateTime  @default(now())
   expiresAt    DateTime?
   notes        String?
+
+  @@index([patientId])
+  @@index([appliedAt])
 }
 
 model Prescription {

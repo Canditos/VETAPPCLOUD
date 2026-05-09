@@ -45,11 +45,58 @@ The interface follows a **"Premium Pro"** aesthetic, characterized by:
 | ![Dashboard](https://placehold.co/600x400?text=Dashboard+Preview) | ![Agenda](https://placehold.co/600x400?text=Agenda+Preview) | ![SOAP](https://placehold.co/600x400?text=SOAP+Preview) |
 
 ## 📦 Installation & Setup
-1. Clone the repository.
-2. Install dependencies: `npm install`.
-3. Configure `.env` with Prisma and Jasmin credentials.
-4. Run migrations: `npx prisma migrate dev`.
-5. Start development: `npm run dev`.
+
+### 1. Clone and Install
+```bash
+npm install
+```
+
+### 2. Start PostgreSQL with Docker
+```bash
+docker-compose up -d
+```
+Services:
+- **PostgreSQL**: `localhost:5432` (user: `vetconnect`, pass: `vetconnect123`, db: `vetconnect`)
+- **pgAdmin**: `http://localhost:5050` (email: `admin@vetconnect.local`, pass: `admin123`)
+
+### 3. Configure Environment
+```bash
+cp .env.local.example .env.local  # already created
+# Edit .env.local if needed (defaults work for local dev)
+```
+
+### 4. Generate Prisma Client & Run Migrations
+```bash
+npx prisma generate
+npx prisma migrate dev --name init
+```
+
+### 5. Seed Demo Data (optional)
+```bash
+# Start the dev server, then visit:
+# http://localhost:3000/api/debug/seed
+```
+
+### 6. Start Development Server
+```bash
+npm run dev
+```
+
+### Useful Commands
+```bash
+# View database in pgAdmin
+# 1. Open http://localhost:5050
+# 2. Login with admin@vetconnect.local / admin123
+# 3. Add Server: localhost:5432, user vetconnect, pass vetconnect123
+
+# Reset database
+docker-compose down -v  # removes data volume
+docker-compose up -d
+npx prisma migrate reset
+
+# Re-generate Prisma client after schema changes
+npx prisma generate
+```
 
 ---
 Developed with ❤️ by the VetConnect Engineering Team.

@@ -26,6 +26,8 @@ import {
   ShieldCheck,
   MessageSquare,
   Copy,
+  Clock,
+  Heart
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -34,20 +36,11 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  AreaChart,
-  Area
-} from "recharts";
 import { format, differenceInYears, differenceInMonths } from "date-fns";
 import { pt } from "date-fns/locale";
 import Link from "next/link";
+import { ClinicalTimeline } from "@/components/ClinicalTimeline";
+import { cn } from "@/lib/utils";
 
 export default function PatientProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -64,7 +57,6 @@ export default function PatientProfilePage({ params }: { params: Promise<{ id: s
       if (!res.ok) throw new Error();
       toast.success("Microchip atualizado com sucesso!");
       setIsEditingChip(false);
-      // Aqui idealmente faríamos refetch da query, mas para demo o toast basta
     } catch (error) {
       toast.error("Erro ao atualizar microchip.");
     }
@@ -91,12 +83,13 @@ export default function PatientProfilePage({ params }: { params: Promise<{ id: s
         return res.json();
       }),
       {
-        loading: "A enviar SMS de teste...",
+        loading: "A enviar SMS via RUT240...",
         success: (data) => data.message || "SMS enviada com sucesso!",
-        error: "Erro ao enviar SMS. Verifica as credenciais.",
+        error: "Erro ao enviar SMS. Verifica a ligação ao RUT240.",
       }
     );
   };
+
   const { data: patient, isLoading } = useQuery({
     queryKey: ["patient-hub", id],
     queryFn: async () => {
@@ -106,405 +99,360 @@ export default function PatientProfilePage({ params }: { params: Promise<{ id: s
     }
   });
 
-  if (isLoading) return <div className="p-12 text-center font-black text-slate-300 dark:text-slate-700 animate-pulse">A carregar Hub Clínico 360º...</div>;
+  const { data: history, isLoading: isHistoryLoading } = useQuery({
+    queryKey: ["patient-history", id],
+    queryFn: async () => {
+      const res = await fetch(`/api/patients/${id}/history`);
+      if (!res.ok) throw new Error("Erro ao carregar histórico");
+      return res.json();
+    }
+  });
+
+  if (isLoading) return <div className="p-12 text-center font-black text-slate-300 dark:text-slate-700 animate-pulse uppercase tracking-[0.3em]">Sincronizando Hub Clínico 360º...</div>;
   if (!patient) return <div className="p-12 text-center text-red-500 font-bold">Paciente não encontrado.</div>;
 
   const ageYears = patient.birthDate ? differenceInYears(new Date(), new Date(patient.birthDate)) : null;
   const ageMonths = patient.birthDate ? differenceInMonths(new Date(), new Date(patient.birthDate)) % 12 : null;
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
-      {/* Navigation & Actions */}
-      <div className="flex justify-between items-center">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 max-w-[1600px] mx-auto px-4 sm:px-0">
+      {/* Top Navigation & Fast Actions */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <Link href={`/dashboard/customers/${patient.ownerId}`}>
-          <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 gap-2">
-            <ArrowLeft size={16} /> Voltar ao Dono
+          <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-black hover:bg-slate-100 dark:hover:bg-white/5 gap-2 uppercase text-[10px] tracking-widest px-0 hover:px-4 transition-all">
+            <ArrowLeft size={14} strokeWidth={3} /> Voltar ao Dono
           </Button>
         </Link>
-        <div className="flex gap-3">
-          <Link href={`/dashboard/internamento`}>
-            <Button variant="outline" className="rounded-xl font-bold gap-2 border-amber-200 dark:border-amber-900/50 text-amber-600 dark:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20">
-              <Bed size={16} /> Internar
-            </Button>
-          </Link>
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <Button 
             variant="outline" 
-            className="rounded-xl font-bold gap-2 border-slate-200 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800"
+            className="rounded-xl font-black gap-2 border-slate-200 dark:border-white/10 dark:text-white flex-1 sm:flex-none uppercase text-[10px] tracking-widest"
             onClick={() => toast.info("A gerar PDF da ficha clínica...")}
           >
-            <Printer size={16} /> Imprimir Ficha
+            <Printer size={14} /> Ficha
           </Button>
           <Button 
             variant="outline" 
-            className="rounded-xl font-bold gap-2 border-indigo-200 dark:border-indigo-900/50 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+            className="rounded-xl font-black gap-2 border-indigo-200 dark:border-indigo-900/50 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 flex-1 sm:flex-none uppercase text-[10px] tracking-widest"
             onClick={sendQuickSMS}
           >
-            <MessageSquare size={16} /> Enviar SMS
+            <MessageSquare size={14} /> SMS
           </Button>
-          <Link href={`/dashboard/consultations?patientId=${id}`}>
-            <Button className="rounded-xl bg-blue-600 hover:bg-blue-700 font-black gap-2 shadow-lg shadow-blue-100 dark:shadow-none">
-              <Plus size={16} /> Nova Consulta
+          <Link href={`/dashboard/consultations?patientId=${id}`} className="flex-1 sm:flex-none">
+            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black gap-2 shadow-lg shadow-blue-500/20 dark:shadow-none uppercase text-[10px] tracking-widest">
+              <Plus size={14} strokeWidth={3} /> Nova Consulta
             </Button>
           </Link>
         </div>
       </div>
 
-      {/* Patient Identity Header */}
-      <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-50 dark:border-slate-800 relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none text-slate-900 dark:text-white">
-           <PawPrint size={180} />
-        </div>
-        <div className="flex flex-col md:flex-row gap-10 items-start md:items-center relative z-10">
-          <div className="h-32 w-32 rounded-[2.5rem] bg-slate-900 dark:bg-blue-600 flex items-center justify-center text-white shadow-2xl">
-            <PawPrint size={64} />
+      {/* Patient Premium Header */}
+      <div className="relative group">
+        <div className="absolute -inset-1 bg-linear-to-r from-blue-600 to-indigo-600 rounded-[3rem] blur opacity-10 dark:opacity-20 group-hover:opacity-20 dark:group-hover:opacity-30 transition duration-1000"></div>
+        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 sm:p-10 border border-slate-100 dark:border-white/5 relative overflow-hidden shadow-2xl shadow-slate-200/50 dark:shadow-none">
+          {/* Large Background Icon */}
+          <div className="absolute top-1/2 -translate-y-1/2 right-0 p-12 opacity-[0.03] dark:opacity-[0.05] pointer-events-none text-slate-900 dark:text-white scale-150">
+             <PawPrint size={240} />
           </div>
-          <div className="flex-1 space-y-4">
-            <div>
-              <div className="flex items-center gap-3 flex-wrap">
-                <h1 className="text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-none">{patient.name}</h1>
-                <div className="flex gap-2">
-                  <Badge className="bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20 font-black text-[10px] uppercase px-3 py-1 rounded-lg">Estável</Badge>
-                  {patient.subscriptions && patient.subscriptions.length > 0 && (
-                    <Badge className="bg-blue-600 text-white border-none font-black text-[10px] uppercase px-3 py-1 rounded-lg shadow-lg shadow-blue-200 dark:shadow-none">Plano Premium</Badge>
-                  )}
+
+          <div className="flex flex-col md:flex-row gap-8 lg:gap-12 items-start md:items-center relative z-10">
+            {/* Profile Picture / Icon */}
+            <div className="relative">
+              <div className="h-32 w-32 sm:h-40 sm:w-40 rounded-[2.5rem] bg-slate-900 dark:bg-blue-600 flex items-center justify-center text-white shadow-2xl ring-4 ring-white dark:ring-slate-800">
+                <PawPrint size={64} sm:size={80} />
+              </div>
+              <div className="absolute -bottom-2 -right-2 h-10 w-10 rounded-2xl bg-emerald-500 border-4 border-white dark:border-slate-900 flex items-center justify-center text-white shadow-lg">
+                <ShieldCheck size={20} strokeWidth={3} />
+              </div>
+            </div>
+
+            {/* Info Grid */}
+            <div className="flex-1 space-y-6">
+              <div>
+                <div className="flex items-center gap-4 flex-wrap">
+                  <h1 className="text-4xl sm:text-6xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">{patient.name}</h1>
+                  <div className="flex gap-2">
+                    <Badge className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20 font-black text-[10px] uppercase px-4 py-1.5 rounded-xl">Estável</Badge>
+                    {patient.subscriptions && patient.subscriptions.length > 0 && (
+                      <Badge className="bg-blue-600 text-white border-none font-black text-[10px] uppercase px-4 py-1.5 rounded-xl shadow-lg shadow-blue-500/20">Plano Premium</Badge>
+                    )}
+                  </div>
+                </div>
+                <p className="text-slate-500 dark:text-slate-400 font-bold mt-3 text-lg sm:text-xl">
+                  {patient.species} • {patient.breed || "Raça Indefinida"} • 
+                  {ageYears !== null ? ` ${ageYears}a ${ageMonths}m` : " Idade desconhecida"}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 pt-2">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-600">Género</span>
+                  <p className="font-black text-slate-900 dark:text-slate-100">{patient.gender === 'M' ? 'Macho' : 'Fêmea'}</p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-600">Esterilizado</span>
+                  <p className="font-black text-slate-900 dark:text-slate-100">Sim</p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-600">Tutor Responsável</span>
+                  <Link href={`/dashboard/customers/${patient.ownerId}`} className="font-black text-blue-600 dark:text-blue-400 flex items-center gap-1.5 hover:underline decoration-2 underline-offset-4">
+                    {patient.owner?.name} <ChevronRight size={14} strokeWidth={3} />
+                  </Link>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-600">ID Cliente</span>
+                  <p className="font-black text-slate-900 dark:text-slate-100">#VC-{patient.ownerId?.slice(-4).toUpperCase()}</p>
                 </div>
               </div>
-              <p className="text-slate-500 dark:text-slate-400 font-bold mt-2 text-lg">
-                {patient.species} • {patient.breed || "Raça Indefinida"} • 
-                {ageYears !== null ? ` ${ageYears} anos e ${ageMonths} meses` : " Idade desconhecida"}
-              </p>
             </div>
-            <div className="flex flex-wrap gap-8 text-sm pt-2">
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-600">Microchip</span>
-                <span className="font-bold text-slate-700 dark:text-slate-300 tracking-wider">{patient.microchip || "N/A"}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-600">Género</span>
-                <span className="font-bold text-slate-700 dark:text-slate-300">{patient.gender === 'M' ? 'Macho' : 'Fêmea'}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-600">Tutor Responsável</span>
-                <Link href={`/dashboard/customers/${patient.ownerId}`} className="font-black text-blue-600 dark:text-blue-400 flex items-center gap-1.5 hover:underline group/owner">
-                  <UserIcon size={14} strokeWidth={3} className="group-hover/owner:scale-110 transition-transform" /> {patient.owner?.name}
-                </Link>
-              </div>
-            </div>
-          </div>
-          {patient.allergies && (
-            <div className="glass-panel p-6 rounded-[2rem] border-rose-100 dark:border-rose-900/30 bg-rose-50/50 dark:bg-rose-950/20 max-w-xs animate-premium">
-              <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 mb-3">
-                <div className="p-2 bg-rose-100 dark:bg-rose-900/50 rounded-xl">
-                  <AlertCircle size={18} strokeWidth={3} />
+
+            {/* Medical Alerts Container */}
+            {patient.allergies && (
+              <div className="glass-panel p-6 rounded-[2rem] border-rose-100 dark:border-rose-900/30 bg-rose-50/30 dark:bg-rose-950/20 max-w-sm w-full animate-premium ring-1 ring-rose-200/50 dark:ring-rose-500/20">
+                <div className="flex items-center gap-3 text-rose-600 dark:text-rose-400 mb-3">
+                  <div className="p-2.5 bg-rose-100 dark:bg-rose-500/20 rounded-xl shadow-inner">
+                    <AlertCircle size={20} strokeWidth={3} />
+                  </div>
+                  <span className="font-black text-[11px] uppercase tracking-widest">Alertas Críticos</span>
                 </div>
-                <span className="font-black text-xs uppercase tracking-widest">Alertas Clínicos</span>
+                <p className="text-rose-700 dark:text-rose-300 font-bold text-sm leading-relaxed">{patient.allergies}</p>
               </div>
-              <p className="text-rose-700 dark:text-rose-300 font-bold text-sm leading-relaxed">{patient.allergies}</p>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Clinical Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column: Vitals & History */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* Vital Signs Chart */}
-          <Card className="border-none shadow-xl shadow-slate-200/50 dark:shadow-none rounded-[2.5rem] overflow-hidden bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-slate-800">
-            <CardHeader className="p-8 pb-0 flex flex-row items-center justify-between">
+      {/* Main Clinical Cockpit */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        {/* LEFT COLUMN (8/12): Medical Intelligence */}
+        <div className="lg:col-span-8 space-y-8">
+          
+          {/* Vital Signs Cockpit */}
+          <Card className="border-none shadow-xl shadow-slate-200/40 dark:shadow-none rounded-[2.5rem] bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/5 overflow-hidden">
+            <CardHeader className="p-8 pb-0 flex flex-row items-center justify-between flex-wrap gap-4">
               <div>
-                <CardTitle className="text-2xl font-black flex items-center gap-2 text-slate-900 dark:text-slate-100">
-                  <Activity className="text-blue-600 dark:text-blue-400" /> Sinais Vitais
+                <CardTitle className="text-xl font-black flex items-center gap-3 text-slate-900 dark:text-white uppercase tracking-tight">
+                  <div className="p-2 bg-blue-50 dark:bg-blue-500/10 rounded-xl text-blue-600 dark:text-blue-400">
+                    <Activity size={20} strokeWidth={3} />
+                  </div>
+                  Painel Biométrico
                 </CardTitle>
-                <CardDescription className="dark:text-slate-400 font-medium">Histórico de peso e temperatura.</CardDescription>
+                <CardDescription className="dark:text-slate-400 font-medium ml-11">Monitorização contínua de parâmetros vitais.</CardDescription>
               </div>
               <div className="flex gap-2">
-                 <Badge variant="outline" className="rounded-lg font-black text-[10px] border-slate-100 dark:border-slate-800 dark:text-slate-400">PESO (KG)</Badge>
+                 <Badge className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black text-[9px] uppercase tracking-widest px-4 py-1.5 rounded-lg">Tendência 30d</Badge>
               </div>
             </CardHeader>
             <CardContent className="p-8">
-              <div className="h-[250px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={patient.vitalSigns}>
-                    <defs>
-                      <linearGradient id="colorWeight" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
-                        <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-slate-100 dark:stroke-slate-800" />
-                    <XAxis 
-                      dataKey="recordedAt" 
-                      tickFormatter={(val) => format(new Date(val), "dd/MM")}
-                      className="text-slate-400 dark:text-slate-600"
-                      fontSize={10}
-                      fontWeight="900"
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <YAxis 
-                      className="text-slate-400 dark:text-slate-600"
-                      fontSize={10}
-                      fontWeight="900"
-                      axisLine={false}
-                      tickLine={false}
-                      domain={['auto', 'auto']}
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        borderRadius: '1.5rem', 
-                        border: 'none', 
-                        boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.25)', 
-                        background: 'rgb(15 23 42 / 0.9)',
-                        color: '#fff',
-                        fontWeight: '900',
-                        padding: '1rem'
-                      }}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="weight" 
-                      stroke="#2563eb" 
-                      strokeWidth={4}
-                      fillOpacity={1} 
-                      fill="url(#colorWeight)" 
-                      animationDuration={1500}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+              <div className="h-[280px] w-full flex items-center justify-center bg-slate-50 dark:bg-white/5 rounded-2xl border border-dashed border-slate-200 dark:border-white/10">
+                <div className="text-center space-y-2">
+                  <Activity size={32} className="text-slate-300 dark:text-slate-700 mx-auto" />
+                  <p className="text-sm font-bold text-slate-400 dark:text-slate-600">Gráfico de Sinais Vitais</p>
+                  <p className="text-xs text-slate-300 dark:text-slate-700">{patient.vitalSigns?.length || 0} registos disponíveis</p>
+                </div>
               </div>
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-                <div className="p-5 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500 mb-1">
-                    <Weight size={14} />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Peso Atual</span>
+                {[
+                  { label: "Peso", value: `${patient.vitalSigns?.[patient.vitalSigns.length-1]?.weight || "---"} kg`, icon: Weight, color: "text-blue-500" },
+                  { label: "Temp", value: `${patient.vitalSigns?.[patient.vitalSigns.length-1]?.temperature || "---"} ºC`, icon: Thermometer, color: "text-orange-500" },
+                  { label: "FC (BPM)", value: patient.vitalSigns?.[patient.vitalSigns.length-1]?.heartRate || "---", icon: Heart, color: "text-rose-500" },
+                  { label: "FR (RPM)", value: patient.vitalSigns?.[patient.vitalSigns.length-1]?.respiratoryRate || "---", icon: Activity, color: "text-indigo-500" },
+                ].map((stat, i) => (
+                  <div key={i} className="p-5 bg-slate-50 dark:bg-white/5 rounded-[2rem] border border-slate-100 dark:border-white/5 transition-all hover:scale-105 group cursor-default">
+                    <div className="flex items-center gap-2 mb-2">
+                      <stat.icon size={14} className={cn("transition-transform group-hover:scale-125", stat.color)} />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-600">{stat.label}</span>
+                    </div>
+                    <p className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">{stat.value}</p>
                   </div>
-                  <p className="text-2xl font-black text-slate-900 dark:text-slate-100">{patient.vitalSigns?.[patient.vitalSigns.length-1]?.weight || "---"} kg</p>
-                </div>
-                <div className="p-5 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500 mb-1">
-                    <Thermometer size={14} />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Temperatura</span>
-                  </div>
-                  <p className="text-2xl font-black text-slate-900 dark:text-slate-100">{patient.vitalSigns?.[patient.vitalSigns.length-1]?.temperature || "---"} ºC</p>
-                </div>
-                <div className="p-5 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500 mb-1">
-                    <Activity size={14} />
-                    <span className="text-[10px] font-black uppercase tracking-widest">FC (BPM)</span>
-                  </div>
-                  <p className="text-2xl font-black text-slate-900 dark:text-slate-100">{patient.vitalSigns?.[patient.vitalSigns.length-1]?.heartRate || "---"}</p>
-                </div>
-                <div className="p-5 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500 mb-1">
-                    <Activity size={14} />
-                    <span className="text-[10px] font-black uppercase tracking-widest">FR (RPM)</span>
-                  </div>
-                  <p className="text-2xl font-black text-slate-900 dark:text-slate-100">{patient.vitalSigns?.[patient.vitalSigns.length-1]?.respiratoryRate || "---"}</p>
-                </div>
+                ))}
               </div>
             </CardContent>
           </Card>
 
-          {/* Detailed Clinical History (SOAP) */}
-          <Card className="border-none shadow-xl shadow-slate-200/50 dark:shadow-none rounded-[2.5rem] bg-white dark:bg-slate-900 overflow-hidden ring-1 ring-slate-100 dark:ring-slate-800">
-            <CardHeader className="p-8 border-b border-slate-50 dark:border-slate-800 flex flex-row items-center justify-between">
+          {/* Clinical Timeline / SOAP Section */}
+          <Card className="border-none shadow-xl shadow-slate-200/40 dark:shadow-none rounded-[2.5rem] bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/5 overflow-hidden">
+            <CardHeader className="p-8 border-b border-slate-50 dark:border-white/5 flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="text-2xl font-black flex items-center gap-2 text-slate-900 dark:text-slate-100">
-                  <HistoryIcon className="text-blue-600 dark:text-blue-400" /> Histórico Clínico
+                <CardTitle className="text-xl font-black flex items-center gap-3 text-slate-900 dark:text-white uppercase tracking-tight">
+                  <div className="p-2 bg-blue-50 dark:bg-blue-500/10 rounded-xl text-blue-600 dark:text-blue-400">
+                    <HistoryIcon size={20} strokeWidth={3} />
+                  </div>
+                  Histórico Clínico Interativo
                 </CardTitle>
-                <CardDescription className="dark:text-slate-400 font-medium">SOAP Notes e Observações Clínicas.</CardDescription>
+                <CardDescription className="dark:text-slate-400 font-medium ml-11">Linha cronológica de atos clínicos e exames.</CardDescription>
               </div>
               <Link href={`/dashboard/consultations?patientId=${id}`}>
-                <Button 
-                  variant="outline" 
-                  className="rounded-xl font-bold border-slate-200 dark:border-slate-800 dark:text-slate-300"
-                >
-                  Ver Tudo
+                <Button variant="ghost" className="rounded-xl font-black text-[10px] uppercase tracking-widest text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10">
+                  Ver Tudo <ChevronRight size={14} className="ml-1" />
                 </Button>
               </Link>
             </CardHeader>
-            <div className="divide-y divide-slate-50 dark:divide-slate-800">
-              {patient.consultations?.map((consult: any) => (
-                <div key={consult.id} className="p-8 hover:bg-slate-50/50 transition-colors">
-                  <div className="flex justify-between items-start mb-6">
-                    <div className="flex items-center gap-4">
-                       <div className="h-12 w-12 rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-black">
-                         {format(new Date(consult.date), "dd")}
-                       </div>
-                       <div>
-                         <p className="font-black text-slate-900 dark:text-slate-100">{format(new Date(consult.date), "MMMM yyyy", { locale: pt })}</p>
-                         <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Médico: {consult.veterinarian?.name || "Dr. Desconhecido"}</p>
-                       </div>
-                    </div>
-                    <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-none font-black text-[9px] uppercase">Finalizada</Badge>
-                  </div>
-                  
-                  {consult.notes ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <div>
-                          <p className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] mb-1">Subjetivo</p>
-                          <p className="text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed">{consult.notes.subjective || "Sem registos."}</p>
-                        </div>
-                        <div>
-                          <p className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] mb-1">Objetivo</p>
-                          <p className="text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed">{consult.notes.objective || "Sem registos."}</p>
-                        </div>
-                      </div>
-                      <div className="space-y-4">
-                        <div>
-                          <p className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] mb-1">Avaliação</p>
-                          <p className="text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed">{consult.notes.assessment || "Sem registos."}</p>
-                        </div>
-                        <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-900/50">
-                          <p className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.2em] mb-1">Plano Terapêutico</p>
-                          <p className="text-sm text-emerald-800 dark:text-emerald-300 font-bold leading-relaxed">{consult.notes.plan || "Sem registos."}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-slate-300 dark:text-slate-700 italic font-medium">Nenhuma nota SOAP registada para esta consulta.</p>
-                  )}
-                </div>
-              ))}
-            </div>
+            <CardContent className="p-8">
+              <ClinicalTimeline history={history} isLoading={isHistoryLoading} />
+            </CardContent>
           </Card>
         </div>
 
-        {/* Right Column: Vaccines, Prescriptions, etc. */}
-        <div className="space-y-8">
+        {/* RIGHT COLUMN (4/12): Preventive & Admin */}
+        <div className="lg:col-span-4 space-y-8">
+          
           {/* Vaccines Card */}
-          <Card className="border-none shadow-xl shadow-slate-200/50 dark:shadow-none rounded-[2.5rem] bg-white dark:bg-slate-900 overflow-hidden ring-1 ring-slate-100 dark:ring-slate-800">
-            <CardHeader className="p-8">
-              <CardTitle className="text-xl font-black flex items-center gap-2 text-slate-900 dark:text-slate-100">
-                <Syringe className="text-blue-600 dark:text-blue-400" /> Plano de Vacinação
+          <Card className="border-none shadow-xl shadow-slate-200/40 dark:shadow-none rounded-[2.5rem] bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/5 overflow-hidden">
+            <CardHeader className="p-8 pb-4">
+              <CardTitle className="text-lg font-black flex items-center gap-3 text-slate-900 dark:text-white uppercase tracking-tight">
+                <div className="p-2 bg-amber-50 dark:bg-amber-500/10 rounded-xl text-amber-600 dark:text-amber-400">
+                  <Syringe size={18} strokeWidth={3} />
+                </div>
+                Plano de Vacinação
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-0">
-              <div className="px-8 pb-8 space-y-4">
-                {patient.vaccinations?.map((v: any) => {
+            <CardContent className="p-8 pt-2 space-y-4">
+              {patient.vaccinations?.length > 0 ? (
+                patient.vaccinations.map((v: any) => {
                   const isExpired = v.expiresAt && new Date(v.expiresAt) < new Date();
                   const isSoon = v.expiresAt && new Date(v.expiresAt) < new Date(Date.now() + 30 * 86400000);
 
                   return (
-                    <div key={v.id} className={`p-5 rounded-3xl border transition-all ${isExpired ? 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-900/50' : isSoon ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-900/50' : 'bg-slate-50 dark:bg-slate-800 border-slate-50 dark:border-slate-800'}`}>
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-black text-slate-900 dark:text-slate-100">{v.vaccineName}</h4>
-                        {isExpired && <Badge className="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-black text-[8px]">EXPIRADA</Badge>}
-                        {isSoon && !isExpired && <Badge className="bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 font-black text-[8px]">EM BREVE</Badge>}
+                    <div key={v.id} className={cn(
+                      "p-5 rounded-3xl border transition-all relative overflow-hidden group",
+                      isExpired 
+                        ? "bg-rose-50/50 dark:bg-rose-500/5 border-rose-100 dark:border-rose-500/20" 
+                        : isSoon 
+                          ? "bg-amber-50/50 dark:bg-amber-500/5 border-amber-100 dark:border-amber-500/20" 
+                          : "bg-slate-50/50 dark:bg-white/5 border-slate-100 dark:border-white/10"
+                    )}>
+                      <div className="flex justify-between items-start mb-3">
+                        <h4 className="font-black text-sm text-slate-900 dark:text-white uppercase tracking-tight">{v.vaccineName}</h4>
+                        {isExpired && <Badge className="bg-rose-600 text-white border-none font-black text-[8px] uppercase tracking-widest px-2 py-0.5 rounded-lg shadow-lg shadow-rose-200 dark:shadow-none">Expirada</Badge>}
+                        {isSoon && !isExpired && <Badge className="bg-amber-500 text-white border-none font-black text-[8px] uppercase tracking-widest px-2 py-0.5 rounded-lg shadow-lg shadow-amber-200 dark:shadow-none">Aviso</Badge>}
                       </div>
                       <div className="flex justify-between items-end">
-                        <div>
+                        <div className="space-y-1">
                           <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Aplicada: {format(new Date(v.appliedAt), "dd MMM yyyy")}</p>
-                          <p className={`text-[10px] font-black uppercase mt-1 ${isExpired ? 'text-red-600 dark:text-red-400' : 'text-slate-500 dark:text-slate-400'}`}>Reforço: {v.expiresAt ? format(new Date(v.expiresAt), "dd MMM yyyy") : "N/A"}</p>
+                          <p className={cn("text-[10px] font-black uppercase flex items-center gap-1", isExpired ? 'text-rose-600 dark:text-rose-400' : 'text-slate-600 dark:text-slate-400')}>
+                            <RefreshCw size={10} /> Reforço: {v.expiresAt ? format(new Date(v.expiresAt), "dd MMM yyyy") : "N/A"}
+                          </p>
                         </div>
-                        <p className="text-[10px] font-bold text-slate-300 dark:text-slate-700">#{v.batchNumber}</p>
+                        <p className="text-[10px] font-black text-slate-300 dark:text-slate-700 tracking-widest opacity-40 group-hover:opacity-100 transition-opacity">LOT {v.batchNumber}</p>
                       </div>
                     </div>
                   );
-                })}
-                <Link href={`/dashboard/consultations?patientId=${id}&tab=vaccines`}>
-                  <Button 
-                    variant="outline" 
-                    className="w-full rounded-2xl py-6 border-dashed border-slate-200 text-slate-400 font-black hover:border-blue-300 hover:text-blue-600 transition-all"
-                  >
-                    <Plus size={16} className="mr-2" /> Registar Vacina
-                  </Button>
-                </Link>
-              </div>
+                })
+              ) : (
+                <div className="text-center py-10 opacity-30">
+                  <Syringe size={32} className="mx-auto mb-2" />
+                  <p className="text-xs font-black uppercase tracking-widest">Sem vacinas</p>
+                </div>
+              )}
+              <Link href={`/dashboard/consultations?patientId=${id}&tab=clinical`} className="block">
+                <Button 
+                  variant="outline" 
+                  className="w-full rounded-2xl py-6 border-dashed border-slate-200 dark:border-white/10 text-slate-400 dark:text-slate-600 font-black uppercase text-[9px] tracking-widest hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all bg-transparent"
+                >
+                  <Plus size={14} className="mr-2" /> Registar Vacinação
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 
-          {/* Prescriptions Card */}
-          <Card className="border-none shadow-xl shadow-slate-200/50 dark:shadow-none rounded-[2.5rem] bg-white dark:bg-slate-900 overflow-hidden ring-1 ring-slate-100 dark:ring-slate-800">
-            <CardHeader className="p-8">
-              <CardTitle className="text-xl font-black flex items-center gap-2 text-slate-900 dark:text-slate-100">
-                <Pill className="text-blue-600 dark:text-blue-400" /> Farmácia & Receitas
+          {/* Prescriptions & Meds */}
+          <Card className="border-none shadow-xl shadow-slate-200/40 dark:shadow-none rounded-[2.5rem] bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/5 overflow-hidden">
+            <CardHeader className="p-8 pb-4">
+              <CardTitle className="text-lg font-black flex items-center gap-3 text-slate-900 dark:text-white uppercase tracking-tight">
+                <div className="p-2 bg-rose-50 dark:bg-rose-500/10 rounded-xl text-rose-600 dark:text-rose-400">
+                  <Pill size={18} strokeWidth={3} />
+                </div>
+                Terapêutica Ativa
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-0">
-              <div className="px-8 pb-8 space-y-4">
-                {patient.prescriptions?.map((pr: any) => (
-                  <div key={pr.id} className="p-6 bg-slate-900 dark:bg-slate-950 rounded-[2rem] text-white space-y-4 relative overflow-hidden group ring-1 ring-white/5">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-                      <Pill size={48} />
+            <CardContent className="p-8 pt-2 space-y-4">
+              {patient.prescriptions?.length > 0 ? (
+                patient.prescriptions.map((pr: any) => (
+                  <div key={pr.id} className="p-6 bg-slate-900 dark:bg-slate-950 rounded-3xl text-white space-y-4 relative overflow-hidden group shadow-2xl">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-125 group-hover:rotate-12 transition-all duration-500">
+                      <Pill size={56} />
                     </div>
                     <div>
-                      <div className="flex justify-between items-start">
-                         <Badge className="bg-blue-600 text-white border-none font-black text-[8px]">ATIVA</Badge>
-                         <p className="text-[9px] font-black text-slate-500 uppercase">{format(new Date(pr.date), "dd/MM/yyyy")}</p>
+                      <div className="flex justify-between items-center">
+                         <Badge className="bg-blue-600 text-white border-none font-black text-[9px] px-3 py-1 rounded-lg">ACTIVA</Badge>
+                         <div className="flex items-center gap-1.5 text-slate-500">
+                            <Calendar size={10} />
+                            <p className="text-[9px] font-black uppercase tracking-widest">{format(new Date(pr.date), "dd MMM yyyy")}</p>
+                         </div>
                       </div>
-                      <div className="mt-4 space-y-3">
+                      <div className="mt-4 space-y-4">
                         {pr.items?.map((item: any) => (
-                          <div key={item.id}>
-                            <p className="font-black text-lg">{item.medicineName}</p>
-                            <p className="text-xs text-blue-400 font-bold">{item.dosage} • {item.frequency} • {item.duration}</p>
+                          <div key={item.id} className="relative z-10">
+                            <p className="font-black text-xl tracking-tight leading-tight">{item.medicineName}</p>
+                            <p className="text-xs text-blue-400 font-black uppercase tracking-tighter mt-1">{item.dosage} • {item.frequency} • {item.duration}</p>
                           </div>
                         ))}
                       </div>
                     </div>
-                    <div className="pt-4 border-t border-white/10 flex justify-between items-center">
-                       <p className="text-[9px] font-bold text-slate-500 italic">Emitido por: {pr.veterinarian?.name}</p>
+                    <div className="pt-4 border-t border-white/10 flex justify-between items-center relative z-10">
+                       <p className="text-[9px] font-bold text-slate-500 italic">Dr. {pr.veterinarian?.name.split(' ')[0]}</p>
                        <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg hover:bg-white/10 text-white">
                          <Printer size={14} />
                        </Button>
                     </div>
                   </div>
-                ))}
-                <Link href={`/dashboard/consultations?patientId=${id}&tab=billing`}>
-                  <Button className="w-full rounded-2xl py-6 bg-slate-100 dark:bg-slate-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 font-black transition-all">
-                    Nova Prescrição
-                  </Button>
-                </Link>
-              </div>
+                ))
+              ) : (
+                <div className="text-center py-10 opacity-30">
+                  <Pill size={32} className="mx-auto mb-2" />
+                  <p className="text-xs font-black uppercase tracking-widest">Sem medicação activa</p>
+                </div>
+              )}
+              <Link href={`/dashboard/consultations?patientId=${id}&tab=billing`} className="block">
+                <Button className="w-full rounded-2xl py-6 bg-slate-100 dark:bg-white/5 hover:bg-blue-100 dark:hover:bg-blue-500/20 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-black uppercase text-[9px] tracking-widest transition-all">
+                  Nova Prescrição
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 
-          {/* Identificação & Microchip Section */}
-          <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-indigo-600/20 to-blue-900/40 p-8 backdrop-blur-md shadow-2xl transition-all hover:shadow-indigo-500/10">
-            <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-indigo-500/10 blur-3xl" />
+          {/* ID & Microchip - Refined Glass Style */}
+          <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-linear-to-br from-indigo-600 to-blue-800 p-8 shadow-2xl transition-all hover:scale-[1.02] duration-500">
+            <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
             <div className="relative flex flex-col gap-6">
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/20 text-indigo-400 shadow-inner">
-                  <ShieldCheck size={28} />
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 text-white shadow-inner backdrop-blur-md">
+                  <ShieldCheck size={24} strokeWidth={3} />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black tracking-tight text-white uppercase">Identificação</h3>
-                  <p className="text-sm text-indigo-200/60 font-medium">Registo de Microchip</p>
+                  <h3 className="text-lg font-black tracking-tight text-white uppercase leading-none">Identificação</h3>
+                  <p className="text-[10px] text-white/60 font-black uppercase tracking-widest mt-1">Transponder Oficial</p>
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <p className="text-sm leading-relaxed text-indigo-100/80 font-medium opacity-70">
-                  Campo oficial para o número do transponder/microchip do animal para fins de identificação legal e clínica.
-                </p>
-
-                <div className="group relative rounded-2xl border border-white/5 bg-black/30 p-5 transition-all hover:bg-black/40">
-                  <span className="block text-[10px] font-bold uppercase tracking-widest text-indigo-400/70 mb-2">NÚMERO DO MICROCHIP</span>
-                  <div className="flex items-center justify-between gap-3">
+              <div className="space-y-5">
+                <div className="group relative rounded-2xl border border-white/10 bg-black/20 p-5 transition-all hover:bg-black/30 backdrop-blur-sm">
+                  <span className="block text-[9px] font-black uppercase tracking-[0.2em] text-white/50 mb-3">Nº MICROCHIP</span>
+                  <div className="flex items-center justify-between gap-4">
                     {isEditingChip ? (
                       <input 
                         type="text"
                         value={chipValue}
                         onChange={(e) => setChipValue(e.target.value)}
-                        className="bg-transparent text-2xl font-black tracking-tighter text-white font-mono outline-none border-b border-indigo-500 w-full"
+                        className="bg-transparent text-2xl font-black tracking-tighter text-white font-mono outline-none border-b-2 border-white/50 w-full pb-1"
                         autoFocus
                       />
                     ) : (
-                      <span className="text-2xl font-black tracking-tighter text-white font-mono leading-none">
-                        {patient.microchip || "Sem registo"}
+                      <span className="text-2xl font-black tracking-tighter text-white font-mono leading-none truncate">
+                        {patient.microchip || "SEM REGISTO"}
                       </span>
                     )}
                     
-                    <div className="flex gap-1">
+                    <div className="flex gap-1.5">
                       {isEditingChip ? (
                         <button 
                           onClick={handleUpdateChip}
-                          className="p-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
+                          className="p-2.5 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 shadow-lg transition-all active:scale-90"
                         >
-                          <CheckCircle2 size={16} />
+                          <CheckCircle2 size={16} strokeWidth={3} />
                         </button>
                       ) : (
                         <button 
@@ -512,18 +460,18 @@ export default function PatientProfilePage({ params }: { params: Promise<{ id: s
                             setChipValue(patient.microchip || "");
                             setIsEditingChip(true);
                           }}
-                          className="p-2 text-indigo-400/50 hover:text-indigo-300 transition-colors"
+                          className="p-2.5 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all active:scale-90"
                           title="Editar Microchip"
                         >
-                          <Plus size={16} />
+                          <Plus size={16} strokeWidth={3} />
                         </button>
                       )}
                       <button 
                         onClick={() => {
                           navigator.clipboard.writeText(patient.microchip || "");
-                          toast.success("Copiado!");
+                          toast.success("Copiado para o clipboard!");
                         }}
-                        className="p-2 text-indigo-400/50 hover:text-indigo-300 transition-colors"
+                        className="p-2.5 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all active:scale-90"
                       >
                         <Copy size={16} />
                       </button>
@@ -531,12 +479,18 @@ export default function PatientProfilePage({ params }: { params: Promise<{ id: s
                   </div>
                 </div>
 
-                <div className="p-4 rounded-xl bg-white/5 border border-white/5 text-[11px] text-indigo-200/50 leading-relaxed italic">
-                  * Este número é utilizado para comunicações oficiais e rastreio em caso de perda.
+                <div className="p-4 rounded-2xl bg-black/10 border border-white/5 text-[10px] text-white/60 leading-relaxed italic font-medium">
+                  * Verificado no último check-up. Obrigatório para viagens internacionais e registo SIAC.
                 </div>
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
         </div>
       </div>
     </div>

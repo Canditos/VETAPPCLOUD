@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
 import {
   Receipt,
   ExternalLink,
@@ -15,7 +16,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -52,125 +53,96 @@ export default function BillingPage() {
   const stats = data?.stats;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex justify-between items-end">
-        <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">
-            Faturação &amp; Finanças
-          </h1>
-          <p className="text-slate-500 font-medium">
-            Controlo legal via Jasmin ERP e histórico de vendas.
-          </p>
+    <div className="max-w-full mx-auto space-y-8 p-4 md:p-6 animate-premium">
+      {/* Painel de Gestão Financeira Unificado */}
+      <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 shadow-sm ring-1 ring-slate-200/60 dark:ring-white/5 space-y-8">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">Faturação & Finanças</h1>
+            <div className="flex items-center gap-2 text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em]">
+               <Receipt size={14} className="text-blue-600" />
+               <span>Controlo Legal via Jasmin ERP & Vendas Locais</span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <Button 
+              variant="outline" 
+              className="h-10 rounded-xl px-4 gap-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-black text-[10px] uppercase tracking-widest hover:bg-white transition-all active:scale-95"
+            >
+              <Download size={16} />
+              <span>Exportar SAF-T</span>
+            </Button>
+            
+            <Button
+              className="h-10 rounded-xl gap-2 bg-blue-600 hover:bg-blue-700 text-white font-black px-5 shadow-sm transition-all active:scale-95"
+              onClick={() => refetch()}
+              disabled={isRefetching}
+            >
+              <RefreshCw size={16} className={isRefetching ? "animate-spin" : ""} />
+              <span className="text-[10px] uppercase tracking-widest">Sincronizar</span>
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" className="rounded-xl gap-2">
-            <Download size={16} /> Exportar SAF-T
-          </Button>
-          <Button
-            className="rounded-xl gap-2 bg-blue-600"
-            onClick={() => refetch()}
-            disabled={isRefetching}
-          >
-            <RefreshCw size={16} className={isRefetching ? "animate-spin" : ""} />
-            Sincronizar
-          </Button>
+
+        {/* Stats Row */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            { 
+              label: "Faturado Hoje", 
+              value: formatEur(stats?.todayTotal ?? 0), 
+              sub: `${stats?.todayCount ?? 0} documentos`,
+              icon: TrendingUp, 
+              color: "text-blue-600", 
+              bg: "bg-blue-50/50" 
+            },
+            { 
+              label: "Pendente Sinc.", 
+              value: formatEur(stats?.pendingTotal ?? 0), 
+              sub: `${stats?.pendingCount ?? 0} rascunhos`,
+              icon: Clock, 
+              color: stats?.pendingCount > 0 ? "text-amber-600" : "text-slate-400", 
+              bg: stats?.pendingCount > 0 ? "bg-amber-50/50" : "bg-slate-50/50" 
+            },
+            { 
+              label: "Total de Documentos", 
+              value: invoices.length, 
+              sub: "Histórico completo",
+              icon: Receipt, 
+              color: "text-slate-900 dark:text-white", 
+              bg: "bg-slate-900/5 dark:bg-white/5" 
+            }
+          ].map((stat, i) => (
+            <div key={i} className="flex items-center gap-4 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/20">
+              <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm ring-1 ring-black/5 dark:ring-white/5", stat.bg, stat.color)}>
+                <stat.icon size={22} strokeWidth={2.5} />
+              </div>
+              <div>
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-tight">{stat.label}</p>
+                {isLoading ? (
+                  <Skeleton className="h-6 w-20 mt-1" />
+                ) : (
+                  <p className="text-xl font-black text-slate-900 dark:text-white tracking-tight">{stat.value}</p>
+                )}
+                <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase mt-0.5">{stat.sub}</p>
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="border-none shadow-sm transition-all duration-300 group overflow-hidden bg-white dark:bg-card ring-1 ring-slate-100 dark:ring-white/10 rounded-[2rem]">
-          <CardContent className="p-7">
-            <div className="flex justify-between items-start">
-              <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
-                <TrendingUp size={26} strokeWidth={2.5} />
-              </div>
-              <Badge variant="outline" className="text-[10px] font-black border-slate-100 dark:border-white/10 text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2 py-1">
-                Hoje
-              </Badge>
-            </div>
-            <div className="mt-6">
-              <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Faturado Hoje</p>
-              {isLoading ? (
-                <Skeleton className="h-10 w-28 mt-2" />
-              ) : (
-                <p className="text-4xl font-black text-slate-900 dark:text-slate-100 mt-2 tracking-tighter">
-                  {formatEur(stats?.todayTotal ?? 0)}
-                </p>
-              )}
-              <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tight">
-                {stats?.todayCount ?? 0} documentos emitidos
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-sm transition-all duration-300 group overflow-hidden bg-white dark:bg-card ring-1 ring-slate-100 dark:ring-white/10 rounded-[2rem]">
-          <CardContent className="p-7">
-            <div className="flex justify-between items-start">
-              <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
-                <Clock size={26} strokeWidth={2.5} />
-              </div>
-              <Badge variant="outline" className="text-[10px] font-black border-slate-100 dark:border-white/10 text-amber-600/50 uppercase tracking-widest px-2 py-1 animate-pulse">
-                Aguardando
-              </Badge>
-            </div>
-            <div className="mt-6">
-              <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Pendente Sinc.</p>
-              {isLoading ? (
-                <Skeleton className="h-10 w-28 mt-2" />
-              ) : (
-                <p className="text-4xl font-black text-amber-600 mt-2 tracking-tighter">
-                  {formatEur(stats?.pendingTotal ?? 0)}
-                </p>
-              )}
-              <p className="text-[10px] font-bold text-amber-600/80 mt-1 uppercase tracking-tight">
-                {stats?.pendingCount ?? 0} rascunhos por enviar
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-sm transition-all duration-300 group overflow-hidden bg-white dark:bg-card ring-1 ring-slate-100 dark:ring-white/10 rounded-[2rem]">
-          <CardContent className="p-7">
-            <div className="flex justify-between items-start">
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-500/10 text-slate-600 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
-                <Receipt size={26} strokeWidth={2.5} />
-              </div>
-              <Badge variant="outline" className="text-[10px] font-black border-slate-100 dark:border-white/10 text-slate-400 uppercase tracking-widest px-2 py-1">
-                Global
-              </Badge>
-            </div>
-            <div className="mt-6">
-              <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Total Documentos</p>
-              {isLoading ? (
-                <Skeleton className="h-10 w-28 mt-2" />
-              ) : (
-                <p className="text-4xl font-black text-slate-900 dark:text-slate-100 mt-2 tracking-tighter">
-                  {invoices.length}
-                </p>
-              )}
-              <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tight">
-                documentos no sistema
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Toolbar with Backdrop Blur */}
-      <Card className="border-none bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-slate-200/40 dark:shadow-none ring-1 ring-slate-100 dark:ring-slate-800 overflow-hidden">
-        <CardContent className="p-4 md:p-6">
+        {/* Search Bottom Row */}
+        <div className="pt-6 border-t border-slate-100 dark:border-slate-800/50">
           <div className="relative group">
-            <FileSearch className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 group-focus-within:text-blue-500 transition-colors" size={20} />
+            <FileSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
             <Input
-              placeholder="Procurar por fatura, cliente ou número externo..."
-              className="h-16 pl-16 pr-6 rounded-3xl border-none bg-slate-100/50 dark:bg-slate-800/50 focus-visible:ring-2 focus-visible:ring-blue-500/50 font-semibold text-lg text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all"
+              placeholder="Pesquisar por fatura, cliente ou número externo..."
+              className="h-14 pl-12 pr-6 rounded-xl border-none bg-slate-50 dark:bg-slate-800/50 ring-1 ring-slate-100 dark:ring-slate-800 focus-visible:ring-2 focus-visible:ring-blue-500/50 font-bold text-sm text-slate-700 dark:text-slate-200"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Invoices Content - Premium Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">

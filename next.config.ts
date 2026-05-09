@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
     // !! WARN !!
     ignoreBuildErrors: true,
   },
+  output: 'standalone',
   async headers() {
     return [
       {

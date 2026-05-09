@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { cn } from "@/lib/utils";
 import { 
   Package, 
   Plus, 
@@ -48,23 +49,6 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 
-// Custom Stat Card Component for consistency
-const StatCard = ({ title, value, icon: Icon, color, subtitle }: any) => (
-  <Card className="border-none bg-white dark:bg-card shadow-sm ring-1 ring-slate-100 dark:ring-white/10 overflow-hidden group">
-    <CardContent className="p-6 flex items-center gap-5">
-      <div className={`p-4 rounded-[2rem] transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 ${color}`}>
-        <Icon size={28} strokeWidth={2.5} />
-      </div>
-      <div>
-        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1">{title}</p>
-        <div className="flex items-baseline gap-2">
-          <p className="text-3xl font-black text-slate-900 dark:text-white leading-none">{value}</p>
-          {subtitle && <span className="text-xs font-bold text-slate-400">{subtitle}</span>}
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-);
 
 export default function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -126,163 +110,130 @@ export default function InventoryPage() {
   }, [products]);
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-10 p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div className="space-y-1">
-          <h1 className="text-4xl font-black tracking-tight text-slate-900 dark:text-white sm:text-5xl">
-            Inventário
-          </h1>
-          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 font-medium">
-            <Badge variant="secondary" className="bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 border-none font-bold px-2 py-0.5">
-              CATÁLOGO
-            </Badge>
-            <span>Gestão avançada de medicamentos e consumíveis</span>
+    <div className="max-w-full mx-auto space-y-8 p-4 md:p-6 animate-premium">
+      {/* Painel de Gestão de Inventário Unificado */}
+      <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 shadow-sm ring-1 ring-slate-200/60 dark:ring-white/5 space-y-8">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">Inventário & Stock</h1>
+            <div className="flex items-center gap-2 text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em]">
+               <Box size={14} className="text-blue-600" />
+               <span>Controlo de Medicamentos e Consumíveis</span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <Button 
+              variant="outline" 
+              onClick={() => toast.info("Histórico de stock em desenvolvimento...")}
+              className="h-10 rounded-xl px-4 gap-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-black text-[10px] uppercase tracking-widest hover:bg-white transition-all active:scale-95"
+            >
+              <History size={16} strokeWidth={2.5} />
+              <span>Movimentos</span>
+            </Button>
+
+            <Button 
+              variant="outline" 
+              onClick={() => toast.success("Exportação iniciada...")}
+              className="h-10 rounded-xl px-4 gap-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-black text-[10px] uppercase tracking-widest hover:bg-white transition-all active:scale-95"
+            >
+              <Download size={16} strokeWidth={2.5} />
+              <span>Exportar</span>
+            </Button>
+            
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button className="h-10 rounded-xl gap-2 bg-blue-600 hover:bg-blue-700 text-white font-black px-5 shadow-sm transition-all active:scale-95">
+                  <Plus size={16} strokeWidth={3} />
+                  <span className="text-[10px] uppercase tracking-widest">Novo Artigo</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px] rounded-[3rem] border-none shadow-3xl p-0 overflow-hidden bg-white dark:bg-slate-900">
+                <div className="bg-blue-600 p-8 text-white">
+                  <DialogTitle className="text-2xl font-black tracking-tight">Adicionar ao Catálogo</DialogTitle>
+                  <p className="text-blue-100 text-xs font-bold uppercase tracking-widest mt-1 opacity-80">Registe novos artigos com IVA e Lote.</p>
+                </div>
+                <div className="p-8 space-y-6">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Designação</Label>
+                    <Input placeholder="Ex: Clavaseptin 500mg" className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Preço (€)</Label>
+                      <Input type="number" placeholder="0.00" className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Taxa IVA</Label>
+                      <select className="h-12 w-full rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-3 text-xs font-black">
+                        <option value="23">23% (Normal)</option>
+                        <option value="13">13% (Intermédia)</option>
+                        <option value="6">6% (Reduzida)</option>
+                      </select>
+                    </div>
+                  </div>
+                  <Button className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs uppercase tracking-widest" onClick={() => toast.success("Artigo registado!")}>
+                    Registar Artigo
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
-        
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <Button 
-            variant="outline" 
-            onClick={() => toast.info("A carregar histórico de movimentos...")}
-            className="h-12 rounded-2xl px-6 gap-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm font-black hover:shadow-md transition-all active:scale-95"
-          >
-            <History size={18} strokeWidth={2.5} />
-            <span className="hidden sm:inline">Movimentos</span>
-          </Button>
 
-          <Button 
-            variant="outline" 
-            onClick={() => {
-              toast.promise(new Promise(resolve => setTimeout(resolve, 1500)), {
-                loading: 'A gerar ficheiro CSV...',
-                success: 'Inventário exportado com sucesso!',
-                error: 'Erro ao exportar.',
-              });
-            }}
-            className="h-12 rounded-2xl px-6 gap-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm font-black hover:shadow-md transition-all active:scale-95"
-          >
-            <Download size={18} strokeWidth={2.5} />
-            <span className="hidden sm:inline">Exportar CSV</span>
-          </Button>
-          
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="h-12 rounded-2xl px-6 gap-3 bg-blue-600 hover:bg-blue-700 text-white shadow-sm font-black transition-all active:scale-95">
-                <Plus size={22} strokeWidth={3} />
-                <span>Novo Artigo</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px] rounded-[3rem] border-none shadow-3xl p-0 overflow-hidden bg-white dark:bg-background">
-              <div className="bg-blue-600 p-10 text-white">
-                <DialogTitle className="text-3xl font-black tracking-tight">Adicionar ao Catálogo</DialogTitle>
-                <DialogDescription className="text-blue-100 font-medium mt-2">Registe novos artigos com IVA e Lote.</DialogDescription>
+        {/* Stats Row - Compact & Integrated */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[
+            { label: "Total Artigos", value: products?.length || 0, icon: Package, color: "text-blue-600", bg: "bg-blue-50/50" },
+            { label: "Stock Crítico", value: stats.lowStock, icon: AlertTriangle, color: stats.lowStock > 0 ? "text-amber-600" : "text-slate-400", bg: stats.lowStock > 0 ? "bg-amber-50/50" : "bg-slate-50/50" },
+            { label: "Expirados", value: stats.expired, icon: Calendar, color: stats.expired > 0 ? "text-rose-600" : "text-slate-400", bg: stats.expired > 0 ? "bg-rose-50/50" : "bg-slate-50/50" },
+            { label: "Valor de Stock", value: `€${Math.floor(stats.totalValue).toLocaleString()}`, icon: TrendingUp, color: "text-slate-900 dark:text-white", bg: "bg-slate-900/5 dark:bg-white/5" }
+          ].map((stat, i) => (
+            <div key={i} className="flex items-center gap-4 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/20">
+              <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm ring-1 ring-black/5 dark:ring-white/5", stat.bg, stat.color)}>
+                <stat.icon size={18} strokeWidth={2.5} />
               </div>
-              <div className="p-10 grid gap-8">
-                <div className="grid gap-3">
-                  <Label className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Designação do Produto</Label>
-                  <Input placeholder="Ex: Clavaseptin 500mg" className="h-14 rounded-2xl border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-card px-6 font-bold" />
-                </div>
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="grid gap-3">
-                    <Label className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Preço Venda (€)</Label>
-                    <Input type="number" placeholder="0.00" className="h-14 rounded-2xl border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-6 font-bold" />
-                  </div>
-                  <div className="grid gap-3">
-                    <Label className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Taxa IVA (%)</Label>
-                    <select className="h-14 rounded-2xl border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-4 text-sm font-black dark:text-slate-300">
-                      <option value="23">23% (Normal)</option>
-                      <option value="13">13% (Intermédia)</option>
-                      <option value="6">6% (Reduzida)</option>
-                    </select>
-                  </div>
-                </div>
-                <Button 
-                  onClick={() => toast.success("Artigo registado com sucesso!")}
-                  className="w-full h-16 rounded-[1.5rem] bg-blue-600 hover:bg-blue-700 text-white text-lg font-black"
-                >
-                  Registar no Sistema
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
-          title="Total Artigos" 
-          value={products?.length || 0} 
-          icon={Package} 
-          color="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
-          subtitle="No catálogo"
-        />
-        <StatCard 
-          title="Stock Crítico" 
-          value={stats.lowStock} 
-          icon={AlertTriangle} 
-          color={stats.lowStock > 0 ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400" : "bg-slate-50 dark:bg-slate-800 text-slate-400"}
-          subtitle="Baixas unidades"
-        />
-        <StatCard 
-          title="Expirados" 
-          value={stats.expired} 
-          icon={Calendar} 
-          color={stats.expired > 0 ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400" : "bg-slate-50 dark:bg-slate-800 text-slate-400"}
-          subtitle="Atenção necessária"
-        />
-        <StatCard 
-          title="Valor Total" 
-          value={`€${Math.floor(stats.totalValue).toLocaleString()}`} 
-          icon={TrendingUp} 
-          color="bg-slate-900 dark:bg-white text-white dark:text-slate-900"
-          subtitle="Avaliação de stock"
-        />
-      </div>
-
-      {/* Main List Section */}
-      <div className="space-y-6">
-        {/* Search & Filter Toolbar */}
-        <Card className="border-none bg-white/60 dark:bg-card/60 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-slate-200/40 dark:shadow-none ring-1 ring-slate-100 dark:ring-white/10 overflow-hidden">
-          <CardContent className="p-4 md:p-6">
-            <div className="flex flex-col lg:flex-row gap-6">
-              <div className="relative flex-1 group">
-                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 group-focus-within:text-indigo-500 transition-colors" size={20} />
-                <Input 
-                  placeholder="Procurar por designação, categoria ou código..."
-                  className="h-16 pl-16 pr-6 rounded-3xl border-none bg-slate-100/50 dark:bg-card/50 focus-visible:ring-2 focus-visible:ring-indigo-500/50 font-semibold text-lg text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              
-              <div className="flex gap-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-16 rounded-3xl px-8 gap-3 bg-slate-100/50 dark:bg-slate-800/50 font-black text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 shadow-sm transition-all">
-                      <Filter size={18} strokeWidth={2.5} />
-                      <span className="uppercase tracking-widest text-[11px]">
-                        {filterCategory === "all" ? "Categorias" : filterCategory}
-                      </span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="rounded-2xl border-none shadow-3xl p-2 w-64 bg-white dark:bg-slate-800">
-                    <DropdownMenuItem onClick={() => setFilterCategory("all")} className="font-bold rounded-xl p-4 dark:text-slate-200">
-                      Todas as Categorias
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator className="opacity-50" />
-                    {categories.map((cat: string) => (
-                      <DropdownMenuItem key={cat} onClick={() => setFilterCategory(cat)} className="font-bold rounded-xl p-4 dark:text-slate-200">
-                        {cat}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              <div>
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-tight">{stat.label}</p>
+                <p className="text-lg font-black text-slate-900 dark:text-white tracking-tight">{stat.value}</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          ))}
+        </div>
+
+        {/* Search & Filter - Bottom Row of the Panel */}
+        <div className="flex flex-col lg:flex-row gap-4 pt-6 border-t border-slate-100 dark:border-slate-800/50">
+          <div className="relative flex-1 group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={16} />
+            <Input 
+              placeholder="Pesquisar por nome, categoria ou código de barras..."
+              className="h-12 pl-12 pr-4 rounded-xl border-none bg-slate-50 dark:bg-slate-800/50 ring-1 ring-slate-100 dark:ring-slate-800 focus-visible:ring-2 focus-visible:ring-blue-500/50 font-bold text-sm"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-12 rounded-xl px-4 gap-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 font-black text-[10px] uppercase tracking-widest text-slate-600 dark:text-slate-400 hover:bg-white transition-all">
+                <Filter size={16} strokeWidth={2.5} />
+                <span>{filterCategory === "all" ? "Todas as Categorias" : filterCategory}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="rounded-xl border-none shadow-2xl p-2 w-64 bg-white dark:bg-slate-900">
+              <DropdownMenuItem onClick={() => setFilterCategory("all")} className="font-bold rounded-lg p-3 text-xs uppercase tracking-widest">
+                Todas as Categorias
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="opacity-50" />
+              {categories.map((cat: string) => (
+                <DropdownMenuItem key={cat} onClick={() => setFilterCategory(cat)} className="font-bold rounded-lg p-3 text-xs uppercase tracking-widest">
+                  {cat}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
 
         {/* List Content - Premium Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
