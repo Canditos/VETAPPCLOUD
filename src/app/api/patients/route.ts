@@ -1,27 +1,20 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import prisma, { getTenantClient } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return new NextResponse("Unauthorized", { status: 401 });
+    if (!session || !(session.user as any).clinicId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      select: { clinicId: true }
-    });
+    const clinicId = (session.user as any).clinicId;
+    const tenantPrisma = getTenantClient(clinicId);
 
-    if (!user?.clinicId) {
-      return new NextResponse("Clinic not found", { status: 404 });
-    }
-
-    const clinicId = user.clinicId;
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search") || "";
     const species = searchParams.get("species") || "";
@@ -44,7 +37,7 @@ export async function GET(req: Request) {
     }
 
     const [patients, total] = await Promise.all([
-      prisma.patient.findMany({
+      tenantPrisma.patient.findMany({
         where,
         include: {
           owner: { select: { id: true, name: true, phone: true, email: true } },
@@ -53,7 +46,7 @@ export async function GET(req: Request) {
         skip,
         take: limit,
       }),
-      prisma.patient.count({ where }),
+      tenantPrisma.patient.count({ where }),
     ]);
 
     return NextResponse.json({
@@ -74,27 +67,19 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return new NextResponse("Unauthorized", { status: 401 });
+    if (!session || !(session.user as any).clinicId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      select: { clinicId: true }
-    });
-
-    if (!user?.clinicId) {
-      return new NextResponse("Clinic not found", { status: 404 });
-    }
+    const clinicId = (session.user as any).clinicId;
+    const tenantPrisma = getTenantClient(clinicId);
 
     const body = await req.json();
-    const clinicId = user.clinicId;
 
     let ownerId = body.ownerId;
 
-    // If it's a new owner, create it first
     if (body.isNewOwner) {
-      const owner = await prisma.owner.create({
+      const owner = await tenantPrisma.owner.create({
         data: {
           clinicId,
           name: body.ownerName,
@@ -109,7 +94,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Owner ID is required" }, { status: 400 });
     }
 
-    const patient = await prisma.patient.create({
+    const patient = await tenantPrisma.patient.create({
       data: {
         clinicId,
         ownerId,

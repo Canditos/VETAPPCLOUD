@@ -224,7 +224,9 @@ export default function PatientProfilePage({ params }: { params: Promise<{ id: s
                 </div>
                 <div className="space-y-1">
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-600">Esterilizado</span>
-                  <p className="font-black text-slate-900 dark:text-slate-100">Sim</p>
+                  <p className="font-black text-slate-900 dark:text-slate-100">
+                    {patient.reproductiveStatus === 'Castrado' || patient.reproductiveStatus === 'Esterilizado' ? 'Sim' : 'Não'}
+                  </p>
                 </div>
                 <div className="space-y-1">
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-600">Tutor Responsável</span>
@@ -288,7 +290,7 @@ export default function PatientProfilePage({ params }: { params: Promise<{ id: s
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
                 {[
-                  { label: "Peso", value: `${patient.vitalSigns?.[patient.vitalSigns.length-1]?.weight || "---"} kg`, icon: Weight, color: "text-blue-500" },
+                  { label: "Peso", value: `${patient.weight ? `${Number(patient.weight).toFixed(1)} kg` : "---"}`, icon: Weight, color: "text-blue-500" },
                   { label: "Temp", value: `${patient.vitalSigns?.[patient.vitalSigns.length-1]?.temperature || "---"} ºC`, icon: Thermometer, color: "text-orange-500" },
                   { label: "FC (BPM)", value: patient.vitalSigns?.[patient.vitalSigns.length-1]?.heartRate || "---", icon: Heart, color: "text-rose-500" },
                   { label: "FR (RPM)", value: patient.vitalSigns?.[patient.vitalSigns.length-1]?.respiratoryRate || "---", icon: Activity, color: "text-indigo-500" },

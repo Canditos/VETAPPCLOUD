@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import prisma, { getTenantClient } from "@/lib/prisma";
+import { getTenantClient } from "@/lib/prisma";
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session || !(session.user as any).clinicId) {
@@ -17,10 +17,11 @@ export async function GET(
   const tenantPrisma = getTenantClient(clinicId);
 
   try {
-    // Fetch all related entities for a complete history
+    const { id } = await params;
+
     const [consultations, labResults, imagingStudies, vaccinations, dewormings, prescriptions, vitals] = await Promise.all([
       tenantPrisma.consultation.findMany({
-        where: { patientId: params.id },
+        where: { patientId: id },
         include: {
           notes: true,
           invoice: true,
@@ -29,33 +30,32 @@ export async function GET(
         orderBy: { date: "desc" },
       }),
       tenantPrisma.labResult.findMany({
-        where: { patientId: params.id },
+        where: { patientId: id },
         orderBy: { createdAt: "desc" },
       }),
       tenantPrisma.imagingStudy.findMany({
-        where: { patientId: params.id },
+        where: { patientId: id },
         orderBy: { createdAt: "desc" },
       }),
       tenantPrisma.vaccination.findMany({
-        where: { patientId: params.id },
+        where: { patientId: id },
         orderBy: { appliedAt: "desc" },
       }),
       tenantPrisma.deworming.findMany({
-        where: { patientId: params.id },
+        where: { patientId: id },
         orderBy: { appliedAt: "desc" },
       }),
       tenantPrisma.prescription.findMany({
-        where: { patientId: params.id },
+        where: { patientId: id },
         include: { items: true, veterinarian: { select: { name: true } } },
         orderBy: { createdAt: "desc" },
       }),
       tenantPrisma.vitalSign.findMany({
-        where: { patientId: params.id },
+        where: { patientId: id },
         orderBy: { recordedAt: "desc" },
       }),
     ]);
 
-    // Merge and sort all events by date
     const history = [
       ...consultations.map(c => ({
         type: "CONSULTATION",

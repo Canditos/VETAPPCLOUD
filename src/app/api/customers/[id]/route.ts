@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { getTenantClient } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -11,24 +11,17 @@ export async function GET(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return new NextResponse("Unauthorized", { status: 401 });
+    if (!session || !(session.user as any).clinicId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      select: { clinicId: true }
-    });
-
-    if (!user?.clinicId) {
-      return new NextResponse("Clinic not found", { status: 404 });
-    }
+    const clinicId = (session.user as any).clinicId;
+    const tenantPrisma = getTenantClient(clinicId);
 
     const { id } = await params;
-    const clinicId = user.clinicId;
 
-    const customer = await prisma.owner.findUnique({
-      where: { id, clinicId },
+    const customer = await tenantPrisma.owner.findUnique({
+      where: { id },
       include: {
         patients: {
           include: {
@@ -55,10 +48,13 @@ export async function GET(
     });
 
     if (!customer) {
-      return new NextResponse("Customer not found", { status: 404 });
+      return NextResponse.json({ error: "Customer not found" }, { status: 404 });
     }
 
-    // Calcular estatísticas financeiras reais
+    if (customer.clinicId !== clinicId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const totalInvoiced = customer.invoices.reduce((acc, inv) => acc + Number(inv.total), 0);
     const totalPaid = customer.payments.reduce((acc, pay) => acc + Number(pay.amount), 0);
     const outstandingBalance = totalInvoiced - totalPaid;

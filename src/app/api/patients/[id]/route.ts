@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import prisma, { getTenantClient } from "@/lib/prisma";
+import { getTenantClient } from "@/lib/prisma";
 
 export async function GET(
   req: Request,
@@ -55,7 +55,6 @@ export async function GET(
       return NextResponse.json({ error: "Patient not found" }, { status: 404 });
     }
 
-    // Ensure patient belongs to clinic
     if (patient.clinicId !== clinicId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -63,6 +62,50 @@ export async function GET(
     return NextResponse.json(patient);
   } catch (error) {
     console.error("[PATIENT_DETAIL_GET]", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}
+
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const session = await getServerSession(authOptions);
+    
+    if (!session || !(session.user as any).clinicId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const clinicId = (session.user as any).clinicId;
+    const tenantPrisma = getTenantClient(clinicId);
+
+    const existing = await tenantPrisma.patient.findUnique({
+      where: { id },
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: "Patient not found" }, { status: 404 });
+    }
+
+    if (existing.clinicId !== clinicId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const body = await req.json();
+    const { microchip } = body;
+
+    const patient = await tenantPrisma.patient.update({
+      where: { id },
+      data: {
+        ...(microchip !== undefined && { microchip }),
+      },
+    });
+
+    return NextResponse.json(patient);
+  } catch (error) {
+    console.error("[PATIENT_PATCH]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
