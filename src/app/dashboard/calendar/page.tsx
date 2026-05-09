@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import {
   ChevronLeft, ChevronRight, Clock, Plus, Stethoscope,
   RefreshCw, Activity, Syringe, Scissors, Zap, CalendarDays,
