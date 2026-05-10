@@ -271,21 +271,23 @@ function ConsultationContent() {
 
       {/* Main Clinical Navigation */}
       <Tabs value={activeTab} onValueChange={updateTab} className="w-full">
-        <TabsList className="flex w-full mb-10 bg-slate-100/50 dark:bg-slate-900/50 p-1.5 rounded-[2.5rem] ring-1 ring-slate-200/50 dark:ring-white/5 overflow-x-auto no-scrollbar gap-1">
-          {[
-            { val: "clinical", label: "Histórico & SOAP", icon: ClipboardCheck },
-            { val: "vaccines", label: "Vacinação & Prevenção", icon: Syringe },
-            { val: "prescriptions", label: "Prescrições", icon: Pill },
-            { val: "exams", label: "Meios Complementares", icon: FlaskConical },
-            { val: "billing", label: "Farmácia & Faturação", icon: Receipt }
-          ].map(t => (
-            <TabsTrigger key={t.val} value={t.val} 
-              className="rounded-[2rem] data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-lg font-black text-[9px] xl:text-[10px] uppercase tracking-widest transition-all gap-2 py-4 px-4 xl:px-6 dark:text-slate-400 dark:data-[state=active]:text-white whitespace-nowrap flex-1 min-w-0">
-              <t.icon className="w-4 h-4 shrink-0" strokeWidth={3} />
-              <span className="truncate">{t.label}</span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <div className="mb-10 overflow-x-auto -mx-4 px-4 md:-mx-8 md:px-8 no-scrollbar">
+          <TabsList className="inline-flex w-auto min-w-full bg-slate-100/50 dark:bg-slate-900/50 p-1.5 rounded-[2.5rem] ring-1 ring-slate-200/50 dark:ring-white/5 gap-1">
+            {[
+              { val: "clinical", label: "Histórico & SOAP", icon: ClipboardCheck },
+              { val: "vaccines", label: "Vacinação & Prevenção", icon: Syringe },
+              { val: "prescriptions", label: "Prescrições", icon: Pill },
+              { val: "exams", label: "Meios Complementares", icon: FlaskConical },
+              { val: "billing", label: "Farmácia & Faturação", icon: Receipt }
+            ].map(t => (
+              <TabsTrigger key={t.val} value={t.val} 
+                className="rounded-[2rem] data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-lg font-black text-[10px] uppercase tracking-widest transition-all gap-2 py-4 px-5 dark:text-slate-400 dark:data-[state=active]:text-white whitespace-nowrap shrink-0">
+                <t.icon className="w-4 h-4 shrink-0" strokeWidth={3} />
+                {t.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
 
 
         {/* CLINICAL / SOAP TAB */}
