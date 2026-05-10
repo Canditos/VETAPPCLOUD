@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   Mail, 
   MessageSquare, 
@@ -15,7 +16,8 @@ import {
   Clock,
   Calendar,
   Syringe,
-  Save
+  Save,
+  Loader2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,8 +33,20 @@ import {
   DialogTitle 
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import axios from "axios";
 
 export default function AutomationsPage() {
+  const queryClient = useQueryClient();
+  const [previewTemplate, setPreviewTemplate] = useState<string | null>(null);
+
+  const { data: settingsData, isLoading } = useQuery({
+    queryKey: ["automationSettings"],
+    queryFn: async () => {
+      const res = await axios.get("/api/settings/automations");
+      return res.data;
+    }
+  });
+
   const [config, setConfig] = useState({
     emailEnabled: true,
     smsEnabled: false,
@@ -40,7 +54,32 @@ export default function AutomationsPage() {
     vaccineAlert: true,
     invoiceEmail: true
   });
-  const [previewTemplate, setPreviewTemplate] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (settingsData && !settingsData.error) {
+      setConfig({
+        emailEnabled: settingsData.emailEnabled,
+        smsEnabled: settingsData.smsEnabled,
+        reminder24h: settingsData.reminder24h,
+        vaccineAlert: settingsData.vaccineAlert,
+        invoiceEmail: settingsData.invoiceEmail
+      });
+    }
+  }, [settingsData]);
+
+  const mutation = useMutation({
+    mutationFn: async (newConfig: typeof config) => {
+      const res = await axios.put("/api/settings/automations", newConfig);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["automationSettings"] });
+      toast.success("Configurações de automação guardadas com sucesso!");
+    },
+    onError: () => {
+      toast.error("Erro ao guardar as configurações.");
+    }
+  });
 
   const templates = {
     reminder24h: {
@@ -56,8 +95,16 @@ export default function AutomationsPage() {
   };
 
   const handleSave = () => {
-    toast.success("Configurações de automação guardadas com sucesso!");
+    mutation.mutate(config);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-5xl mx-auto space-y-10 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -66,8 +113,13 @@ export default function AutomationsPage() {
           <h1 className="text-4xl font-black text-slate-900 tracking-tight">Automações & Notificações</h1>
           <p className="text-slate-500 font-medium mt-2">Configure como a clínica comunica com os tutores de forma automática.</p>
         </div>
-        <Button onClick={handleSave} className="rounded-2xl bg-blue-600 hover:bg-blue-700 font-black px-8 py-6 gap-2 shadow-xl shadow-blue-200">
-          <Save size={18} /> Guardar Alterações
+        <Button 
+          onClick={handleSave} 
+          disabled={mutation.isPending}
+          className="rounded-2xl bg-blue-600 hover:bg-blue-700 font-black px-8 py-6 gap-2 shadow-xl shadow-blue-200"
+        >
+          {mutation.isPending ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+          {mutation.isPending ? "A Guardar..." : "Guardar Alterações"}
         </Button>
       </div>
 

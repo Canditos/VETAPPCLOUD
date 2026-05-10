@@ -170,7 +170,7 @@ export default function CalendarPage() {
   });
 
   const vets = teamData
-    .filter((u: any) => ["VETERINARIAN", "ADMIN"].includes(u.role))
+    .filter((u: any) => ["VETERINARIAN", "ADMIN", "RECEPTIONIST"].includes(u.role))
     .map((u: any, i: number) => ({ ...u, color: VET_COLORS[i % VET_COLORS.length] }));
 
   const getVetColor = (vetId: string) => {

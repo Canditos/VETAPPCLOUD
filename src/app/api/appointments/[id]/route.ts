@@ -31,6 +31,56 @@ export async function PATCH(
       computedEndTime = new Date(new Date(startTime).getTime() + durationMs);
     }
 
+    const newStartTime = startTime ? new Date(startTime) : existing.startTime;
+    const newEndTime = computedEndTime || existing.endTime;
+    const newVeterinarianId = veterinarianId || existing.veterinarianId;
+
+    // Verificação de sobreposição global e específica
+    if (status !== "CANCELLED") {
+      // Limite global: Máximo de 5 consultas na mesma clínica em simultâneo
+      const totalOverlapping = await prisma.appointment.count({
+        where: {
+          id: { not: params.id },
+          status: { not: "CANCELLED" },
+          OR: [
+            {
+              startTime: { lt: newEndTime },
+              endTime: { gt: newStartTime },
+            }
+          ],
+        },
+      });
+
+      if (totalOverlapping >= 5) {
+        return NextResponse.json(
+          { error: "Limite máximo de 5 consultas em simultâneo na clínica atingido." },
+          { status: 400 }
+        );
+      }
+
+      // Verificação específica: O membro não pode ter outra marcação na mesma hora
+      const overlapping = await prisma.appointment.findFirst({
+        where: {
+          id: { not: params.id },
+          veterinarianId: newVeterinarianId,
+          status: { not: "CANCELLED" },
+          OR: [
+            {
+              startTime: { lt: newEndTime },
+              endTime: { gt: newStartTime },
+            }
+          ],
+        },
+      });
+
+      if (overlapping) {
+        return NextResponse.json(
+          { error: "O membro da equipa selecionado já tem uma marcação nesse horário." },
+          { status: 400 }
+        );
+      }
+    }
+
     const appointment = await prisma.appointment.update({
       where: { id: params.id },
       data: {

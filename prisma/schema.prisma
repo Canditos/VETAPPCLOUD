@@ -39,6 +39,7 @@ model Clinic {
   stockMovements   StockMovement[]
   subscriptions    Subscription[]
   users            User[]
+  automationSettings AutomationSettings?
 
   @@index([name])
 }
@@ -544,4 +545,17 @@ enum MovementType {
   IN
   OUT
   ADJUSTMENT
+}
+
+model AutomationSettings {
+  id             String   @id @default(uuid())
+  clinicId       String   @unique
+  emailEnabled   Boolean  @default(true)
+  smsEnabled     Boolean  @default(false)
+  reminder24h    Boolean  @default(true)
+  vaccineAlert   Boolean  @default(true)
+  invoiceEmail   Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  clinic         Clinic   @relation(fields: [clinicId], references: [id])
 }

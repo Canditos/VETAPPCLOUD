@@ -107,7 +107,7 @@ export function VaccinationForm({ patientId, onSuccess }: VaccinationFormProps) 
                 <Calendar
                   mode="single"
                   selected={formData.appliedAt}
-                  onSelect={(date) => date && setFormData({ ...formData, appliedAt: date })}
+                  onSelect={(date: any) => date && setFormData({ ...formData, appliedAt: date })}
                   initialFocus
                   locale={pt}
                 />
@@ -137,7 +137,7 @@ export function VaccinationForm({ patientId, onSuccess }: VaccinationFormProps) 
               <Calendar
                 mode="single"
                 selected={formData.expiresAt}
-                onSelect={(date) => setFormData({ ...formData, expiresAt: date })}
+                onSelect={(date: any) => setFormData({ ...formData, expiresAt: date })}
                 initialFocus
                 locale={pt}
               />

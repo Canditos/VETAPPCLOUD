@@ -67,12 +67,56 @@ export async function POST(req: Request) {
   } = body;
 
   try {
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+
+    // Limite global: Máximo de 5 consultas na mesma clínica em simultâneo
+    const totalOverlapping = await tenantPrisma.appointment.count({
+      where: {
+        status: { not: "CANCELLED" },
+        OR: [
+          {
+            startTime: { lt: end },
+            endTime: { gt: start },
+          }
+        ],
+      },
+    });
+
+    if (totalOverlapping >= 5) {
+      return NextResponse.json(
+        { error: "Limite máximo de 5 consultas em simultâneo na clínica atingido." },
+        { status: 400 }
+      );
+    }
+
+    // Verificação de sobreposição: O membro da equipa não pode ter outra marcação na mesma hora
+    const overlapping = await tenantPrisma.appointment.findFirst({
+      where: {
+        veterinarianId,
+        status: { not: "CANCELLED" },
+        OR: [
+          {
+            startTime: { lt: end },
+            endTime: { gt: start },
+          }
+        ],
+      },
+    });
+
+    if (overlapping) {
+      return NextResponse.json(
+        { error: "O membro da equipa selecionado já tem uma marcação nesse horário." },
+        { status: 400 }
+      );
+    }
+
     const appointment = await tenantPrisma.appointment.create({
       data: {
         patientId,
         veterinarianId,
-        startTime: new Date(startTime),
-        endTime: new Date(endTime),
+        startTime: start,
+        endTime: end,
         type,
         status: "SCHEDULED",
       },

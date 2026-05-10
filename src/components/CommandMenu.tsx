@@ -14,8 +14,10 @@ import {
   Stethoscope,
   Users,
   Package,
+  TerminalSquare
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import {
   CommandDialog,
@@ -101,6 +103,26 @@ export function CommandMenu() {
             <CommandItem onSelect={() => runCommand(() => router.push("/dashboard/settings"))}>
               <Settings className="mr-2 h-4 w-4" />
               <span>Definições da Clínica</span>
+            </CommandItem>
+          </CommandGroup>
+          <CommandSeparator />
+          <CommandGroup heading="Developer (Hidden)" className="hidden group-hover:block opacity-10 hover:opacity-100 transition-opacity">
+            <CommandItem onSelect={() => runCommand(async () => {
+              toast.info("A iniciar testes E2E (Playwright)... isto pode demorar um pouco.");
+              try {
+                const res = await fetch("/api/dev/run-tests", { method: "POST" });
+                const data = await res.json();
+                if (data.success) {
+                  toast.success("Testes E2E concluídos com sucesso!");
+                } else {
+                  toast.error("Alguns testes falharam. Verifica a consola.");
+                }
+              } catch (e) {
+                toast.error("Erro ao iniciar testes E2E.");
+              }
+            })}>
+              <TerminalSquare className="mr-2 h-4 w-4" />
+              <span>Executar Testes (Playwright)</span>
             </CommandItem>
           </CommandGroup>
         </CommandList>
