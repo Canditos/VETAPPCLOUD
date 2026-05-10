@@ -147,7 +147,28 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
             </div>
           </Card>
           
-          <div className="grid grid-cols-2 gap-3 h-fit">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 h-fit mt-4 lg:mt-0">
+            <Button 
+              variant="outline" 
+              className="rounded-2xl h-full py-6 font-black border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-900/10 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all gap-2 text-blue-600 dark:text-blue-400"
+              onClick={async () => {
+                try {
+                  const res = await fetch("/api/portal/token", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ ownerId: id }),
+                  });
+                  const data = await res.json();
+                  const link = `${window.location.origin}/portal/${data.token}`;
+                  await navigator.clipboard.writeText(link);
+                  toast.success("Link do Portal copiado com sucesso!");
+                } catch {
+                  toast.error("Erro ao gerar link do portal");
+                }
+              }}
+            >
+              <Smartphone size={18} /> Portal do Tutor
+            </Button>
             <Link href={`/dashboard/consultations?customerId=${id}`} className="flex-1">
               <Button className="w-full rounded-2xl h-full py-6 font-black bg-slate-900 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-700 transition-all gap-2 shadow-xl shadow-slate-200 dark:shadow-none">
                 <Plus size={18} /> Nova Consulta
