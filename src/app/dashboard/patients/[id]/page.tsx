@@ -457,7 +457,7 @@ export default function PatientDetailPage() {
             <PrescriptionForm patientId={patientId} onSuccess={() => { setDialog(null); refetchRx(); }} />
           </div>
         </DialogContent>
-      </div>
+      </Dialog>
     </div>
   );
 }
