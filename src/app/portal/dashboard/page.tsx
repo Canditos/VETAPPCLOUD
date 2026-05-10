@@ -274,7 +274,19 @@ export default function PortalPage() {
     </div>
   );
 
-  con  return (
+  const { owner, clinic, patients, vaccineAlerts } = data;
+  const nextAppointment = patients.flatMap((p: any) => p.appointments ?? []).sort(
+    (a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+  )[0];
+
+  const tabs = [
+    { id: "home",    label: "Início",   icon: Home },
+    { id: "animals", label: "Animais",  icon: PawPrint },
+    { id: "agenda",  label: "Agenda",   icon: Calendar },
+    { id: "clinic",  label: "Clínica",  icon: MapPin },
+  ] as const;
+
+  return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col md:flex-row">
       
       {/* ── Desktop Sidebar ────────────────────────────────────────────────── */}
@@ -370,7 +382,7 @@ export default function PortalPage() {
                             <p className="text-white font-black text-lg leading-tight">{alert.patientName}</p>
                             <p className="text-slate-400 text-sm">{alert.vaccineName} · {alert.expired ? "Expirada" : "A expirar"}</p>
                           </div>
-                          <Button onClick={() => setShowRequest(true)} size="sm" className="bg-white/10 hover:bg-white/20 text-white rounded-xl font-black text-[10px] uppercase">Marcar Reforço</Button>
+                          <button onClick={() => setShowRequest(true)} className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase">Marcar Reforço</button>
                         </div>
                       </div>
                     ))}
@@ -381,7 +393,7 @@ export default function PortalPage() {
                          <p className="text-white font-black text-lg leading-tight">Nova Consulta</p>
                          <p className="text-slate-400 text-sm">Peça uma marcação online</p>
                        </div>
-                       <Button onClick={() => setShowRequest(true)} size="sm" className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-[10px] uppercase mt-3">Pedir Agora</Button>
+                       <button onClick={() => setShowRequest(true)} className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase mt-3 w-fit">Pedir Agora</button>
                     </div>
                   </div>
 
@@ -439,7 +451,7 @@ export default function PortalPage() {
                     ) : (
                       <div className="space-y-4">
                         <p className="text-blue-100 font-medium">Não tem nenhuma consulta agendada para breve.</p>
-                        <Button onClick={() => setShowRequest(true)} className="w-full py-6 rounded-2xl bg-white/20 hover:bg-white/30 text-white font-black uppercase text-xs">Marcar Agora</Button>
+                        <button onClick={() => setShowRequest(true)} className="w-full py-3 rounded-2xl bg-white/20 hover:bg-white/30 text-white font-black uppercase text-[10px] tracking-widest">Marcar Agora</button>
                       </div>
                     )}
                   </div>
@@ -460,8 +472,8 @@ export default function PortalPage() {
                         </div>
                       </div>
                       <div className="flex gap-2 pt-2">
-                        <Button variant="outline" className="flex-1 bg-white/5 border-white/10 rounded-xl font-bold" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clinic.address || clinic.name)}`)}>Direções</Button>
-                        <Button variant="outline" className="flex-1 bg-white/5 border-white/10 rounded-xl font-bold" onClick={() => window.location.href = `tel:${clinic.phone}`}>Ligar</Button>
+                        <button className="flex-1 bg-white/5 border border-white/10 rounded-xl py-3 font-bold text-xs hover:bg-white/10 transition-colors" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clinic.address || clinic.name)}`)}>Direções</button>
+                        <button className="flex-1 bg-white/5 border border-white/10 rounded-xl py-3 font-bold text-xs hover:bg-white/10 transition-colors" onClick={() => window.location.href = `tel:${clinic.phone}`}>Ligar</button>
                       </div>
                     </div>
                   </div>
@@ -478,7 +490,7 @@ export default function PortalPage() {
                     <h1 className="text-4xl font-black text-white tracking-tight">Os Seus Animais</h1>
                     <p className="text-slate-400 font-medium">Histórico clínico, vacinas e medicação.</p>
                   </div>
-                  <Button onClick={() => setShowRequest(true)} className="bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black px-8 h-14">Novo Pedido</Button>
+                  <button onClick={() => setShowRequest(true)} className="bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black px-8 h-14 uppercase text-xs tracking-widest">Novo Pedido</button>
                 </header>
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                   {patients.map((p: any) => <PatientCard key={p.id} patient={p} />)}
@@ -516,14 +528,14 @@ export default function PortalPage() {
                     <div className="text-center py-20 bg-white/5 rounded-[3rem] border border-white/5">
                       <Calendar size={64} className="mx-auto text-slate-800 mb-6" strokeWidth={1} />
                       <p className="text-xl text-slate-400 font-bold">Sem consultas agendadas</p>
-                      <Button onClick={() => setShowRequest(true)} className="mt-6 bg-blue-600 hover:bg-blue-500 rounded-2xl px-8 h-14 font-black">Agendar Agora</Button>
+                      <button onClick={() => setShowRequest(true)} className="mt-6 bg-blue-600 hover:bg-blue-500 rounded-2xl px-8 h-14 font-black uppercase text-xs tracking-widest">Agendar Agora</button>
                     </div>
                   )}
                 </div>
               </div>
             )}
 
-            {/* CLINIC VIEW (Desktop specific or merged) */}
+            {/* CLINIC VIEW */}
             {tab === "clinic" && (
                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-6">
@@ -542,14 +554,14 @@ export default function PortalPage() {
                            </div>
                          </div>
                          <div className="flex items-center gap-4 p-5 bg-white/5 rounded-2xl">
-                           <Mail className="text-blue-400" />
+                           <FileText className="text-blue-400" />
                            <div>
                              <p className="text-[10px] font-black text-slate-500 uppercase">Email</p>
                              <p className="text-white font-bold">{clinic.email || "Não disponível"}</p>
                            </div>
                          </div>
                        </div>
-                       <Button onClick={() => setShowRequest(true)} className="w-full h-16 rounded-2xl bg-blue-600 text-xl font-black">Pedir Marcação</Button>
+                       <button onClick={() => setShowRequest(true)} className="w-full h-16 rounded-2xl bg-blue-600 text-xl font-black uppercase tracking-widest hover:bg-blue-500 transition-colors">Pedir Marcação</button>
                     </div>
                   </div>
                   <div className="bg-slate-900 rounded-[3rem] border border-white/5 overflow-hidden flex items-center justify-center min-h-[400px]">
@@ -583,18 +595,6 @@ export default function PortalPage() {
 
       {/* Appointment request modal */}
       {showRequest && <RequestModal patients={patients} token={""} onClose={() => setShowRequest(false)} />}
-    </div>
-  );        tab === id ? "bg-blue-600/20 text-blue-400" : "text-slate-600 hover:text-slate-400"
-              )}>
-              <Icon size={22} strokeWidth={tab === id ? 2.5 : 1.5} />
-              <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Appointment request modal */}
-      {showRequest && <RequestModal patients={patients} token={token} onClose={() => setShowRequest(false)} />}
     </div>
   );
 }
