@@ -281,7 +281,7 @@ export default function PatientDetailPage() {
                               <div>
                                 <p className="font-black text-slate-900 dark:text-white text-lg leading-tight">{v.vaccineName}</p>
                                 <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-tighter">
-                                  {fmt(v.date)} · Dr. {v.veterinarian?.name}
+                                  {v.appliedAt ? fmt(v.appliedAt) : "Sem data"} {v.veterinarian?.name ? `· Dr. ${v.veterinarian.name}` : ""}
                                 </p>
                               </div>
                             </div>
