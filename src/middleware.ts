@@ -41,12 +41,14 @@ Documentation is available at [/docs/api](/docs/api).
   const isAuthPage = pathname.startsWith("/auth");
   const isDashboard = pathname.startsWith("/dashboard");
   const isApiAuth = pathname.startsWith("/api/auth");
+  const isPortal = pathname.startsWith("/portal") || pathname.startsWith("/api/portal");
   const isRoot = pathname === "/";
 
   // Always allow NextAuth API routes
-  if (isApiAuth) {
-    return NextResponse.next();
-  }
+  if (isApiAuth) return NextResponse.next();
+
+  // Portal uses its own token auth — never block these routes
+  if (isPortal) return NextResponse.next();
 
   // If user is NOT logged in
   if (!token) {
@@ -77,5 +79,7 @@ export const config = {
     "/",
     "/dashboard/:path*",
     "/auth/:path*",
+    "/portal/:path*",
+    "/api/portal/:path*",
   ],
 };

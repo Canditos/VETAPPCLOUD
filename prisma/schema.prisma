@@ -34,6 +34,8 @@ model Clinic {
   payments         Payment[]
   prescriptions    Prescription[]
   products         Product[]
+  portalTokens     OwnerPortalToken[]
+  appointmentRequests PortalAppointmentRequest[]
   stockMovements   StockMovement[]
   subscriptions    Subscription[]
   users            User[]
@@ -93,6 +95,7 @@ model Patient {
   subscriptions      Subscription[]
   vaccinations       Vaccination[]
   vitalSigns         VitalSign[]
+  appointmentRequests PortalAppointmentRequest[]
 
   @@index([clinicId])
   @@index([ownerId])
@@ -118,6 +121,8 @@ model Owner {
   clinic        Clinic         @relation(fields: [clinicId], references: [id])
   patients      Patient[]
   payments      Payment[]
+  portalTokens  OwnerPortalToken[]
+  appointmentRequests PortalAppointmentRequest[]
   subscriptions Subscription[]
 
   @@index([clinicId])
@@ -382,7 +387,37 @@ model HospitalizationTask {
   @@index([scheduledTime])
 }
 
-model HealthPlan {
+model OwnerPortalToken {
+  id        String   @id @default(uuid())
+  token     String   @unique @default(uuid())
+  ownerId   String
+  clinicId  String
+  expiresAt DateTime?
+  lastUsed  DateTime?
+  createdAt DateTime  @default(now())
+  owner     Owner    @relation(fields: [ownerId], references: [id])
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+
+  @@index([token])
+  @@index([ownerId])
+}
+
+model PortalAppointmentRequest {
+  id        String   @id @default(uuid())
+  ownerId   String
+  clinicId  String
+  patientId String
+  reason    String
+  preferred String?
+  status    String   @default("PENDING")
+  notes     String?
+  createdAt DateTime @default(now())
+  owner     Owner    @relation(fields: [ownerId], references: [id])
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+  patient   Patient  @relation(fields: [patientId], references: [id])
+
+  @@index([clinicId, status])
+}
   id            String         @id @default(uuid())
   clinicId      String
   name          String

@@ -205,7 +205,30 @@ export default function CustomersPage() {
                   </div>
 
                   {/* Action */}
-                  <div className="text-right">
+                  <div className="text-right flex items-center gap-2 justify-end">
+                    <button
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        try {
+                          const res = await fetch("/api/portal/token", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ ownerId: customer.id }),
+                          });
+                          const data = await res.json();
+                          const link = `${window.location.origin}/portal/${data.token}`;
+                          await navigator.clipboard.writeText(link);
+                          alert(`Link copiado!\n\n${link}`);
+                        } catch {
+                          alert("Erro ao gerar link do portal");
+                        }
+                      }}
+                      className="h-12 px-3 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-wider hover:bg-blue-600 hover:text-white transition-all duration-300 shrink-0"
+                      title="Enviar Portal ao Tutor"
+                    >
+                      Portal
+                    </button>
                     <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-300 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
                       <ChevronRight size={24} strokeWidth={3} />
                     </div>
