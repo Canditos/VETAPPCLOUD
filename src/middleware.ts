@@ -32,20 +32,18 @@ Documentation is available at [/docs/api](/docs/api).
     });
   }
 
-  // ── Auth protection ─────────────────────────────────────────────────────
-  const token = await getToken({
-    req: request,
-    secret: process.env.NEXTAUTH_SECRET,
-  });
-
   const isAuthPage = pathname.startsWith("/auth");
   const isDashboard = pathname.startsWith("/dashboard");
   const isApiAuth = pathname.startsWith("/api/auth");
   const isPortalDashboard = pathname.startsWith("/portal/dashboard");
   const isPortalLogin = pathname === "/portal";
+  const isPortalApi = pathname.startsWith("/api/portal");
+  const isRoot = pathname === "/";
 
-  // Handle Portal Authentication separately
-  if (isPortalDashboard || isPortalLogin) {
+  // Handle Portal routes first (no getToken needed)
+  if (isPortalDashboard || isPortalLogin || isPortalApi) {
+    if (isPortalApi) return NextResponse.next();
+
     const portalSession = request.cookies.get("vet_portal_session")?.value;
     
     if (isPortalDashboard && !portalSession) {
@@ -59,8 +57,14 @@ Documentation is available at [/docs/api](/docs/api).
     return NextResponse.next();
   }
 
-  // Regular dashboard auth
-  if (pathname.startsWith("/api/portal")) return NextResponse.next();
+  // ── Dashboard Auth protection ───────────────────────────────────────────
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
+
+  // Always allow NextAuth API routes
+  if (isApiAuth) return NextResponse.next();
 
   // If user is NOT logged in
   if (!token) {
