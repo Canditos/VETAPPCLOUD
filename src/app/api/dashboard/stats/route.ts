@@ -5,6 +5,16 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { startOfDay, endOfDay, subDays, addDays } from "date-fns";
 
+// Safe query wrapper — if a query fails, return fallback instead of crashing
+async function safe<T>(label: string, fn: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    console.error(`[DASHBOARD_STATS] Query "${label}" failed:`, err);
+    return fallback;
+  }
+}
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
@@ -28,7 +38,7 @@ export async function GET() {
     const thirtyDaysAgo = subDays(today, 30);
     const in7Days = addDays(today, 7);
 
-    // Run all queries in parallel for speed
+    // Run all queries in parallel — each one is safe and won't crash the others
     const [
       consultationsToday,
       newPatients,
@@ -43,103 +53,107 @@ export async function GET() {
     ] = await Promise.all([
 
       // 1. Consultas hoje
-      prisma.consultation.count({
-        where: { clinicId, date: { gte: startToday, lte: endToday } },
-      }),
+      safe("consultationsToday", () =>
+        prisma.consultation.count({
+          where: { clinicId, date: { gte: startToday, lte: endToday } },
+        }), 0),
 
       // 2. Novos pacientes (30 dias)
-      prisma.patient.count({
-        where: { clinicId, createdAt: { gte: thirtyDaysAgo } },
-      }),
+      safe("newPatients", () =>
+        prisma.patient.count({
+          where: { clinicId, createdAt: { gte: thirtyDaysAgo } },
+        }), 0),
 
-      // 3. Faturação hoje — usa paidAt com fallback para createdAt
-      prisma.payment.aggregate({
-        where: {
-          clinicId,
-          OR: [
-            { paidAt: { gte: startToday, lte: endToday } },
-            { paidAt: null, createdAt: { gte: startToday, lte: endToday } },
-          ],
-        },
-        _sum: { amount: true },
-      }),
+      // 3. Faturação hoje
+      safe("revenueToday", () =>
+        prisma.payment.aggregate({
+          where: {
+            clinicId,
+            paidAt: { gte: startToday, lte: endToday },
+          },
+          _sum: { amount: true },
+        }), { _sum: { amount: null } }),
 
-      // 4. Stock crítico — compara com minStock se existir, senão usa 5
-      prisma.product.findMany({
-        where: {
-          clinicId,
-          OR: [
-            // products with explicit minStock field
-            { stockQuantity: { lte: 5 } },
-          ],
-        },
-        select: { id: true, name: true, stockQuantity: true },
-      }),
+      // 4. Stock crítico
+      safe("criticalStock", () =>
+        prisma.product.findMany({
+          where: {
+            clinicId,
+            stockQuantity: { lte: 5 },
+          },
+          select: { id: true, name: true, stockQuantity: true },
+        }), []),
 
-      // 5. Marcações de HOJE ordenadas por hora (máx 8)
-      prisma.appointment.findMany({
-        where: {
-          clinicId,
-          startTime: { gte: startToday, lte: endToday },
-          status: { not: "CANCELLED" },
-        },
-        include: {
-          patient: { include: { owner: true } },
-        },
-        orderBy: { startTime: "asc" },
-        take: 8,
-      }),
+      // 5. Marcações de HOJE
+      safe("todayAppointments", () =>
+        prisma.appointment.findMany({
+          where: {
+            clinicId,
+            startTime: { gte: startToday, lte: endToday },
+            status: { not: "CANCELLED" },
+          },
+          include: {
+            patient: { include: { owner: true } },
+          },
+          orderBy: { startTime: "asc" },
+          take: 8,
+        }), []),
 
       // 6. Internamentos ativos
-      prisma.hospitalization.findMany({
-        where: { clinicId, status: "ADMITTED" },
-        include: {
-          patient: { select: { name: true, species: true } },
-          tasks: { where: { status: "PENDING" } },
-        },
-      }),
+      safe("activeHospitalizations", () =>
+        prisma.hospitalization.findMany({
+          where: { clinicId, status: "ADMITTED" },
+          include: {
+            patient: { select: { name: true, species: true } },
+            tasks: { where: { status: "PENDING" } },
+          },
+        }), []),
 
       // 7. Vacinas expiradas ou a expirar em 7 dias
-      prisma.vaccination.findMany({
-        where: {
-          patient: { clinicId },
-          expiresAt: { lte: in7Days },
-        },
-        include: {
-          patient: { select: { name: true, clinicId: true } },
-        },
-        orderBy: { expiresAt: "asc" },
-        take: 5,
-      }),
+      safe("overdueVaccinations", () =>
+        prisma.vaccination.findMany({
+          where: {
+            patient: { clinicId },
+            expiresAt: { lte: in7Days },
+          },
+          include: {
+            patient: { select: { name: true, clinicId: true } },
+          },
+          orderBy: { expiresAt: "asc" },
+          take: 5,
+        }), []),
 
-      // 8. Tarefas de internamento pendentes urgentes
-      prisma.hospitalizationTask.count({
-        where: {
-          status: "PENDING",
-          hospitalization: { clinicId, status: "ADMITTED" },
-          scheduledTime: { lte: today },
-        },
-      }),
+      // 8. Tarefas de internamento pendentes
+      safe("pendingHospTasks", () =>
+        prisma.hospitalizationTask.count({
+          where: {
+            status: "PENDING",
+            hospitalization: { clinicId, status: "ADMITTED" },
+            scheduledTime: { lte: today },
+          },
+        }), 0),
 
       // 9. Consultas recentes
-      prisma.consultation.findMany({
-        where: { clinicId },
-        include: { patient: { select: { name: true, id: true } } },
-        orderBy: { createdAt: "desc" },
-        take: 4,
-      }),
+      safe("recentConsultations", () =>
+        prisma.consultation.findMany({
+          where: { clinicId },
+          include: { patient: { select: { name: true, id: true } } },
+          orderBy: { createdAt: "desc" },
+          take: 4,
+        }), []),
 
       // 10. Pagamentos recentes
-      prisma.payment.findMany({
-        where: { clinicId },
-        include: { owner: { select: { name: true } } },
-        orderBy: { createdAt: "desc" },
-        take: 4,
-      }),
+      safe("recentPayments", () =>
+        prisma.payment.findMany({
+          where: { clinicId },
+          include: { owner: { select: { name: true } } },
+          orderBy: { createdAt: "desc" },
+          take: 4,
+        }), []),
     ]);
 
     // Build alerts
-    const alerts = [];
+    const alerts: any[] = [];
 
     if (criticalStockProducts.length > 0) {
       alerts.push({
@@ -190,16 +204,16 @@ export async function GET() {
 
     // Activity feed
     const activity = [
-      ...recentConsultations.map((c) => ({
+      ...recentConsultations.map((c: any) => ({
         type: "CONSULTATION",
-        title: `Consulta: ${c.patient.name}`,
+        title: `Consulta: ${c.patient?.name ?? "—"}`,
         desc: "Finalizada",
         time: c.createdAt,
         icon: "Stethoscope",
         color: "bg-blue-500",
         href: `/dashboard/patients?id=${c.patientId}`,
       })),
-      ...recentPayments.map((p) => ({
+      ...recentPayments.map((p: any) => ({
         type: "PAYMENT",
         title: `Pagamento: ${p.owner?.name ?? "—"}`,
         desc: `€${Number(p.amount).toFixed(2)}`,
@@ -219,7 +233,7 @@ export async function GET() {
       revenueToday: Number(revenueToday._sum.amount ?? 0),
       criticalStock: criticalStockProducts.length,
       todayAppointments,
-      activeHospitalizations: activeHospitalizations.map((h) => ({
+      activeHospitalizations: activeHospitalizations.map((h: any) => ({
         id: h.id,
         patientName: h.patient.name,
         species: h.patient.species,
@@ -231,7 +245,7 @@ export async function GET() {
       activity,
     });
   } catch (error) {
-    console.error("[DASHBOARD_STATS_GET]", error);
+    console.error("[DASHBOARD_STATS_GET] Fatal error:", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
