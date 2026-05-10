@@ -419,6 +419,8 @@ model PortalAppointmentRequest {
 
   @@index([clinicId, status])
 }
+
+model HealthPlan {
   id            String         @id @default(uuid())
   clinicId      String
   name          String
