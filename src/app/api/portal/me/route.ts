@@ -38,7 +38,6 @@ export async function GET(req: Request) {
                   take: 5,
                   include: {
                     veterinarian: { select: { name: true } },
-                    notes: { take: 1, select: { content: true, type: true } },
                   },
                 },
                 prescriptions: {
