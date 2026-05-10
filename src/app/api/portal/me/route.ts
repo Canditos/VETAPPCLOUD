@@ -1,71 +1,79 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { jwtVerify } from "jose";
 import prisma from "@/lib/prisma";
 import { addDays } from "date-fns";
 
-// GET /api/portal/me?token=xxx — returns owner + all animals + upcoming data
-export async function GET(req: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(req.url);
-    const token = searchParams.get("token");
+    const cookieStore = cookies();
+    const token = cookieStore.get("vet_portal_session")?.value;
 
     if (!token) {
-      return NextResponse.json({ error: "Token obrigatório" }, { status: 400 });
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const portalToken = await prisma.ownerPortalToken.findUnique({
-      where: { token },
+    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || "temp-fallback-secret-do-not-use-in-prod");
+    let payload;
+    try {
+      const { payload: jwtPayload } = await jwtVerify(token, secret);
+      payload = jwtPayload;
+    } catch (e) {
+      return NextResponse.json({ error: "Sessão inválida" }, { status: 401 });
+    }
+
+    const ownerId = payload.ownerId as string;
+
+    const owner = await prisma.owner.findUnique({
+      where: { id: ownerId },
       include: {
-        owner: {
+        patients: {
+          where: { status: "ACTIVE" },
           include: {
-            patients: {
-              where: { status: "ACTIVE" },
+            vaccinations: {
+              orderBy: { appliedAt: "desc" },
+              take: 10,
+            },
+            dewormings: {
+              orderBy: { appliedAt: "desc" },
+              take: 5,
+            },
+            vitalSigns: {
+              orderBy: { recordedAt: "desc" },
+              take: 1,
+            },
+            consultations: {
+              orderBy: { date: "desc" },
+              take: 5,
               include: {
-                vaccinations: {
-                  orderBy: { appliedAt: "desc" },
-                  take: 10,
-                },
-                dewormings: {
-                  orderBy: { appliedAt: "desc" },
-                  take: 5,
-                },
-                vitalSigns: {
-                  orderBy: { recordedAt: "desc" },
-                  take: 1,
-                },
-                consultations: {
-                  orderBy: { date: "desc" },
-                  take: 5,
-                  include: {
-                    veterinarian: { select: { name: true } },
-                  },
-                },
-                prescriptions: {
-                  where: {
-                    OR: [
-                      { validUntil: null },
-                      { validUntil: { gte: new Date() } },
-                    ],
-                    status: "ACTIVE",
-                  },
-                  include: {
-                    items: true,
-                    veterinarian: { select: { name: true } },
-                  },
-                  orderBy: { date: "desc" },
-                  take: 5,
-                },
-                appointments: {
-                  where: {
-                    startTime: { gte: new Date() },
-                    status: { not: "CANCELLED" },
-                  },
-                  orderBy: { startTime: "asc" },
-                  take: 3,
-                  include: {
-                    clinic: { select: { name: true, phone: true, address: true } },
-                  },
-                },
+                veterinarian: { select: { name: true } },
+              },
+            },
+            prescriptions: {
+              where: {
+                OR: [
+                  { validUntil: null },
+                  { validUntil: { gte: new Date() } },
+                ],
+                status: "ACTIVE",
+              },
+              include: {
+                items: true,
+                veterinarian: { select: { name: true } },
+              },
+              orderBy: { date: "desc" },
+              take: 5,
+            },
+            appointments: {
+              where: {
+                startTime: { gte: new Date() },
+                status: { not: "CANCELLED" },
+              },
+              orderBy: { startTime: "asc" },
+              take: 3,
+              include: {
+                clinic: { select: { name: true, phone: true, address: true } },
               },
             },
           },
@@ -83,19 +91,13 @@ export async function GET(req: Request) {
       },
     });
 
-    if (!portalToken) {
-      return NextResponse.json({ error: "Link inválido ou expirado" }, { status: 404 });
+    if (!owner) {
+      return NextResponse.json({ error: "Cliente não encontrado" }, { status: 404 });
     }
-
-    // Update last used
-    await prisma.ownerPortalToken.update({
-      where: { token },
-      data: { lastUsed: new Date() },
-    });
 
     // Build vaccine alerts (expiring in 30 days or already expired)
     const in30Days = addDays(new Date(), 30);
-    const vaccineAlerts = portalToken.owner.patients.flatMap((patient) =>
+    const vaccineAlerts = owner.patients.flatMap((patient) =>
       patient.vaccinations
         .filter((v) => v.expiresAt && v.expiresAt <= in30Days)
         .map((v) => ({
@@ -108,15 +110,14 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       owner: {
-        id: portalToken.owner.id,
-        name: portalToken.owner.name,
-        email: portalToken.owner.email,
-        phone: portalToken.owner.phone,
+        id: owner.id,
+        name: owner.name,
+        email: owner.email,
+        phone: owner.phone,
       },
-      clinic: portalToken.clinic,
-      patients: portalToken.owner.patients,
+      clinic: owner.clinic,
+      patients: owner.patients,
       vaccineAlerts,
-      token,
     });
   } catch (error) {
     console.error("[PORTAL_ME_GET]", error);

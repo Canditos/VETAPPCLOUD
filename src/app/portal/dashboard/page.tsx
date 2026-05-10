@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   PawPrint, Syringe, Calendar, FileText, Phone, MapPin,
   AlertTriangle, ChevronRight, Heart, Weight, Thermometer,
   Activity, Shield, Clock, CheckCircle2, Dog, Cat, X,
-  Stethoscope, Pill, Bell, Home, User, Star,
+  Stethoscope, Pill, Bell, Home, User, Star, LogOut
 } from "lucide-react";
 import { format, isPast, differenceInDays, differenceInYears } from "date-fns";
 import { pt } from "date-fns/locale";
@@ -221,19 +221,28 @@ function PatientCard({ patient }: { patient: any }) {
 
 // ── Main portal page ──────────────────────────────────────────────────────────
 export default function PortalPage() {
-  const { token } = useParams<{ token: string }>();
+  const router = useRouter();
   const [tab, setTab] = useState<"home" | "animals" | "agenda" | "clinic">("home");
   const [showRequest, setShowRequest] = useState(false);
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["portal", token],
+    queryKey: ["portal"],
     queryFn: async () => {
-      const res = await fetch(`/api/portal/me?token=${token}`);
+      const res = await fetch(`/api/portal/me`);
       if (!res.ok) throw new Error("invalid");
       return res.json();
     },
     retry: false,
   });
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/portal/auth/logout", { method: "POST" });
+      router.push("/portal");
+    } catch (error) {
+      console.error("Erro ao sair", error);
+    }
+  };
 
   // PWA install prompt
   useEffect(() => {
@@ -291,9 +300,17 @@ export default function PortalPage() {
             <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Portal do Tutor</p>
           </div>
         </div>
-        <div className="text-right">
-          <p className="text-white font-bold text-sm">{owner.name.split(" ")[0]}</p>
-          <p className="text-slate-500 text-[10px]">{patients.length} animal{patients.length !== 1 ? "is" : ""}</p>
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <p className="text-white font-bold text-sm">{owner.name.split(" ")[0]}</p>
+            <p className="text-slate-500 text-[10px]">{patients.length} animal{patients.length !== 1 ? "is" : ""}</p>
+          </div>
+          <button 
+            onClick={handleLogout}
+            className="w-10 h-10 rounded-2xl bg-slate-900 flex items-center justify-center text-slate-400 hover:text-red-400 transition-colors"
+          >
+            <LogOut size={18} />
+          </button>
         </div>
       </div>
 
@@ -513,3 +530,4 @@ export default function PortalPage() {
     </div>
   );
 }
+

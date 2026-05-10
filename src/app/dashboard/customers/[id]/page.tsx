@@ -27,7 +27,8 @@ import {
   Calendar,
   Edit3,
   Save,
-  X
+  X,
+  Copy
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -42,13 +43,19 @@ import { InvoiceDownloadBtn } from "@/components/InvoicePDF";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 
 export default function CustomerProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({ name: "", email: "", phone: "", vatNumber: "", address: "", notes: "" });
+  
+  // Portal Modal state
+  const [isPortalModalOpen, setIsPortalModalOpen] = useState(false);
+  const [manualPassword, setManualPassword] = useState("");
+  const [generatedPassword, setGeneratedPassword] = useState("");
+  const [isGeneratingPass, setIsGeneratingPass] = useState(false);
 
   const { data: customer, isLoading } = useQuery({
     queryKey: ["customer-hub", id],
@@ -148,27 +155,89 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
           </Card>
           
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 h-fit mt-4 lg:mt-0">
-            <Button 
-              variant="outline" 
-              className="rounded-2xl h-full py-6 font-black border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-900/10 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all gap-2 text-blue-600 dark:text-blue-400"
-              onClick={async () => {
-                try {
-                  const res = await fetch("/api/portal/token", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ ownerId: id }),
-                  });
-                  const data = await res.json();
-                  const link = `${window.location.origin}/portal/${data.token}`;
-                  await navigator.clipboard.writeText(link);
-                  toast.success("Link do Portal copiado com sucesso!");
-                } catch {
-                  toast.error("Erro ao gerar link do portal");
-                }
-              }}
-            >
-              <Smartphone size={18} /> Portal do Tutor
-            </Button>
+              <Dialog open={isPortalModalOpen} onOpenChange={setIsPortalModalOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="rounded-2xl h-full py-6 font-black border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-900/10 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all gap-2 text-blue-600 dark:text-blue-400"
+                  >
+                    <Smartphone size={18} /> Portal do Tutor
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md rounded-[2rem]">
+                  <DialogHeader>
+                    <DialogTitle className="font-black text-2xl flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center">
+                        <Smartphone size={24} />
+                      </div>
+                      Acesso ao Portal
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <p className="text-slate-500 font-medium">Gere uma password de acesso para o cliente entrar no portal. O email de acesso é: <strong className="text-slate-800 dark:text-white">{customer.email || "Necessita email na ficha!"}</strong></p>
+                    
+                    {!generatedPassword ? (
+                      <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <div>
+                          <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Password Personalizada (Opcional)</Label>
+                          <Input 
+                            value={manualPassword}
+                            onChange={(e) => setManualPassword(e.target.value)}
+                            placeholder="Deixe em branco para gerar aleatória"
+                            className="mt-2 bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 h-12 font-bold"
+                          />
+                        </div>
+                        <Button 
+                          className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black"
+                          onClick={async () => {
+                            if (!customer.email) {
+                              toast.error("O cliente precisa de ter um email na ficha.");
+                              return;
+                            }
+                            setIsGeneratingPass(true);
+                            try {
+                              const res = await fetch("/api/portal/generate-password", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ ownerId: id, manualPassword }),
+                              });
+                              const data = await res.json();
+                              if (data.error) throw new Error(data.error);
+                              setGeneratedPassword(data.password);
+                              toast.success("Acesso gerado com sucesso!");
+                            } catch (e: any) {
+                              toast.error(e.message || "Erro ao gerar acesso");
+                            } finally {
+                              setIsGeneratingPass(false);
+                            }
+                          }}
+                          disabled={isGeneratingPass}
+                        >
+                          {isGeneratingPass ? "A gerar..." : "Gerar Acesso"}
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800 animate-in fade-in slide-in-from-bottom-2">
+                        <div className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-900/50 text-center">
+                          <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-1">Nova Password</p>
+                          <p className="text-3xl font-black tracking-widest">{generatedPassword}</p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          className="w-full h-12 rounded-xl font-black border-slate-200 dark:border-slate-800"
+                          onClick={() => {
+                            const text = `O seu acesso ao Portal do Gato Escondido:\nLink: https://cloud.gatoescondido.com/portal\nEmail: ${customer.email}\nPassword: ${generatedPassword}`;
+                            navigator.clipboard.writeText(text);
+                            toast.success("Dados copiados para partilhar!");
+                          }}
+                        >
+                          <Copy size={18} className="mr-2" /> Copiar Dados de Acesso
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
             <Link href={`/dashboard/consultations?customerId=${id}`} className="flex-1">
               <Button className="w-full rounded-2xl h-full py-6 font-black bg-slate-900 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-700 transition-all gap-2 shadow-xl shadow-slate-200 dark:shadow-none">
                 <Plus size={18} /> Nova Consulta

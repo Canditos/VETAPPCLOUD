@@ -41,14 +41,26 @@ Documentation is available at [/docs/api](/docs/api).
   const isAuthPage = pathname.startsWith("/auth");
   const isDashboard = pathname.startsWith("/dashboard");
   const isApiAuth = pathname.startsWith("/api/auth");
-  const isPortal = pathname.startsWith("/portal") || pathname.startsWith("/api/portal");
-  const isRoot = pathname === "/";
+  const isPortalDashboard = pathname.startsWith("/portal/dashboard");
+  const isPortalLogin = pathname === "/portal";
 
-  // Always allow NextAuth API routes
-  if (isApiAuth) return NextResponse.next();
+  // Handle Portal Authentication separately
+  if (isPortalDashboard || isPortalLogin) {
+    const portalSession = request.cookies.get("vet_portal_session")?.value;
+    
+    if (isPortalDashboard && !portalSession) {
+      return NextResponse.redirect(new URL("/portal", request.url));
+    }
+    
+    if (isPortalLogin && portalSession) {
+      return NextResponse.redirect(new URL("/portal/dashboard", request.url));
+    }
 
-  // Portal uses its own token auth — never block these routes
-  if (isPortal) return NextResponse.next();
+    return NextResponse.next();
+  }
+
+  // Regular dashboard auth
+  if (pathname.startsWith("/api/portal")) return NextResponse.next();
 
   // If user is NOT logged in
   if (!token) {
