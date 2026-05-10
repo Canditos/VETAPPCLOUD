@@ -58,27 +58,27 @@ export default function DiagnosticsPage() {
   const [filter, setFilter] = useState("all");
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
+    <div className="space-y-8 animate-in fade-in duration-700 max-w-[1600px] mx-auto">
       <div className="flex flex-wrap justify-between items-end gap-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Centro de Diagnóstico</h1>
-          <p className="text-slate-500 font-medium">Gestão integrada de análises HL7 e imagens DICOM.</p>
+          <h1 className="text-3xl font-black text-white tracking-tight">Centro de Diagnóstico</h1>
+          <p className="text-slate-400 font-medium">Gestão integrada de análises HL7 e imagens DICOM.</p>
         </div>
-        <div className="flex gap-2 bg-slate-100 p-1 rounded-xl">
+        <div className="flex gap-1 bg-slate-800/50 p-1.5 rounded-2xl ring-1 ring-white/5">
            <Button 
              variant={filter === "all" ? "secondary" : "ghost"} 
              onClick={() => setFilter("all")}
-             className="rounded-lg font-bold text-xs"
+             className={`rounded-xl font-black text-[10px] uppercase tracking-widest ${filter === "all" ? "bg-slate-700 text-white shadow-sm" : "text-slate-400 hover:text-white"}`}
            >Todos</Button>
            <Button 
              variant={filter === "LAB" ? "secondary" : "ghost"} 
              onClick={() => setFilter("LAB")}
-             className="rounded-lg font-bold text-xs gap-2"
+             className={`rounded-xl font-black text-[10px] uppercase tracking-widest gap-2 ${filter === "LAB" ? "bg-slate-700 text-white shadow-sm" : "text-slate-400 hover:text-white"}`}
            ><FlaskConical size={14}/> Laboratório</Button>
            <Button 
              variant={filter === "IMAGING" ? "secondary" : "ghost"} 
              onClick={() => setFilter("IMAGING")}
-             className="rounded-lg font-bold text-xs gap-2"
+             className={`rounded-xl font-black text-[10px] uppercase tracking-widest gap-2 ${filter === "IMAGING" ? "bg-slate-700 text-white shadow-sm" : "text-slate-400 hover:text-white"}`}
            ><ImageIcon size={14}/> Imagem</Button>
         </div>
       </div>
@@ -87,34 +87,33 @@ export default function DiagnosticsPage() {
         {/* Main Feed */}
         <div className="lg:col-span-2 space-y-4">
            {mockDiagnostics.map((dx) => (
-             <Card key={dx.id} className="border-none shadow-sm hover:shadow-md transition-all group overflow-hidden rounded-3xl">
+             <Card key={dx.id} className="border-none shadow-sm hover:shadow-md transition-all group overflow-hidden rounded-[2rem] bg-slate-900/50 backdrop-blur-xl ring-1 ring-white/5">
                <CardContent className="p-0">
                   <div className="flex items-center p-6 gap-6">
                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-sm
-                       ${dx.type === 'LAB' ? 'bg-purple-50 text-purple-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                       ${dx.type === 'LAB' ? 'bg-purple-500/10 text-purple-400' : 'bg-emerald-500/10 text-emerald-400'}`}>
                         {dx.type === 'LAB' ? <FlaskConical size={24} /> : <ImageIcon size={24} />}
                      </div>
                      
                      <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                           <Badge className="bg-slate-100 text-slate-500 border-none font-black text-[10px] uppercase">{dx.id}</Badge>
-                           {dx.status === 'COMPLETED' && <Badge className="bg-green-100 text-green-700 border-none text-[10px] font-bold"><CheckCircle2 size={10} className="mr-1"/> Recebido</Badge>}
-                           {dx.status === 'PENDING' && <Badge className="bg-amber-100 text-amber-700 border-none text-[10px] font-bold"><Clock size={10} className="mr-1"/> Em Processamento</Badge>}
-                           {dx.status === 'ALERT' && <Badge className="bg-red-100 text-red-700 border-none text-[10px] font-bold"><AlertCircle size={10} className="mr-1"/> Alerta Crítico</Badge>}
+                           <Badge className="bg-slate-800 text-slate-400 border-none font-black text-[10px] uppercase">{dx.id}</Badge>
+                           {dx.status === 'COMPLETED' && <Badge className="bg-green-500/10 text-green-400 border-none text-[10px] font-bold"><CheckCircle2 size={10} className="mr-1"/> Recebido</Badge>}
+                           {dx.status === 'PENDING' && <Badge className="bg-amber-500/10 text-amber-400 border-none text-[10px] font-bold"><Clock size={10} className="mr-1"/> Em Processamento</Badge>}
+                           {dx.status === 'ALERT' && <Badge className="bg-red-500/10 text-red-400 border-none text-[10px] font-bold"><AlertCircle size={10} className="mr-1"/> Alerta Crítico</Badge>}
                         </div>
-                        <h3 className="text-lg font-black text-slate-900 truncate">{dx.patient} <span className="text-slate-400 font-medium text-sm">({dx.owner})</span></h3>
-                        <p className="text-sm text-slate-500 font-bold tracking-tight">{dx.summary} • <span className="text-blue-600">{dx.source}</span></p>
+                        <h3 className="text-lg font-black text-white truncate">{dx.patient} <span className="text-slate-500 font-medium text-sm">({dx.owner})</span></h3>
+                        <p className="text-sm text-slate-400 font-bold tracking-tight">{dx.summary} • <span className="text-blue-400">{dx.source}</span></p>
                      </div>
 
                       <div className="flex flex-col items-end gap-2">
-                        <p className="text-[10px] font-black text-slate-400 uppercase">{new Date(dx.createdAt).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}</p>
+                        <p className="text-[10px] font-black text-slate-500 uppercase">{new Date(dx.createdAt).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}</p>
                         <Button 
                           variant="outline" 
                           onClick={() => {
                             toast.info(`A carregar relatório ${dx.id}...`);
-                            // In a real app: router.push(`/dashboard/diagnostics/${dx.id}`);
                           }}
-                          className="rounded-xl font-bold h-9 gap-2 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm border-slate-200 dark:border-white/10"
+                          className="rounded-xl font-bold h-9 gap-2 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm border-white/10 text-slate-300"
                         >
                            Visualizar <ChevronRight size={16} />
                         </Button>
@@ -127,7 +126,7 @@ export default function DiagnosticsPage() {
 
         {/* Integration Stats / Setup */}
         <div className="space-y-6">
-           <Card className="border-none shadow-sm bg-slate-900 text-white rounded-3xl p-6">
+           <Card className="border-none shadow-sm bg-slate-900/50 backdrop-blur-xl text-white rounded-[2rem] p-6 ring-1 ring-white/5">
               <CardHeader className="p-0 mb-6">
                  <CardTitle className="text-lg font-black flex items-center gap-2">
                     <Activity size={20} className="text-blue-400" />
@@ -152,29 +151,29 @@ export default function DiagnosticsPage() {
               </div>
            </Card>
 
-           <Card className="border-none shadow-sm rounded-3xl overflow-hidden">
-              <CardHeader className="bg-slate-50/50">
+           <Card className="border-none shadow-sm rounded-[2rem] overflow-hidden bg-slate-900/50 backdrop-blur-xl ring-1 ring-white/5">
+              <CardHeader className="bg-white/5">
                  <CardTitle className="text-sm font-black text-slate-400 uppercase tracking-widest">Ações Rápidas</CardTitle>
               </CardHeader>
               <CardContent className="p-4 space-y-2">
                  <Button 
                    variant="ghost" 
                    onClick={() => toast.success("Pedido de Laboratório iniciado.")}
-                   className="w-full justify-start gap-3 font-bold h-12 rounded-xl hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-900/20"
+                   className="w-full justify-start gap-3 font-bold h-12 rounded-xl text-slate-300 hover:bg-purple-500/10 hover:text-purple-400"
                  >
                     <FlaskConical size={18} /> Novo Pedido Laboratório
                  </Button>
                  <Button 
                    variant="ghost" 
                    onClick={() => toast.success("Solicitação de RX Digital aberta.")}
-                   className="w-full justify-start gap-3 font-bold h-12 rounded-xl hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20"
+                   className="w-full justify-start gap-3 font-bold h-12 rounded-xl text-slate-300 hover:bg-emerald-500/10 hover:text-emerald-400"
                  >
                     <ImageIcon size={18} /> Solicitar RX Digital
                  </Button>
                  <Button 
                    variant="ghost" 
                    onClick={() => toast.info("A preparar lote para exportação...")}
-                   className="w-full justify-start gap-3 font-bold h-12 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5"
+                   className="w-full justify-start gap-3 font-bold h-12 rounded-xl text-slate-300 hover:bg-white/5"
                  >
                     <Download size={18} /> Exportar Lote de Resultados
                  </Button>

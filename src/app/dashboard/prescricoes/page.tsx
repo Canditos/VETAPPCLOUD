@@ -21,15 +21,15 @@ import { cn } from "@/lib/utils";
 const fmt = (d: string) => format(new Date(d), "dd MMM yyyy", { locale: pt });
 
 function StatusBadge({ validUntil }: { validUntil: string | null }) {
-  if (!validUntil) return <Badge variant="outline" className="text-[10px]">Sem validade</Badge>;
+  if (!validUntil) return <Badge variant="outline" className="text-[10px] border-white/10 text-slate-400">Sem validade</Badge>;
   if (isPast(new Date(validUntil))) {
-    return <Badge className="bg-red-100 text-red-700 border-none text-[10px] gap-1"><AlertCircle size={10} /> Expirada</Badge>;
+    return <Badge className="bg-red-500/10 text-red-400 border-none text-[10px] gap-1"><AlertCircle size={10} /> Expirada</Badge>;
   }
   const days = differenceInDays(new Date(validUntil), new Date());
   if (days <= 7) {
-    return <Badge className="bg-amber-100 text-amber-700 border-none text-[10px] gap-1"><Clock size={10} /> Expira em {days}d</Badge>;
+    return <Badge className="bg-amber-500/10 text-amber-400 border-none text-[10px] gap-1"><Clock size={10} /> Expira em {days}d</Badge>;
   }
-  return <Badge className="bg-green-100 text-green-700 border-none text-[10px] gap-1"><CheckCircle2 size={10} /> Válida</Badge>;
+  return <Badge className="bg-green-500/10 text-green-400 border-none text-[10px] gap-1"><CheckCircle2 size={10} /> Válida</Badge>;
 }
 
 export default function PrescricoesPage() {
@@ -61,12 +61,12 @@ export default function PrescricoesPage() {
   const expired = filtered.filter((rx: any) => !rx.validUntil || isPast(new Date(rx.validUntil)));
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500 max-w-[1600px] mx-auto">
       {/* Header */}
       <div className="flex flex-wrap justify-between items-end gap-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Receituário</h1>
-          <p className="text-slate-500 font-medium">Prescrições médico-veterinárias emitidas pela clínica.</p>
+          <h1 className="text-3xl font-black text-white tracking-tight">Receituário</h1>
+          <p className="text-slate-400 font-medium">Prescrições médico-veterinárias emitidas pela clínica.</p>
         </div>
         <div className="flex gap-3">
           <Button variant="outline" className="rounded-xl gap-2" onClick={() => refetch()} disabled={isRefetching}>
@@ -81,11 +81,11 @@ export default function PrescricoesPage() {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { label: "Total", value: filtered.length, color: "text-slate-900", sub: "prescrições emitidas" },
+          { label: "Total", value: filtered.length, color: "text-white", sub: "prescrições emitidas" },
           { label: "Ativas", value: active.length, color: "text-green-600", sub: "dentro da validade" },
-          { label: "Expiradas", value: expired.length, color: "text-red-500", sub: "fora de validade" },
+          { label: "Expiradas", value: expired.length, color: "text-red-400", sub: "fora de validade" },
         ].map(({ label, value, color, sub }) => (
-          <Card key={label} className="border-none shadow-sm rounded-3xl">
+          <Card key={label} className="border-none shadow-sm rounded-[2rem] bg-slate-900/50 backdrop-blur-xl ring-1 ring-white/5">
             <CardContent className="p-6">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
               {isLoading
@@ -99,7 +99,7 @@ export default function PrescricoesPage() {
       </div>
 
       {/* Search + list */}
-      <Card className="border-none shadow-sm rounded-3xl overflow-hidden">
+      <Card className="border-none shadow-sm rounded-[2rem] overflow-hidden bg-slate-900/50 backdrop-blur-xl ring-1 ring-white/5">
         <CardHeader className="p-6 border-b border-slate-50 dark:border-slate-800">
           <div className="relative max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -113,7 +113,7 @@ export default function PrescricoesPage() {
         </CardHeader>
         <CardContent className="p-0">
           {isError && (
-            <div className="flex items-center gap-3 m-6 p-4 bg-red-50 border border-red-100 rounded-2xl text-red-700">
+            <div className="flex items-center gap-3 m-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400">
               <AlertCircle size={18} />
               <p className="font-bold text-sm">Erro ao carregar prescrições</p>
               <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-auto">Tentar novamente</Button>
@@ -180,10 +180,10 @@ export default function PrescricoesPage() {
 
       {/* New prescription dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[640px] rounded-3xl border-none shadow-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[640px] rounded-[2rem] border-none shadow-2xl max-h-[90vh] overflow-y-auto bg-slate-900 ring-1 ring-white/10">
           <DialogHeader>
-            <DialogTitle className="text-xl font-black flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center">
+            <DialogTitle className="text-xl font-black text-white flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-500/10 text-blue-400 rounded-2xl flex items-center justify-center">
                 <Pill size={20} />
               </div>
               Nova Prescrição
