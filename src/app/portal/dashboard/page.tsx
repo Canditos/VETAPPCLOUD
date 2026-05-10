@@ -7,7 +7,8 @@ import {
   PawPrint, Syringe, Calendar, FileText, Phone, MapPin,
   AlertTriangle, ChevronRight, Heart, Weight, Thermometer,
   Activity, Shield, Clock, CheckCircle2, Dog, Cat, X,
-  Stethoscope, Pill, Bell, Home, User, Star, LogOut
+  Stethoscope, Pill, Bell, Home, User, Star, LogOut,
+  Sun, Cloud, CloudRain, CloudLightning, ThermometerSun
 } from "lucide-react";
 import { format, isPast, differenceInDays, differenceInYears } from "date-fns";
 import { pt } from "date-fns/locale";
@@ -219,6 +220,67 @@ function PatientCard({ patient }: { patient: any }) {
   );
 }
 
+// ── Weather Widget ────────────────────────────────────────────────────────────
+function WeatherWidget() {
+  const [weather, setWeather] = useState<{ temp: number; icon: any; text: string } | null>(null);
+
+  useEffect(() => {
+    const fetchWeather = async (lat: number, lon: number) => {
+      try {
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+        const data = await res.json();
+        const code = data.current_weather.weathercode;
+        
+        // Basic mapping
+        let icon = Sun;
+        let text = "Céu Limpo";
+        if (code >= 1 && code <= 3) { icon = Cloud; text = "Parcialmente Nublado"; }
+        else if (code >= 51 && code <= 67) { icon = CloudRain; text = "Chuva"; }
+        else if (code >= 95) { icon = CloudLightning; text = "Trovoada"; }
+
+        setWeather({ temp: Math.round(data.current_weather.temperature), icon, text });
+      } catch (e) { console.error(e); }
+    };
+
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => fetchWeather(pos.coords.latitude, pos.coords.longitude),
+        () => fetchWeather(38.7223, -9.1393) // Fallback to Lisbon
+      );
+    }
+  }, []);
+
+  if (!weather) return (
+    <div className="p-6 rounded-[2.5rem] bg-white/5 border border-white/10 animate-pulse flex items-center gap-4">
+      <div className="w-12 h-12 rounded-2xl bg-white/10" />
+      <div className="space-y-2">
+        <div className="w-20 h-4 bg-white/10 rounded" />
+        <div className="w-12 h-3 bg-white/10 rounded" />
+      </div>
+    </div>
+  );
+
+  const WeatherIcon = weather.icon;
+
+  return (
+    <div className="p-6 rounded-[2.5rem] bg-gradient-to-br from-blue-600/20 to-indigo-600/20 border border-blue-500/20 flex items-center justify-between group hover:scale-[1.02] transition-transform duration-500">
+      <div className="flex items-center gap-4">
+        <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+          <WeatherIcon size={28} className="text-white" />
+        </div>
+        <div>
+          <p className="text-3xl font-black text-white tracking-tighter">{weather.temp}°C</p>
+          <p className="text-blue-300 text-[10px] font-black uppercase tracking-widest">{weather.text}</p>
+        </div>
+      </div>
+      <div className="text-right hidden sm:block">
+        <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">Hoje</p>
+        <p className="text-white/60 text-xs font-bold">{format(new Date(), "eeee", { locale: pt })}</p>
+      </div>
+    </div>
+  );
+}
+
 // ── Main portal page ──────────────────────────────────────────────────────────
 export default function PortalPage() {
   const router = useRouter();
@@ -358,125 +420,163 @@ export default function PortalPage() {
 
             {/* HOME VIEW */}
             {tab === "home" && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+              <div className="space-y-10">
                 
-                {/* Left: Main Info */}
-                <div className="lg:col-span-8 space-y-8">
+                {/* Header Section */}
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                   <header>
-                    <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight mb-2">
+                    <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter mb-2">
                       Olá, {owner.name.split(" ")[0]}! 👋
                     </h1>
-                    <p className="text-slate-400 font-medium">Bem-vindo à área reservada dos seus patudos.</p>
+                    <p className="text-slate-400 font-medium text-lg">Bem-vindo à área reservada dos seus patudos.</p>
                   </header>
-
-                  {/* Quick Stats / Alerts */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {vaccineAlerts?.slice(0, 2).map((alert: any, i: number) => (
-                      <div key={i} className={cn(
-                        "p-6 rounded-[2rem] border relative overflow-hidden group",
-                        alert.expired ? "bg-red-500/10 border-red-500/20" : "bg-amber-500/10 border-amber-500/20"
-                      )}>
-                        <div className="relative z-10 space-y-3">
-                          <AlertTriangle className={alert.expired ? "text-red-400" : "text-amber-400"} size={24} />
-                          <div>
-                            <p className="text-white font-black text-lg leading-tight">{alert.patientName}</p>
-                            <p className="text-slate-400 text-sm">{alert.vaccineName} · {alert.expired ? "Expirada" : "A expirar"}</p>
-                          </div>
-                          <button onClick={() => setShowRequest(true)} className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase">Marcar Reforço</button>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    <div className="p-6 rounded-[2rem] border border-blue-500/20 bg-blue-600/10 flex flex-col justify-between">
-                       <Stethoscope className="text-blue-400" size={24} />
-                       <div className="mt-4">
-                         <p className="text-white font-black text-lg leading-tight">Nova Consulta</p>
-                         <p className="text-slate-400 text-sm">Peça uma marcação online</p>
-                       </div>
-                       <button onClick={() => setShowRequest(true)} className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase mt-3 w-fit">Pedir Agora</button>
-                    </div>
+                  <div className="w-full lg:w-72">
+                    <WeatherWidget />
                   </div>
-
-                  {/* Animals Preview */}
-                  <section className="space-y-4">
-                    <div className="flex justify-between items-end px-2">
-                      <h2 className="text-xl font-black uppercase tracking-widest text-slate-500">Os Seus Animais</h2>
-                      <button onClick={() => setTab("animals")} className="text-blue-400 font-black text-xs uppercase">Ver Todos</button>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {patients.map((p: any) => {
-                        const Icon = p.species?.toLowerCase().includes("cão") || p.species?.toLowerCase().includes("can") ? Dog : Cat;
-                        return (
-                          <button key={p.id} onClick={() => setTab("animals")} className="flex items-center gap-4 p-5 bg-white/5 border border-white/10 rounded-[2rem] hover:bg-white/10 transition-all text-left group">
-                            <div className="w-16 h-16 rounded-2xl bg-blue-600/20 text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                              <Icon size={32} />
-                            </div>
-                            <div>
-                              <p className="font-black text-white text-xl">{p.name}</p>
-                              <p className="text-slate-400 text-sm capitalize">{p.species} · {p.breed || "SRD"}</p>
-                            </div>
-                            <ChevronRight size={20} className="ml-auto text-slate-700 group-hover:text-blue-400 transition-colors" />
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </section>
                 </div>
 
-                {/* Right: Sidebar Info */}
-                <div className="lg:col-span-4 space-y-6">
-                  {/* Next Appt Card */}
-                  <div className="bg-blue-600 rounded-[2.5rem] p-8 shadow-xl shadow-blue-500/20 space-y-6">
-                    <h3 className="text-blue-200 text-xs font-black uppercase tracking-widest">Próxima Consulta</h3>
-                    {nextAppointment ? (
-                      <>
-                        <div className="space-y-2">
-                          <p className="text-4xl font-black text-white tracking-tighter">
-                            {format(new Date(nextAppointment.startTime), "dd MMM", { locale: pt })}
-                          </p>
-                          <p className="text-blue-100 font-bold text-lg">
-                            {format(new Date(nextAppointment.startTime), "EEEE, HH:mm", { locale: pt })}
-                          </p>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                  
+                  {/* Left Column: Alerts & Next Appt */}
+                  <div className="lg:col-span-8 space-y-8">
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Next Appointment (Moved to Center) */}
+                      <div className="p-8 rounded-[2.5rem] bg-blue-600 shadow-xl shadow-blue-500/20 flex flex-col justify-between group hover:scale-[1.02] transition-transform duration-500 relative overflow-hidden">
+                        <div className="absolute top-[-20%] right-[-10%] w-40 h-40 bg-white/10 rounded-full blur-3xl" />
+                        <div className="relative z-10">
+                          <h3 className="text-blue-100 text-[10px] font-black uppercase tracking-widest mb-6 flex items-center gap-2">
+                            <Clock size={12} /> Próxima Consulta
+                          </h3>
+                          {nextAppointment ? (
+                            <div className="space-y-4">
+                              <div>
+                                <p className="text-4xl font-black text-white tracking-tighter leading-none">
+                                  {format(new Date(nextAppointment.startTime), "dd MMM", { locale: pt })}
+                                </p>
+                                <p className="text-blue-100 font-bold text-lg mt-1 capitalize">
+                                  {format(new Date(nextAppointment.startTime), "EEEE, HH:mm", { locale: pt })}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-3 py-3 px-4 bg-white/10 rounded-2xl w-fit">
+                                <PawPrint size={16} className="text-white" />
+                                <span className="font-bold text-white text-sm">{nextAppointment.patientName}</span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="space-y-4">
+                              <p className="text-blue-100 font-medium leading-relaxed">Sem consultas agendadas para os próximos dias.</p>
+                              <button onClick={() => setShowRequest(true)} className="px-6 py-3 rounded-xl bg-white/20 hover:bg-white/30 text-white font-black uppercase text-[10px] tracking-widest transition-all">Marcar Agora</button>
+                            </div>
+                          )}
                         </div>
-                        <div className="bg-white/10 rounded-2xl p-4 flex items-center gap-3">
-                           <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                             <PawPrint size={20} className="text-white" />
-                           </div>
-                           <p className="font-bold text-white">{nextAppointment.patientName}</p>
-                        </div>
-                        <a href={`tel:${clinic.phone}`} className="block w-full py-4 rounded-2xl bg-white text-blue-600 text-center font-black text-sm uppercase tracking-widest hover:bg-blue-50 transition-colors">
-                          Confirmar / Ligar
-                        </a>
-                      </>
-                    ) : (
-                      <div className="space-y-4">
-                        <p className="text-blue-100 font-medium">Não tem nenhuma consulta agendada para breve.</p>
-                        <button onClick={() => setShowRequest(true)} className="w-full py-3 rounded-2xl bg-white/20 hover:bg-white/30 text-white font-black uppercase text-[10px] tracking-widest">Marcar Agora</button>
                       </div>
+
+                      {/* Request New Appointment */}
+                      <div className="p-8 rounded-[2.5rem] border border-blue-500/20 bg-slate-900/50 backdrop-blur-xl flex flex-col justify-between group hover:border-blue-500/40 transition-all">
+                        <Stethoscope className="text-blue-400 group-hover:scale-110 transition-transform" size={32} />
+                        <div className="mt-8">
+                          <p className="text-white font-black text-2xl leading-tight">Agendar Serviço</p>
+                          <p className="text-slate-400 text-sm mt-1">Consulta, vacinas ou banhos</p>
+                          <button onClick={() => setShowRequest(true)} className="mt-6 w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-500/20 transition-all">Pedir Marcação</button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Vaccine Alerts Grid */}
+                    {vaccineAlerts?.length > 0 && (
+                      <section className="space-y-4">
+                        <div className="flex items-center gap-2 px-2">
+                           <Bell size={16} className="text-amber-400" />
+                           <h2 className="text-xs font-black uppercase tracking-widest text-slate-500">Alertas de Saúde</h2>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {vaccineAlerts.slice(0, 2).map((alert: any, i: number) => (
+                            <div key={i} className={cn(
+                              "p-6 rounded-[2rem] border relative overflow-hidden group",
+                              alert.expired ? "bg-red-500/5 border-red-500/10" : "bg-amber-500/5 border-amber-500/10"
+                            )}>
+                              <div className="relative z-10 flex gap-4">
+                                <div className={cn(
+                                  "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0",
+                                  alert.expired ? "bg-red-500/20 text-red-400" : "bg-amber-500/20 text-amber-400"
+                                )}>
+                                  <AlertTriangle size={24} />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-white font-black text-base">{alert.patientName}</p>
+                                  <p className="text-slate-400 text-xs font-medium">{alert.vaccineName} · {alert.expired ? "Expirada" : "A expirar"}</p>
+                                  <button onClick={() => setShowRequest(true)} className="mt-3 text-[10px] font-black text-blue-400 uppercase tracking-widest hover:text-blue-300">Resolver Agora</button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </section>
                     )}
+
+                    {/* Animals Section */}
+                    <section className="space-y-4">
+                      <div className="flex justify-between items-end px-2">
+                        <h2 className="text-xs font-black uppercase tracking-widest text-slate-500">Os Seus Animais</h2>
+                        <button onClick={() => setTab("animals")} className="text-blue-400 font-black text-xs uppercase hover:underline transition-all">Ver Todos</button>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {patients.map((p: any) => {
+                          const Icon = p.species?.toLowerCase().includes("cão") || p.species?.toLowerCase().includes("can") ? Dog : Cat;
+                          return (
+                            <button key={p.id} onClick={() => setTab("animals")} className="flex items-center gap-4 p-5 bg-white/5 border border-white/10 rounded-[2.5rem] hover:bg-white/10 transition-all text-left group">
+                              <div className="w-16 h-16 rounded-2xl bg-blue-600/20 text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-inner shadow-blue-500/10">
+                                <Icon size={32} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-black text-white text-xl truncate">{p.name}</p>
+                                <p className="text-slate-400 text-xs font-medium capitalize truncate">{p.species} · {p.breed || "SRD"}</p>
+                              </div>
+                              <ChevronRight size={20} className="text-slate-700 group-hover:text-blue-400 transition-colors" />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </section>
                   </div>
 
-                  {/* Clinic Card */}
-                  <div className="bg-slate-900 border border-white/5 rounded-[2.5rem] p-8 space-y-6">
-                    <h3 className="text-slate-500 text-xs font-black uppercase tracking-widest">A Sua Clínica</h3>
-                    <div className="space-y-4">
-                      <p className="text-white font-black text-xl leading-tight">{clinic.name}</p>
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3 text-slate-400">
-                          <MapPin size={16} className="text-blue-400" />
-                          <span className="text-sm font-medium">{clinic.address || "Morada não disponível"}</span>
+                  {/* Right Column: Clinic Info */}
+                  <div className="lg:col-span-4 space-y-6">
+                    <div className="bg-slate-900 border border-white/5 rounded-[2.5rem] p-8 sticky top-12">
+                      <h3 className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-8">A Nossa Clínica</h3>
+                      <div className="space-y-8">
+                        <div>
+                          <p className="text-white font-black text-2xl leading-tight mb-2">{clinic.name}</p>
+                          <div className="flex items-center gap-3 text-slate-400">
+                            <MapPin size={16} className="text-blue-400 shrink-0" />
+                            <span className="text-sm font-medium">{clinic.address || "Morada não disponível"}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-3 text-slate-400">
-                          <Phone size={16} className="text-blue-400" />
-                          <span className="text-sm font-medium">{clinic.phone}</span>
+
+                        <div className="grid grid-cols-1 gap-3">
+                          <button onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clinic.address || clinic.name)}`)} 
+                            className="w-full flex items-center gap-4 p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-all border border-white/5">
+                            <div className="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center"><MapPin size={18} /></div>
+                            <span className="text-xs font-black uppercase tracking-widest text-white">Direções</span>
+                          </button>
+                          <a href={`tel:${clinic.phone}`} className="w-full flex items-center gap-4 p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-all border border-white/5">
+                            <div className="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center"><Phone size={18} /></div>
+                            <span className="text-xs font-black uppercase tracking-widest text-white">Ligar</span>
+                          </a>
                         </div>
-                      </div>
-                      <div className="flex gap-2 pt-2">
-                        <button className="flex-1 bg-white/5 border border-white/10 rounded-xl py-3 font-bold text-xs hover:bg-white/10 transition-colors" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clinic.address || clinic.name)}`)}>Direções</button>
-                        <button className="flex-1 bg-white/5 border border-white/10 rounded-xl py-3 font-bold text-xs hover:bg-white/10 transition-colors" onClick={() => window.location.href = `tel:${clinic.phone}`}>Ligar</button>
+
+                        <div className="pt-6 border-t border-white/5">
+                           <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-4">Horário de Hoje</p>
+                           <div className="flex justify-between items-center text-sm font-bold">
+                              <span className="text-white">Segunda a Sexta</span>
+                              <span className="text-blue-400">09:00 - 20:00</span>
+                           </div>
+                        </div>
                       </div>
                     </div>
                   </div>
+
                 </div>
 
               </div>
