@@ -6,8 +6,9 @@ import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft, PawPrint, User, Phone, Mail, Calendar, Activity,
   Stethoscope, Syringe, AlertCircle, Dog, Cat, FileText, Heart,
-  Thermometer, Weight, Plus, Pill
+  Thermometer, Weight, Plus, Pill, Shield, TrendingUp
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
