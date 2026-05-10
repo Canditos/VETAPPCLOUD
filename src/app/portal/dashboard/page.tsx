@@ -274,249 +274,317 @@ export default function PortalPage() {
     </div>
   );
 
-  const { owner, clinic, patients, vaccineAlerts } = data;
-  const nextAppointment = patients.flatMap((p: any) => p.appointments ?? []).sort(
-    (a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-  )[0];
-
-  const tabs = [
-    { id: "home",    label: "Início",   icon: Home },
-    { id: "animals", label: "Animais",  icon: PawPrint },
-    { id: "agenda",  label: "Agenda",   icon: Calendar },
-    { id: "clinic",  label: "Clínica",  icon: MapPin },
-  ] as const;
-
-  return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col max-w-md mx-auto">
-
-      {/* Top bar */}
-      <div className="px-5 pt-12 pb-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center">
-            <PawPrint size={20} className="text-white" />
+  con  return (
+    <div className="min-h-screen bg-slate-950 text-white flex flex-col md:flex-row">
+      
+      {/* ── Desktop Sidebar ────────────────────────────────────────────────── */}
+      <aside className="hidden md:flex w-72 flex-col border-r border-white/5 bg-slate-900/50 backdrop-blur-xl p-6 sticky top-0 h-screen">
+        <div className="flex items-center gap-3 mb-10">
+          <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+            <PawPrint size={24} className="text-white" />
           </div>
           <div>
-            <p className="font-black text-white text-sm leading-tight">{clinic.name}</p>
+            <p className="font-black text-white text-base leading-tight">VetConnect</p>
             <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Portal do Tutor</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <p className="text-white font-bold text-sm">{owner.name.split(" ")[0]}</p>
-            <p className="text-slate-500 text-[10px]">{patients.length} animal{patients.length !== 1 ? "is" : ""}</p>
-          </div>
-          <button 
-            onClick={handleLogout}
-            className="w-10 h-10 rounded-2xl bg-slate-900 flex items-center justify-center text-slate-400 hover:text-red-400 transition-colors"
-          >
-            <LogOut size={18} />
-          </button>
-        </div>
-      </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto px-4 pb-28">
-
-        {/* HOME */}
-        {tab === "home" && (
-          <div className="space-y-4 py-2">
-
-            {/* Vaccine alerts */}
-            {vaccineAlerts?.length > 0 && (
-              <div className="space-y-2">
-                {vaccineAlerts.map((alert: any, i: number) => (
-                  <div key={i} className={cn(
-                    "flex items-center gap-3 p-4 rounded-2xl border",
-                    alert.expired
-                      ? "bg-red-500/10 border-red-500/20"
-                      : "bg-amber-500/10 border-amber-500/20"
-                  )}>
-                    <AlertTriangle size={18} className={alert.expired ? "text-red-400 shrink-0" : "text-amber-400 shrink-0"} />
-                    <div className="flex-1">
-                      <p className={cn("font-black text-sm", alert.expired ? "text-red-300" : "text-amber-300")}>
-                        {alert.expired ? "Vacina expirada" : "Vacina a expirar"}
-                      </p>
-                      <p className="text-xs text-slate-400">{alert.patientName} · {alert.vaccineName}</p>
-                    </div>
-                    <button onClick={() => setShowRequest(true)}
-                      className="text-[10px] font-black bg-white/10 px-3 py-1.5 rounded-xl hover:bg-white/20 transition-colors shrink-0">
-                      Marcar
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Next appointment */}
-            {nextAppointment ? (
-              <div className="bg-blue-600 rounded-3xl p-5 space-y-3">
-                <p className="text-blue-200 text-[10px] font-black uppercase tracking-widest">Próxima Consulta</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
-                    <Calendar size={22} className="text-white" />
-                  </div>
-                  <div>
-                    <p className="font-black text-white text-lg leading-tight">
-                      {format(new Date(nextAppointment.startTime), "d 'de' MMMM", { locale: pt })}
-                    </p>
-                    <p className="text-blue-200 text-sm">
-                      {format(new Date(nextAppointment.startTime), "HH:mm", { locale: pt })} · {nextAppointment.type ?? "Consulta"}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <a href={`tel:${clinic.phone}`}
-                    className="flex-1 bg-white/20 hover:bg-white/30 rounded-2xl py-2.5 text-center font-black text-xs uppercase tracking-widest transition-colors">
-                    Ligar
-                  </a>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-white/5 border border-white/10 rounded-3xl p-5 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center shrink-0">
-                  <Calendar size={22} className="text-slate-400" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-slate-400 font-bold text-sm">Sem consultas agendadas</p>
-                </div>
-                <button onClick={() => setShowRequest(true)}
-                  className="text-[10px] font-black bg-blue-600 px-3 py-2 rounded-xl text-white shrink-0">
-                  Pedir
-                </button>
-              </div>
-            )}
-
-            {/* Animals summary */}
-            <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1">
-                Os Seus Animais
-              </p>
-              {patients.map((p: any) => {
-                const Icon = p.species?.toLowerCase().includes("cão") || p.species?.toLowerCase().includes("can") ? Dog
-                  : p.species?.toLowerCase().includes("gato") ? Cat : PawPrint;
-                const age = p.birthDate ? differenceInYears(new Date(), new Date(p.birthDate)) : null;
-                const expiredVax = p.vaccinations?.filter((v: any) => v.expiresAt && isPast(new Date(v.expiresAt))).length ?? 0;
-                return (
-                  <button key={p.id} onClick={() => setTab("animals")}
-                    className="w-full flex items-center gap-4 p-4 bg-white/5 border border-white/10 rounded-2xl mb-2 hover:bg-white/10 transition-colors text-left">
-                    <div className="w-12 h-12 rounded-2xl bg-blue-600/20 text-blue-400 flex items-center justify-center shrink-0">
-                      <Icon size={24} />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-black text-white">{p.name}</p>
-                      <p className="text-slate-400 text-xs capitalize">{p.species}{age !== null ? ` · ${age} anos` : ""}</p>
-                    </div>
-                    {expiredVax > 0 && (
-                      <span className="text-[10px] font-black bg-red-500/20 text-red-400 px-2 py-1 rounded-lg">
-                        {expiredVax} vacina{expiredVax > 1 ? "s" : ""}
-                      </span>
-                    )}
-                    <ChevronRight size={16} className="text-slate-600" />
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Request appointment CTA */}
-            <button onClick={() => setShowRequest(true)}
-              className="w-full py-4 rounded-3xl bg-gradient-to-r from-blue-600 to-blue-500 text-white font-black text-sm uppercase tracking-widest active:scale-95 transition-all shadow-xl shadow-blue-500/20">
-              + Pedir Marcação
-            </button>
-          </div>
-        )}
-
-        {/* ANIMALS */}
-        {tab === "animals" && (
-          <div className="space-y-4 py-2">
-            <h2 className="font-black text-2xl text-white tracking-tight">Os seus animais</h2>
-            {patients.map((p: any) => <PatientCard key={p.id} patient={p} />)}
-          </div>
-        )}
-
-        {/* AGENDA */}
-        {tab === "agenda" && (
-          <div className="space-y-4 py-2">
-            <h2 className="font-black text-2xl text-white tracking-tight">Agenda</h2>
-            {patients.flatMap((p: any) => (p.appointments ?? []).map((a: any) => ({ ...a, patientName: p.name }))).length > 0 ? (
-              patients.flatMap((p: any) => (p.appointments ?? []).map((a: any) => ({ ...a, patientName: p.name })))
-                .sort((a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-                .map((a: any) => (
-                  <div key={a.id} className="bg-white/5 border border-white/10 rounded-3xl p-5 flex gap-4 items-start">
-                    <div className="w-12 h-12 rounded-2xl bg-blue-600/20 text-blue-400 flex items-center justify-center shrink-0">
-                      <Calendar size={22} />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-black text-white">{a.patientName}</p>
-                      <p className="text-slate-400 text-sm capitalize">{a.type ?? "Consulta"}</p>
-                      <p className="text-blue-400 font-bold text-sm mt-1 capitalize">{fmtTime(a.startTime)}</p>
-                    </div>
-                  </div>
-                ))
-            ) : (
-              <div className="text-center py-16 space-y-4">
-                <Calendar size={48} className="mx-auto text-slate-700" strokeWidth={1.2} />
-                <p className="text-slate-400 font-bold">Sem consultas agendadas</p>
-                <button onClick={() => setShowRequest(true)}
-                  className="px-6 py-3 rounded-2xl bg-blue-600 text-white font-black text-sm">
-                  Pedir Marcação
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* CLINIC */}
-        {tab === "clinic" && (
-          <div className="space-y-4 py-2">
-            <h2 className="font-black text-2xl text-white tracking-tight">A Clínica</h2>
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-4">
-              <div>
-                <p className="font-black text-white text-xl">{clinic.name}</p>
-                {clinic.address && <p className="text-slate-400 text-sm mt-1">{clinic.address}</p>}
-              </div>
-              {clinic.phone && (
-                <a href={`tel:${clinic.phone}`}
-                  className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-colors">
-                  <div className="w-10 h-10 rounded-xl bg-green-500/20 text-green-400 flex items-center justify-center">
-                    <Phone size={18} />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Telefone</p>
-                    <p className="text-white font-bold">{clinic.phone}</p>
-                  </div>
-                  <ChevronRight size={16} className="ml-auto text-slate-600" />
-                </a>
-              )}
-              {clinic.email && (
-                <a href={`mailto:${clinic.email}`}
-                  className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-colors">
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center">
-                    <FileText size={18} />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Email</p>
-                    <p className="text-white font-bold">{clinic.email}</p>
-                  </div>
-                  <ChevronRight size={16} className="ml-auto text-slate-600" />
-                </a>
-              )}
-              <button onClick={() => setShowRequest(true)}
-                className="w-full py-4 rounded-2xl bg-blue-600 text-white font-black text-sm uppercase tracking-widest active:scale-95 transition-all">
-                Pedir Marcação
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Bottom nav */}
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-slate-950/95 backdrop-blur-xl border-t border-white/10 px-2 pb-safe">
-        <div className="grid grid-cols-4 gap-1 py-2">
+        <nav className="flex-1 space-y-2">
           {tabs.map(({ id, label, icon: Icon }) => (
             <button key={id} onClick={() => setTab(id as any)}
               className={cn(
-                "flex flex-col items-center gap-1 py-2 px-3 rounded-2xl transition-all",
-                tab === id ? "bg-blue-600/20 text-blue-400" : "text-slate-600 hover:text-slate-400"
+                "w-full flex items-center gap-3 px-4 py-4 rounded-2xl transition-all font-black text-xs uppercase tracking-widest",
+                tab === id 
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" 
+                  : "text-slate-500 hover:text-slate-300 hover:bg-white/5"
+              )}>
+              <Icon size={18} />
+              {label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="mt-auto pt-6 border-t border-white/5">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 font-black">
+              {owner.name.charAt(0)}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-white truncate">{owner.name}</p>
+              <p className="text-[10px] text-slate-500 font-bold uppercase">{clinic.name}</p>
+            </div>
+          </div>
+          <button 
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all font-black text-[10px] uppercase tracking-widest"
+          >
+            <LogOut size={16} />
+            Sair do Portal
+          </button>
+        </div>
+      </aside>
+
+      {/* ── Main Content ───────────────────────────────────────────────────── */}
+      <main className="flex-1 flex flex-col min-w-0">
+        
+        {/* Mobile Header */}
+        <header className="md:hidden px-5 pt-10 pb-4 flex items-center justify-between border-b border-white/5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center">
+              <PawPrint size={20} className="text-white" />
+            </div>
+            <p className="font-black text-white text-sm">{clinic.name}</p>
+          </div>
+          <button onClick={handleLogout} className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-slate-500">
+            <LogOut size={18} />
+          </button>
+        </header>
+
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto px-4 md:px-10 py-6 md:py-12">
+          <div className="max-w-6xl mx-auto w-full">
+
+            {/* HOME VIEW */}
+            {tab === "home" && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                
+                {/* Left: Main Info */}
+                <div className="lg:col-span-8 space-y-8">
+                  <header>
+                    <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight mb-2">
+                      Olá, {owner.name.split(" ")[0]}! 👋
+                    </h1>
+                    <p className="text-slate-400 font-medium">Bem-vindo à área reservada dos seus patudos.</p>
+                  </header>
+
+                  {/* Quick Stats / Alerts */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {vaccineAlerts?.slice(0, 2).map((alert: any, i: number) => (
+                      <div key={i} className={cn(
+                        "p-6 rounded-[2rem] border relative overflow-hidden group",
+                        alert.expired ? "bg-red-500/10 border-red-500/20" : "bg-amber-500/10 border-amber-500/20"
+                      )}>
+                        <div className="relative z-10 space-y-3">
+                          <AlertTriangle className={alert.expired ? "text-red-400" : "text-amber-400"} size={24} />
+                          <div>
+                            <p className="text-white font-black text-lg leading-tight">{alert.patientName}</p>
+                            <p className="text-slate-400 text-sm">{alert.vaccineName} · {alert.expired ? "Expirada" : "A expirar"}</p>
+                          </div>
+                          <Button onClick={() => setShowRequest(true)} size="sm" className="bg-white/10 hover:bg-white/20 text-white rounded-xl font-black text-[10px] uppercase">Marcar Reforço</Button>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    <div className="p-6 rounded-[2rem] border border-blue-500/20 bg-blue-600/10 flex flex-col justify-between">
+                       <Stethoscope className="text-blue-400" size={24} />
+                       <div className="mt-4">
+                         <p className="text-white font-black text-lg leading-tight">Nova Consulta</p>
+                         <p className="text-slate-400 text-sm">Peça uma marcação online</p>
+                       </div>
+                       <Button onClick={() => setShowRequest(true)} size="sm" className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-[10px] uppercase mt-3">Pedir Agora</Button>
+                    </div>
+                  </div>
+
+                  {/* Animals Preview */}
+                  <section className="space-y-4">
+                    <div className="flex justify-between items-end px-2">
+                      <h2 className="text-xl font-black uppercase tracking-widest text-slate-500">Os Seus Animais</h2>
+                      <button onClick={() => setTab("animals")} className="text-blue-400 font-black text-xs uppercase">Ver Todos</button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {patients.map((p: any) => {
+                        const Icon = p.species?.toLowerCase().includes("cão") || p.species?.toLowerCase().includes("can") ? Dog : Cat;
+                        return (
+                          <button key={p.id} onClick={() => setTab("animals")} className="flex items-center gap-4 p-5 bg-white/5 border border-white/10 rounded-[2rem] hover:bg-white/10 transition-all text-left group">
+                            <div className="w-16 h-16 rounded-2xl bg-blue-600/20 text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                              <Icon size={32} />
+                            </div>
+                            <div>
+                              <p className="font-black text-white text-xl">{p.name}</p>
+                              <p className="text-slate-400 text-sm capitalize">{p.species} · {p.breed || "SRD"}</p>
+                            </div>
+                            <ChevronRight size={20} className="ml-auto text-slate-700 group-hover:text-blue-400 transition-colors" />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+                </div>
+
+                {/* Right: Sidebar Info */}
+                <div className="lg:col-span-4 space-y-6">
+                  {/* Next Appt Card */}
+                  <div className="bg-blue-600 rounded-[2.5rem] p-8 shadow-xl shadow-blue-500/20 space-y-6">
+                    <h3 className="text-blue-200 text-xs font-black uppercase tracking-widest">Próxima Consulta</h3>
+                    {nextAppointment ? (
+                      <>
+                        <div className="space-y-2">
+                          <p className="text-4xl font-black text-white tracking-tighter">
+                            {format(new Date(nextAppointment.startTime), "dd MMM", { locale: pt })}
+                          </p>
+                          <p className="text-blue-100 font-bold text-lg">
+                            {format(new Date(nextAppointment.startTime), "EEEE, HH:mm", { locale: pt })}
+                          </p>
+                        </div>
+                        <div className="bg-white/10 rounded-2xl p-4 flex items-center gap-3">
+                           <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                             <PawPrint size={20} className="text-white" />
+                           </div>
+                           <p className="font-bold text-white">{nextAppointment.patientName}</p>
+                        </div>
+                        <a href={`tel:${clinic.phone}`} className="block w-full py-4 rounded-2xl bg-white text-blue-600 text-center font-black text-sm uppercase tracking-widest hover:bg-blue-50 transition-colors">
+                          Confirmar / Ligar
+                        </a>
+                      </>
+                    ) : (
+                      <div className="space-y-4">
+                        <p className="text-blue-100 font-medium">Não tem nenhuma consulta agendada para breve.</p>
+                        <Button onClick={() => setShowRequest(true)} className="w-full py-6 rounded-2xl bg-white/20 hover:bg-white/30 text-white font-black uppercase text-xs">Marcar Agora</Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Clinic Card */}
+                  <div className="bg-slate-900 border border-white/5 rounded-[2.5rem] p-8 space-y-6">
+                    <h3 className="text-slate-500 text-xs font-black uppercase tracking-widest">A Sua Clínica</h3>
+                    <div className="space-y-4">
+                      <p className="text-white font-black text-xl leading-tight">{clinic.name}</p>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3 text-slate-400">
+                          <MapPin size={16} className="text-blue-400" />
+                          <span className="text-sm font-medium">{clinic.address || "Morada não disponível"}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-slate-400">
+                          <Phone size={16} className="text-blue-400" />
+                          <span className="text-sm font-medium">{clinic.phone}</span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 pt-2">
+                        <Button variant="outline" className="flex-1 bg-white/5 border-white/10 rounded-xl font-bold" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clinic.address || clinic.name)}`)}>Direções</Button>
+                        <Button variant="outline" className="flex-1 bg-white/5 border-white/10 rounded-xl font-bold" onClick={() => window.location.href = `tel:${clinic.phone}`}>Ligar</Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+            {/* ANIMALS VIEW */}
+            {tab === "animals" && (
+              <div className="space-y-8">
+                <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                  <div>
+                    <h1 className="text-4xl font-black text-white tracking-tight">Os Seus Animais</h1>
+                    <p className="text-slate-400 font-medium">Histórico clínico, vacinas e medicação.</p>
+                  </div>
+                  <Button onClick={() => setShowRequest(true)} className="bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black px-8 h-14">Novo Pedido</Button>
+                </header>
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                  {patients.map((p: any) => <PatientCard key={p.id} patient={p} />)}
+                </div>
+              </div>
+            )}
+
+            {/* AGENDA VIEW */}
+            {tab === "agenda" && (
+              <div className="max-w-3xl space-y-8">
+                <h1 className="text-4xl font-black text-white tracking-tight">Agenda</h1>
+                <div className="space-y-4">
+                  {patients.flatMap((p: any) => (p.appointments ?? []).map((a: any) => ({ ...a, patientName: p.name }))).length > 0 ? (
+                    patients.flatMap((p: any) => (p.appointments ?? []).map((a: any) => ({ ...a, patientName: p.name })))
+                      .sort((a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+                      .map((a: any) => (
+                        <div key={a.id} className="bg-white/5 border border-white/10 rounded-[2rem] p-6 flex gap-6 items-center">
+                          <div className="w-16 h-16 rounded-2xl bg-blue-600/20 text-blue-400 flex items-center justify-center shrink-0">
+                            <Calendar size={28} />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">{a.patientName}</p>
+                            <p className="text-xl font-black text-white capitalize">{a.type ?? "Consulta"}</p>
+                            <p className="text-blue-400 font-bold text-base mt-1 capitalize">{fmtTime(a.startTime)}</p>
+                          </div>
+                          <div className="hidden sm:block text-right">
+                             <p className="text-slate-400 text-xs font-bold mb-2">Confirmado</p>
+                             <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center ml-auto">
+                               <CheckCircle2 size={16} />
+                             </div>
+                          </div>
+                        </div>
+                      ))
+                  ) : (
+                    <div className="text-center py-20 bg-white/5 rounded-[3rem] border border-white/5">
+                      <Calendar size={64} className="mx-auto text-slate-800 mb-6" strokeWidth={1} />
+                      <p className="text-xl text-slate-400 font-bold">Sem consultas agendadas</p>
+                      <Button onClick={() => setShowRequest(true)} className="mt-6 bg-blue-600 hover:bg-blue-500 rounded-2xl px-8 h-14 font-black">Agendar Agora</Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* CLINIC VIEW (Desktop specific or merged) */}
+            {tab === "clinic" && (
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-6">
+                    <h1 className="text-4xl font-black text-white tracking-tight">A Nossa Clínica</h1>
+                    <div className="bg-white/5 border border-white/10 rounded-[3rem] p-10 space-y-8">
+                       <div className="space-y-2">
+                         <h2 className="text-2xl font-black text-white">{clinic.name}</h2>
+                         <p className="text-slate-400 leading-relaxed">{clinic.address || "Morada não especificada"}</p>
+                       </div>
+                       <div className="grid grid-cols-1 gap-4">
+                         <div className="flex items-center gap-4 p-5 bg-white/5 rounded-2xl">
+                           <Phone className="text-blue-400" />
+                           <div>
+                             <p className="text-[10px] font-black text-slate-500 uppercase">Contacto</p>
+                             <p className="text-white font-bold">{clinic.phone}</p>
+                           </div>
+                         </div>
+                         <div className="flex items-center gap-4 p-5 bg-white/5 rounded-2xl">
+                           <Mail className="text-blue-400" />
+                           <div>
+                             <p className="text-[10px] font-black text-slate-500 uppercase">Email</p>
+                             <p className="text-white font-bold">{clinic.email || "Não disponível"}</p>
+                           </div>
+                         </div>
+                       </div>
+                       <Button onClick={() => setShowRequest(true)} className="w-full h-16 rounded-2xl bg-blue-600 text-xl font-black">Pedir Marcação</Button>
+                    </div>
+                  </div>
+                  <div className="bg-slate-900 rounded-[3rem] border border-white/5 overflow-hidden flex items-center justify-center min-h-[400px]">
+                     <div className="text-center p-10">
+                       <MapPin size={48} className="text-blue-600 mx-auto mb-4" />
+                       <p className="text-slate-400 font-bold underline cursor-pointer" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clinic.address || clinic.name)}`)}>Abrir no Google Maps</p>
+                     </div>
+                  </div>
+               </div>
+            )}
+
+          </div>
+        </div>
+      </main>
+
+      {/* ── Mobile Navigation ─────────────────────────────────────────────── */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur-xl border-t border-white/5 px-6 pb-8 pt-4 z-40">
+        <div className="flex justify-between items-center">
+          {tabs.map(({ id, label, icon: Icon }) => (
+            <button key={id} onClick={() => setTab(id as any)}
+              className={cn(
+                "flex flex-col items-center gap-1 transition-all",
+                tab === id ? "text-blue-400" : "text-slate-600"
+              )}>
+              <Icon size={24} strokeWidth={tab === id ? 2.5 : 1.5} />
+              <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
+
+      {/* Appointment request modal */}
+      {showRequest && <RequestModal patients={patients} token={""} onClose={() => setShowRequest(false)} />}
+    </div>
+  );        tab === id ? "bg-blue-600/20 text-blue-400" : "text-slate-600 hover:text-slate-400"
               )}>
               <Icon size={22} strokeWidth={tab === id ? 2.5 : 1.5} />
               <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
