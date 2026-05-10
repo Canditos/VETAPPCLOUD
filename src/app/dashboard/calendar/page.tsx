@@ -127,9 +127,12 @@ export default function CalendarPage() {
   const [newVetId, setNewVetId] = useState("");
   const [newType, setNewType] = useState("CONSULTA");
   const [newDuration, setNewDuration] = useState("30");
-  const [now, setNow] = useState(new Date());
+  const [now, setNow] = useState<Date | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+    setNow(new Date());
     const timer = setInterval(() => setNow(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
@@ -189,10 +192,15 @@ export default function CalendarPage() {
     const map = new Map<string, any[]>();
     rawAppointments.forEach((app: any) => {
       if (selectedVet !== "all" && app.veterinarianId !== selectedVet) return;
-      const date = new Date(app.startTime);
-      const key = `${format(date, "yyyy-MM-dd")}-${format(date, "HH:00")}`;
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(app);
+      try {
+        const date = new Date(app.startTime);
+        if (isNaN(date.getTime())) return;
+        const key = `${format(date, "yyyy-MM-dd")}-${format(date, "HH:00")}`;
+        if (!map.has(key)) map.set(key, []);
+        map.get(key)!.push(app);
+      } catch (e) {
+        console.error("Error formatting appointment date:", e);
+      }
     });
     return map;
   }, [rawAppointments, selectedVet]);
@@ -421,11 +429,11 @@ export default function CalendarPage() {
 
           <div className="relative">
             {/* Now Indicator Line */}
-            {activeDays.some(d => d.isToday) && (
+            {mounted && now && activeDays.some(d => d.isToday) && (
               <div 
                 className="absolute left-0 right-0 z-30 pointer-events-none transition-all duration-1000"
                 style={{ 
-                  top: `${((now.getHours() - 8) * 60 + now.getMinutes()) * (121 / 60) + 1}px`,
+                  top: `${((now.getHours() - 8) * 60 + now.getMinutes()) * (128 / 60) + 1}px`,
                   display: now.getHours() >= 8 && now.getHours() < 24 ? "block" : "none"
                 }}
               >
@@ -484,9 +492,10 @@ export default function CalendarPage() {
             <div className="w-[180px] pointer-events-none">
               <DraggableAppointment
                 app={activeApp}
-                hour={format(new Date(activeApp.startTime), "HH:mm")}
-                config={getTypeConfig(activeApp.type)}
-                vetColor={getVetColor(activeApp.veterinarianId)}
+                hour={activeApp?.startTime ? format(new Date(activeApp.startTime), "HH:mm") : "--:--"}
+                config={getTypeConfig(activeApp?.type)}
+                vetColor={getVetColor(activeApp?.veterinarianId)}
+                onClick={() => {}}
                 isOverlay
               />
             </div>
