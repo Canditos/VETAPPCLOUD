@@ -24,15 +24,8 @@ export const viewport: Viewport = {
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt">
-      <head>
-        <link rel="apple-touch-icon" href="/icon-192.png" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-      </head>
-      <body className="bg-slate-950 antialiased overscroll-none">
-        {children}
-      </body>
-    </html>
+    <div className="bg-slate-950 antialiased overscroll-none min-h-screen text-white">
+      {children}
+    </div>
   );
 }
