@@ -348,27 +348,47 @@ export default function CalendarPage() {
                 </Button>
               </div>
               <div className="h-4 w-px bg-slate-200 dark:bg-white/10 mx-2" />
-              <div className="relative group/date">
-                <input 
-                  type="date" 
-                  id="datePicker"
-                  className="absolute inset-0 opacity-0 cursor-pointer z-10 w-full h-full"
-                  onChange={(e) => {
-                    const newDate = new Date(e.target.value);
-                    if (!isNaN(newDate.getTime())) {
-                      setCurrentDate(newDate);
-                    }
-                  }}
-                  value={format(currentDate, "yyyy-MM-dd")}
-                />
-                <label 
-                  htmlFor="datePicker"
-                  className="text-[11px] font-black text-slate-900 dark:text-white uppercase tracking-widest px-2 min-w-[140px] text-center cursor-pointer group-hover/date:text-blue-600 transition-colors flex items-center gap-2"
-                >
-                  {format(currentDate, "MMMM yyyy", { locale: pt })}
-                  <CalendarDays size={14} className="opacity-40 group-hover/date:opacity-100 transition-opacity" />
-                </label>
-              </div>
+              
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" className="h-9 px-4 font-black text-[11px] uppercase tracking-widest hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all text-slate-900 dark:text-white flex items-center gap-2">
+                    {format(currentDate, "MMMM yyyy", { locale: pt })}
+                    <CalendarDays size={14} className="text-blue-600" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-4 rounded-[1.5rem] bg-white dark:bg-slate-900 border-none shadow-2xl ring-1 ring-black/5 dark:ring-white/10 z-[100]" align="center">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ir para data (Manual)</label>
+                      <Input 
+                        placeholder="DD/MM/AAAA"
+                        className="h-10 rounded-xl bg-slate-50 dark:bg-slate-800 border-none font-bold"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const val = (e.target as HTMLInputElement).value;
+                            const [d, m, y] = val.split('/').map(Number);
+                            if (d && m && y) {
+                              const newD = new Date(y, m - 1, d);
+                              if (!isNaN(newD.getTime())) {
+                                setCurrentDate(newD);
+                                toast.success(`Agenda movida para ${format(newD, "PP", { locale: pt })}`);
+                              }
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                    <Calendar
+                      mode="single"
+                      selected={currentDate}
+                      onSelect={(d) => d && setCurrentDate(d)}
+                      initialFocus
+                      locale={pt}
+                      className="rounded-xl border border-slate-100 dark:border-white/5"
+                    />
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 
