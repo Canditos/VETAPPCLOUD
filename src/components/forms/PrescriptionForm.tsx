@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Pill, Plus, Trash2, Calendar as CalendarIcon, FileText, ChevronDown } from "lucide-react";
+import { Pill, Plus, Trash2, Calendar as CalendarIcon, FileText, ChevronDown, Search, PawPrint, User as UserIcon } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -16,6 +16,8 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { PrescriptionDownloadButton } from "@/components/clinical/PrescriptionDownloadButton";
 import { Printer } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface PrescriptionItem {
   medicineName: string;
@@ -31,8 +33,9 @@ interface PrescriptionFormProps {
   onSuccess?: () => void;
 }
 
-export function PrescriptionForm({ patientId, consultationId, onSuccess }: PrescriptionFormProps) {
+export function PrescriptionForm({ patientId: initialPatientId, consultationId, onSuccess }: PrescriptionFormProps) {
   const queryClient = useQueryClient();
+  const [patientId, setPatientId] = useState(initialPatientId);
   const [createdPrescription, setCreatedPrescription] = useState<any>(null);
   const [validUntil, setValidUntil] = useState<Date | undefined>(
     new Date(Date.now() + 30 * 86400000) // Default 30 days
@@ -40,6 +43,20 @@ export function PrescriptionForm({ patientId, consultationId, onSuccess }: Presc
   const [items, setItems] = useState<PrescriptionItem[]>([
     { medicineName: "", dosage: "", frequency: "", duration: "", notes: "" }
   ]);
+
+  // Fetch patients for selection if not provided
+  const { data: patientsData, isLoading: isLoadingPatients } = useQuery({
+    queryKey: ["patients-list"],
+    queryFn: async () => {
+      const res = await fetch("/api/patients?limit=100");
+      if (!res.ok) throw new Error("Erro ao carregar pacientes");
+      return res.json();
+    },
+    enabled: !initialPatientId
+  });
+
+  const patients = patientsData?.data || [];
+  const selectedPatient = patients.find((p: any) => p.id === patientId);
 
   const { data: clinic } = useQuery({
     queryKey: ["clinic"],
@@ -62,6 +79,7 @@ export function PrescriptionForm({ patientId, consultationId, onSuccess }: Presc
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["patient-hub", patientId] });
+      queryClient.invalidateQueries({ queryKey: ["prescriptions"] });
       setCreatedPrescription(data);
       toast.success("Prescrição criada com sucesso!");
       onSuccess?.();
@@ -89,6 +107,10 @@ export function PrescriptionForm({ patientId, consultationId, onSuccess }: Presc
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!patientId) {
+      toast.error("Por favor, selecione um paciente.");
+      return;
+    }
     if (items.some(i => !i.medicineName)) {
       toast.error("Todos os itens devem ter um nome de medicamento.");
       return;
@@ -103,6 +125,49 @@ export function PrescriptionForm({ patientId, consultationId, onSuccess }: Presc
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
+      {/* Patient Selection - Mandatory when not in patient profile */}
+      {!initialPatientId && (
+        <div className="bg-blue-600/5 p-6 rounded-[2rem] border border-blue-500/10 space-y-4">
+          <Label className="text-[10px] font-black text-blue-500 uppercase tracking-widest flex items-center gap-2">
+            <PawPrint size={12} /> Seleção do Paciente
+          </Label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Select value={patientId} onValueChange={setPatientId}>
+              <SelectTrigger className="h-14 rounded-2xl bg-white dark:bg-slate-900 border-none ring-1 ring-slate-200 dark:ring-slate-700 font-bold">
+                <SelectValue placeholder="Escolha o Animal..." />
+              </SelectTrigger>
+              <SelectContent className="rounded-2xl border-none shadow-2xl bg-slate-900 ring-1 ring-white/10">
+                {isLoadingPatients ? (
+                  <div className="p-4 space-y-2">
+                    <Skeleton className="h-10 w-full rounded-xl" />
+                    <Skeleton className="h-10 w-full rounded-xl" />
+                  </div>
+                ) : patients.map((p: any) => (
+                  <SelectItem key={p.id} value={p.id} className="rounded-xl focus:bg-blue-600 focus:text-white p-3">
+                    <div className="flex flex-col items-start gap-0.5">
+                      <span className="font-black text-sm">{p.name}</span>
+                      <span className="text-[10px] opacity-60 uppercase font-bold tracking-tight">Dono: {p.owner?.name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {selectedPatient && (
+              <div className="flex items-center gap-3 p-3 bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200 dark:ring-slate-700 animate-in fade-in slide-in-from-left-2">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center shrink-0">
+                  <UserIcon size={18} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tutor Associado</p>
+                  <p className="font-bold text-slate-900 dark:text-white leading-tight">{selectedPatient.owner?.name}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800">
         <div className="flex items-center justify-between mb-6">
           <div className="space-y-1">

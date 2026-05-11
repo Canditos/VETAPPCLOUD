@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { getTenantClient } from "@/lib/prisma";
 
 export async function GET(request: Request) {
   try {
@@ -13,10 +13,10 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const patientId = searchParams.get("patientId");
     const clinicId = (session.user as any).clinicId;
+    const tenantPrisma = getTenantClient(clinicId);
 
-    const prescriptions = await prisma.prescription.findMany({
+    const prescriptions = await tenantPrisma.prescription.findMany({
       where: { 
-        clinicId,
         ...(patientId ? { patientId } : {})
       },
       include: {
@@ -42,6 +42,7 @@ export async function POST(request: Request) {
     }
 
     const clinicId = (session.user as any).clinicId;
+    const tenantPrisma = getTenantClient(clinicId);
     const body = await request.json();
     const { patientId, consultationId, validUntil, items } = body;
 
@@ -49,9 +50,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Patient ID and items are required" }, { status: 400 });
     }
 
-    const prescription = await prisma.prescription.create({
+    const prescription = await tenantPrisma.prescription.create({
       data: {
-        clinicId,
         patientId,
         veterinarianId: (session.user as any).id,
         consultationId,
