@@ -522,116 +522,131 @@ export default function CalendarPage() {
 
         {/* ── New appointment modal ─────────────────────────────────────── */}
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <DialogContent className="sm:max-w-[420px] rounded-3xl p-0 overflow-hidden bg-white dark:bg-slate-900 border-none shadow-2xl">
-            <div className="bg-slate-50 dark:bg-slate-800/50 p-6 border-b border-slate-200 dark:border-white/5">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
-                  <CalendarDays size={22} strokeWidth={2.5} />
+          <DialogContent className="sm:max-w-[560px] rounded-[2.5rem] p-0 overflow-hidden bg-white dark:bg-slate-950 border-none shadow-[0_0_50px_rgba(0,0,0,0.3)] ring-1 ring-white/10">
+            <div className="bg-slate-50 dark:bg-slate-900/50 p-8 border-b border-slate-200 dark:border-white/5 relative overflow-hidden">
+              <div className="absolute -right-8 -top-8 w-32 h-32 bg-blue-600/10 rounded-full blur-3xl" />
+              <div className="flex items-center gap-5 relative z-10">
+                <div className="w-14 h-14 bg-blue-600 rounded-[1.25rem] flex items-center justify-center text-white shadow-xl shadow-blue-500/20 ring-4 ring-blue-500/10">
+                  <CalendarDays size={26} strokeWidth={2.5} />
                 </div>
                 <div>
-                  <DialogTitle className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter">Nova Marcação</DialogTitle>
-                  <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">
+                  <DialogTitle className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Nova Marcação</DialogTitle>
+                  <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mt-1.5 flex items-center gap-2">
+                    <Clock size={12} strokeWidth={3} />
                     {newSlot
                       ? `${format(new Date(newSlot.day), "d 'de' MMMM", { locale: pt })} às ${newSlot.hour}`
-                      : "Selecione o horário"}
+                      : "Selecione o horário disponível"}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="p-6 space-y-6">
-              <div className="space-y-2">
+            <div className="p-8 space-y-8">
+              <div className="space-y-3">
                 <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1">Paciente</label>
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600" size={16} />
+                <div className="relative group">
+                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600 group-focus-within:text-blue-500 transition-colors" size={18} />
                   <input
-                    className="w-full h-12 pl-12 pr-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 font-bold text-sm text-slate-900 dark:text-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-400 outline-none transition-all"
-                    placeholder="Procurar paciente..."
+                    className="w-full h-14 pl-14 pr-6 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-black text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
+                    placeholder="Procurar animal ou tutor..."
                     value={patientSearch}
                     onChange={(e) => { setPatientSearch(e.target.value); setSelectedPatient(null); }}
                   />
+                  
+                  {filteredPatients.length > 0 && !selectedPatient && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden z-[60] animate-in fade-in slide-in-from-top-2 duration-300 ring-1 ring-black/5">
+                      {filteredPatients.map((p: any) => (
+                        <button key={p.id}
+                          className="w-full text-left px-6 py-4 hover:bg-blue-600 group/item transition-all flex justify-between items-center border-b border-slate-100 dark:border-white/5 last:border-0"
+                          onClick={() => { setSelectedPatient(p); setPatientSearch(p.name); }}
+                        >
+                          <div className="flex flex-col">
+                            <span className="font-black text-slate-900 dark:text-white group-hover/item:text-white">{p.name}</span>
+                            <span className="text-[10px] font-bold text-slate-400 group-hover/item:text-blue-100 uppercase tracking-widest">{p.species}</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-[10px] font-black text-slate-400 group-hover/item:text-white uppercase tracking-tighter block">{p.owner?.name}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                {filteredPatients.length > 0 && !selectedPatient && (
-                  <div className="border border-slate-200 rounded-lg overflow-hidden shadow-sm">
-                    {filteredPatients.map((p: any) => (
-                      <button key={p.id}
-                        className="w-full text-left px-3 py-2.5 hover:bg-slate-50 transition-colors text-sm border-b border-slate-100 last:border-0 flex justify-between items-center"
-                        onClick={() => { setSelectedPatient(p); setPatientSearch(p.name); }}
-                      >
-                        <span className="font-medium text-slate-800">{p.name}</span>
-                        <span className="text-slate-500 text-xs">{p.species} · {p.owner?.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
+
                 {selectedPatient && (
-                  <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
-                    <span className="font-medium text-blue-800 text-sm">{selectedPatient.name}
-                      <span className="text-blue-500 font-normal ml-2 text-xs">{selectedPatient.species} · {selectedPatient.owner?.name}</span>
-                    </span>
-                    <button onClick={() => { setSelectedPatient(null); setPatientSearch(""); }}>
-                      <X size={14} className="text-blue-400 hover:text-blue-600" />
+                  <div className="flex items-center justify-between bg-blue-600/10 dark:bg-blue-400/5 border border-blue-600/20 rounded-2xl px-5 py-4 animate-in zoom-in-95">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center">
+                        <PawPrint size={18} />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-black text-blue-600 dark:text-blue-400 text-sm leading-none">{selectedPatient.name}</span>
+                        <span className="text-[10px] font-bold text-blue-600/60 dark:text-blue-400/40 uppercase tracking-widest mt-1">{selectedPatient.owner?.name}</span>
+                      </div>
+                    </div>
+                    <button onClick={() => { setSelectedPatient(null); setPatientSearch(""); }} className="p-2 hover:bg-blue-600/10 rounded-lg transition-colors">
+                      <X size={16} className="text-blue-600/60 hover:text-blue-600" />
                     </button>
                   </div>
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-600">Médico</label>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1">Médico Responsável</label>
                   <Select value={newVetId} onValueChange={setNewVetId}>
-                    <SelectTrigger className="h-10 rounded-lg bg-slate-50 border border-slate-200 font-medium text-xs">
+                    <SelectTrigger className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-black text-sm px-6">
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <SelectContent className="rounded-lg">
+                    <SelectContent className="rounded-[1.5rem] bg-slate-900 border-white/10 text-white p-2">
                       {vets.map((v: any) => (
-                        <SelectItem key={v.id} value={v.id} className="font-medium">{v.name}</SelectItem>
+                        <SelectItem key={v.id} value={v.id} className="rounded-xl focus:bg-blue-600 p-3 font-bold">{v.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-600">Tipo</label>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1">Tipo de Serviço</label>
                   <Select value={newType} onValueChange={setNewType}>
-                    <SelectTrigger className="h-10 rounded-lg bg-slate-50 border border-slate-200 font-medium text-xs">
+                    <SelectTrigger className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-black text-sm px-6">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="rounded-lg">
-                      <SelectItem value="CONSULTA" className="font-medium">Consulta Geral</SelectItem>
-                      <SelectItem value="VACINA" className="font-medium">Vacinação</SelectItem>
-                      <SelectItem value="CIRURGIA" className="font-medium">Cirurgia</SelectItem>
-                      <SelectItem value="URGÊNCIA" className="font-medium">Urgência</SelectItem>
+                    <SelectContent className="rounded-[1.5rem] bg-slate-900 border-white/10 text-white p-2">
+                      <SelectItem value="CONSULTA" className="rounded-xl focus:bg-blue-600 p-3 font-bold">Consulta Geral</SelectItem>
+                      <SelectItem value="VACINA" className="rounded-xl focus:bg-blue-600 p-3 font-bold">Vacinação</SelectItem>
+                      <SelectItem value="CIRURGIA" className="rounded-xl focus:bg-blue-600 p-3 font-bold">Cirurgia</SelectItem>
+                      <SelectItem value="URGÊNCIA" className="rounded-xl focus:bg-blue-600 p-3 font-bold">Urgência</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-600">Duração</label>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1">Duração Prevista</label>
                   <Select value={newDuration} onValueChange={setNewDuration}>
-                    <SelectTrigger className="h-10 rounded-lg bg-slate-50 border border-slate-200 font-medium text-xs">
+                    <SelectTrigger className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-black text-sm px-6">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="rounded-lg">
-                      <SelectItem value="15" className="font-medium">15 min</SelectItem>
-                      <SelectItem value="30" className="font-medium">30 min</SelectItem>
-                      <SelectItem value="45" className="font-medium">45 min</SelectItem>
-                      <SelectItem value="60" className="font-medium">1 hora</SelectItem>
-                      <SelectItem value="90" className="font-medium">1h 30min</SelectItem>
+                    <SelectContent className="rounded-[1.5rem] bg-slate-900 border-white/10 text-white p-2">
+                      <SelectItem value="15" className="rounded-xl focus:bg-blue-600 p-3 font-bold">15 minutos</SelectItem>
+                      <SelectItem value="30" className="rounded-xl focus:bg-blue-600 p-3 font-bold">30 minutos</SelectItem>
+                      <SelectItem value="45" className="rounded-xl focus:bg-blue-600 p-3 font-bold">45 minutos</SelectItem>
+                      <SelectItem value="60" className="rounded-xl focus:bg-blue-600 p-3 font-bold">1 hora</SelectItem>
+                      <SelectItem value="90" className="rounded-xl focus:bg-blue-600 p-3 font-bold">1h 30min</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 {!newSlot && (
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-slate-600">Hora</label>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1">Hora de Início</label>
                     <Select onValueChange={(v) => setNewSlot({ day: format(new Date(), "yyyy-MM-dd"), hour: v })}>
-                      <SelectTrigger className="h-10 rounded-lg bg-slate-50 border border-slate-200 font-medium text-xs">
-                        <SelectValue placeholder="Hora..." />
+                      <SelectTrigger className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-black text-sm px-6">
+                        <SelectValue placeholder="Escolher..." />
                       </SelectTrigger>
-                      <SelectContent className="rounded-lg">
-                        {hours.map(h => <SelectItem key={h} value={h} className="font-medium">{h}</SelectItem>)}
+                      <SelectContent className="rounded-[1.5rem] bg-slate-900 border-white/10 text-white p-2">
+                        {hours.map(h => <SelectItem key={h} value={h} className="rounded-xl focus:bg-blue-600 p-3 font-bold">{h}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -639,11 +654,11 @@ export default function CalendarPage() {
               </div>
 
               <Button
-                className="w-full h-11 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs shadow-md shadow-blue-500/10"
+                className="w-full h-16 rounded-[2rem] bg-blue-600 hover:bg-blue-700 text-white font-black text-sm uppercase tracking-[0.2em] shadow-xl shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"
                 disabled={!selectedPatient || !newVetId || !newSlot || createAppointment.isPending}
                 onClick={() => createAppointment.mutate()}
               >
-                {createAppointment.isPending ? "A agendar..." : "Confirmar Agendamento"}
+                {createAppointment.isPending ? "A processar..." : "Confirmar Agendamento"}
               </Button>
             </div>
           </DialogContent>
