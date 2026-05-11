@@ -52,6 +52,7 @@ export async function POST(request: Request) {
 
     const prescription = await tenantPrisma.prescription.create({
       data: {
+        clinicId,
         patientId,
         veterinarianId: (session.user as any).id,
         consultationId,
