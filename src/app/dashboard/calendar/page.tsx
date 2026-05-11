@@ -349,35 +349,36 @@ export default function CalendarPage() {
               </div>
               <div className="h-4 w-px bg-slate-200 dark:bg-white/10 mx-2" />
               
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="ghost" className="h-9 px-4 font-black text-[11px] uppercase tracking-widest hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all text-slate-900 dark:text-white flex items-center gap-2">
-                    {format(currentDate, "MMMM yyyy", { locale: pt })}
-                    <CalendarDays size={14} className="text-blue-600" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-4 rounded-[1.5rem] bg-white dark:bg-slate-900 border-none shadow-2xl ring-1 ring-black/5 dark:ring-white/10 z-[100]" align="center">
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ir para data (Manual)</label>
-                      <Input 
-                        placeholder="DD/MM/AAAA"
-                        className="h-10 rounded-xl bg-slate-50 dark:bg-slate-800 border-none font-bold"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            const val = (e.target as HTMLInputElement).value;
-                            const [d, m, y] = val.split('/').map(Number);
-                            if (d && m && y) {
-                              const newD = new Date(y, m - 1, d);
-                              if (!isNaN(newD.getTime())) {
-                                setCurrentDate(newD);
-                                toast.success(`Agenda movida para ${format(newD, "PP", { locale: pt })}`);
-                              }
-                            }
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Input 
+                    key={format(currentDate, "yyyy-MM-dd")}
+                    defaultValue={format(currentDate, "dd/MM/yyyy")}
+                    className="h-9 w-[110px] bg-transparent border-none font-black text-[11px] uppercase tracking-widest text-slate-900 dark:text-white p-0 text-center focus:ring-0 focus:bg-slate-200/50 dark:focus:bg-white/5 rounded-lg transition-all"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        const val = (e.target as HTMLInputElement).value;
+                        const [d, m, y] = val.split('/').map(Number);
+                        if (d && m && y) {
+                          const newD = new Date(y, m - 1, d);
+                          if (!isNaN(newD.getTime())) {
+                            setCurrentDate(newD);
+                            (e.target as HTMLInputElement).blur();
+                            toast.success(`Agenda movida para ${format(newD, "PP", { locale: pt })}`);
                           }
-                        }}
-                      />
-                    </div>
+                        }
+                      }
+                    }}
+                  />
+                </div>
+
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl hover:bg-white dark:hover:bg-white/10 transition-all text-blue-600">
+                      <CalendarDays size={18} strokeWidth={2.5} />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-4 rounded-[1.5rem] bg-white dark:bg-slate-900 border-none shadow-2xl ring-1 ring-black/5 dark:ring-white/10 z-[110]" align="end">
                     <Calendar
                       mode="single"
                       selected={currentDate}
@@ -386,9 +387,9 @@ export default function CalendarPage() {
                       locale={pt}
                       className="rounded-xl border border-slate-100 dark:border-white/5"
                     />
-                  </div>
-                </PopoverContent>
-              </Popover>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
           </div>
 
