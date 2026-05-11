@@ -4,9 +4,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Pill, Plus, Trash2, Calendar as CalendarIcon, FileText, ChevronDown, Search, PawPrint, User as UserIcon } from "lucide-react";
+import { Pill, Plus, Trash2, Calendar as CalendarIcon, Search, PawPrint, User as UserIcon, Printer } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -15,9 +14,6 @@ import { pt } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { PrescriptionDownloadButton } from "@/components/clinical/PrescriptionDownloadButton";
-import { Printer } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface PrescriptionItem {
   medicineName: string;
@@ -47,11 +43,11 @@ export function PrescriptionForm({ patientId: initialPatientId, consultationId, 
   const [patientSearch, setPatientSearch] = useState("");
   const [showResults, setShowResults] = useState(false);
 
-  // Fetch patients for selection if not provided
+  // Fetch patients
   const { data: patientsData, isLoading: isLoadingPatients } = useQuery({
     queryKey: ["patients-list"],
     queryFn: async () => {
-      const res = await fetch("/api/patients?limit=1000"); // Aumentar o limite para pesquisa local ser eficaz
+      const res = await fetch("/api/patients?limit=1000");
       if (!res.ok) throw new Error("Erro ao carregar pacientes");
       return res.json();
     },
@@ -64,12 +60,56 @@ export function PrescriptionForm({ patientId: initialPatientId, consultationId, 
   const filteredPatients = patients.filter((p: any) => 
     p.name.toLowerCase().includes(patientSearch.toLowerCase()) || 
     p.owner?.name.toLowerCase().includes(patientSearch.toLowerCase())
-  ).slice(0, 10); // Mostrar apenas os 10 primeiros resultados
+  ).slice(0, 10);
 
-  // ... resto do código (mutações, clinic, etc) ...
+  const { data: clinic } = useQuery({
+    queryKey: ["clinic"],
+    queryFn: async () => {
+      const res = await fetch("/api/clinic");
+      if (!res.ok) throw new Error("Erro ao carregar dados da clínica");
+      return res.json();
+    }
+  });
+
+  const mutation = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await fetch(`/api/prescriptions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Erro ao criar prescrição");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["patient-hub", patientId] });
+      queryClient.invalidateQueries({ queryKey: ["prescriptions"] });
+      setCreatedPrescription(data);
+      toast.success("Prescrição criada com sucesso!");
+      onSuccess?.();
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Erro ao criar prescrição.");
+    }
+  });
+
+  const addItem = () => {
+    setItems([...items, { medicineName: "", dosage: "", frequency: "", duration: "", notes: "" }]);
+  };
+
+  const removeItem = (index: number) => {
+    if (items.length > 1) {
+      setItems(items.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateItem = (index: number, field: keyof PrescriptionItem, value: string) => {
+    const newItems = [...items];
+    newItems[index][field] = value;
+    setItems(newItems);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    // ... handleSubmit logic ...
     e.preventDefault();
     if (!patientId) {
       toast.error("Por favor, selecione um paciente.");
@@ -89,7 +129,7 @@ export function PrescriptionForm({ patientId: initialPatientId, consultationId, 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      {/* Patient Selection - Mandatory when not in patient profile */}
+      {/* Patient Selection */}
       {!initialPatientId && (
         <div className="bg-blue-600/5 p-6 rounded-[2.5rem] border border-blue-500/10 space-y-4">
           <Label className="text-[10px] font-black text-blue-500 uppercase tracking-widest flex items-center gap-2 ml-2">
@@ -165,16 +205,8 @@ export function PrescriptionForm({ patientId: initialPatientId, consultationId, 
           </div>
         </div>
       )}
-                <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tutor Associado</p>
-                  <p className="font-bold text-slate-900 dark:text-white leading-tight">{selectedPatient.owner?.name}</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
+      {/* Main Form Content */}
       <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800">
         <div className="flex items-center justify-between mb-6">
           <div className="space-y-1">
@@ -185,6 +217,7 @@ export function PrescriptionForm({ patientId: initialPatientId, consultationId, 
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
+                  type="button"
                   className={cn(
                     "w-64 h-10 justify-start text-left font-bold rounded-xl border-none ring-1 ring-slate-200 dark:ring-slate-700 bg-white dark:bg-slate-900",
                     !validUntil && "text-muted-foreground"
@@ -305,6 +338,7 @@ export function PrescriptionForm({ patientId: initialPatientId, consultationId, 
             />
             <Button 
               variant="outline" 
+              type="button"
               className="flex-1 rounded-xl font-black uppercase text-[10px] tracking-widest h-12"
               onClick={() => {
                 setCreatedPrescription(null);
