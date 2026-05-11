@@ -348,9 +348,27 @@ export default function CalendarPage() {
                 </Button>
               </div>
               <div className="h-4 w-px bg-slate-200 dark:bg-white/10 mx-2" />
-              <span className="text-[11px] font-black text-slate-900 dark:text-white uppercase tracking-widest px-2 min-w-[140px] text-center">
-                {format(currentDate, "MMMM yyyy", { locale: pt })}
-              </span>
+              <div className="relative group/date">
+                <input 
+                  type="date" 
+                  id="datePicker"
+                  className="absolute inset-0 opacity-0 cursor-pointer z-10 w-full h-full"
+                  onChange={(e) => {
+                    const newDate = new Date(e.target.value);
+                    if (!isNaN(newDate.getTime())) {
+                      setCurrentDate(newDate);
+                    }
+                  }}
+                  value={format(currentDate, "yyyy-MM-dd")}
+                />
+                <label 
+                  htmlFor="datePicker"
+                  className="text-[11px] font-black text-slate-900 dark:text-white uppercase tracking-widest px-2 min-w-[140px] text-center cursor-pointer group-hover/date:text-blue-600 transition-colors flex items-center gap-2"
+                >
+                  {format(currentDate, "MMMM yyyy", { locale: pt })}
+                  <CalendarDays size={14} className="opacity-40 group-hover/date:opacity-100 transition-opacity" />
+                </label>
+              </div>
             </div>
           </div>
 
