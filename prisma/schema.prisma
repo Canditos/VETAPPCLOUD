@@ -35,6 +35,7 @@ model Clinic {
   prescriptions    Prescription[]
   products         Product[]
   portalTokens     OwnerPortalToken[]
+  portalMessages   PortalMessage[]
   appointmentRequests PortalAppointmentRequest[]
   stockMovements   StockMovement[]
   subscriptions    Subscription[]
@@ -126,7 +127,8 @@ model Owner {
   payments      Payment[]
   portalTokens  OwnerPortalToken[]
   appointmentRequests PortalAppointmentRequest[]
-  subscriptions Subscription[]
+  portalMessages      PortalMessage[]
+  subscriptions       Subscription[]
 
   @@index([clinicId])
   @@index([email])
@@ -418,6 +420,7 @@ model PortalAppointmentRequest {
   owner     Owner    @relation(fields: [ownerId], references: [id])
   clinic    Clinic   @relation(fields: [clinicId], references: [id])
   patient   Patient  @relation(fields: [patientId], references: [id])
+  messages  PortalMessage[]
 
   @@index([clinicId, status])
 }
@@ -534,6 +537,7 @@ enum Role {
 
 enum ConsultationStatus {
   SCHEDULED
+  PENDING_CONFIRMATION
   IN_PROGRESS
   COMPLETED
   CANCELLED
@@ -578,4 +582,47 @@ model AutomationSettings {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   clinic         Clinic   @relation(fields: [clinicId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  clinicId  String
+  title     String
+  message   String
+  type      String   @default("INFO") // INFO, APPOINTMENT, URGENT, MESSAGE
+  isRead    Boolean  @default(false)
+  link      String?
+  ownerId   String?
+  requestId String?
+  createdAt DateTime @default(now())
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+
+  @@index([clinicId])
+  @@index([isRead])
+  @@index([ownerId])
+}
+
+model PortalMessage {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  
+  senderId    String
+  senderType  SenderType
+  
+  clinicId  String
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+  ownerId   String
+  owner     Owner    @relation(fields: [ownerId], references: [id])
+  
+  requestId String?
+  request   PortalAppointmentRequest? @relation(fields: [requestId], references: [id])
+
+  @@index([clinicId])
+  @@index([ownerId])
+}
+
+enum SenderType {
+  CLINIC
+  TUTOR
 }

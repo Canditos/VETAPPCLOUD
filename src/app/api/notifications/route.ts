@@ -19,13 +19,13 @@ export async function GET(req: Request) {
       prisma.notification.findMany({
         where: {
           clinicId,
-          ...(onlyUnread ? { read: false } : {}),
+          ...(onlyUnread ? { isRead: false } : {}),
         },
         orderBy: { createdAt: "desc" },
         take: 20,
       }),
       prisma.notification.count({
-        where: { clinicId, read: false },
+        where: { clinicId, isRead: false },
       }),
     ]);
 
@@ -48,8 +48,8 @@ export async function PATCH(req: Request) {
 
     if (markAllRead) {
       await prisma.notification.updateMany({
-        where: { clinicId, read: false },
-        data: { read: true },
+        where: { clinicId, isRead: false },
+        data: { isRead: true },
       });
       return NextResponse.json({ success: true });
     }
@@ -57,7 +57,7 @@ export async function PATCH(req: Request) {
     if (id) {
       await prisma.notification.update({
         where: { id },
-        data: { read: true },
+        data: { isRead: true },
       });
       return NextResponse.json({ success: true });
     }

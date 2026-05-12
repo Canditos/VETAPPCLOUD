@@ -1,46 +1,35 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
-import { PawPrint, Mail, Lock, Loader2, ArrowRight } from "lucide-react";
-import { toast } from "sonner";
-import Image from "next/image";
+import { PawPrint } from "lucide-react";
+import { PortalLoginForm } from "@/components/portal/PortalLoginForm";
 
-export default function PortalLoginPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+function PortalContent() {
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      const res = await fetch("/api/portal/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Erro ao entrar");
-      }
-
-      toast.success("Bem-vindo ao Portal!");
-      router.push("/portal/dashboard");
-    } catch (error: any) {
-      toast.error(error.message);
-    } finally {
-      setIsLoading(false);
+  useEffect(() => {
+    const token = searchParams.get("token");
+    if (token) {
+      setIsLoading(true);
+      window.location.href = `/api/portal/auth/magic?token=${token}`;
     }
-  };
+  }, [searchParams]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 rounded-3xl bg-blue-600 flex items-center justify-center mx-auto animate-pulse">
+            <PawPrint size={32} className="text-white" />
+          </div>
+          <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">A validar acesso...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 relative overflow-hidden">
@@ -50,62 +39,19 @@ export default function PortalLoginPage() {
 
       <Card className="w-full max-w-md bg-slate-900/50 border-slate-800 p-8 rounded-[2.5rem] shadow-2xl backdrop-blur-xl relative z-10">
         <div className="text-center space-y-6 mb-8">
-          <div className="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center mx-auto shadow-xl shadow-blue-500/20">
+          <div className="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center mx-auto shadow-xl shadow-blue-500/20 group hover:scale-105 transition-transform duration-500">
             <PawPrint size={40} className="text-white" />
           </div>
           <div>
             <h1 className="text-white text-3xl font-black tracking-tight mb-2">Portal do Tutor</h1>
-            <p className="text-slate-400 font-medium">Área Reservada Gato Escondido</p>
+            <p className="text-slate-400 font-medium tracking-tight">Insira as suas credenciais Gato Escondido</p>
           </div>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-5">
-          <div className="space-y-2">
-            <Label className="text-slate-500 font-black text-[10px] uppercase tracking-widest px-1">Email</Label>
-            <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-              <Input
-                type="email"
-                placeholder="exemplo@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="bg-slate-950/50 border-slate-800 h-14 pl-12 rounded-2xl text-white font-medium focus:ring-blue-600 transition-all"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-slate-500 font-black text-[10px] uppercase tracking-widest px-1">Password</Label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-              <Input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="bg-slate-950/50 border-slate-800 h-14 pl-12 rounded-2xl text-white font-medium focus:ring-blue-600 transition-all"
-                required
-              />
-            </div>
-          </div>
-
-          <Button 
-            disabled={isLoading}
-            className="w-full h-14 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black text-lg shadow-lg shadow-blue-500/20 transition-all active:scale-95 group"
-          >
-            {isLoading ? (
-              <Loader2 className="animate-spin mr-2" />
-            ) : (
-              <span className="flex items-center gap-2">
-                Entrar <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-              </span>
-            )}
-          </Button>
-        </form>
+        <PortalLoginForm />
 
         <div className="mt-12 pt-8 border-t border-slate-800/50 text-center space-y-4">
-          <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Precisa de ajuda?</p>
+          <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Precisa de ajuda com o acesso?</p>
           <div className="flex justify-center gap-4">
              <a href="tel:910000000" className="text-blue-400 text-sm font-black hover:text-blue-300 transition-colors">Telefone</a>
              <span className="text-slate-700">|</span>
@@ -116,3 +62,17 @@ export default function PortalLoginPage() {
     </div>
   );
 }
+
+export default function PortalLoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <Loader2 className="animate-spin text-blue-600" size={32} />
+      </div>
+    }>
+      <PortalContent />
+    </Suspense>
+  );
+}
+
+import { Loader2 } from "lucide-react";

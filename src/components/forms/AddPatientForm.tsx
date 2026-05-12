@@ -119,13 +119,35 @@ export function AddPatientForm({ onSuccess, defaultOwnerId }: { onSuccess?: () =
       if (!res.ok) throw new Error("Erro ao criar paciente");
       return res.json();
     },
-    onSuccess: () => {
-      toast.success("Paciente registado com sucesso!");
+    // Optimistic Update
+    onMutate: async (newPatient) => {
+      await queryClient.cancelQueries({ queryKey: ["patients"] });
+      const previousPatients = queryClient.getQueryData(["patients"]);
+      
+      queryClient.setQueryData(["patients"], (old: any) => {
+        if (!old) return { data: [newPatient], pagination: { total: 1, page: 1, limit: 30, totalPages: 1 } };
+        return {
+          ...old,
+          data: [newPatient, ...(old.data || [])],
+          pagination: {
+            ...old.pagination,
+            total: (old.pagination?.total || 0) + 1,
+          }
+        };
+      });
+
+      return { previousPatients };
+    },
+    onError: (err: any, newPatient, context: any) => {
+      queryClient.setQueryData(["patients"], context.previousPatients);
+      toast.error(err.message || "Erro ao registar paciente.");
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["patients"] });
+      toast.success("Paciente registado com sucesso!");
       reset();
       onSuccess?.();
     },
-    onError: (err: any) => toast.error(err.message || "Erro ao registar paciente."),
   });
 
   const handleSelectOwner = (owner: any) => {
@@ -137,7 +159,7 @@ export function AddPatientForm({ onSuccess, defaultOwnerId }: { onSuccess?: () =
   };
 
   return (
-    <DialogContent className="sm:max-w-[650px] rounded-2xl p-0 overflow-hidden bg-white dark:bg-slate-900 border-none shadow-2xl">
+    <DialogContent className="sm:max-w-[650px] rounded-2xl p-0 overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl">
       <div className="bg-blue-600 p-6 text-white">
         <DialogTitle className="text-xl font-bold">Novo Registo Clínico</DialogTitle>
         <DialogDescription className="text-blue-100 text-sm mt-1">

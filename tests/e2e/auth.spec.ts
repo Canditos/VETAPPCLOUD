@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Authentication Flow', () => {
   test('should login successfully with valid credentials', async ({ page }) => {
-    await page.goto('/login');
+    await page.goto('/auth/signin');
 
     // Assumimos que existe um formulário com email e password e um botão de submit
     await page.fill('input[type="email"]', 'demo@vetconnect.com');

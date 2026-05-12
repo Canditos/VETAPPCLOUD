@@ -21,6 +21,7 @@ export async function GET(req: Request) {
 
     const appointments = await tenantPrisma.appointment.findMany({
       where: {
+        status: { not: "CANCELLED" },
         startTime: {
           gte: start ? new Date(start) : undefined,
           lte: end ? new Date(end) : undefined,

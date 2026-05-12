@@ -114,11 +114,11 @@ export default function TeamPage() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 max-w-[1600px] mx-auto">
+    <div className="space-y-8 animate-in fade-in duration-500 max-w-[1600px] mx-auto p-4 md:p-8">
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-4xl font-black text-white tracking-tight">Equipa & Acessos</h1>
-          <p className="text-slate-400 font-medium">Faça a gestão dos utilizadores e permissões da clínica.</p>
+          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">Equipa & Acessos</h1>
+          <p className="text-slate-500 dark:text-slate-400 font-medium">Faça a gestão dos utilizadores e permissões da clínica.</p>
         </div>
         <Dialog>
           <DialogTrigger asChild>
@@ -126,10 +126,10 @@ export default function TeamPage() {
               <UserPlus size={18} /> Convidar Membro
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px] rounded-[2rem] border-none shadow-2xl bg-slate-900 ring-1 ring-white/10">
+          <DialogContent className="sm:max-w-[425px] rounded-[2rem] border-none shadow-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-white/10">
             <DialogHeader>
-              <DialogTitle className="text-xl font-bold text-white">Adicionar Membro</DialogTitle>
-              <DialogDescription>O novo utilizador receberá um email para definir a palavra-passe.</DialogDescription>
+              <DialogTitle className="text-xl font-bold text-slate-900 dark:text-white">Adicionar Membro</DialogTitle>
+              <DialogDescription className="text-slate-500 dark:text-slate-400">O novo utilizador receberá um email para definir a palavra-passe.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
@@ -137,7 +137,7 @@ export default function TeamPage() {
                 <Input 
                   id="name" 
                   placeholder="Ex: Maria João" 
-                  className="rounded-xl bg-slate-800/50 border-slate-700/50 text-white" 
+                  className="rounded-xl bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/50 text-slate-900 dark:text-white" 
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 />
@@ -148,7 +148,7 @@ export default function TeamPage() {
                   id="email" 
                   type="email" 
                   placeholder="nome@clínica.pt" 
-                  className="rounded-xl bg-slate-800/50 border-slate-700/50 text-white" 
+                  className="rounded-xl bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/50 text-slate-900 dark:text-white" 
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 />
@@ -156,7 +156,7 @@ export default function TeamPage() {
               <div className="grid gap-2">
                 <Label htmlFor="role" className="text-xs font-bold text-slate-500 uppercase">Cargo / Role</Label>
                 <Select value={formData.role} onValueChange={(val) => setFormData({ ...formData, role: val })}>
-                  <SelectTrigger className="rounded-xl bg-slate-800/50 border-slate-700/50 text-white">
+                  <SelectTrigger className="rounded-xl bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/50 text-slate-900 dark:text-white">
                     <SelectValue placeholder="Selecione o cargo" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
@@ -181,31 +181,31 @@ export default function TeamPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="border-none shadow-sm rounded-[2rem] bg-slate-900/50 backdrop-blur-xl ring-1 ring-white/5">
+        <Card className="border-none shadow-sm rounded-[2rem] bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/5">
           <CardHeader className="pb-2">
             <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Staff</CardTitle>
           </CardHeader>
           <CardContent>
-             <p className="text-4xl font-black text-white">{team.length}</p>
+             <p className="text-4xl font-black text-slate-900 dark:text-white">{team.length}</p>
              <p className="text-xs text-blue-600 font-bold mt-1">Colaboradores ativos</p>
           </CardContent>
         </Card>
-        <Card className="border-none shadow-sm rounded-[2rem] bg-white ring-1 ring-slate-100">
+        <Card className="border-none shadow-sm rounded-[2rem] bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/5">
           <CardHeader className="pb-2">
             <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Acessos Ativos</CardTitle>
           </CardHeader>
           <CardContent>
-             <p className="text-4xl font-black text-white">{team.filter(u => u.role === 'ADMIN' || u.role === 'VETERINARIAN').length}</p>
+             <p className="text-4xl font-black text-slate-900 dark:text-white">{team.filter(u => u.role === 'ADMIN' || u.role === 'VETERINARIAN').length}</p>
              <p className="text-xs text-slate-400 font-bold mt-1">Gestão & Área Clínica</p>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="border-none shadow-sm overflow-hidden rounded-[2.5rem] bg-slate-900/50 backdrop-blur-xl ring-1 ring-white/5">
+      <Card className="border-none shadow-sm overflow-hidden rounded-[2.5rem] bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/5">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow className="hover:bg-transparent border-white/5 bg-white/5">
+              <TableRow className="hover:bg-transparent border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
                 <TableHead className="px-8 py-5 text-slate-400 font-black text-[10px] uppercase tracking-widest">Colaborador</TableHead>
                 <TableHead className="px-8 py-5 text-slate-400 font-black text-[10px] uppercase tracking-widest">Permissões</TableHead>
                 <TableHead className="px-8 py-5 text-slate-400 font-black text-[10px] uppercase tracking-widest">Desde</TableHead>
@@ -214,15 +214,15 @@ export default function TeamPage() {
             </TableHeader>
             <TableBody>
               {team.map((m) => (
-                <TableRow key={m.id} className="hover:bg-white/[0.02] border-white/5 transition-colors">
+                <TableRow key={m.id} className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02] border-slate-100 dark:border-white/5 transition-colors">
                   <TableCell className="px-8 py-6">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-blue-500/10 text-blue-400 rounded-2xl flex items-center justify-center font-black text-lg">
+                      <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center font-black text-lg">
                         {m.name[0]}
                       </div>
                       <div>
-                        <p className="font-black text-white text-lg tracking-tight leading-none">{m.name}</p>
-                        <p className="text-sm text-slate-400 font-medium flex items-center gap-1.5 mt-2 tracking-tight">
+                        <p className="font-black text-slate-900 dark:text-white text-lg tracking-tight leading-none">{m.name}</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1.5 mt-2 tracking-tight">
                           <Mail size={14} className="opacity-40" /> {m.email}
                         </p>
                       </div>
@@ -232,7 +232,7 @@ export default function TeamPage() {
                     {getRoleBadge(m.role)}
                   </TableCell>
                   <TableCell className="px-8 py-6">
-                    <p className="text-sm font-bold text-slate-500">
+                    <p className="text-sm font-bold text-slate-500 dark:text-slate-400">
                       {new Date(m.createdAt).toLocaleDateString('pt-PT')}
                     </p>
                   </TableCell>
@@ -241,7 +241,7 @@ export default function TeamPage() {
                       variant="ghost" 
                       size="sm" 
                       onClick={() => toast.info(`A abrir definições de ${m.name}...`)}
-                      className="font-black text-[10px] uppercase tracking-widest text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-xl px-4 h-9"
+                      className="font-black text-[10px] uppercase tracking-widest text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl px-4 h-9"
                     >
                       Configurar
                     </Button>

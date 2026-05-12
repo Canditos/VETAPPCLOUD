@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, Suspense } from "react";
 import {
   ChevronLeft, ChevronRight, Clock, Plus, Stethoscope,
   RefreshCw, Activity, Syringe, Scissors, Zap, CalendarDays,
-  User as UserIcon, Search, CheckCircle2, X, MessageSquare, Mail,
+  User as UserIcon, Search, CheckCircle2, X, MessageSquare, Mail, PawPrint,
 } from "lucide-react";
 import {
   DndContext, DragOverlay, PointerSensor, useSensor, useSensors,
@@ -23,7 +23,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format, startOfWeek, addDays } from "date-fns";
 import { pt } from "date-fns/locale";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const hours = [
@@ -114,8 +114,10 @@ function DroppableSlot({ id, children, day, hour, isToday, onAddClick }: any) {
 }
 
 // ── Main page ───────────────────────────────────────────────────────────────
-export default function CalendarPage() {
+function CalendarContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestId = searchParams.get("requestId");
   const queryClient = useQueryClient();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedVet, setSelectedVet] = useState<string>("all");
@@ -123,6 +125,8 @@ export default function CalendarPage() {
   const [selectedApp, setSelectedApp] = useState<any>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isApprovalOpen, setIsApprovalOpen] = useState(false);
+  const [pendingRequest, setPendingRequest] = useState<any>(null);
   const [newSlot, setNewSlot] = useState<{ day: string; hour: string } | null>(null);
 
   const [patientSearch, setPatientSearch] = useState("");
@@ -139,6 +143,25 @@ export default function CalendarPage() {
     const timer = setInterval(() => setNow(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
+
+  // Fetch pending request if ID exists in URL
+  const { data: requestData } = useQuery({
+    queryKey: ["appointment-request", requestId],
+    queryFn: async () => {
+      if (!requestId) return null;
+      const res = await fetch(`/api/appointments/requests/${requestId}`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!requestId,
+  });
+
+  useEffect(() => {
+    if (requestData) {
+      setPendingRequest(requestData);
+      setIsApprovalOpen(true);
+    }
+  }, [requestData]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
@@ -273,6 +296,31 @@ export default function CalendarPage() {
       setSelectedApp(null);
     },
     onError: () => toast.error("Erro ao cancelar"),
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: async () => {
+      if (!pendingRequest || !newVetId) throw new Error("Dados em falta");
+      
+      const res = await fetch(`/api/appointments/requests/${pendingRequest.id}/approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          veterinarianId: newVetId,
+          // Se o tutor não especificou hora, usa a data sugerida + 09:00 por defeito ou a hora atual se for hoje
+          startTime: `${pendingRequest.requestedDate.split('T')[0]}T09:00:00` 
+        }),
+      });
+      if (!res.ok) throw new Error("Erro ao aprovar pedido");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      toast.success("Proposta enviada ao tutor!");
+      setIsApprovalOpen(false);
+      router.push("/dashboard/calendar");
+    },
+    onError: (e: any) => toast.error(e.message),
   });
 
   const handleDragEnd = async (event: any) => {
@@ -765,7 +813,108 @@ export default function CalendarPage() {
             })()}
           </DialogContent>
         </Dialog>
+      {/* ── Approval Modal ────────────────────────────────────────────── */}
+      <Dialog open={isApprovalOpen} onOpenChange={setIsApprovalOpen}>
+        <DialogContent className="sm:max-w-[560px] rounded-[2.5rem] p-0 overflow-hidden bg-white dark:bg-slate-950 border-none shadow-2xl">
+          <div className="bg-amber-500 p-8 text-white relative overflow-hidden">
+            <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
+            <div className="flex items-center gap-5 relative z-10">
+              <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-[1.25rem] flex items-center justify-center text-white ring-4 ring-white/10">
+                <Calendar size={26} strokeWidth={2.5} />
+              </div>
+              <div>
+                <DialogTitle className="text-xl font-black uppercase tracking-tighter">Pedido de Marcação</DialogTitle>
+                <p className="text-[10px] font-black text-white/80 uppercase tracking-[0.2em] mt-1.5">Recebido via Portal do Tutor</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-8 space-y-8">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Paciente</span>
+                <p className="text-sm font-black text-slate-900 dark:text-white uppercase">{pendingRequest?.patient?.name}</p>
+              </div>
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Tutor</span>
+                <p className="text-sm font-black text-slate-900 dark:text-white uppercase">{pendingRequest?.owner?.name}</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Data Sugerida</span>
+                <p className="text-sm font-black text-slate-900 dark:text-white uppercase">
+                  {pendingRequest?.requestedDate && format(new Date(pendingRequest.requestedDate), "d 'de' MMMM", { locale: pt })}
+                </p>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Período</span>
+                <Badge variant="secondary" className="font-black text-[9px] uppercase">{pendingRequest?.requestedPeriod}</Badge>
+              </div>
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Observações do Tutor</span>
+                <p className="text-xs font-medium text-slate-600 dark:text-slate-400 leading-relaxed italic">
+                  "{pendingRequest?.notes || "Nenhuma observação adicional."}"
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-white/5">
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Atribuir Veterinário</label>
+                <Select value={newVetId} onValueChange={setNewVetId}>
+                  <SelectTrigger className="h-12 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-black text-sm px-6">
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl">
+                    {vets.map((v: any) => (
+                      <SelectItem key={v.id} value={v.id} className="font-bold">{v.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Button 
+                  className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-white font-black text-[10px] uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all"
+                  onClick={() => {
+                    // Logic to reject
+                    toast.info("Pedido rejeitado");
+                    setIsApprovalOpen(false);
+                    router.push("/dashboard/appointments");
+                  }}
+                >
+                  Rejeitar
+                </Button>
+                <Button 
+                  className="h-14 rounded-2xl bg-blue-600 text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
+                  disabled={!newVetId || approveMutation.isPending}
+                  onClick={() => approveMutation.mutate()}
+                >
+                  {approveMutation.isPending ? "A processar..." : "Confirmar e Propor Horário"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  </DndContext>
+);
+}
+
+export default function CalendarPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen w-full items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Carregando Agenda...</p>
+        </div>
       </div>
-    </DndContext>
+    }>
+      <CalendarContent />
+    </Suspense>
   );
 }

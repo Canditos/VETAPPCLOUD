@@ -1,28 +1,50 @@
-export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getPortalSession } from "@/lib/auth-portal";
+
+export const dynamic = "force-dynamic";
 
 // POST /api/portal/appointments — tutor requests an appointment (suggested, not free)
 export async function POST(req: Request) {
   try {
     const { token, patientId, reason, preferred } = await req.json();
 
-    if (!token || !patientId || !reason) {
-      return NextResponse.json({ error: "Campos obrigatórios em falta" }, { status: 400 });
+    let ownerId: string;
+    let clinicId: string;
+    let ownerName: string;
+
+    if (token) {
+      const portalToken = await prisma.ownerPortalToken.findUnique({
+        where: { token },
+        include: { owner: true },
+      });
+
+      if (!portalToken) {
+        return NextResponse.json({ error: "Token inválido" }, { status: 401 });
+      }
+      ownerId = portalToken.ownerId;
+      clinicId = portalToken.clinicId;
+      ownerName = portalToken.owner.name;
+    } else {
+      const session = await getPortalSession();
+      if (!session) {
+        return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+      }
+      ownerId = session.ownerId;
+      clinicId = session.clinicId;
+      
+      const owner = await prisma.owner.findUnique({ where: { id: ownerId } });
+      if (!owner) return NextResponse.json({ error: "Cliente não encontrado" }, { status: 404 });
+      ownerName = owner.name;
     }
 
-    const portalToken = await prisma.ownerPortalToken.findUnique({
-      where: { token },
-      include: { owner: true },
-    });
-
-    if (!portalToken) {
-      return NextResponse.json({ error: "Token inválido" }, { status: 401 });
+    if (!patientId || !reason) {
+      return NextResponse.json({ error: "Campos obrigatórios em falta" }, { status: 400 });
     }
 
     // Verify patient belongs to this owner
     const patient = await prisma.patient.findFirst({
-      where: { id: patientId, ownerId: portalToken.ownerId },
+      where: { id: patientId, ownerId },
     });
     if (!patient) {
       return NextResponse.json({ error: "Paciente não encontrado" }, { status: 404 });
@@ -30,8 +52,8 @@ export async function POST(req: Request) {
 
     const request = await prisma.portalAppointmentRequest.create({
       data: {
-        ownerId: portalToken.ownerId,
-        clinicId: portalToken.clinicId,
+        ownerId,
+        clinicId,
         patientId,
         reason,
         preferred: preferred ?? null,
@@ -42,17 +64,13 @@ export async function POST(req: Request) {
     // Create notification for the clinic
     await prisma.notification.create({
       data: {
-        clinicId: portalToken.clinicId,
-        type: "APPOINTMENT_REQUEST",
-        title: `Pedido de marcação — ${portalToken.owner.name}`,
-        body: reason,
-        link: "/dashboard/calendar",
-        metadata: {
-          requestId: request.id,
-          ownerId: portalToken.ownerId,
-          patientId,
-          preferred: preferred ?? null,
-        },
+        clinicId,
+        type: "APPOINTMENT",
+        title: `Pedido de marcação — ${ownerName}`,
+        message: reason,
+        link: `/dashboard/appointments?requestId=${request.id}`,
+        ownerId,
+        requestId: request.id,
       },
     });
 

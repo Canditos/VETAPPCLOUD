@@ -5,7 +5,7 @@ test.describe('Patients Flow', () => {
   test.beforeEach(async ({ page }) => {
     // Para testes robustos, usar autenticação via state ou mock da API
     // Por simplicidade aqui vamos pela rota do UI
-    await page.goto('/login');
+    await page.goto('/auth/signin');
     await page.fill('input[type="email"]', 'demo@vetconnect.com');
     await page.fill('input[type="password"]', 'demo123');
     await Promise.all([

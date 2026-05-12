@@ -26,7 +26,7 @@ const menuGroups = [
     label: "Principal",
     items: [
       { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-      { name: "Agenda", href: "/dashboard/calendar", icon: Stethoscope },
+      { name: "Agenda", href: "/dashboard/appointments", icon: Stethoscope },
     ]
   },
   {

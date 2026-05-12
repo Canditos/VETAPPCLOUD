@@ -14,7 +14,8 @@ import {
   Syringe,
   Pill,
   Activity,
-  Bug
+  Bug,
+  History
 } from "lucide-react";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -49,6 +50,8 @@ function HistoryEvent({ event }: HistoryEventProps) {
     if (event.status === "SCHEDULED") return <Badge className="bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-none text-[9px] font-black uppercase">Agendado</Badge>;
     return <Badge variant="outline" className="text-[9px] font-black uppercase border-slate-200 dark:border-white/10">{event.status}</Badge>;
   };
+
+  const eur = (v: number) => `€${v.toFixed(2)}`;
 
   return (
     <div className="relative pl-10 pb-6 last:pb-0 group">
@@ -202,8 +205,6 @@ function HistoryEvent({ event }: HistoryEventProps) {
   );
 }
 
-const eur = (v: number) => `€${v.toFixed(2)}`;
-
 export function ClinicalTimeline({ history, isLoading }: { history: any[], isLoading: boolean }) {
   if (isLoading) {
     return (
@@ -231,10 +232,19 @@ export function ClinicalTimeline({ history, isLoading }: { history: any[], isLoa
   }
 
   return (
-    <div className="space-y-1">
-      {history.map((event) => (
-        <HistoryEvent key={event.id} event={event} />
-      ))}
+    <div className="space-y-6">
+      <div className="flex items-center gap-2 px-2 group/header">
+         <div className="w-5 h-5 rounded-md bg-slate-500/10 flex items-center justify-center text-slate-500 group-hover/header:bg-slate-900 dark:group-hover/header:bg-white dark:group-hover/header:text-slate-900 transition-all">
+           <History size={10} strokeWidth={3} />
+         </div>
+         <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] group-hover/header:text-slate-900 dark:group-hover/header:text-white transition-colors">Timeline de Eventos</h3>
+         <div className="h-px flex-1 bg-linear-to-r from-slate-100 to-transparent dark:from-white/5 dark:to-transparent ml-2 opacity-50" />
+      </div>
+      <div className="space-y-1">
+        {history.map((event) => (
+          <HistoryEvent key={event.id} event={event} />
+        ))}
+      </div>
     </div>
   );
 }

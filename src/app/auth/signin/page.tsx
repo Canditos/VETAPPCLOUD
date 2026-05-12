@@ -83,8 +83,14 @@ export default function SignInPage() {
               {loading ? "A entrar..." : "Entrar"}
             </Button>
           </form>
-          <div className="mt-6 text-center text-xs text-slate-600">
+          <div className="mt-6 text-center text-xs text-slate-600 space-y-2">
             <p>Demo: admin@vetapp.com / admin123</p>
+            <p>
+              Não tem conta?{" "}
+              <a href="/auth/register" className="text-blue-500 hover:underline font-bold">
+                Criar clínica
+              </a>
+            </p>
           </div>
         </CardContent>
       </Card>

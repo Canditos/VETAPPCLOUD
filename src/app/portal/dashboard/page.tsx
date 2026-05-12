@@ -29,7 +29,7 @@ function VaxBadge({ expiresAt }: { expiresAt: string | null }) {
 }
 
 // ── Appointment request modal ─────────────────────────────────────────────────
-function RequestModal({ patients, token, onClose }: { patients: any[]; token: string; onClose: () => void }) {
+function RequestModal({ patients, token, onClose }: { patients: any[]; token?: string; onClose: () => void }) {
   const [patientId, setPatientId] = useState(patients[0]?.id ?? "");
   const [reason, setReason] = useState("");
   const [preferred, setPreferred] = useState("");
@@ -146,9 +146,15 @@ function PatientCard({ patient }: { patient: any }) {
           {/* Vaccines */}
           {patient.vaccinations?.length > 0 && (
             <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                <Syringe size={10} /> Vacinas
-              </p>
+              <div className="flex items-center gap-2 mb-3 mt-2 group/header">
+                <div className="w-6 h-6 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover/header:bg-emerald-500 group-hover/header:text-white transition-all duration-500 shadow-inner">
+                  <Syringe size={12} strokeWidth={2.5} />
+                </div>
+                <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] group-hover/header:text-white transition-colors duration-500">
+                  Vacinação & Desparasitação
+                </p>
+                <div className="h-px flex-1 bg-linear-to-r from-white/10 to-transparent ml-2 opacity-50" />
+              </div>
               <div className="space-y-2">
                 {patient.vaccinations.slice(0, 4).map((v: any) => (
                   <div key={v.id} className="flex justify-between items-center bg-white/5 rounded-xl px-3 py-2">
@@ -166,9 +172,15 @@ function PatientCard({ patient }: { patient: any }) {
           {/* Prescriptions */}
           {activeRx?.length > 0 && (
             <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                <Pill size={10} /> Medicação Ativa
-              </p>
+              <div className="flex items-center gap-2 mb-3 mt-4 group/header">
+                <div className="w-6 h-6 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 group-hover/header:bg-blue-500 group-hover/header:text-white transition-all duration-500 shadow-inner">
+                  <Pill size={12} strokeWidth={2.5} />
+                </div>
+                <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] group-hover/header:text-white transition-colors duration-500">
+                  Protocolo Terapêutico
+                </p>
+                <div className="h-px flex-1 bg-linear-to-r from-white/10 to-transparent ml-2 opacity-50" />
+              </div>
               <div className="space-y-2">
                 {activeRx.map((rx: any) => (
                   <div key={rx.id} className="bg-white/5 rounded-xl px-3 py-2">
@@ -187,9 +199,15 @@ function PatientCard({ patient }: { patient: any }) {
           {/* Consultation history */}
           {patient.consultations?.length > 0 && (
             <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                <Stethoscope size={10} /> Últimas Consultas
-              </p>
+              <div className="flex items-center gap-2 mb-3 mt-4 group/header">
+                <div className="w-6 h-6 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400 group-hover/header:bg-purple-500 group-hover/header:text-white transition-all duration-500 shadow-inner">
+                  <Stethoscope size={12} strokeWidth={2.5} />
+                </div>
+                <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] group-hover/header:text-white transition-colors duration-500">
+                  Histórico de Consultas
+                </p>
+                <div className="h-px flex-1 bg-linear-to-r from-white/10 to-transparent ml-2 opacity-50" />
+              </div>
               <div className="space-y-2">
                 {patient.consultations.slice(0, 3).map((c: any) => (
                   <div key={c.id} className="bg-white/5 rounded-xl px-3 py-2">
@@ -694,7 +712,7 @@ export default function PortalPage() {
       </nav>
 
       {/* Appointment request modal */}
-      {showRequest && <RequestModal patients={patients} token={""} onClose={() => setShowRequest(false)} />}
+      {showRequest && <RequestModal patients={patients} token={data.token || ""} onClose={() => setShowRequest(false)} />}
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Automations Settings Persistence', () => {
   test.beforeEach(async ({ page }) => {
     // Autenticação
-    await page.goto('/login');
+    await page.goto('/auth/signin');
     await page.fill('input[type="email"]', 'demo@vetconnect.com');
     await page.fill('input[type="password"]', 'demo123');
     await Promise.all([

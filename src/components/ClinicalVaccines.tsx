@@ -75,9 +75,14 @@ export function ClinicalVaccines({ patientId }: ClinicalVaccinesProps) {
         {/* VACCINATIONS COLUMN */}
         <div className="space-y-6">
           <div className="flex justify-between items-end px-4">
-            <div>
-              <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Vacinação</h3>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Imunização & Protocolos</p>
+            <div className="group/title">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover/title:bg-emerald-500 group-hover/title:text-white transition-all duration-500 shadow-inner">
+                  <Syringe size={16} strokeWidth={2.5} />
+                </div>
+                <h3 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none">Plano de Vacinação</h3>
+              </div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-11 opacity-70">Imunização & Protocolos de Reforço</p>
             </div>
             
             <Dialog open={activeForm === "vaccine"} onOpenChange={(open) => !open && setActiveForm(null)}>
@@ -86,7 +91,7 @@ export function ClinicalVaccines({ patientId }: ClinicalVaccinesProps) {
                   onClick={() => setActiveForm("vaccine")}
                   className="rounded-2xl gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase text-[10px] tracking-widest px-6 h-12 shadow-xl shadow-emerald-500/20 transition-all active:scale-95"
                 >
-                  <Plus size={16} strokeWidth={3} /> Registar Vacina
+                  <Plus size={16} strokeWidth={3} /> Nova Vacinação
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[500px] rounded-[3rem] p-0 overflow-hidden border-none shadow-3xl bg-white dark:bg-slate-900">
@@ -151,9 +156,14 @@ export function ClinicalVaccines({ patientId }: ClinicalVaccinesProps) {
         {/* DEWORMINGS COLUMN */}
         <div className="space-y-6">
           <div className="flex justify-between items-end px-4">
-            <div>
-              <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Desparasitação</h3>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Interna & Externa</p>
+            <div className="group/title">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="w-8 h-8 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 group-hover/title:bg-indigo-500 group-hover/title:text-white transition-all duration-500 shadow-inner">
+                  <Bug size={16} strokeWidth={2.5} />
+                </div>
+                <h3 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none">Controlo Parasitário</h3>
+              </div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-11 opacity-70">Desparasitação Interna & Externa</p>
             </div>
             
             <Dialog open={activeForm === "deworming"} onOpenChange={(open) => !open && setActiveForm(null)}>

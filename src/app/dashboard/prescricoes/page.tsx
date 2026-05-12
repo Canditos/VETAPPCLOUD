@@ -61,15 +61,15 @@ export default function PrescricoesPage() {
   const expired = filtered.filter((rx: any) => !rx.validUntil || isPast(new Date(rx.validUntil)));
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 max-w-[1600px] mx-auto">
+    <div className="space-y-8 animate-in fade-in duration-500 max-w-[1600px] mx-auto p-4 md:p-8">
       {/* Header */}
       <div className="flex flex-wrap justify-between items-end gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight">Receituário</h1>
-          <p className="text-slate-400 font-medium">Prescrições médico-veterinárias emitidas pela clínica.</p>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Receituário</h1>
+          <p className="text-slate-500 dark:text-slate-400 font-medium">Prescrições médico-veterinárias emitidas pela clínica.</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" className="rounded-xl gap-2" onClick={() => refetch()} disabled={isRefetching}>
+          <Button variant="outline" className="rounded-xl gap-2 border-slate-200 dark:border-slate-800" onClick={() => refetch()} disabled={isRefetching}>
             <RefreshCw size={16} className={isRefetching ? "animate-spin" : ""} /> Atualizar
           </Button>
           <Button className="rounded-xl gap-2 bg-blue-600 hover:bg-blue-700 font-black" onClick={() => { setSelectedPatientId(null); setIsDialogOpen(true); }}>
@@ -81,30 +81,30 @@ export default function PrescricoesPage() {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { label: "Total", value: filtered.length, color: "text-white", sub: "prescrições emitidas" },
+          { label: "Total", value: filtered.length, color: "text-slate-900 dark:text-white", sub: "prescrições emitidas" },
           { label: "Ativas", value: active.length, color: "text-green-600", sub: "dentro da validade" },
-          { label: "Expiradas", value: expired.length, color: "text-red-400", sub: "fora de validade" },
+          { label: "Expiradas", value: expired.length, color: "text-red-500", sub: "fora de validade" },
         ].map(({ label, value, color, sub }) => (
-          <Card key={label} className="border-none shadow-sm rounded-[2rem] bg-slate-900/50 backdrop-blur-xl ring-1 ring-white/5">
+          <Card key={label} className="border-none shadow-sm rounded-[2rem] bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/5">
             <CardContent className="p-6">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
               {isLoading
                 ? <Skeleton className="h-9 w-16 mt-2" />
                 : <p className={cn("text-4xl font-black mt-2 tracking-tighter", color)}>{value}</p>
               }
-              <p className="text-xs text-slate-400 mt-1">{sub}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{sub}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
       {/* Search + list */}
-      <Card className="border-none shadow-sm rounded-[2rem] overflow-hidden bg-slate-900/50 backdrop-blur-xl ring-1 ring-white/5">
-        <CardHeader className="p-6 border-b border-slate-50 dark:border-slate-800">
+      <Card className="border-none shadow-sm rounded-[2rem] overflow-hidden bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/5">
+        <CardHeader className="p-6 border-b border-slate-100 dark:border-slate-800">
           <div className="relative max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <Input
-              className="pl-9 rounded-xl bg-slate-50 dark:bg-slate-800 border-none"
+              className="pl-9 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
               placeholder="Paciente, médico ou medicamento..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -113,7 +113,7 @@ export default function PrescricoesPage() {
         </CardHeader>
         <CardContent className="p-0">
           {isError && (
-            <div className="flex items-center gap-3 m-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400">
+            <div className="flex items-center gap-3 m-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 rounded-2xl text-red-600 dark:text-red-400">
               <AlertCircle size={18} />
               <p className="font-bold text-sm">Erro ao carregar prescrições</p>
               <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-auto">Tentar novamente</Button>
@@ -135,7 +135,7 @@ export default function PrescricoesPage() {
               )}
             </div>
           ) : (
-            <div className="divide-y divide-slate-50 dark:divide-slate-800">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
               {filtered.map((rx: any) => (
                 <div
                   key={rx.id}
@@ -143,7 +143,7 @@ export default function PrescricoesPage() {
                   onClick={() => router.push(`/dashboard/patients/${rx.patientId}`)}
                 >
                   {/* Icon */}
-                  <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                     <Pill size={22} />
                   </div>
 
@@ -161,7 +161,7 @@ export default function PrescricoesPage() {
                         </span>
                       ))}
                     </div>
-                    <div className="flex items-center gap-4 text-xs text-slate-400">
+                    <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
                       <span className="flex items-center gap-1"><User size={11} /> {rx.veterinarian?.name ?? "—"}</span>
                       <span className="flex items-center gap-1"><Calendar size={11} /> {fmt(rx.createdAt)}</span>
                       {rx.validUntil && (
@@ -170,7 +170,7 @@ export default function PrescricoesPage() {
                     </div>
                   </div>
 
-                  <ChevronRight size={18} className="text-slate-300 group-hover:text-blue-400 transition-colors shrink-0 mt-1" />
+                  <ChevronRight size={18} className="text-slate-300 dark:text-slate-600 group-hover:text-blue-400 transition-colors shrink-0 mt-1" />
                 </div>
               ))}
             </div>
@@ -180,10 +180,10 @@ export default function PrescricoesPage() {
 
       {/* New prescription dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[640px] rounded-[2rem] border-none shadow-2xl max-h-[90vh] overflow-y-auto bg-slate-900 ring-1 ring-white/10">
+        <DialogContent className="sm:max-w-[640px] rounded-[2rem] border-none shadow-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-white/10">
           <DialogHeader>
-            <DialogTitle className="text-xl font-black text-white flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-500/10 text-blue-400 rounded-2xl flex items-center justify-center">
+            <DialogTitle className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center">
                 <Pill size={20} />
               </div>
               Nova Prescrição

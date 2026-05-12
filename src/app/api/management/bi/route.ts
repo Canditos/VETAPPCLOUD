@@ -1,92 +1,84 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import { startOfMonth, subMonths, format } from "date-fns";
-import { pt } from "date-fns/locale";
+import { startOfMonth, subMonths, endOfMonth } from "date-fns";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return new NextResponse("Unauthorized", { status: 401 });
+    if (!session || !(session.user as any).clinicId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    
+    const clinicId = (session.user as any).clinicId;
+    const now = new Date();
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      select: { clinicId: true }
-    });
-
-    if (!user?.clinicId) {
-       return new NextResponse("Clinic not found", { status: 404 });
-    }
-
-    // 1. Tendência de Faturação (últimos 6 meses)
-    const revenueTrend = [];
+    // 1. Faturação Mensal (Últimos 6 meses)
+    const monthlyBilling = [];
     for (let i = 5; i >= 0; i--) {
-      const monthDate = subMonths(new Date(), i);
-      const start = startOfMonth(monthDate);
-      const end = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0, 23, 59, 59);
-
-      const monthRevenue = await prisma.payment.aggregate({
+      const monthStart = startOfMonth(subMonths(now, i));
+      const monthEnd = endOfMonth(subMonths(now, i));
+      
+      const payments = await prisma.payment.aggregate({
         where: {
-          clinicId: user.clinicId,
-          paidAt: {
-            gte: start,
-            lte: end
-          }
+          clinicId,
+          paidAt: { gte: monthStart, lte: monthEnd }
         },
-        _sum: {
-          amount: true
-        }
+        _sum: { amount: true }
       });
 
-      revenueTrend.push({
-        month: format(monthDate, "MMM", { locale: pt }),
-        revenue: monthRevenue._sum.amount || 0
+      monthlyBilling.push({
+        month: monthStart.toLocaleString('pt-PT', { month: 'short' }),
+        total: Number(payments._sum.amount || 0)
       });
     }
 
-    // 2. Distribuição por Espécie
-    const speciesData = await prisma.patient.groupBy({
-      by: ['species'],
-      where: { clinicId: user.clinicId },
-      _count: { _all: true }
+    // 2. Mix de Receita por Categoria (Top 5)
+    const invoiceItems = await prisma.invoiceItem.findMany({
+      where: {
+        invoice: { clinicId }
+      },
+      select: {
+        description: true,
+        price: true,
+        quantity: true
+      }
     });
 
-    const speciesDistribution = speciesData.map(item => ({
-      name: item.species,
-      value: item._count._all
-    }));
+    const categories = invoiceItems.reduce((acc: any, item) => {
+      const total = Number(item.price) * item.quantity;
+      acc[item.description] = (acc[item.description] || 0) + total;
+      return acc;
+    }, {});
 
-    // 3. Estatísticas Gerais
-    const totalPatients = await prisma.patient.count({ where: { clinicId: user.clinicId } });
-    const totalPayments = await prisma.payment.aggregate({
-      where: { clinicId: user.clinicId },
-      _sum: { amount: true },
-      _count: { _all: true }
+    const topCategories = Object.entries(categories)
+      .map(([name, total]) => ({ name, total: Number(total) }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5);
+
+    // 3. Métricas de Performance
+    const totalPatients = await prisma.patient.count({ where: { clinicId } });
+    const appointmentsThisMonth = await prisma.appointment.count({
+      where: {
+        clinicId,
+        startTime: { gte: startOfMonth(now) }
+      }
     });
-
-    const avgTicket = totalPayments._count._all > 0 
-      ? (totalPayments._sum.amount || 0) / totalPayments._count._all 
-      : 0;
 
     return NextResponse.json({
-      revenueTrend,
-      speciesDistribution,
-      stats: {
+      monthlyBilling,
+      topCategories,
+      metrics: {
         totalPatients,
-        totalRevenue: totalPayments._sum.amount || 0,
-        avgTicket: avgTicket.toFixed(2),
-        activeCases: await prisma.consultation.count({ 
-          where: { clinicId: user.clinicId, date: { gte: startOfMonth(new Date()) } } 
-        })
+        appointmentsThisMonth,
+        conversionRate: 85 // Mock por agora
       }
     });
   } catch (error) {
-    console.error("[BI_GET]", error);
+    console.error("[BI_API_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
