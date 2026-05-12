@@ -40,6 +40,7 @@ model Clinic {
   subscriptions    Subscription[]
   users            User[]
   automationSettings AutomationSettings?
+  notifications      Notification[]
 
   @@index([name])
 }
@@ -548,6 +549,22 @@ enum MovementType {
   IN
   OUT
   ADJUSTMENT
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  clinicId  String
+  type      String   // APPOINTMENT_REQUEST | STOCK_ALERT | VACCINE_DUE | SYSTEM
+  title     String
+  body      String?
+  read      Boolean  @default(false)
+  link      String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+
+  @@index([clinicId, read])
+  @@index([clinicId, createdAt])
 }
 
 model AutomationSettings {

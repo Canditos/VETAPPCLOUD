@@ -39,6 +39,23 @@ export async function POST(req: Request) {
       },
     });
 
+    // Create notification for the clinic
+    await prisma.notification.create({
+      data: {
+        clinicId: portalToken.clinicId,
+        type: "APPOINTMENT_REQUEST",
+        title: `Pedido de marcação — ${portalToken.owner.name}`,
+        body: reason,
+        link: "/dashboard/calendar",
+        metadata: {
+          requestId: request.id,
+          ownerId: portalToken.ownerId,
+          patientId,
+          preferred: preferred ?? null,
+        },
+      },
+    });
+
     return NextResponse.json({ success: true, id: request.id });
   } catch (error) {
     console.error("[PORTAL_APPOINTMENTS_POST]", error);
