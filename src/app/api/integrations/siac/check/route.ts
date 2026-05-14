@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import axios from "axios";
-import * as cheerio from "cheerio"; // Se não estiver instalado, uso regex simples
+ // Se não estiver instalado, uso regex simples
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);

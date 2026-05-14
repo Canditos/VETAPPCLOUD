@@ -48,7 +48,7 @@ export async function GET() {
       }
     });
 
-    const categories = invoiceItems.reduce((acc: any, item) => {
+    const categories = invoiceItems.reduce((acc: any, item: any) => {
       const total = Number(item.price) * item.quantity;
       acc[item.description] = (acc[item.description] || 0) + total;
       return acc;

@@ -42,7 +42,7 @@ export async function GET(request: Request) {
     }
 
     // 2. Dental Health
-    const hasDental = patient.consultations.some(c => c.notes?.assessment?.toLowerCase().includes("destartarização"));
+    const hasDental = patient.consultations.some((c: any) => c.notes?.assessment?.toLowerCase().includes("destartarização"));
     if (!hasDental) {
       recommendations.push({
         id: 'dental-cleaning',

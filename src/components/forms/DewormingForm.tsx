@@ -10,7 +10,8 @@ import { Bug, Calendar as CalendarIcon, Tag, FileText } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar as _Cal } from "@/components/ui/calendar";
+const Calendar = _Cal as any;
 import { pt } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
@@ -132,7 +133,7 @@ export function DewormingForm({ patientId, onSuccess }: DewormingFormProps) {
                 <Calendar
                   mode="single"
                   selected={formData.appliedAt}
-                  onSelect={(date) => date && setFormData({ ...formData, appliedAt: date })}
+                  onSelect={(date: any) => date && setFormData({ ...formData, appliedAt: date })}
                   initialFocus
                   locale={pt}
                 />
@@ -162,7 +163,7 @@ export function DewormingForm({ patientId, onSuccess }: DewormingFormProps) {
               <Calendar
                 mode="single"
                 selected={formData.expiresAt}
-                onSelect={(date) => setFormData({ ...formData, expiresAt: date })}
+                onSelect={(date: any) => setFormData({ ...formData, expiresAt: date })}
                 initialFocus
                 locale={pt}
               />

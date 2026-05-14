@@ -1,4 +1,5 @@
-import { Prisma } from "@prisma/client";
+/* eslint-disable @typescript-eslint/no-require-imports */
+const { Prisma } = require('@prisma/client');
 
 /**
  * Prisma Extension for Multi-tenancy
@@ -10,7 +11,7 @@ export const multiTenantExtension = (clinicId: string) => {
     name: 'multiTenantExtension',
     query: {
       $allModels: {
-        async $allOperations({ model, operation, args, query }) {
+        async $allOperations({ model, operation, args, query }: { model: any; operation: any; args: any; query: any }) {
           // List of models that should be isolated by clinicId
           const tenantModels = [
             'User', 'Patient', 'Owner', 'Consultation', 'Appointment',

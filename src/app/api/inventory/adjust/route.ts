@@ -21,7 +21,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    const result = await tenantPrisma.$transaction(async (tx) => {
+    const result = await tenantPrisma.$transaction(async (tx: any) => {
       // 1. Update product stock
       const product = await tx.product.update({
         where: { id: productId },

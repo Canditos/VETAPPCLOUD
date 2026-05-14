@@ -55,8 +55,8 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const totalInvoiced = customer.invoices.reduce((acc, inv) => acc + Number(inv.total), 0);
-    const totalPaid = customer.payments.reduce((acc, pay) => acc + Number(pay.amount), 0);
+    const totalInvoiced = customer.invoices.reduce((acc: any, inv: any) => acc + Number(inv.total), 0);
+    const totalPaid = customer.payments.reduce((acc: any, pay: any) => acc + Number(pay.amount), 0);
     const outstandingBalance = totalInvoiced - totalPaid;
 
     const enriched = {

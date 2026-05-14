@@ -31,8 +31,8 @@ export async function GET(req: Request) {
       include: { items: true }
     });
 
-    const report = invoices.reduce((acc, inv) => {
-      inv.items.forEach(item => {
+    const report = invoices.reduce((acc: any, inv: any) => {
+      inv.items.forEach((item: any) => {
         const rate = item.vatRate || 23;
         const base = Number(item.price) * item.quantity;
         const vat = base * (rate / 100);

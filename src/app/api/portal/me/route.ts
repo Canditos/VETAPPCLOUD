@@ -7,7 +7,7 @@ import { addDays } from "date-fns";
 
 export async function GET() {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const token = cookieStore.get("vet_portal_session")?.value;
 
     if (!token) {
@@ -97,10 +97,10 @@ export async function GET() {
 
     // Build vaccine alerts (expiring in 30 days or already expired)
     const in30Days = addDays(new Date(), 30);
-    const vaccineAlerts = owner.patients.flatMap((patient) =>
+    const vaccineAlerts = owner.patients.flatMap((patient: any) =>
       patient.vaccinations
-        .filter((v) => v.expiresAt && v.expiresAt <= in30Days)
-        .map((v) => ({
+        .filter((v: any) => v.expiresAt && v.expiresAt <= in30Days)
+        .map((v: any) => ({
           patientName: patient.name,
           vaccineName: v.vaccineName,
           expiresAt: v.expiresAt,

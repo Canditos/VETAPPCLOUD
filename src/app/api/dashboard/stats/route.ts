@@ -160,16 +160,17 @@ export async function GET() {
         type: "STOCK",
         level: "warning",
         title: `${criticalStockProducts.length} produto${criticalStockProducts.length > 1 ? "s" : ""} com stock crítico`,
-        desc: criticalStockProducts.slice(0, 2).map((p) => p.name).join(", ") + (criticalStockProducts.length > 2 ? "..." : ""),
+        desc: criticalStockProducts.slice(0, 2).map((p: any) => p?.name ?? "").join(", ") + (criticalStockProducts.length > 2 ? "..." : ""),
         href: "/dashboard/inventory",
       });
     }
 
-    const expiredVaccines = overdueVaccinations.filter(
-      (v) => v.patient.clinicId === clinicId && v.expiresAt && new Date(v.expiresAt) < today
+    const _vax: any[] = Array.isArray(overdueVaccinations) ? (overdueVaccinations as any[]) : [];
+    const expiredVaccines = _vax.filter(
+      (v: any) => v?.patient?.clinicId === clinicId && v?.expiresAt && new Date(v.expiresAt) < today
     );
-    const soonVaccines = overdueVaccinations.filter(
-      (v) => v.patient.clinicId === clinicId && v.expiresAt && new Date(v.expiresAt) >= today
+    const soonVaccines = _vax.filter(
+      (v: any) => v?.patient?.clinicId === clinicId && v?.expiresAt && new Date(v.expiresAt) >= today
     );
 
     if (expiredVaccines.length > 0) {
@@ -177,7 +178,7 @@ export async function GET() {
         type: "VACCINE",
         level: "error",
         title: `${expiredVaccines.length} vacina${expiredVaccines.length > 1 ? "s" : ""} expirada${expiredVaccines.length > 1 ? "s" : ""}`,
-        desc: expiredVaccines.map((v) => v.patient.name).slice(0, 2).join(", "),
+        desc: expiredVaccines.map((v: any) => v?.patient?.name ?? "").slice(0, 2).join(", "),
         href: "/dashboard/patients",
       });
     }
@@ -187,7 +188,7 @@ export async function GET() {
         type: "VACCINE_SOON",
         level: "warning",
         title: `${soonVaccines.length} vacina${soonVaccines.length > 1 ? "s" : ""} a expirar em 7 dias`,
-        desc: soonVaccines.map((v) => v.patient.name).slice(0, 2).join(", "),
+        desc: soonVaccines.map((v: any) => v?.patient?.name ?? "").slice(0, 2).join(", "),
         href: "/dashboard/patients",
       });
     }

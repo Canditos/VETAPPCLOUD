@@ -57,7 +57,7 @@ export async function GET(
     ]);
 
     const history = [
-      ...consultations.map(c => ({
+      ...consultations.map((c: any) => ({
         type: "CONSULTATION",
         id: c.id,
         date: c.date,
@@ -66,7 +66,7 @@ export async function GET(
         status: c.status,
         data: c
       })),
-      ...labResults.map(l => ({
+      ...labResults.map((l: any) => ({
         type: "LAB_RESULT",
         id: l.id,
         date: l.createdAt,
@@ -75,7 +75,7 @@ export async function GET(
         status: "COMPLETED",
         data: l
       })),
-      ...imagingStudies.map(i => ({
+      ...imagingStudies.map((i: any) => ({
         type: "IMAGING",
         id: i.id,
         date: i.createdAt,
@@ -84,7 +84,7 @@ export async function GET(
         status: "COMPLETED",
         data: i
       })),
-      ...vaccinations.map(v => ({
+      ...vaccinations.map((v: any) => ({
         type: "VACCINATION",
         id: v.id,
         date: v.appliedAt,
@@ -93,7 +93,7 @@ export async function GET(
         status: "COMPLETED",
         data: v
       })),
-      ...dewormings.map(d => ({
+      ...dewormings.map((d: any) => ({
         type: "DEWORMING",
         id: d.id,
         date: d.appliedAt,
@@ -102,7 +102,7 @@ export async function GET(
         status: "COMPLETED",
         data: d
       })),
-      ...prescriptions.map(p => ({
+      ...prescriptions.map((p: any) => ({
         type: "PRESCRIPTION",
         id: p.id,
         date: p.createdAt,
@@ -111,7 +111,7 @@ export async function GET(
         status: "ACTIVE",
         data: p
       })),
-      ...vitals.map(v => ({
+      ...vitals.map((v: any) => ({
         type: "VITALS",
         id: v.id,
         date: v.recordedAt,

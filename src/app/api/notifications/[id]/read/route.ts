@@ -18,7 +18,7 @@ export async function PATCH(
     await prisma.notification.update({
       where: {
         id,
-        clinicId: session.user.clinicId,
+        clinicId: (session.user as any).clinicId,
       },
       data: {
         isRead: true,

@@ -225,7 +225,7 @@ export default function InventoryPage() {
                 Todas as Categorias
               </DropdownMenuItem>
               <DropdownMenuSeparator className="opacity-50" />
-              {categories.map((cat: string) => (
+              {(categories as string[]).map((cat: string) => (
                 <DropdownMenuItem key={cat} onClick={() => setFilterCategory(cat)} className="font-bold rounded-lg p-3 text-xs uppercase tracking-widest">
                   {cat}
                 </DropdownMenuItem>
