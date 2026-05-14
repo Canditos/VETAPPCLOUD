@@ -26,7 +26,7 @@ export function NotificationsDropdown() {
   const [selectedNotification, setSelectedNotification] = useState<any>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  const { data: notifications = [] } = useQuery({
+  const { data } = useQuery({
     queryKey: ["notifications"],
     queryFn: async () => {
       const res = await fetch("/api/notifications");
@@ -36,7 +36,8 @@ export function NotificationsDropdown() {
     refetchInterval: 10000,
   });
 
-  const unreadCount = notifications.filter((n: any) => !n.isRead).length;
+  const notifications = data?.notifications || [];
+  const unreadCount = data?.unreadCount || 0;
 
   const markAsRead = useMutation({
     mutationFn: async (id: string) => {

@@ -48,12 +48,13 @@ export function MessagesDrawer({
   const scrollRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
-  // Buscar mensagens
+  // Buscar mensagens filtradas por contexto (RequestId)
   const { data: messages = [] } = useQuery({
-    queryKey: ["messages", notification?.ownerId],
+    queryKey: ["messages", notification?.ownerId, notification?.requestId],
     queryFn: async () => {
       if (!notification?.ownerId) return [];
-      const res = await fetch(`/api/portal/messages?ownerId=${notification.ownerId}`);
+      const requestId = notification.requestId || "";
+      const res = await fetch(`/api/portal/messages?ownerId=${notification.ownerId}&requestId=${requestId}`);
       if (!res.ok) return [];
       return res.json();
     },
@@ -78,7 +79,7 @@ export function MessagesDrawer({
     },
     onSuccess: () => {
       setReply("");
-      queryClient.invalidateQueries({ queryKey: ["messages", notification.ownerId] });
+      queryClient.invalidateQueries({ queryKey: ["messages", notification.ownerId, notification.requestId] });
       toast.success("Mensagem enviada");
     }
   });

@@ -171,6 +171,10 @@
   .animate-premium {
     animation: premium-slide 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
+
+  .empty-state-container {
+    @apply flex flex-col items-center justify-center py-20 px-8 text-center border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-[2.5rem] bg-slate-50/30 dark:bg-transparent transition-all duration-500 hover:border-blue-200 dark:hover:border-blue-900/40;
+  }
 }
 
 @keyframes premium-slide {

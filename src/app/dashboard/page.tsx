@@ -215,7 +215,7 @@ export default function DashboardPage() {
       )}
 
       {/* ── Alerts ── */}
-      {!isLoading && data?.alerts?.length > 0 && (
+      {!isLoading && (data?.alerts?.length ?? 0) > 0 && (
         <div className="space-y-2">
           {data.alerts.map((alert: any, i: number) => (
             <AlertBanner key={i} alert={alert} />
@@ -250,7 +250,7 @@ export default function DashboardPage() {
           <div className="space-y-3">
             {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-[1.5rem]" />)
-            ) : data?.todayAppointments?.length > 0 ? (
+            ) : (data?.todayAppointments?.length ?? 0) > 0 ? (
               data.todayAppointments.map((appt: any) => (
                 <AppointmentRow key={appt.id} appt={appt} now={now} />
               ))
@@ -282,7 +282,7 @@ export default function DashboardPage() {
             <CardContent className="px-6 pb-6 space-y-3">
               {isLoading ? (
                 <Skeleton className="h-16 rounded-2xl" />
-              ) : data?.activeHospitalizations?.length > 0 ? (
+              ) : (data?.activeHospitalizations?.length ?? 0) > 0 ? (
                 data.activeHospitalizations.slice(0, 4).map((h: any) => (
                   <div key={h.id}
                     onClick={() => router.push("/dashboard/internamento")}
@@ -295,7 +295,7 @@ export default function DashboardPage() {
                       <p className="font-black text-slate-800 dark:text-slate-100 text-sm truncate">{h.patientName}</p>
                       <p className="text-[10px] text-slate-400 truncate">{h.boxNumber ?? "Sem box"}</p>
                     </div>
-                    {h.pendingTasks > 0 && (
+                    {(h.pendingTasks ?? 0) > 0 && (
                       <Badge className="bg-amber-100 text-amber-700 border-none text-[9px] font-black shrink-0">
                         {h.pendingTasks} tarefa{h.pendingTasks > 1 ? "s" : ""}
                       </Badge>
@@ -327,7 +327,7 @@ export default function DashboardPage() {
                       <Skeleton className="h-3 w-1/2" />
                     </div>
                   ))
-                ) : data?.activity?.length > 0 ? (
+                ) : (data?.activity?.length ?? 0) > 0 ? (
                   data.activity.map((log: any, idx: number) => {
                     const Icon = log.icon === "Stethoscope" ? Stethoscope : TrendingUp;
                     return (
@@ -340,7 +340,7 @@ export default function DashboardPage() {
                         <p className="text-xs text-slate-400 font-medium">{log.desc}</p>
                         <p className="text-[9px] font-black text-slate-300 flex items-center gap-1 uppercase tracking-widest mt-0.5">
                           <Clock size={9} strokeWidth={3} />
-                          {format(new Date(log.time), "HH:mm")}
+                          {log.time ? format(new Date(log.time), "HH:mm") : "—"}
                         </p>
                       </div>
                     );

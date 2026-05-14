@@ -17,7 +17,8 @@ import {
   Heart,
   ChevronRight,
   User,
-  Pill
+  Pill,
+  Mail
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 
@@ -27,6 +28,7 @@ const menuGroups = [
     items: [
       { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
       { name: "Agenda", href: "/dashboard/appointments", icon: Stethoscope },
+      { name: "Mensagens", href: "/dashboard/messages", icon: Mail },
     ]
   },
   {

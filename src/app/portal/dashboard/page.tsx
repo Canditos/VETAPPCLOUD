@@ -8,12 +8,17 @@ import {
   AlertTriangle, ChevronRight, Heart, Weight, Thermometer,
   Activity, Shield, Clock, CheckCircle2, Dog, Cat, X,
   Stethoscope, Pill, Bell, Home, User, Star, LogOut,
-  Sun, Cloud, CloudRain, CloudLightning, ThermometerSun
+  Sun, Cloud, CloudRain, CloudLightning, ThermometerSun,
+  MessageSquare, Send
 } from "lucide-react";
-import { format, isPast, differenceInDays, differenceInYears } from "date-fns";
+import { format, isPast, differenceInDays, differenceInYears, formatDistanceToNow } from "date-fns";
 import { pt } from "date-fns/locale";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const fmt = (d: string | Date) => format(new Date(d), "dd MMM yyyy", { locale: pt });
 const fmtTime = (d: string | Date) => format(new Date(d), "EEEE, d MMM · HH:mm", { locale: pt });
@@ -302,7 +307,7 @@ function WeatherWidget() {
 // ── Main portal page ──────────────────────────────────────────────────────────
 export default function PortalPage() {
   const router = useRouter();
-  const [tab, setTab] = useState<"home" | "animals" | "agenda" | "clinic">("home");
+  const [tab, setTab] = useState<"home" | "animals" | "agenda" | "clinic" | "messages">("home");
   const [showRequest, setShowRequest] = useState(false);
 
   const { data, isLoading, isError } = useQuery({
@@ -363,6 +368,7 @@ export default function PortalPage() {
     { id: "home",    label: "Início",   icon: Home },
     { id: "animals", label: "Animais",  icon: PawPrint },
     { id: "agenda",  label: "Agenda",   icon: Calendar },
+    { id: "messages", label: "Mensagens", icon: MessageSquare },
     { id: "clinic",  label: "Clínica",  icon: MapPin },
   ] as const;
 
@@ -691,6 +697,20 @@ export default function PortalPage() {
                </div>
             )}
 
+            {/* MESSAGES VIEW */}
+            {tab === "messages" && (
+              <div className="space-y-8 max-w-6xl animate-in fade-in duration-500">
+                <header>
+                  <h1 className="text-4xl font-black text-white tracking-tight">As Suas Mensagens</h1>
+                  <p className="text-slate-400 font-medium">Histórico de conversas e pedidos com a clínica.</p>
+                </header>
+
+                <div className="grid grid-cols-1 gap-4">
+                  <PortalMessagesView clinic={clinic} owner={owner} />
+                </div>
+              </div>
+            )}
+
           </div>
         </div>
       </main>
@@ -713,6 +733,200 @@ export default function PortalPage() {
 
       {/* Appointment request modal */}
       {showRequest && <RequestModal patients={patients} token={data.token || ""} onClose={() => setShowRequest(false)} />}
+    </div>
+  );
+}
+
+// ── Portal Messages View ──────────────────────────────────────────────────────
+function PortalMessagesView({ clinic, owner }: { clinic: any; owner: any }) {
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const [reply, setReply] = useState("");
+
+  const { data: messages = [], isLoading, refetch } = useQuery({
+    queryKey: ["portal-messages"],
+    queryFn: async () => {
+      const res = await fetch("/api/portal/messages");
+      if (!res.ok) return [];
+      return res.json();
+    },
+    refetchInterval: 5000
+  });
+
+  // Auto-select first thread if nothing selected
+  useEffect(() => {
+    if (!selectedRequestId && messages.length > 0) {
+      setSelectedRequestId(messages[0].requestId);
+    }
+  }, [messages, selectedRequestId]);
+
+  const send = useMutation({
+    mutationFn: async () => {
+      if (!reply.trim()) return;
+      const res = await fetch("/api/portal/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: reply, requestId: selectedRequestId })
+      });
+      if (!res.ok) throw new Error("Falha ao enviar");
+      return res.json();
+    },
+    onSuccess: () => {
+      setReply("");
+      refetch();
+      toast.success("Mensagem enviada!");
+    },
+    onError: () => {
+      toast.error("Erro ao enviar mensagem. Tente novamente.");
+    }
+  });
+
+  if (isLoading) return (
+    <div className="p-20 text-center space-y-4">
+      <div className="w-12 h-12 rounded-2xl bg-blue-600/20 flex items-center justify-center mx-auto animate-bounce">
+        <MessageSquare className="text-blue-400" size={24} />
+      </div>
+      <p className="text-slate-500 font-black animate-pulse">A carregar comunicações...</p>
+    </div>
+  );
+
+  const threads = messages.filter((m: any, i: number, self: any[]) => 
+    self.findIndex((t: any) => t.requestId === m.requestId) === i
+  );
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 min-h-[600px]">
+       {/* List of topics/tickets */}
+       <div className="lg:col-span-4 space-y-3">
+          <div className="flex items-center justify-between px-2 mb-4">
+            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Conversas</h3>
+            <span className="bg-blue-500/10 text-blue-400 text-[10px] font-black px-2 py-0.5 rounded-full">{threads.length}</span>
+          </div>
+          
+          <div className="space-y-2 overflow-y-auto max-h-[500px] pr-2 scrollbar-hide">
+            {threads.length === 0 ? (
+              <div className="p-10 rounded-[2rem] bg-white/5 border border-dashed border-white/10 text-center">
+                <MessageSquare className="mx-auto mb-3 text-slate-700" size={32} />
+                <p className="text-[10px] font-black text-slate-500 uppercase">Sem histórico</p>
+                <p className="text-[10px] text-slate-600 mt-1">As suas mensagens aparecerão aqui.</p>
+              </div>
+            ) : (
+              threads.map((m: any) => (
+                <button 
+                  key={m.id}
+                  onClick={() => setSelectedRequestId(m.requestId)}
+                  className={cn(
+                    "w-full p-5 rounded-[2rem] border transition-all text-left group relative overflow-hidden",
+                    selectedRequestId === m.requestId 
+                      ? "bg-blue-600 border-blue-500 shadow-xl shadow-blue-500/20 scale-[1.02]" 
+                      : "bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10"
+                  )}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                     <span className={cn(
+                       "px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest",
+                       selectedRequestId === m.requestId ? "bg-white/20 text-white" : "bg-blue-500/10 text-blue-400"
+                     )}>
+                       {m.requestId ? "Pedido Clínica" : "Geral"}
+                     </span>
+                     <span className={cn(
+                       "text-[9px] font-bold",
+                       selectedRequestId === m.requestId ? "text-blue-100" : "text-slate-600"
+                     )}>
+                       {formatDistanceToNow(new Date(m.createdAt), { addSuffix: true, locale: pt })}
+                     </span>
+                  </div>
+                  <p className={cn(
+                    "text-sm font-black tracking-tight line-clamp-1",
+                    selectedRequestId === m.requestId ? "text-white" : "text-slate-300"
+                  )}>
+                    {m.content}
+                  </p>
+                </button>
+              ))
+            )}
+          </div>
+       </div>
+
+       {/* Chat view */}
+       <div className="lg:col-span-8 flex flex-col bg-slate-900/50 border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
+          {selectedRequestId !== undefined || messages.length > 0 ? (
+            <>
+              {/* Chat Header */}
+              <div className="p-6 border-b border-white/5 bg-white/5 flex items-center justify-between backdrop-blur-md">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
+                    <PawPrint size={20} className="text-white" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Conversa com</p>
+                    <p className="text-sm font-black text-white">{clinic.name}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Ativo</span>
+                </div>
+              </div>
+              
+              <ScrollArea className="flex-1 p-6">
+                <div className="space-y-6">
+                  {messages.filter((m: any) => m.requestId === selectedRequestId).map((m: any) => (
+                    <div key={m.id} className={cn(
+                      "flex flex-col max-w-[85%] gap-1",
+                      m.senderType === "TUTOR" ? "ml-auto items-end" : "items-start"
+                    )}>
+                      <div className={cn(
+                        "p-4 rounded-2xl text-sm font-medium leading-relaxed shadow-sm",
+                        m.senderType === "TUTOR" 
+                          ? "bg-blue-600 text-white rounded-tr-none shadow-blue-500/10" 
+                          : "bg-white/10 text-slate-200 rounded-tl-none border border-white/5"
+                      )}>
+                        {m.content}
+                      </div>
+                      <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest px-1">
+                        {formatDistanceToNow(new Date(m.createdAt), { addSuffix: true, locale: pt })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+
+              <div className="p-6 bg-white/5 border-t border-white/5 backdrop-blur-md">
+                <div className="flex gap-3">
+                   <Input 
+                     placeholder="Escreva a sua resposta..."
+                     className="flex-1 bg-slate-950/50 border-white/10 rounded-2xl h-14 text-sm font-medium placeholder:text-slate-600 focus:ring-blue-500 transition-all"
+                     value={reply}
+                     onChange={e => setReply(e.target.value)}
+                     onKeyDown={e => {
+                       if (e.key === 'Enter' && !e.shiftKey) {
+                         e.preventDefault();
+                         send.mutate();
+                       }
+                     }}
+                   />
+                   <Button 
+                     onClick={() => send.mutate()}
+                     disabled={!reply.trim() || send.isPending}
+                     className="h-14 w-14 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20 disabled:opacity-50 transition-all active:scale-95"
+                   >
+                     {send.isPending ? (
+                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                     ) : (
+                       <Send size={20} />
+                     )}
+                   </Button>
+                </div>
+                <p className="mt-3 text-[10px] text-slate-600 text-center font-medium italic">A clínica receberá a sua mensagem instantaneamente.</p>
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
+              <MessageSquare size={48} className="mb-4 text-slate-800" />
+              <p className="text-sm font-black uppercase tracking-widest text-slate-600">Selecione uma conversa</p>
+            </div>
+          )}
+       </div>
     </div>
   );
 }

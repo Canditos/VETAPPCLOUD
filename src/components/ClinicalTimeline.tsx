@@ -40,12 +40,15 @@ function HistoryEvent({ event }: HistoryEventProps) {
       case "DEWORMING": return <Bug className="text-indigo-600 dark:text-indigo-400" size={16} strokeWidth={2.5} />;
       case "PRESCRIPTION": return <Pill className="text-rose-600 dark:text-rose-400" size={16} strokeWidth={2.5} />;
       case "VITALS": return <Activity className="text-indigo-600 dark:text-indigo-400" size={16} strokeWidth={2.5} />;
+      case "MESSAGE": return <Clock className="text-sky-600 dark:text-sky-400" size={16} strokeWidth={2.5} />;
+      case "PAYMENT": return <Receipt className="text-emerald-600 dark:text-emerald-400" size={16} strokeWidth={2.5} />;
       default: return <FileText className="text-slate-600 dark:text-slate-400" size={16} strokeWidth={2.5} />;
     }
   };
 
   const getStatusBadge = () => {
-    if (event.status === "COMPLETED") return <Badge className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-none text-[9px] font-black uppercase">Concluído</Badge>;
+    if (event.status === "COMPLETED" || event.status === "PAID" || event.status === "READ") 
+      return <Badge className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-none text-[9px] font-black uppercase">{event.status === "PAID" ? "Pago" : event.status === "READ" ? "Lido" : "Concluído"}</Badge>;
     if (event.status === "ACTIVE") return <Badge className="bg-blue-600 text-white border-none text-[9px] font-black uppercase shadow-lg shadow-blue-500/20">Ativo</Badge>;
     if (event.status === "SCHEDULED") return <Badge className="bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-none text-[9px] font-black uppercase">Agendado</Badge>;
     return <Badge variant="outline" className="text-[9px] font-black uppercase border-slate-200 dark:border-white/10">{event.status}</Badge>;
@@ -194,6 +197,25 @@ function HistoryEvent({ event }: HistoryEventProps) {
                       </div>
                     ))}
                   </div>
+                )}
+
+                {event.type === "MESSAGE" && (
+                   <div className="p-4 rounded-xl bg-sky-50/30 dark:bg-sky-500/5 border border-sky-100/50 dark:border-sky-500/10">
+                      <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{event.data?.content}</p>
+                      <div className="mt-3 flex justify-end">
+                         <Button variant="ghost" size="sm" className="h-6 px-2 text-[8px] font-black uppercase tracking-widest rounded-md dark:text-sky-400">Responder no Chat</Button>
+                      </div>
+                   </div>
+                )}
+
+                {event.type === "PAYMENT" && (
+                   <div className="p-4 rounded-xl bg-emerald-50/30 dark:bg-emerald-500/5 border border-emerald-100/50 dark:border-emerald-500/10 flex justify-between items-center">
+                      <div>
+                         <p className="text-xs font-black text-slate-900 dark:text-white">Pagamento de €{Number(event.data?.amount).toFixed(2)}</p>
+                         <p className="text-[10px] text-slate-500 font-medium">Método: {event.data?.method}</p>
+                      </div>
+                      <Receipt className="text-emerald-500 opacity-40" size={24} />
+                   </div>
                 )}
 
               </div>

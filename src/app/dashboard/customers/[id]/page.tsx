@@ -133,9 +133,19 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
             <div className="flex items-center gap-3">
               <h1 className="text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">{customer.name}</h1>
               <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-none font-black text-[10px] uppercase">Cliente Ativo</Badge>
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-400 hover:text-blue-600" onClick={handleEdit}>
-                <Edit3 size={16} />
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-400 hover:text-blue-600" onClick={handleEdit}>
+                  <Edit3 size={16} />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-8 rounded-lg border-sky-100 dark:border-sky-900/50 bg-sky-50 dark:bg-sky-900/10 text-sky-600 dark:text-sky-400 font-black text-[10px] uppercase tracking-widest gap-2"
+                  onClick={() => router.push(`/dashboard/messages?customerId=${id}`)}
+                >
+                  <Clock size={12} strokeWidth={3} /> Chat com Tutor
+                </Button>
+              </div>
             </div>
             <div className="flex flex-wrap gap-6 mt-3 text-slate-500 dark:text-slate-400 font-bold">
               <span className="flex items-center gap-2"><Phone size={16} className="text-slate-300 dark:text-slate-600" /> {customer.phone || "Sem telefone"}</span>

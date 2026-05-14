@@ -19,7 +19,12 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const [consultations, labResults, imagingStudies, vaccinations, dewormings, prescriptions, vitals] = await Promise.all([
+    const patient = await tenantPrisma.patient.findUnique({
+      where: { id },
+      select: { ownerId: true }
+    });
+
+    const [consultations, labResults, imagingStudies, vaccinations, dewormings, prescriptions, vitals, messages, payments] = await Promise.all([
       tenantPrisma.consultation.findMany({
         where: { patientId: id },
         include: {
@@ -54,6 +59,16 @@ export async function GET(
         where: { patientId: id },
         orderBy: { recordedAt: "desc" },
       }),
+      // Puxar mensagens relacionadas ao tutor deste animal
+      tenantPrisma.portalMessage.findMany({
+        where: { ownerId: patient?.ownerId, clinicId },
+        orderBy: { createdAt: "desc" },
+      }),
+      // Puxar pagamentos
+      tenantPrisma.payment.findMany({
+        where: { patientId: id },
+        orderBy: { createdAt: "desc" },
+      })
     ]);
 
     const history = [
@@ -119,6 +134,24 @@ export async function GET(
         subtitle: `${v.weight ? v.weight + "kg" : ""} ${v.temperature ? v.temperature + "ºC" : ""}`,
         status: "COMPLETED",
         data: v
+      })),
+      ...messages.map(m => ({
+        type: "MESSAGE",
+        id: m.id,
+        date: m.createdAt,
+        title: m.senderType === "TUTOR" ? "Mensagem do Tutor" : "Mensagem da Clínica",
+        subtitle: m.content.substring(0, 50) + (m.content.length > 50 ? "..." : ""),
+        status: "READ",
+        data: m
+      })),
+      ...payments.map(p => ({
+        type: "PAYMENT",
+        id: p.id,
+        date: p.createdAt,
+        title: "Pagamento Registado",
+        subtitle: `Valor: €${Number(p.amount).toFixed(2)} (${p.method})`,
+        status: "PAID",
+        data: p
       }))
     ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 

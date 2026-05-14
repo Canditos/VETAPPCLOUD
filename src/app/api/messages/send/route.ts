@@ -1,24 +1,36 @@
-import { NextResponse } from "next/navigation";
-import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth";
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import prisma from "@/lib/prisma";
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions) as any;
-  if (!session) return new NextResponse("Unauthorized", { status: 401 });
-
-  const { content, ownerId, requestId } = await req.json();
-
-  const message = await prisma.portalMessage.create({
-    data: {
-      content,
-      senderId: session.user.id,
-      senderType: "CLINIC",
-      clinicId: session.user.clinicId,
-      ownerId: ownerId,
-      requestId: requestId || null
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !(session.user as any).clinicId) {
+      return new NextResponse("Unauthorized", { status: 401 });
     }
-  });
 
-  return NextResponse.json(message);
+    const { content, ownerId, requestId } = await req.json();
+    const clinicId = (session.user as any).clinicId;
+
+    if (!content || !ownerId) {
+      return new NextResponse("Conteúdo e OwnerId são obrigatórios", { status: 400 });
+    }
+
+    const message = await prisma.portalMessage.create({
+      data: {
+        content,
+        senderId: clinicId,
+        senderType: "CLINIC",
+        clinicId,
+        ownerId,
+        requestId: requestId || null,
+      }
+    });
+
+    return NextResponse.json(message);
+  } catch (error) {
+    console.error("[MESSAGES_SEND]", error);
+    return new NextResponse("Erro interno", { status: 500 });
+  }
 }
