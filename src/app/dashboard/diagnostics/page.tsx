@@ -26,6 +26,7 @@ import { PremiumCard } from "@/components/PremiumCard";
 import { PageHeader } from "@/components/PageHeader";
 import { StatsGrid } from "@/components/StatsGrid";
 import { EmptyState } from "@/components/EmptyState";
+import { useIntegrationHealth } from "@/hooks/useIntegrationHealth";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: any }> = {
   COMPLETED: { label: "Recebido", color: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-900/30", icon: CheckCircle2 },
@@ -50,6 +51,8 @@ export default function DiagnosticsPage() {
   const filteredData = diagnostics?.filter((dx: any) =>
     filter === "all" ? true : dx.type === filter
   ) ?? [];
+
+  const { data: health } = useIntegrationHealth();
 
   const stats = {
     total: diagnostics?.length ?? 0,
@@ -208,26 +211,34 @@ export default function DiagnosticsPage() {
               <Activity size={20} className="text-blue-600" />
               Status Integrador
             </h3>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-100 dark:border-white/5">
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Fuji DX HL7 Bridge</p>
-                </div>
-                <Badge className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-none font-medium">
-                  Online
-                </Badge>
-              </div>
-              <div className="flex justify-between items-center bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-100 dark:border-white/5">
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">PACS Examion Cloud</p>
-                </div>
-                <Badge className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-none font-medium">
-                  Ligado
-                </Badge>
-              </div>
-            </div>
+             <div className="space-y-3">
+               <div className="flex justify-between items-center bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-100 dark:border-white/5">
+                 <div className="flex items-center gap-3">
+                   <div className={`w-2 h-2 rounded-full animate-pulse ${health?.hl7?.status === "online" ? "bg-emerald-500" : "bg-slate-400"}`} />
+                   <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Fuji DX HL7 Bridge</p>
+                 </div>
+                 <Badge className={
+                   health?.hl7?.status === "online"
+                     ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-none font-medium"
+                     : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-none font-medium"
+                 }>
+                   {health?.hl7?.label || "Offline"}
+                 </Badge>
+               </div>
+               <div className="flex justify-between items-center bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-100 dark:border-white/5">
+                 <div className="flex items-center gap-3">
+                   <div className={`w-2 h-2 rounded-full animate-pulse ${health?.dicom?.status === "online" ? "bg-emerald-500" : "bg-slate-400"}`} />
+                   <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">PACS Examion Cloud</p>
+                 </div>
+                 <Badge className={
+                   health?.dicom?.status === "online"
+                     ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-none font-medium"
+                     : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-none font-medium"
+                 }>
+                   {health?.dicom?.label || "Offline"}
+                 </Badge>
+               </div>
+             </div>
           </PremiumCard>
 
           {/* Quick Actions */}

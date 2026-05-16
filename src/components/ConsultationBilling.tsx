@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
+import { useIntegrationHealth } from "@/hooks/useIntegrationHealth";
 
 interface BillingItem {
   id: string;
@@ -93,8 +94,10 @@ export function ConsultationBilling({ onItemsChange }: { onItemsChange: (items: 
     onItemsChange(newItems);
   };
 
+  const { data: health } = useIntegrationHealth();
+
   const subtotal = items.reduce((acc, curr) => acc + (curr.price * curr.quantity), 0);
-  
+
   const vatBreakdown = VAT_RATES.map(rate => {
     const itemsForRate = items.filter(i => i.vatRate === rate);
     const base = itemsForRate.reduce((acc, i) => acc + (i.price * i.quantity), 0);
@@ -217,8 +220,14 @@ export function ConsultationBilling({ onItemsChange }: { onItemsChange: (items: 
                      </div>
                      <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-1">Base: €{subtotal.toFixed(2)} · IVA: €{totalVat.toFixed(2)}</p>
                   </div>
-                   <Badge className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-none px-4 py-1.5 mb-1 font-semibold text-[10px] rounded-lg">
-                     Pronto para Vendus
+                   <Badge className={
+                     health?.vendus?.status === "connected"
+                       ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-none px-4 py-1.5 mb-1 font-semibold text-[10px] rounded-lg"
+                       : health?.vendus?.status === "configured"
+                       ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-none px-4 py-1.5 mb-1 font-semibold text-[10px] rounded-lg"
+                       : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-none px-4 py-1.5 mb-1 font-semibold text-[10px] rounded-lg"
+                   }>
+                     {health?.vendus?.label || "Vendus"}
                   </Badge>
                </div>
             </div>

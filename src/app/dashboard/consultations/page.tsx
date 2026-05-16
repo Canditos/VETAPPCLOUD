@@ -25,6 +25,7 @@ import { SmartAlertsFetcher } from "@/components/SmartAlertsFetcher";
 import { PremiumCard } from "@/components/PremiumCard";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useIntegrationHealth } from "@/hooks/useIntegrationHealth";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { pt } from "date-fns/locale";
@@ -82,6 +83,8 @@ function ConsultationContent() {
     },
     enabled: !!patientId,
   });
+
+  const { data: health } = useIntegrationHealth();
 
   const handleRequestExam = async (type: "LAB" | "IMAGING", source: string, testName: string) => {
     toast.promise(
@@ -368,7 +371,13 @@ function ConsultationContent() {
                <PremiumCard padding="lg">
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 mb-8">
                      <div>
-                        <Badge className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-medium text-[10px] px-3 py-1 mb-3 rounded-lg">Inventory Sync Active</Badge>
+                        <Badge className={
+                          health?.inventorySync?.status === "active"
+                            ? "bg-emerald-600 text-white font-medium text-[10px] px-3 py-1 mb-3 rounded-lg"
+                            : "bg-slate-600 text-white font-medium text-[10px] px-3 py-1 mb-3 rounded-lg"
+                        }>
+                          {health?.inventorySync?.label || "Inventory Sync"}
+                        </Badge>
                         <h2 className="text-2xl font-bold text-slate-900 dark:text-white leading-none">Prescrição & Faturação</h2>
                         <p className="text-slate-500 dark:text-slate-400 font-medium mt-1 text-sm">Registe consumíveis, medicamentos e atos clínicos.</p>
                      </div>
