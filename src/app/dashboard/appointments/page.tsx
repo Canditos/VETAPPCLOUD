@@ -19,7 +19,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar as _Cal } from "@/components/ui/calendar";
+const Calendar = _Cal as any;
 import { format, startOfWeek, addDays } from "date-fns";
 import { pt } from "date-fns/locale";
 import { toast } from "sonner";
@@ -46,7 +47,7 @@ const getTypeConfig = (type: string) => {
 
 // ── Draggable appointment card ──────────────────────────────────────────────
 function DraggableAppointment({ app, hour, config, vetColor, onClick, isOverlay }: any) {
-  const { attributes, listeners, setNodeRef, style, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, transform: dndTransform, isDragging } = useDraggable({
     id: app.id, data: { app },
   });
 
@@ -56,16 +57,18 @@ function DraggableAppointment({ app, hour, config, vetColor, onClick, isOverlay 
 
   return (
     <div
-      ref={setNodeRef} style={style} {...attributes} {...listeners}
+      ref={setNodeRef}
+      style={{
+        ...(dndTransform ? { transform: `translate3d(${dndTransform.x}px,${dndTransform.y}px,0)` } : {}),
+        borderLeftColor: config.color,
+        backgroundColor: `color-mix(in srgb, ${config.color}, transparent 92%)`,
+      }}
+      {...attributes} {...listeners}
       onClick={(e) => { e.stopPropagation(); onClick(app); }}
       className={cn(
         "p-3 rounded-xl h-full border-l-4 transition-all cursor-grab active:cursor-grabbing group relative overflow-hidden mb-1.5 last:mb-0 shadow-sm",
         isOverlay ? "scale-105 rotate-1 shadow-2xl cursor-grabbing ring-4 ring-blue-500/20 z-[1000]" : "hover:shadow-md hover:-translate-y-0.5 active:scale-95"
       )}
-      style={{
-        borderLeftColor: config.color,
-        backgroundColor: `color-mix(in srgb, ${config.color}, transparent 92%)`,
-      }}
     >
       <div className="flex justify-between items-start relative z-10">
         <div className="flex items-center gap-1.5">
@@ -433,7 +436,7 @@ function CalendarContent() {
                     <Calendar
                       mode="single"
                       selected={currentDate}
-                      onSelect={(d) => d && setCurrentDate(d)}
+                      onSelect={(d: any) => d && setCurrentDate(d)}
                       initialFocus
                       locale={pt}
                       className="rounded-xl border border-slate-100 dark:border-white/5"

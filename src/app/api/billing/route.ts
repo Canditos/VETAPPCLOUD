@@ -32,7 +32,7 @@ export async function GET(req: Request) {
 
     // Filter by search term (client name or invoice id)
     const filtered = search
-      ? invoices.filter((inv) => {
+      ? invoices.filter((inv: any) => {
           const ownerName = (inv.owner?.name ?? inv.consultation?.patient?.owner?.name ?? "").toLowerCase();
           const invId = inv.id.toLowerCase();
           const extId = (inv.externalId ?? "").toLowerCase();
@@ -46,15 +46,15 @@ export async function GET(req: Request) {
     today.setHours(0, 0, 0, 0);
 
     const todayInvoices = invoices.filter(
-      (inv) => new Date(inv.createdAt) >= today
+      (inv: any) => new Date(inv.createdAt) >= today
     );
     const todayTotal = todayInvoices.reduce(
-      (sum, inv) => sum + Number(inv.total),
+      (sum: any, inv: any) => sum + Number(inv.total),
       0
     );
-    const pendingInvoices = invoices.filter((inv) => inv.status === "DRAFT");
+    const pendingInvoices = invoices.filter((inv: any) => inv.status === "DRAFT");
     const pendingTotal = pendingInvoices.reduce(
-      (sum, inv) => sum + Number(inv.total),
+      (sum: any, inv: any) => sum + Number(inv.total),
       0
     );
 

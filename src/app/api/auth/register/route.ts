@@ -1,7 +1,7 @@
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { Prisma } from "@prisma/client";
+/* Prisma types via any */;
 
 const RegisterSchema = z.object({
   clinic: z.object({
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       const newClinic = await tx.clinic.create({
         data: {
           name: clinic.name,

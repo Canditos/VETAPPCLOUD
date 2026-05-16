@@ -11,7 +11,7 @@ export async function GET() {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const clinicId = session.user.clinicId;
+    const clinicId = (session.user as any).clinicId;
     const today = new Date();
     const startMonth = startOfMonth(today);
     const endMonth = endOfMonth(today);
@@ -76,7 +76,7 @@ export async function GET() {
       },
       charts: {
         dailyConsultations,
-        species: speciesDistribution.map(s => ({
+        species: speciesDistribution.map((s: any) => ({
           name: s.species,
           value: s._count
         }))

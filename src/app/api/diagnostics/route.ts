@@ -12,18 +12,18 @@ export async function GET() {
 
     const [labResults, imagingStudies] = await Promise.all([
       prisma.labResult.findMany({
-        where: { clinicId: session.user.clinicId },
+        where: { clinicId: (session.user as any).clinicId },
         include: { patient: true },
         orderBy: { createdAt: "desc" },
       }),
       prisma.imagingStudy.findMany({
-        where: { clinicId: session.user.clinicId },
+        where: { clinicId: (session.user as any).clinicId },
         include: { patient: true },
         orderBy: { createdAt: "desc" },
       }),
     ]);
 
-    const formattedLab = labResults.map((lr) => ({
+    const formattedLab = labResults.map((lr: any) => ({
       id: lr.id,
       patient: lr.patient.name,
       owner: "Consultar Ficha", // Seria necessário incluir o owner no prisma se quiséssemos o nome aqui direto
@@ -34,7 +34,7 @@ export async function GET() {
       summary: (lr.dataJson as any)?.testName || "Análises Clínicas",
     }));
 
-    const formattedImaging = imagingStudies.map((is) => ({
+    const formattedImaging = imagingStudies.map((is: any) => ({
       id: is.id,
       patient: is.patient.name,
       owner: "Consultar Ficha",

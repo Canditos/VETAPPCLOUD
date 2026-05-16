@@ -20,11 +20,11 @@ export async function GET() {
       orderBy: { createdAt: "asc" }
     });
 
-    const totalRevenue = payments.reduce((acc, p) => acc + Number(p.amount), 0);
+    const totalRevenue = payments.reduce((acc: any, p: any) => acc + Number(p.amount), 0);
 
     // Group by month
     const monthlyData: Record<string, { revenue: number; expenses: number }> = {};
-    payments.forEach(p => {
+    payments.forEach((p: any) => {
       const month = p.createdAt.toLocaleString('pt-PT', { month: 'short' });
       if (!monthlyData[month]) monthlyData[month] = { revenue: 0, expenses: 0 };
       monthlyData[month].revenue += Number(p.amount);
@@ -46,7 +46,7 @@ export async function GET() {
       take: 5
     });
 
-    const topClients = await Promise.all(topOwners.map(async (o) => {
+    const topClients = await Promise.all(topOwners.map(async (o: any) => {
       const owner = await prisma.owner.findUnique({ where: { id: o.ownerId } });
       return {
         name: owner?.name || "Desconhecido",

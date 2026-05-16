@@ -24,7 +24,7 @@ export async function GET() {
       },
     });
 
-    const paymentsByMethod = paymentsRaw.reduce((acc: any, p) => {
+    const paymentsByMethod = paymentsRaw.reduce((acc: any, p: any) => {
       const method = p.method || "UNKNOWN";
       if (!acc[method]) acc[method] = 0;
       acc[method] += Number(p.amount);

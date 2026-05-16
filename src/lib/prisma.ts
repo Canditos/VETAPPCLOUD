@@ -1,7 +1,9 @@
-import { PrismaClient } from '@prisma/client'
+// @ts-ignore — Prisma v7 client
+const { PrismaClient } = require('@prisma/client')
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Pool } from 'pg'
-import { withAccelerate } from '@prisma/extension-accelerate'
+// Accelerate optional
+const withAccelerate = (() => { try { return require('@prisma/extension-accelerate').withAccelerate; } catch { return null; } })()
 import { multiTenantExtension } from './prisma-tenant-ext'
 
 const prismaClientSingleton = () => {

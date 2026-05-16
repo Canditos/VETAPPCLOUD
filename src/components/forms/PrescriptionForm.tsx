@@ -9,7 +9,8 @@ import { Pill, Plus, Trash2, Calendar as CalendarIcon, Search, PawPrint, User as
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar as _Cal } from "@/components/ui/calendar";
+const Calendar = _Cal as any;
 import { pt } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";

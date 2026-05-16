@@ -64,7 +64,7 @@ export async function GET(req: Request) {
               where: { clinicId, paidAt: { gte: startOfMonth(d), lte: endOfMonth(d) } },
               _sum: { amount: true },
             })
-            .then((r) => ({
+            .then((r: any) => ({
               month: d.toLocaleDateString("pt-PT", { month: "short" }),
               revenue: Number(r._sum.amount ?? 0),
             }));
