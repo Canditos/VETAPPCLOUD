@@ -434,9 +434,17 @@ function CalendarContent() {
     const origSlot = `${String(origDate.getHours()).padStart(2,'0')}:${origMin}`;
     if (newHour === origSlot && newDay === format(origDate, "yyyy-MM-dd")) return;
     const newStartTime = `${newDay}T${newHour}:00`;
+
+    // Preservar a duração original no update otimista local
+    const origStart = new Date(app.startTime);
+    const origEnd = app.endTime ? new Date(app.endTime) : new Date(origStart.getTime() + 30 * 60000);
+    const durationMs = origEnd.getTime() - origStart.getTime();
+    const newStart = new Date(newStartTime);
+    const newEndTime = new Date(newStart.getTime() + durationMs).toISOString();
+
     queryClient.setQueryData(
       ["appointments", weekDays[0]?.fullDate, selectedVet],
-      (old: any[]) => old?.map(a => a.id === active.id ? { ...a, startTime: newStartTime } : a) ?? []
+      (old: any[]) => old?.map(a => a.id === active.id ? { ...a, startTime: newStartTime, endTime: newEndTime } : a) ?? []
     );
     try {
       const res = await fetch(`/api/appointments/${active.id}`, {
@@ -445,6 +453,14 @@ function CalendarContent() {
         body: JSON.stringify({ startTime: newStartTime }),
       });
       if (!res.ok) throw new Error();
+      const updatedApp = await res.json();
+      
+      // Atualiza com a resposta exata do servidor para manter sincronia perfeita
+      queryClient.setQueryData(
+        ["appointments", weekDays[0]?.fullDate, selectedVet],
+        (old: any[]) => old?.map(a => a.id === active.id ? updatedApp : a) ?? []
+      );
+      
       toast.success(`Movido para ${newHour} — ${format(new Date(newDay), "EEE d MMM", { locale: pt })}`);
     } catch {
       refetch();
