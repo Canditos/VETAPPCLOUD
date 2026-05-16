@@ -327,23 +327,45 @@ function CalendarContent() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const handleDragEnd = async (event: any) => {
-    const { active, over } = event;
-    setActiveId(null);
-    if (!over || active.id === over.id) return;
+  const SLOT_HEIGHT_PX = 112; // h-28 = 7rem = 112px
 
-    const { day, hour } = over.data.current || {};
-    if (!day || !hour) return;
+  const handleDragEnd = async (event: any) => {
+    const { active, delta } = event;
+    setActiveId(null);
+
+    // Get original appointment data
+    const app = active.data.current?.app;
+    if (!app?.startTime) return;
+
+    const origDate = new Date(app.startTime);
+    const origHourIndex = hours.indexOf(format(origDate, "HH:00"));
+    if (origHourIndex === -1) return;
+
+    // Calculate hour offset from vertical drag delta
+    const hourDelta = Math.round(delta.y / SLOT_HEIGHT_PX);
+    const newHourIndex = Math.max(0, Math.min(hours.length - 1, origHourIndex + hourDelta));
+    const newHour = hours[newHourIndex];
+
+    // Calculate day offset from horizontal drag delta
+    // Each column = (viewport - 80px sidebar) / colCount
+    const colWidthPx = (window.innerWidth - 80) / colCount;
+    const dayDelta = Math.round(delta.x / colWidthPx);
+    const origDayIndex = activeDays.findIndex(d => d.fullDate === format(origDate, "yyyy-MM-dd"));
+    const newDayIndex = Math.max(0, Math.min(activeDays.length - 1, origDayIndex + dayDelta));
+    const newDay = activeDays[newDayIndex]?.fullDate ?? format(origDate, "yyyy-MM-dd");
+
+    // Don't save if nothing changed
+    if (newHour === format(origDate, "HH:00") && newDay === format(origDate, "yyyy-MM-dd")) return;
 
     try {
-      const startTime = `${day}T${hour}:00`;
+      const startTime = `${newDay}T${newHour}:00`;
       const res = await fetch(`/api/appointments/${active.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ startTime }),
       });
       if (!res.ok) throw new Error();
-      toast.success("Marcação reagendada");
+      toast.success(`Marcação movida para ${newDay} às ${newHour}`);
       refetch();
     } catch {
       toast.error("Erro ao reagendar marcação");
@@ -359,10 +381,6 @@ function CalendarContent() {
       sensors={sensors}
       onDragStart={(e) => setActiveId(e.active.id as string)}
       onDragEnd={handleDragEnd}
-      collisionDetection={pointerWithin}
-      measuring={{
-        droppable: { strategy: MeasuringStrategy.Always },
-      }}
     >
       <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-slate-50/30 dark:bg-slate-950 max-w-[1600px] mx-auto">
         {/* ── Top Bar ─────────────────────────────────────────────────── */}
