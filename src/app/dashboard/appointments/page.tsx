@@ -53,7 +53,7 @@ function DraggableAppointment({ app, hour, config, vetColor, onClick, isOverlay 
   });
 
   if (isDragging && !isOverlay) {
-    return <div ref={setNodeRef} className="opacity-20 h-full w-full rounded-2xl border-2 border-dashed border-blue-500/50 bg-blue-50/50 dark:bg-blue-500/10" />;
+    return <div ref={setNodeRef} className="h-full w-full" style={{ visibility: "hidden" }} />;
   }
 
   return (
