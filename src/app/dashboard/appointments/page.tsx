@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import {
   DndContext, DragOverlay, PointerSensor, useSensor, useSensors,
-  closestCorners, useDraggable, useDroppable,
+  pointerWithin, useDraggable, useDroppable, MeasuringStrategy,
 } from "@dnd-kit/core";
 import { restrictToFirstScrollableAncestor } from "@dnd-kit/modifiers";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -366,7 +366,7 @@ function CalendarContent() {
       onDragStart={(e) => setActiveId(e.active.id as string)}
       onDragEnd={handleDragEnd}
       modifiers={[restrictToFirstScrollableAncestor]}
-      collisionDetection={closestCorners}
+      collisionDetection={pointerWithin}
     >
       <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-slate-50/30 dark:bg-slate-950 max-w-[1600px] mx-auto">
         {/* ── Top Bar ─────────────────────────────────────────────────── */}
