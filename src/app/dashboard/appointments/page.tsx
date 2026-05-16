@@ -101,9 +101,9 @@ function DroppableSlot({ id, children, day, hour, isToday, onAddClick }: any) {
       data-day={day}
       data-hour={hour}
       className={cn(
-        "p-2 border-l border-slate-100 dark:border-white/[0.04] transition-all duration-150 min-h-[110px] flex flex-col gap-1.5 relative group/slot",
+        "p-2 border-l border-slate-100 dark:border-white/[0.04] transition-colors duration-150 h-28 flex flex-col gap-1.5 relative group/slot",
         isToday && "bg-blue-600/[0.015] dark:bg-blue-400/[0.01]",
-        isOver && "bg-blue-600/10 ring-2 ring-inset ring-blue-600/30 z-40 rounded-lg shadow-lg shadow-blue-500/10 dark:shadow-none"
+        isOver && "bg-blue-600/10 ring-2 ring-inset ring-blue-600/30 z-40 rounded-lg"
       )}
     >
       {children}
@@ -363,6 +363,9 @@ function CalendarContent() {
       onDragStart={(e) => setActiveId(e.active.id as string)}
       onDragEnd={handleDragEnd}
       collisionDetection={pointerWithin}
+      measuring={{
+        droppable: { strategy: MeasuringStrategy.Always },
+      }}
     >
       <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-slate-50/30 dark:bg-slate-950 max-w-[1600px] mx-auto">
         {/* ── Top Bar ─────────────────────────────────────────────────── */}
@@ -544,7 +547,7 @@ function CalendarContent() {
                 className="grid border-b border-slate-200/40 dark:border-white/[0.03] group/row"
                 style={{ gridTemplateColumns: `80px repeat(${colCount}, 1fr)` }}
               >
-                <div className="py-12 px-2 text-[10px] font-bold text-slate-400 dark:text-slate-600 text-right pr-6 flex items-start justify-end sticky left-0 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md z-10 border-r border-slate-200/60 dark:border-white/10 group-hover/row:bg-slate-100 dark:group-hover/row:bg-slate-800/80 transition-colors shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] dark:shadow-none">
+                <div className="h-28 px-2 text-[10px] font-bold text-slate-400 dark:text-slate-600 text-right pr-6 flex items-start pt-2 justify-end sticky left-0 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md z-10 border-r border-slate-200/60 dark:border-white/10 group-hover/row:bg-slate-100 dark:group-hover/row:bg-slate-800/80 transition-colors shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] dark:shadow-none">
                   {hour}
                 </div>
                 {activeDays.map(day => {
