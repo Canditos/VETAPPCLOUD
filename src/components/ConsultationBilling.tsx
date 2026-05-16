@@ -217,8 +217,8 @@ export function ConsultationBilling({ onItemsChange }: { onItemsChange: (items: 
                      </div>
                      <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-1">Base: €{subtotal.toFixed(2)} · IVA: €{totalVat.toFixed(2)}</p>
                   </div>
-                  <Badge className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-none px-4 py-1.5 mb-1 font-black text-[10px] uppercase tracking-widest rounded-lg">
-                     Draft Jasmin Pronto
+                   <Badge className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-none px-4 py-1.5 mb-1 font-semibold text-[10px] rounded-lg">
+                     Pronto para Vendus
                   </Badge>
                </div>
             </div>

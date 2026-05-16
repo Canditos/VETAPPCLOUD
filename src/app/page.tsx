@@ -45,8 +45,8 @@ export default function Home() {
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Conectada</span> ao Futuro.
             </h1>
             <p className="text-xl text-slate-500 max-w-2xl font-medium leading-relaxed">
-              Software de gestão veterinária moderno, intuitivo e totalmente integrado. 
-              Da agenda dinâmica à faturação Certificada com Vendus e Jasmin.
+              Software de gestão veterinária moderno, intuitivo e totalmente integrado.
+              Da agenda dinâmica à faturação certificada com Vendus.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <Link href="/dashboard" className="px-10 py-5 bg-blue-600 text-white rounded-2xl font-black text-lg shadow-2xl shadow-blue-200 hover:scale-105 transition-all flex items-center justify-center gap-3">
@@ -91,7 +91,7 @@ export default function Home() {
               <FeatureCard 
                 icon={<ShieldCheck className="text-emerald-600" />}
                 title="Faturação Certificada"
-                description="Integração nativa com Vendus e Jasmin para emissão de faturas no ato médico."
+                description="Integração nativa com Vendus para emissão de faturas no ato médico."
               />
             </div>
           </div>
@@ -106,8 +106,8 @@ export default function Home() {
                 Ligue-se aos seus parceiros habituais. Receba resultados de laboratórios (Fuji) e imagens de RX (Examion) diretamente na ficha do paciente.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Badge label="Jasmin ERP" />
-                <Badge label="Vendus POS" />
+                <Badge label="Vendus" />
+                <Badge label="Jasmin ERP (Legacy)" />
                 <Badge label="Fuji Lab" />
                 <Badge label="Examion RX" />
               </div>
