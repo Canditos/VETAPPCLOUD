@@ -64,6 +64,12 @@ function ConsultationContent() {
     assessment: "",
     plan: ""
   });
+  const [vitals, setVitals] = useState({
+    weight: "",
+    temperature: "",
+    heartRate: "", // mapped from "Respiração" or added field
+    respiratoryRate: ""
+  });
 
   // Sync activeTab with URL if it changes (e.g. from a link)
   useEffect(() => {
@@ -89,6 +95,15 @@ function ConsultationContent() {
       return res.json();
     },
     enabled: !!patientId
+  });
+
+  const { data: veterinarians } = useQuery({
+    queryKey: ["veterinarians"],
+    queryFn: async () => {
+      const res = await fetch("/api/users?role=VETERINARIAN");
+      if (!res.ok) return [];
+      return res.json();
+    }
   });
 
   const handleRequestExam = async (type: "LAB" | "IMAGING", source: string) => {
@@ -124,6 +139,12 @@ function ConsultationContent() {
           patientId,
           appointmentId: appointmentId || "walk-in-" + Date.now(),
           notes,
+          vitals: {
+            weight: vitals.weight ? parseFloat(vitals.weight) : null,
+            temperature: vitals.temperature ? parseFloat(vitals.temperature) : null,
+            heartRate: vitals.heartRate ? parseFloat(vitals.heartRate) : null,
+            respiratoryRate: vitals.respiratoryRate ? parseFloat(vitals.respiratoryRate) : null,
+          },
           items: billingItems,
           billNow: true
         }),
@@ -242,14 +263,19 @@ function ConsultationContent() {
               </p>
               <div className="hidden sm:flex items-center gap-3 pl-6 border-l border-slate-100 dark:border-white/5">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Responsável:</span>
-                <Select defaultValue="vet-1">
+                <Select defaultValue={veterinarians?.[0]?.id}>
                   <SelectTrigger className="h-10 min-w-[160px] border-none bg-slate-50 dark:bg-white/5 rounded-xl text-[11px] font-black uppercase tracking-widest px-4 focus:ring-2 focus:ring-blue-500/20">
-                    <SelectValue />
+                    <SelectValue placeholder="Selecione Veterinário" />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl border-none shadow-2xl">
-                    <SelectItem value="vet-1">Dr. Marco (Clinical Lead)</SelectItem>
-                    <SelectItem value="vet-2">Dra. Ana (Cirurgia)</SelectItem>
-                    <SelectItem value="vet-3">Dr. João (Geral)</SelectItem>
+                    {veterinarians?.map((v: any) => (
+                      <SelectItem key={v.id} value={v.id}>
+                        {v.name}
+                      </SelectItem>
+                    ))}
+                    {(!veterinarians || veterinarians.length === 0) && (
+                      <SelectItem value="vet-1">Dr. Marco (Admin)</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -306,10 +332,10 @@ function ConsultationContent() {
                   {/* High Precision Vitals Input */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-slate-50 dark:bg-slate-800/40 rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-inner">
                     {[
-                      { label: "Peso Corporal", icon: Weight, unit: "kg", color: "text-blue-500", placeholder: "12.45" },
-                      { label: "Temp. Rectal", icon: Thermometer, unit: "ºC", color: "text-orange-500", placeholder: "38.6" },
-                      { label: "TRC (S)", icon: Clock, unit: "seg", color: "text-purple-500", placeholder: "2" },
-                      { label: "Respiração", icon: Activity, unit: "mpm", color: "text-rose-500", placeholder: "24" }
+                      { label: "Peso Corporal", icon: Weight, unit: "kg", color: "text-blue-500", placeholder: "12.45", key: "weight" },
+                      { label: "Temp. Rectal", icon: Thermometer, unit: "ºC", color: "text-orange-500", placeholder: "38.6", key: "temperature" },
+                      { label: "Batimento (FC)", icon: Clock, unit: "bpm", color: "text-purple-500", placeholder: "100", key: "heartRate" },
+                      { label: "Respiração", icon: Activity, unit: "mpm", color: "text-rose-500", placeholder: "24", key: "respiratoryRate" }
                     ].map((vital, i) => (
                       <div key={i} className="flex flex-col gap-2 p-4 bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-100 dark:ring-white/5 transition-all hover:ring-blue-500/30">
                         <div className="flex items-center gap-2">
@@ -317,7 +343,14 @@ function ConsultationContent() {
                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{vital.label}</span>
                         </div>
                         <div className="flex items-baseline gap-2 mt-1">
-                           <input type="number" step="0.1" className="w-full bg-transparent border-none p-0 focus:ring-0 font-black text-2xl text-slate-900 dark:text-white placeholder:opacity-20" placeholder={vital.placeholder} />
+                           <input 
+                             type="number" 
+                             step="0.1" 
+                             className="w-full bg-transparent border-none p-0 focus:ring-0 font-black text-2xl text-slate-900 dark:text-white placeholder:opacity-20" 
+                             placeholder={vital.placeholder}
+                             value={(vitals as any)[vital.key]}
+                             onChange={(e) => setVitals({ ...vitals, [vital.key]: e.target.value })}
+                           />
                            <span className="text-xs font-bold text-slate-400 uppercase">{vital.unit}</span>
                         </div>
                       </div>
@@ -353,7 +386,24 @@ function ConsultationContent() {
                       />
                     </div>
                     <div className="space-y-4">
-                      <Label className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] ml-4 font-bold">P: Plan (Plano de Tratamento)</Label>
+                      <div className="flex items-center justify-between ml-4">
+                        <Label className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] font-bold">P: Plan (Plano de Tratamento)</Label>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-7 text-[9px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 gap-2"
+                          onClick={() => {
+                            if (!notes.plan) {
+                              toast.error("Escreva o plano primeiro!");
+                              return;
+                            }
+                            updateTab("prescriptions");
+                            toast.success("Plano transferido para Prescrições!");
+                          }}
+                        >
+                          <Sparkles size={12} strokeWidth={3} /> Gerar Prescrição
+                        </Button>
+                      </div>
                       <textarea 
                         className="w-full min-h-[160px] p-6 rounded-[2.5rem] border-none bg-blue-50/30 dark:bg-blue-900/10 focus:ring-2 focus:ring-blue-500/20 focus:bg-white dark:focus:bg-slate-800 transition-all text-sm outline-none font-black dark:text-white shadow-inner ring-1 ring-blue-100 dark:ring-blue-900/20"
                         value={notes.plan}

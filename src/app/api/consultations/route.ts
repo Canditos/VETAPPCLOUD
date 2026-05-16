@@ -16,6 +16,12 @@ const ConsultationSchema = z.object({
     assessment: z.string().optional(),
     plan: z.string().optional(),
   }),
+  vitals: z.object({
+    weight: z.number().optional().nullable(),
+    temperature: z.number().optional().nullable(),
+    heartRate: z.number().optional().nullable(),
+    respiratoryRate: z.number().optional().nullable(),
+  }).optional(),
   items: z.array(z.object({
     id: z.string().optional(),
     name: z.string(),
@@ -54,6 +60,7 @@ export async function POST(req: Request) {
     patientId, 
     appointmentId, 
     notes, 
+    vitals,
     items, 
     billNow 
   } = validation.data;
@@ -76,6 +83,22 @@ export async function POST(req: Request) {
         }
       },
     });
+
+    // 1.1. Create Vital Signs if provided
+    if (vitals && (vitals.weight || vitals.temperature || vitals.heartRate || vitals.respiratoryRate)) {
+      await tenantPrisma.vitalSigns.create({
+        data: {
+          patientId,
+          clinicId,
+          weight: vitals.weight,
+          temperature: vitals.temperature,
+          heartRate: vitals.heartRate,
+          respiratoryRate: vitals.respiratoryRate,
+          date: new Date(),
+          veterinarianId: (session.user as any).id,
+        }
+      });
+    }
 
     // 2. Handle Billing (Jasmin or Vendus Integration)
     let externalInvoiceId = null;
