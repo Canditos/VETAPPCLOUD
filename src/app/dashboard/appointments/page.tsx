@@ -92,17 +92,23 @@ function DraggableAppointment({ app, hour, config, vetColor, onClick, isOverlay 
 }
 
 // ── Droppable time slot ─────────────────────────────────────────────────────
-function DroppableSlot({ id, children, day, hour, isToday, onAddClick }: any) {
-  const { setNodeRef, isOver } = useDroppable({ id, data: { day, hour } });
+function DroppableSlot({ id, children, day, hour, isToday, onAddClick, isHighlighted }: any) {
+  const { setNodeRef } = useDroppable({ id, data: { day, hour } });
   return (
     <div
       ref={setNodeRef}
       className={cn(
-        "p-2 border-l border-slate-100 dark:border-white/[0.04] transition-all duration-300 min-h-[110px] flex flex-col gap-1.5 relative group/slot",
+        "p-2 border-l border-slate-100 dark:border-white/[0.04] transition-all duration-150 min-h-[110px] flex flex-col gap-1.5 relative group/slot",
         isToday && "bg-blue-600/[0.015] dark:bg-blue-400/[0.01]",
-        isOver && "bg-blue-600/10 ring-2 ring-inset ring-blue-600/30 z-40 scale-[1.01] rounded-lg shadow-lg shadow-blue-500/10 dark:shadow-none"
+        isHighlighted && "bg-blue-600/10 ring-2 ring-inset ring-blue-500/40 z-40 rounded-lg"
       )}
     >
+      {/* Drop target indicator shown when dragging over this slot */}
+      {isHighlighted && (
+        <div className="absolute inset-1 rounded-lg border-2 border-dashed border-blue-500/50 pointer-events-none z-10 flex items-center justify-center">
+          <span className="text-[9px] font-bold text-blue-500/70 tracking-widest bg-blue-50/80 dark:bg-blue-950/80 px-2 py-0.5 rounded-full">{hour}</span>
+        </div>
+      )}
       {children}
       <button
         onClick={() => onAddClick?.({ day, hour })}
@@ -128,6 +134,7 @@ function CalendarContent() {
   const [view, setView] = useState<"week" | "day">("week");
   const [selectedApp, setSelectedApp] = useState<any>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [hoverSlotKey, setHoverSlotKey] = useState<string | null>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isApprovalOpen, setIsApprovalOpen] = useState(false);
   const [pendingRequest, setPendingRequest] = useState<any>(null);
@@ -329,45 +336,66 @@ function CalendarContent() {
 
   const SLOT_HEIGHT_PX = 112; // h-28 = 7rem = 112px
 
-  const handleDragEnd = async (event: any) => {
-    const { active, delta } = event;
-    setActiveId(null);
-
-    // Get original appointment data
+  /** Calculates target {day, hour} from drag delta — pure math, no collision detection */
+  const calcTargetSlot = useCallback((active: any, delta: { x: number; y: number }) => {
     const app = active.data.current?.app;
-    if (!app?.startTime) return;
-
+    if (!app?.startTime) return null;
     const origDate = new Date(app.startTime);
     const origHourIndex = hours.indexOf(format(origDate, "HH:00"));
-    if (origHourIndex === -1) return;
-
-    // Calculate hour offset from vertical drag delta
+    if (origHourIndex === -1) return null;
     const hourDelta = Math.round(delta.y / SLOT_HEIGHT_PX);
     const newHourIndex = Math.max(0, Math.min(hours.length - 1, origHourIndex + hourDelta));
     const newHour = hours[newHourIndex];
-
-    // Calculate day offset from horizontal drag delta
-    // Each column = (viewport - 80px sidebar) / colCount
     const colWidthPx = (window.innerWidth - 80) / colCount;
     const dayDelta = Math.round(delta.x / colWidthPx);
     const origDayIndex = activeDays.findIndex(d => d.fullDate === format(origDate, "yyyy-MM-dd"));
     const newDayIndex = Math.max(0, Math.min(activeDays.length - 1, origDayIndex + dayDelta));
     const newDay = activeDays[newDayIndex]?.fullDate ?? format(origDate, "yyyy-MM-dd");
+    return { day: newDay, hour: newHour };
+  }, [activeDays, colCount]);
+
+  /** Real-time hover highlight during drag */
+  const handleDragMove = useCallback((event: any) => {
+    const slot = calcTargetSlot(event.active, event.delta);
+    setHoverSlotKey(slot ? `${slot.day}-${slot.hour}` : null);
+  }, [calcTargetSlot]);
+
+  const handleDragEnd = async (event: any) => {
+    const { active, delta } = event;
+    setActiveId(null);
+    setHoverSlotKey(null);
+
+    const slot = calcTargetSlot(active, delta);
+    if (!slot) return;
+    const { day: newDay, hour: newHour } = slot;
+
+    const app = active.data.current?.app;
+    if (!app?.startTime) return;
+    const origDate = new Date(app.startTime);
 
     // Don't save if nothing changed
     if (newHour === format(origDate, "HH:00") && newDay === format(origDate, "yyyy-MM-dd")) return;
 
+    // Optimistic update — move card in local cache immediately
+    const newStartTime = `${newDay}T${newHour}:00`;
+    queryClient.setQueryData(
+      ["appointments", weekDays[0]?.fullDate, selectedVet],
+      (old: any[]) => old?.map(a =>
+        a.id === active.id ? { ...a, startTime: newStartTime } : a
+      ) ?? []
+    );
+
     try {
-      const startTime = `${newDay}T${newHour}:00`;
       const res = await fetch(`/api/appointments/${active.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ startTime }),
+        body: JSON.stringify({ startTime: newStartTime }),
       });
       if (!res.ok) throw new Error();
-      toast.success(`Marcação movida para ${newDay} às ${newHour}`);
-      refetch();
+      toast.success(`Movido para ${newHour} — ${format(new Date(newDay), "EEE d MMM", { locale: pt })}`);
     } catch {
+      // Revert on error
+      refetch();
       toast.error("Erro ao reagendar marcação");
     }
   };
@@ -379,8 +407,10 @@ function CalendarContent() {
   return (
     <DndContext
       sensors={sensors}
-      onDragStart={(e) => setActiveId(e.active.id as string)}
+      onDragStart={(e) => { setActiveId(e.active.id as string); setHoverSlotKey(null); }}
+      onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
+      onDragCancel={() => { setActiveId(null); setHoverSlotKey(null); }}
     >
       <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-slate-50/30 dark:bg-slate-950 max-w-[1600px] mx-auto">
         {/* ── Top Bar ─────────────────────────────────────────────────── */}
@@ -574,6 +604,7 @@ function CalendarContent() {
                       day={day.fullDate}
                       hour={hour}
                       isToday={day.isToday}
+                      isHighlighted={hoverSlotKey === `${day.fullDate}-${hour}`}
                       onAddClick={(slot: any) => { setNewSlot(slot); setIsAddOpen(true); }}
                     >
                       {apps?.map((app: any) => (
