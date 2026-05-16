@@ -720,7 +720,7 @@ function CalendarContent() {
                         <SelectValue placeholder="Escolher..." />
                       </SelectTrigger>
                       <SelectContent className="rounded-2xl bg-slate-900 border-white/10 text-white p-2">
-                        {hours.map(h => <SelectItem key={h} value={h} className="rounded-xl focus:bg-blue-600 p-3 font-bold">{h}</SelectItem>)}
+                        {halfHours.map(h => <SelectItem key={h} value={h} className="rounded-xl focus:bg-blue-600 p-3 font-bold">{h}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
