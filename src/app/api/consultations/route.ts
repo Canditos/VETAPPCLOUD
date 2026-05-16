@@ -2,9 +2,30 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { z } from "zod";
 import prisma, { getTenantClient } from "@/lib/prisma";
 import { JasminService } from "@/lib/jasmin-service";
 import { VendusService } from "@/lib/vendus-service";
+
+const ConsultationSchema = z.object({
+  patientId: z.string().min(1, "ID do paciente é obrigatório"),
+  appointmentId: z.string().optional(),
+  notes: z.object({
+    subjective: z.string().optional(),
+    objective: z.string().optional(),
+    assessment: z.string().optional(),
+    plan: z.string().optional(),
+  }),
+  items: z.array(z.object({
+    id: z.string().optional(),
+    name: z.string(),
+    quantity: z.number().positive(),
+    price: z.number().nonnegative(),
+    vatRate: z.number().nonnegative(),
+  })).optional(),
+  billNow: z.boolean().optional(),
+  paymentMethod: z.string().optional(),
+});
 
 export async function POST(req: Request) {
   if (process.env.NEXT_PHASE === 'phase-production-build') {
@@ -20,13 +41,22 @@ export async function POST(req: Request) {
   const tenantPrisma = getTenantClient(clinicId);
   const body = await req.json();
 
+  // Validate request body
+  const validation = ConsultationSchema.safeParse(body);
+  if (!validation.success) {
+    return NextResponse.json({ 
+      error: "Dados inválidos", 
+      details: validation.error.format() 
+    }, { status: 400 });
+  }
+
   const { 
     patientId, 
     appointmentId, 
     notes, 
     items, 
     billNow 
-  } = body;
+  } = validation.data;
 
   try {
     // 1. Create Consultation in DB

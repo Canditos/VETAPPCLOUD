@@ -1,26 +1,36 @@
-import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { Prisma } from "@prisma/client";
 
+const RegisterSchema = z.object({
+  clinic: z.object({
+    name: z.string().min(3, "Nome da clínica deve ter pelo menos 3 caracteres"),
+    vatNumber: z.string().optional(),
+    phone: z.string().optional(),
+    email: z.string().email("Email da clínica inválido").optional().or(z.literal('')),
+  }),
+  admin: z.object({
+    name: z.string().min(2, "Nome do administrador deve ter pelo menos 2 caracteres"),
+    email: z.string().email("Email do administrador inválido"),
+    password: z.string().min(6, "A password deve ter pelo menos 6 caracteres"),
+  }),
+});
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { clinic, admin } = body;
 
-    if (!clinic?.name || !admin?.name || !admin?.email || !admin?.password) {
-      return NextResponse.json(
-        { error: "Campos obrigatórios em falta" },
-        { status: 400 }
-      );
+    // Validate request body
+    const validation = RegisterSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json({ 
+        error: "Dados inválidos", 
+        details: validation.error.format() 
+      }, { status: 400 });
     }
 
-    if (admin.password.length < 6) {
-      return NextResponse.json(
-        { error: "A password deve ter pelo menos 6 caracteres" },
-        { status: 400 }
-      );
-    }
+    const { clinic, admin } = validation.data;
 
     const existingUser = await prisma.user.findUnique({
       where: { email: admin.email },

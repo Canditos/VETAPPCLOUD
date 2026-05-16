@@ -9,7 +9,7 @@ import {
   Activity, Shield, Clock, CheckCircle2, Dog, Cat, X,
   Stethoscope, Pill, Bell, Home, User, Star, LogOut,
   Sun, Cloud, CloudRain, CloudLightning, ThermometerSun,
-  MessageSquare, Send
+  MessageSquare, Send, CreditCard, Download
 } from "lucide-react";
 import { format, isPast, differenceInDays, differenceInYears, formatDistanceToNow } from "date-fns";
 import { pt } from "date-fns/locale";
@@ -307,7 +307,7 @@ function WeatherWidget() {
 // ── Main portal page ──────────────────────────────────────────────────────────
 export default function PortalPage() {
   const router = useRouter();
-  const [tab, setTab] = useState<"home" | "animals" | "agenda" | "clinic" | "messages">("home");
+  const [tab, setTab] = useState<"home" | "animals" | "agenda" | "clinic" | "messages" | "financial">("home");
   const [showRequest, setShowRequest] = useState(false);
 
   const { data, isLoading, isError } = useQuery({
@@ -369,6 +369,7 @@ export default function PortalPage() {
     { id: "animals", label: "Animais",  icon: PawPrint },
     { id: "agenda",  label: "Agenda",   icon: Calendar },
     { id: "messages", label: "Mensagens", icon: MessageSquare },
+    { id: "financial", label: "Financeiro", icon: CreditCard },
     { id: "clinic",  label: "Clínica",  icon: MapPin },
   ] as const;
 
@@ -710,6 +711,20 @@ export default function PortalPage() {
                 </div>
               </div>
             )}
+            
+            {/* FINANCIAL VIEW */}
+            {tab === "financial" && (
+              <div className="space-y-8 max-w-6xl animate-in fade-in duration-500">
+                <header>
+                  <h1 className="text-4xl font-black text-white tracking-tight">O Seu Financeiro</h1>
+                  <p className="text-slate-400 font-medium">Consulte o seu saldo e histórico de faturas.</p>
+                </header>
+
+                <div className="grid grid-cols-1 gap-8">
+                  <PortalFinancialView />
+                </div>
+              </div>
+            )}
 
           </div>
         </div>
@@ -927,6 +942,119 @@ function PortalMessagesView({ clinic, owner }: { clinic: any; owner: any }) {
             </div>
           )}
        </div>
+    </div>
+  );
+}
+
+// ── Portal Financial View ────────────────────────────────────────────────────
+function PortalFinancialView() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["portal-financial"],
+    queryFn: async () => {
+      const res = await fetch("/api/portal/invoices");
+      if (!res.ok) throw new Error("Falha ao carregar dados financeiros");
+      return res.json();
+    }
+  });
+
+  if (isLoading) return (
+    <div className="p-20 text-center space-y-4">
+      <div className="w-12 h-12 rounded-2xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center mx-auto animate-bounce">
+        <CreditCard size={24} />
+      </div>
+      <p className="text-slate-500 font-black animate-pulse">A carregar dados financeiros...</p>
+    </div>
+  );
+
+  const { invoices = [], stats } = data || {};
+
+  return (
+    <div className="space-y-8">
+      {/* Financial Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="p-8 rounded-[2.5rem] bg-gradient-to-br from-emerald-600 to-teal-700 shadow-xl shadow-emerald-900/20 relative overflow-hidden group">
+          <div className="absolute top-[-20%] right-[-10%] w-40 h-40 bg-white/10 rounded-full blur-3xl" />
+          <div className="relative z-10">
+            <p className="text-emerald-100 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Total Liquidado</p>
+            <p className="text-5xl font-black text-white tracking-tighter">€{(stats?.totalInvoiced - stats?.outstandingBalance || 0).toFixed(2)}</p>
+            <p className="text-emerald-200/60 text-xs mt-2 font-medium">Pagamentos efetuados com sucesso</p>
+          </div>
+        </div>
+
+        <div className={cn(
+          "p-8 rounded-[2.5rem] border relative overflow-hidden transition-all duration-500",
+          stats?.outstandingBalance > 0 
+            ? "bg-red-500/10 border-red-500/20 shadow-xl shadow-red-900/20" 
+            : "bg-white/5 border-white/10"
+        )}>
+          <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Saldo em Aberto</p>
+          <p className={cn(
+            "text-5xl font-black tracking-tighter",
+            stats?.outstandingBalance > 0 ? "text-red-400" : "text-white"
+          )}>
+            €{(stats?.outstandingBalance || 0).toFixed(2)}
+          </p>
+          <p className="text-slate-500 text-xs mt-2 font-medium">
+            {stats?.outstandingBalance > 0 ? "Pendente de pagamento na clínica" : "Conta totalmente liquidada"}
+          </p>
+        </div>
+      </div>
+
+      {/* Invoice List */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-2 px-2">
+           <FileText size={16} className="text-blue-400" />
+           <h2 className="text-xs font-black uppercase tracking-widest text-slate-500">Histórico de Documentos</h2>
+        </div>
+        
+        <div className="space-y-3">
+          {invoices.length === 0 ? (
+             <div className="flex flex-col items-center justify-center py-20 px-8 text-center border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-[2.5rem] bg-slate-50/30 dark:bg-transparent">
+                <FileText size={48} className="text-slate-800 mb-4" strokeWidth={1} />
+                <p className="text-slate-400 font-bold">Ainda não existem faturas registadas.</p>
+             </div>
+          ) : (
+            invoices.map((inv: any) => (
+              <div key={inv.id} className="bg-white/5 border border-white/10 rounded-[2rem] p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-white/10 transition-all group">
+                <div className="flex items-center gap-4">
+                  <div className={cn(
+                    "w-12 h-12 rounded-xl flex items-center justify-center",
+                    inv.status === "PAID" ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"
+                  )}>
+                    <FileText size={24} />
+                  </div>
+                  <div>
+                    <p className="text-white font-black text-lg">{inv.jasminInvoiceId || `FT #${inv.id.slice(-6).toUpperCase()}`}</p>
+                    <p className="text-slate-500 text-xs font-bold uppercase">{fmt(inv.createdAt)} · {inv.status === "PAID" ? "Pago" : "Pendente"}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between md:justify-end gap-8">
+                  <div className="text-right">
+                    <p className="text-2xl font-black text-white tracking-tight">€{(Number(inv.total) || 0).toFixed(2)}</p>
+                    <p className="text-slate-600 text-[10px] font-bold uppercase tracking-widest">{inv.paymentMethod || "TPA / Dinheiro"}</p>
+                  </div>
+                  <Button variant="outline" className="rounded-xl h-12 w-12 border-white/10 bg-white/5 hover:bg-blue-600 hover:border-blue-600 transition-all group/btn" 
+                    onClick={() => toast.info("Download de PDF em desenvolvimento")}>
+                    <Download size={20} className="text-slate-400 group-hover/btn:text-white" />
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+
+      {/* Info Box */}
+      <div className="p-6 rounded-[2rem] bg-blue-600/10 border border-blue-500/20 flex gap-4 items-start">
+        <Activity size={20} className="text-blue-400 shrink-0 mt-1" />
+        <div className="space-y-1">
+          <p className="text-white font-black text-sm">Pagamentos na Clínica</p>
+          <p className="text-slate-400 text-xs leading-relaxed">
+            As faturas apresentadas refletem os serviços prestados. Os pagamentos devem ser efetuados presencialmente na clínica via TPA (Multibanco) ou Numerário. Assim que o pagamento for processado, o portal será atualizado automaticamente.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

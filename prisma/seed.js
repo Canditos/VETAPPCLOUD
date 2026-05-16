@@ -8,27 +8,44 @@ async function main() {
   console.log("Starting production-grade seed...");
 
   // 1. Create Clinic
+  const CLINIC_NAME = process.env.CLINIC_NAME || "Hospital Veterinário Gato Escondido";
+  const CLINIC_ADDRESS = process.env.CLINIC_ADDRESS || "Avenida da Liberdade 123, Palmela";
+  const CLINIC_VAT = process.env.CLINIC_VAT || "500987654";
+  const CLINIC_PHONE = process.env.CLINIC_PHONE || "210 000 000";
+  const CLINIC_EMAIL = process.env.CLINIC_EMAIL || "geral@gatoescondido.pt";
+
   const clinic = await prisma.clinic.upsert({
     where: { id: 'c1-demo-clinic' },
-    update: {},
+    update: {
+      name: CLINIC_NAME,
+      address: CLINIC_ADDRESS,
+      vatNumber: CLINIC_VAT,
+      phone: CLINIC_PHONE,
+      email: CLINIC_EMAIL,
+    },
     create: {
       id: 'c1-demo-clinic',
-      name: "Hospital Veterinário Gato Escondido",
-      address: "Avenida da Liberdade 123, Palmela",
-      vatNumber: "500987654",
-      phone: "210 000 000",
-      email: "geral@gatoescondido.pt",
+      name: CLINIC_NAME,
+      address: CLINIC_ADDRESS,
+      vatNumber: CLINIC_VAT,
+      phone: CLINIC_PHONE,
+      email: CLINIC_EMAIL,
     },
   });
 
   // 2. Create Users
+  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "marco@clinicavet.pt";
+  const ADMIN_NAME = process.env.ADMIN_NAME || "Dr. Marco António";
   const passwordHash = await bcrypt.hash("admin123", 10);
+  
   const admin = await prisma.user.upsert({
-    where: { email: "marco@clinicavet.pt" },
-    update: {},
+    where: { email: ADMIN_EMAIL },
+    update: {
+      name: ADMIN_NAME,
+    },
     create: {
-      name: "Dr. Marco António",
-      email: "marco@clinicavet.pt",
+      name: ADMIN_NAME,
+      email: ADMIN_EMAIL,
       passwordHash,
       role: "ADMIN",
       clinicId: clinic.id,
