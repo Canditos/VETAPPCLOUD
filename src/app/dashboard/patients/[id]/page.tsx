@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -19,15 +19,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { VaccinationForm } from "@/components/forms/VaccinationForm";
 import { VitalSignsForm } from "@/components/forms/VitalSignsForm";
 import { PrescriptionForm } from "@/components/forms/PrescriptionForm";
-import { format, isPast, differenceInDays } from "date-fns";
+import { format, isPast, differenceInDays, differenceInYears, differenceInMonths } from "date-fns";
 import { pt } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { useClinicalSummary } from "@/hooks/useClinicalSummary";
+import { PremiumCard } from "@/components/PremiumCard";
+import type { Vaccination, VitalSign, Prescription } from "@/types";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 const fmt = (d: string | Date) => format(new Date(d), "dd MMM yyyy", { locale: pt });
 const fmtFull = (d: string | Date) => format(new Date(d), "dd 'de' MMMM 'de' yyyy", { locale: pt });
 
-function EmptyState({ icon: Icon, text }: { icon: any; text: string }) {
+function EmptyState({ icon: Icon, text }: { icon: React.ComponentType<{ size?: number; strokeWidth?: number }>; text: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-14 text-slate-400 gap-3">
       <Icon size={36} strokeWidth={1.2} />
@@ -46,7 +49,15 @@ function VaccineStatusBadge({ expiresAt }: { expiresAt: string | null }) {
 }
 
 // ── Timeline Component ──
-function ClinicalTimeline({ events }: { events: any[] }) {
+interface TimelineEvent {
+  type: "CONSULTATION" | "VACCINE" | "EXAM" | string;
+  date: string | Date;
+  title: string;
+  description: string;
+  doctor?: string;
+}
+
+function ClinicalTimeline({ events }: { events: TimelineEvent[] }) {
   if (events.length === 0) return <EmptyState icon={Clock} text="Ainda não existem eventos no histórico clínico." />;
 
   return (
@@ -76,6 +87,106 @@ function ClinicalTimeline({ events }: { events: any[] }) {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+// ── Clinical Summary Banner Component ─────────────────────────────────────
+function ClinicalSummaryBanner({ patientId }: { patientId: string }) {
+  const { data: summary, isLoading } = useClinicalSummary(patientId);
+
+  if (isLoading) {
+    return (
+      <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl p-8 shadow-xl shadow-blue-500/10 animate-pulse">
+        <div className="h-24 bg-white/10 rounded-2xl" />
+      </div>
+    );
+  }
+
+  if (!summary) return null;
+
+  const hasAlerts = summary.safetyAlerts.length > 0 || summary.vaccines.expired.length > 0 || summary.deworming.overdue;
+
+  return (
+    <div className={`relative overflow-hidden rounded-3xl p-8 shadow-xl shadow-blue-500/10 group ${
+      hasAlerts ? "bg-gradient-to-r from-rose-600 to-orange-600" : "bg-gradient-to-r from-blue-600 to-indigo-700"
+    }`}>
+      <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-32 translate-x-32 group-hover:bg-white/20 transition-all duration-700" />
+      <div className="relative z-10 flex flex-col lg:flex-row lg:items-start justify-between gap-8">
+        <div className="space-y-4 max-w-2xl">
+          <div className="flex items-center gap-3">
+            <div className="bg-white/20 p-2 rounded-xl text-white"><Sparkles size={18} /></div>
+            <h3 className="text-lg font-bold text-white">Resumo Clínico</h3>
+            <span className="text-[10px] font-medium text-white/70 bg-white/10 px-2 py-0.5 rounded-full">
+              Local — 100% privado
+            </span>
+          </div>
+
+          <p className="text-blue-50 text-base font-medium leading-relaxed">
+            {summary.patientName} é um {summary.species.toLowerCase()} {summary.gender.toLowerCase()} de {summary.breed}, {summary.ageText}.
+            {summary.lastConsultation
+              ? ` Última consulta há ${summary.lastConsultation.daysAgo} dias com ${summary.lastConsultation.veterinarian}.`
+              : " Sem consultas registadas."}
+          </p>
+
+          {/* Safety Alerts */}
+          {summary.safetyAlerts.length > 0 && (
+            <div className="space-y-1">
+              {summary.safetyAlerts.map((alert, i) => (
+                <div key={i} className="flex items-center gap-2 text-rose-100 text-sm font-semibold">
+                  <AlertCircle size={14} /> {alert}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Vaccine Status */}
+          {summary.vaccines.expired.length > 0 && (
+            <p className="text-amber-100 text-sm font-semibold">
+              ⚠️ {summary.vaccines.expired.length} vacina(s) expirada(s): {summary.vaccines.expired.join(", ")}
+            </p>
+          )}
+          {summary.vaccines.upcoming.length > 0 && (
+            <p className="text-blue-100 text-sm">
+              📅 {summary.vaccines.upcoming.map(v => `${v.name} (em ${v.daysLeft}d)`).join(", ")}
+            </p>
+          )}
+
+          {/* Recommendations */}
+          {summary.recommendations.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-1">
+              {summary.recommendations.map((rec, i) => (
+                <span key={i} className="text-xs font-medium text-white bg-white/20 px-3 py-1 rounded-full">
+                  💡 {rec}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-wrap gap-4">
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 min-w-[100px]">
+            <p className="text-[10px] font-semibold text-blue-200 mb-1">Peso</p>
+            <p className="text-2xl font-bold text-white">{summary.weight ?? "—"}</p>
+            {summary.weightTrend && (
+              <p className={`text-xs font-medium mt-1 ${summary.weightTrend.startsWith("+") ? "text-rose-200" : "text-emerald-200"}`}>
+                {summary.weightTrend}
+              </p>
+            )}
+          </div>
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 min-w-[100px]">
+            <p className="text-[10px] font-semibold text-blue-200 mb-1">Idade</p>
+            <p className="text-2xl font-bold text-white">{summary.ageText}</p>
+          </div>
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 min-w-[100px]">
+            <p className="text-[10px] font-semibold text-blue-200 mb-1">Vacinas</p>
+            <p className="text-2xl font-bold text-white">{summary.vaccines.total}</p>
+            {summary.vaccines.expired.length > 0 && (
+              <p className="text-xs text-rose-200 mt-1">{summary.vaccines.expired.length} exp.</p>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -197,35 +308,8 @@ export default function PatientDetailPage() {
         </div>
       </div>
 
-      {/* ── AI Summary Banner ── */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-700 rounded-[2.5rem] p-8 shadow-xl shadow-blue-500/10 group">
-         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-32 translate-x-32 group-hover:bg-white/20 transition-all duration-700" />
-         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-            <div className="space-y-4 max-w-2xl">
-               <div className="flex items-center gap-3">
-                  <div className="bg-white/20 p-2 rounded-xl text-white"><Sparkles size={18} /></div>
-                  <h3 className="text-lg font-black text-white uppercase tracking-widest">Sumário Inteligente (IA)</h3>
-               </div>
-               <p className="text-blue-50 text-lg font-medium leading-relaxed">
-                  {patient.name} é um {patient.species} {patient.gender === "M" ? "macho" : "fêmea"} de {patient.breed || "raça indeterminada"}. 
-                  A última consulta foi em {history[0]?.date ? fmt(history[0].date) : "data desconhecida"}. 
-                  {vaccinations.some((v: any) => isPast(new Date(v.expiresAt))) ? " ⚠️ Atenção: Existem vacinas fora de validade." : " ✅ Plano de vacinação em dia."}
-               </p>
-            </div>
-            <div className="flex gap-4">
-               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
-                  <p className="text-[10px] font-black text-blue-200 uppercase tracking-widest mb-1">Último Peso</p>
-                  <p className="text-2xl font-black text-white tracking-tighter">{patient.weight || "—"} kg</p>
-               </div>
-               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
-                  <p className="text-[10px] font-black text-blue-200 uppercase tracking-widest mb-1">Idade Est.</p>
-                  <p className="text-2xl font-black text-white tracking-tighter">
-                     {patient.birthDate ? `${differenceInDays(new Date(), new Date(patient.birthDate)) / 365}`.split(".")[0] + " anos" : "—"}
-                  </p>
-               </div>
-            </div>
-         </div>
-      </div>
+      {/* ── Clinical Summary Banner ── */}
+      <ClinicalSummaryBanner patientId={patientId} />
 
       {/* ── Main Layout ── */}
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
@@ -319,7 +403,7 @@ export default function PatientDetailPage() {
                     </Button>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {vaccinations.map((v: any) => (
+                    {vaccinations.map((v: Vaccination) => (
                       <div key={v.id} className="group flex items-center justify-between p-6 rounded-[2rem] bg-white dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-900 transition-all shadow-sm">
                         <div className="flex items-center gap-5">
                           <div className="w-16 h-16 rounded-2xl bg-blue-100/50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform"><Shield size={24} /></div>
@@ -349,7 +433,7 @@ export default function PatientDetailPage() {
                     </Button>
                   </div>
                   <div className="space-y-4">
-                    {vitals.map((v: any) => (
+                    {vitals.map((v: VitalSign) => (
                       <div key={v.id} className="p-8 rounded-[2.5rem] bg-white dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-6 shadow-sm">
                          <div className="flex flex-wrap gap-10">
                             <div className="space-y-1">
@@ -369,7 +453,7 @@ export default function PatientDetailPage() {
 
                 {/* ── RECEITUÁRIO ── */}
                 <TabsContent value="prescriptions" className="m-0 space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-                  {prescriptions.map((rx: any) => (
+                  {prescriptions.map((rx: Prescription) => (
                     <div key={rx.id} className="p-8 rounded-[2.5rem] bg-white dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
                        <div className="flex justify-between items-start">
                           <div className="flex items-center gap-4">
