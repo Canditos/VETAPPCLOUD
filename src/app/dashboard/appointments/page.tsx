@@ -52,15 +52,16 @@ const getTypeConfig = (type: string) => {
 function layoutAppointments(appointments: any[]) {
   if (!appointments || appointments.length === 0) return [];
 
-  // Sort: earlier start time first; if same, longer duration first
-  const sorted = [...appointments].sort((a, b) => {
-    const aStart = new Date(a.startTime).getTime();
-    const bStart = new Date(b.startTime).getTime();
-    if (aStart !== bStart) return aStart - bStart;
-    
-    const aEnd = a.endTime ? new Date(a.endTime).getTime() : aStart + 30 * 60000;
-    const bEnd = b.endTime ? new Date(b.endTime).getTime() : bStart + 30 * 60000;
-    return bEnd - aEnd;
+  // Clone and project appointments into visual day-minutes
+  const sorted = appointments.map(app => {
+    const start = new Date(app.startTime);
+    const end = app.endTime ? new Date(app.endTime) : new Date(start.getTime() + 30 * 60000);
+    const startMin = start.getHours() * 60 + start.getMinutes();
+    const endMin = end.getHours() * 60 + end.getMinutes();
+    return { ...app, startMin, endMin };
+  }).sort((a, b) => {
+    if (a.startMin !== b.startMin) return a.startMin - b.startMin;
+    return (b.endMin - b.startMin) - (a.endMin - a.startMin);
   });
 
   const clusters: any[][] = [];
@@ -68,19 +69,16 @@ function layoutAppointments(appointments: any[]) {
   let maxEnd = 0;
 
   for (const app of sorted) {
-    const start = new Date(app.startTime).getTime();
-    const end = app.endTime ? new Date(app.endTime).getTime() : start + 30 * 60000;
-
     if (currentCluster.length === 0) {
       currentCluster.push(app);
-      maxEnd = end;
-    } else if (start < maxEnd) {
+      maxEnd = app.endMin;
+    } else if (app.startMin < maxEnd) {
       currentCluster.push(app);
-      if (end > maxEnd) maxEnd = end;
+      if (app.endMin > maxEnd) maxEnd = app.endMin;
     } else {
       clusters.push(currentCluster);
       currentCluster = [app];
-      maxEnd = end;
+      maxEnd = app.endMin;
     }
   }
   if (currentCluster.length > 0) {
@@ -94,14 +92,10 @@ function layoutAppointments(appointments: any[]) {
 
     for (const app of cluster) {
       let placed = false;
-      const start = new Date(app.startTime).getTime();
 
       for (let i = 0; i < columns.length; i++) {
         const lastApp = columns[i][columns[i].length - 1];
-        const lastStart = new Date(lastApp.startTime).getTime();
-        const lastEnd = lastApp.endTime ? new Date(lastApp.endTime).getTime() : lastStart + 30 * 60000;
-
-        if (start >= lastEnd) {
+        if (app.startMin >= lastApp.endMin) {
           columns[i].push(app);
           app.colIndex = i;
           placed = true;
@@ -125,6 +119,7 @@ function layoutAppointments(appointments: any[]) {
 
   return result;
 }
+
 
 // ── Draggable appointment card (absolutely positioned, duration-aware) ────────
 function AppCard({ app, config, onClick, isOverlay, topPx, heightPx, leftPct = 0, widthPct = 100, vetColor }: any) {
