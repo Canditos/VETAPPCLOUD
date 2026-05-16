@@ -1,3 +1,16 @@
+/**
+ * API ROUTE: /api/health/integrations
+ *
+ * Responsabilidade: Verificar estado de conectividade de todas as
+ * integrações de terceiros: Vendus, Jasmin, HL7, DICOM, e stock sync.
+ *
+ * Cache: Nenhum (cada request faz ping real). Considerar Redis
+ *        se o volume de requests aumentar.
+ *
+ * Tenant: Sim — verifica configurações da clínica atual
+ * Auth: Requer sessão
+ */
+
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";

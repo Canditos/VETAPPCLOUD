@@ -1,3 +1,16 @@
+/**
+ * API ROUTE: /api/patients/[id]/alerts
+ *
+ * Responsabilidade: Gerar alertas clínicos inteligentes baseados
+ * nos dados do paciente: vacinas expiradas, desparasitações em
+ * atraso, alergias, e ausência de vitais na consulta atual.
+ *
+ * Este endpoint é READ-ONLY — não modifica dados.
+ *
+ * Tenant: Sim
+ * Auth: Requer sessão
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";

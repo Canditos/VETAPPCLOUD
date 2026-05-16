@@ -1,15 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-
-export interface IntegrationHealth {
-  vendus: { status: string; label: string };
-  jasmin: { status: string; label: string };
-  inventorySync: { status: string; label: string };
-  hl7: { status: string; label: string };
-  dicom: { status: string; label: string };
-  checkedAt: string;
-}
+import type { IntegrationHealth } from "@/types";
 
 export function useIntegrationHealth() {
   return useQuery<IntegrationHealth>({

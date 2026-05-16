@@ -1,3 +1,22 @@
+/**
+ * API ROUTE: /api/consultations
+ *
+ * Responsabilidade: Criar consultas, persistir notas SOAP e vitais,
+ * e sincronizar faturação com Vendus (primário) ou Jasmin (legacy).
+ *
+ * Fluxo:
+ *  1. Valida dados com Zod
+ *  2. Cria consulta + notas clínicas + vitais
+ *  3. Se billNow=true, emite fatura no Vendus e grava invoice local
+ *  4. Envia email automático via Vendus se cliente tiver email
+ *
+ * Tenant: Sim, usa getTenantClient(clinicId)
+ * Auth: Requer sessão com clinicId
+ *
+ * TODO: Adicionar suporte a orçamentos (Budget) antes de faturar
+ * TODO: Permitir faturação em 2a instância (billNow=false, depois emitir)
+ */
+
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";

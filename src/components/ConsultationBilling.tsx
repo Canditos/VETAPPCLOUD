@@ -1,3 +1,19 @@
+/**
+ * ============================================
+ * CONSULTATION BILLING
+ * ============================================
+ *
+ * Responsabilidade: Gestão de itens de faturação durante uma consulta.
+ * Permite pesquisar produtos/serviços, adicionar/remover itens,
+ * ajustar quantidades, e calcular IVA por taxa (6%, 13%, 23%).
+ *
+ * Integrações: Vendus (via API /api/consultations ao finalizar)
+ * Tenant: N/A (dados recebidos via props)
+ *
+ * TODO: Adicionar suporte a descontos por linha e por total
+ * TODO: Integrar leitor de código de barras para adição rápida
+ */
+
 "use client";
 
 import { useState } from "react";
