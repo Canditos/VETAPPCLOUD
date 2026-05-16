@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect, Suspense } from "react";
+import { useState, useMemo, useCallback, useEffect, Suspense, useRef } from "react";
 import {
   ChevronLeft, ChevronRight, Clock, Plus, Stethoscope,
   RefreshCw, Activity, Syringe, Scissors, Zap, CalendarDays,
@@ -48,21 +48,114 @@ const getTypeConfig = (type: string) => {
   }
 };
 
+// ── Overlap layout algorithm for side-by-side appointments ──────────────────
+function layoutAppointments(appointments: any[]) {
+  if (!appointments || appointments.length === 0) return [];
+
+  // Sort: earlier start time first; if same, longer duration first
+  const sorted = [...appointments].sort((a, b) => {
+    const aStart = new Date(a.startTime).getTime();
+    const bStart = new Date(b.startTime).getTime();
+    if (aStart !== bStart) return aStart - bStart;
+    
+    const aEnd = a.endTime ? new Date(a.endTime).getTime() : aStart + 30 * 60000;
+    const bEnd = b.endTime ? new Date(b.endTime).getTime() : bStart + 30 * 60000;
+    return bEnd - aEnd;
+  });
+
+  const clusters: any[][] = [];
+  let currentCluster: any[] = [];
+  let maxEnd = 0;
+
+  for (const app of sorted) {
+    const start = new Date(app.startTime).getTime();
+    const end = app.endTime ? new Date(app.endTime).getTime() : start + 30 * 60000;
+
+    if (currentCluster.length === 0) {
+      currentCluster.push(app);
+      maxEnd = end;
+    } else if (start < maxEnd) {
+      currentCluster.push(app);
+      if (end > maxEnd) maxEnd = end;
+    } else {
+      clusters.push(currentCluster);
+      currentCluster = [app];
+      maxEnd = end;
+    }
+  }
+  if (currentCluster.length > 0) {
+    clusters.push(currentCluster);
+  }
+
+  const result: any[] = [];
+
+  for (const cluster of clusters) {
+    const columns: any[][] = [];
+
+    for (const app of cluster) {
+      let placed = false;
+      const start = new Date(app.startTime).getTime();
+
+      for (let i = 0; i < columns.length; i++) {
+        const lastApp = columns[i][columns[i].length - 1];
+        const lastStart = new Date(lastApp.startTime).getTime();
+        const lastEnd = lastApp.endTime ? new Date(lastApp.endTime).getTime() : lastStart + 30 * 60000;
+
+        if (start >= lastEnd) {
+          columns[i].push(app);
+          app.colIndex = i;
+          placed = true;
+          break;
+        }
+      }
+
+      if (!placed) {
+        columns.push([app]);
+        app.colIndex = columns.length - 1;
+      }
+    }
+
+    const totalCols = columns.length;
+    for (const app of cluster) {
+      app.leftPct = (app.colIndex / totalCols) * 100;
+      app.widthPct = 100 / totalCols;
+      result.push(app);
+    }
+  }
+
+  return result;
+}
+
 // ── Draggable appointment card (absolutely positioned, duration-aware) ────────
-function AppCard({ app, config, onClick, isOverlay, topPx, heightPx }: any) {
+function AppCard({ app, config, onClick, isOverlay, topPx, heightPx, leftPct = 0, widthPct = 100, vetColor }: any) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: app.id, data: { app } });
   const compact = (heightPx ?? SLOT_H) < 56;
-  if (isDragging && !isOverlay) return <div ref={setNodeRef} style={{ position:'absolute', top: topPx, height: heightPx, left:3, right:3, visibility:'hidden' }} />;
+  if (isDragging && !isOverlay) return <div ref={setNodeRef} style={{ position:'absolute', top: topPx, height: heightPx, left: `${leftPct}%`, width: `${widthPct}%`, visibility:'hidden' }} />;
+  
+  // Opacity 10% for grid cards, 15% for overlay cards
+  const bgOpacity = isOverlay ? '26' : '1a';
   const cardStyle: React.CSSProperties = isOverlay
-    ? { borderLeftColor: config.color, backgroundColor: `color-mix(in srgb,${config.color},transparent 85%)` }
-    : { position:'absolute', top: topPx, height: (heightPx??SLOT_H)-2, left:3, right:3, borderLeftColor: config.color, backgroundColor: `color-mix(in srgb,${config.color},transparent 88%)` };
+    ? { borderLeftColor: config.color, backgroundColor: config.color + bgOpacity }
+    : { 
+        position:'absolute', 
+        top: topPx, 
+        height: (heightPx??SLOT_H)-2, 
+        left: `calc(${leftPct}% + 2px)`, 
+        width: `calc(${widthPct}% - 4px)`, 
+        borderLeftColor: config.color, 
+        backgroundColor: config.color + bgOpacity 
+      };
+
   return (
     <div ref={setNodeRef} style={cardStyle} {...attributes} {...listeners}
       onClick={e => { e.stopPropagation(); onClick(app); }}
       className={cn('rounded-md border-l-[3px] cursor-grab select-none overflow-hidden px-2 flex flex-col justify-center gap-0.5 shadow-sm hover:shadow-md hover:z-20 z-10 transition-shadow',
         isOverlay && 'scale-105 shadow-2xl cursor-grabbing ring-2 ring-blue-500/30 z-[1000] rounded-lg w-52')}>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
         <config.icon size={9} strokeWidth={3} style={{color:config.color}} className="shrink-0" />
+        {vetColor && (
+          <div className="w-1.5 h-1.5 rounded-full shrink-0 shadow-[0_0_4px_rgba(0,0,0,0.15)]" style={{ backgroundColor: vetColor }} title="Veterinário" />
+        )}
         <span className="font-bold text-[11px] truncate dark:text-white text-slate-800 leading-none flex-1">{app.patient?.name}</span>
         <span className="text-[9px] text-slate-400 dark:text-slate-500 shrink-0 tabular-nums">{format(new Date(app.startTime),'HH:mm')}</span>
       </div>
@@ -72,16 +165,21 @@ function AppCard({ app, config, onClick, isOverlay, topPx, heightPx }: any) {
 }
 
 // ── Drop target slot (thin, fixed-height background element) ────────────────
-function DropSlot({ id, day, slotTime, isToday, isHighlighted, onAddClick }: any) {
+function DropSlot({ id, day, slotTime, isToday, isHighlighted, activeColor, onAddClick }: any) {
   const { setNodeRef } = useDroppable({ id, data: { day, hour: slotTime } });
   const isHalf = slotTime.endsWith(':30');
+  
+  // Highlight background matches the dragged card's type color (with opacity)
+  const highlightStyle = isHighlighted && activeColor
+    ? { backgroundColor: activeColor + '1a', borderBottomColor: activeColor + '40' }
+    : {};
+
   return (
     <div ref={setNodeRef} onClick={() => onAddClick?.({ day, hour: slotTime })}
-      style={{ height: SLOT_H }}
-      className={cn('border-b cursor-pointer transition-colors duration-75 group/slot relative',
+      style={{ height: SLOT_H, ...highlightStyle }}
+      className={cn('border-b cursor-pointer transition-all duration-150 group/slot relative',
         isHalf ? 'border-slate-100/20 dark:border-white/[0.015]' : 'border-slate-200/40 dark:border-white/[0.04]',
-        isToday && !isHighlighted && 'bg-blue-600/[0.008]',
-        isHighlighted && 'bg-blue-500/10 border-blue-400/40')} />
+        isToday && !isHighlighted && 'bg-blue-600/[0.008]')} />
   );
 }
 
@@ -101,6 +199,7 @@ function CalendarContent() {
   const [isApprovalOpen, setIsApprovalOpen] = useState(false);
   const [pendingRequest, setPendingRequest] = useState<any>(null);
   const [newSlot, setNewSlot] = useState<{ day: string; hour: string } | null>(null);
+  const columnsRef = useRef<HTMLDivElement>(null);
 
   const [patientSearch, setPatientSearch] = useState("");
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
@@ -309,7 +408,11 @@ function CalendarContent() {
     const slotDelta = Math.round(delta.y / SLOT_H);
     const newIdx = Math.max(0, Math.min(halfHours.length - 1, origIdx + slotDelta));
     const newHour = halfHours[newIdx];
-    const colWidthPx = (window.innerWidth - 64) / colCount;
+    
+    // Calculates exact col width based on columnsRef bounding client rect
+    const containerWidth = columnsRef.current ? columnsRef.current.getBoundingClientRect().width : (window.innerWidth - 64);
+    const colWidthPx = containerWidth / colCount;
+    
     const dayDelta = Math.round(delta.x / colWidthPx);
     const origDayIdx = activeDays.findIndex(d => d.fullDate === format(origDate, "yyyy-MM-dd"));
     const newDayIdx = Math.max(0, Math.min(activeDays.length - 1, origDayIdx + dayDelta));
@@ -535,7 +638,7 @@ function CalendarContent() {
             </div>
 
             {/* Day columns */}
-            <div className="flex flex-1 min-w-0">
+            <div className="flex flex-1 min-w-0" ref={columnsRef}>
               {activeDays.map(day => {
                 const dayApps = groupedByDay.get(day.fullDate) ?? [];
                 return (
@@ -546,10 +649,11 @@ function CalendarContent() {
                       <DropSlot key={slotTime} id={`${day.fullDate}-${slotTime}`}
                         day={day.fullDate} slotTime={slotTime} isToday={day.isToday}
                         isHighlighted={hoverSlotKey === `${day.fullDate}-${slotTime}`}
+                        activeColor={activeApp ? getTypeConfig(activeApp.type)?.color : null}
                         onAddClick={(s: any) => { setNewSlot(s); setIsAddOpen(true); }} />
                     ))}
-                    {/* Appointment cards — absolutely positioned */}
-                    {dayApps.map((app: any) => {
+                    {/* Appointment cards — absolutely positioned with side-by-side overlap support */}
+                    {layoutAppointments(dayApps).map((app: any) => {
                       const start = new Date(app.startTime);
                       const end = app.endTime ? new Date(app.endTime) : new Date(start.getTime() + 30 * 60000);
                       const startMins = (start.getHours() - 8) * 60 + start.getMinutes();
@@ -559,7 +663,8 @@ function CalendarContent() {
                       return (
                         <AppCard key={app.id} app={app} config={getTypeConfig(app.type)}
                           vetColor={getVetColor(app.veterinarianId)}
-                          onClick={setSelectedApp} topPx={topPx} heightPx={heightPx} />
+                          onClick={setSelectedApp} topPx={topPx} heightPx={heightPx}
+                          leftPct={app.leftPct} widthPct={app.widthPct} />
                       );
                     })}
                   </div>
