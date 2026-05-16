@@ -26,6 +26,7 @@ import { PremiumCard } from "@/components/PremiumCard";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useIntegrationHealth } from "@/hooks/useIntegrationHealth";
+import type { BillingItem, DiagnosticResult } from "@/types";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { pt } from "date-fns/locale";
@@ -38,7 +39,7 @@ function ConsultationContent() {
   const urlTab = searchParams.get("tab") || "clinical";
   
   const [activeTab, setActiveTab] = useState(urlTab);
-  const [billingItems, setBillingItems] = useState<any[]>([]);
+  const [billingItems, setBillingItems] = useState<BillingItem[]>([]);
   const [notes, setNotes] = useState({ subjective: "", objective: "", assessment: "", plan: "" });
   const [vitals, setVitals] = useState({ weight: "", temperature: "", heartRate: "", respiratoryRate: "" });
 
@@ -188,7 +189,7 @@ function ConsultationContent() {
   }
 
   const allergies = patient?.allergies;
-  const lastVitals = history?.find((h: any) => h.type === "VITALS")?.data;
+  const lastVitals = history?.find((h: { type: string; data?: { weight?: number } }) => h.type === "VITALS")?.data;
 
   return (
     <div className="space-y-8 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-[1600px] mx-auto px-4 sm:px-0">
@@ -439,7 +440,7 @@ function ConsultationContent() {
                        </div>
                     ) : (
                        <div className="space-y-3">
-                          {diagnostics.map((dx: any) => (
+                           {diagnostics.map((dx: DiagnosticResult) => (
                              <div key={dx.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 hover:border-blue-200 dark:hover:border-blue-900/30 transition-all group">
                                 <div className="flex items-center gap-4">
                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${dx.type === 'LAB' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600' : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600'}`}>

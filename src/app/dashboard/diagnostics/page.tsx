@@ -27,8 +27,11 @@ import { PageHeader } from "@/components/PageHeader";
 import { StatsGrid } from "@/components/StatsGrid";
 import { EmptyState } from "@/components/EmptyState";
 import { useIntegrationHealth } from "@/hooks/useIntegrationHealth";
+import { isFeatureEnabled } from "@/lib/features";
+import type { DiagnosticResult } from "@/types";
+import type { LucideIcon } from "lucide-react";
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: any }> = {
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: LucideIcon }> = {
   COMPLETED: { label: "Recebido", color: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-900/30", icon: CheckCircle2 },
   PENDING: { label: "Em Processamento", color: "text-amber-700 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-900/30", icon: Clock },
   ALERT: { label: "Alerta Crítico", color: "text-rose-700 dark:text-rose-400", bg: "bg-rose-50 dark:bg-rose-900/30", icon: AlertCircle },
@@ -48,7 +51,7 @@ export default function DiagnosticsPage() {
     refetchInterval: 30000,
   });
 
-  const filteredData = diagnostics?.filter((dx: any) =>
+  const filteredData = diagnostics?.filter((dx: DiagnosticResult) =>
     filter === "all" ? true : dx.type === filter
   ) ?? [];
 
@@ -56,8 +59,8 @@ export default function DiagnosticsPage() {
 
   const stats = {
     total: diagnostics?.length ?? 0,
-    pending: diagnostics?.filter((d: any) => d.status === "PENDING").length ?? 0,
-    alerts: diagnostics?.filter((d: any) => d.status === "ALERT").length ?? 0,
+    pending: diagnostics?.filter((d: DiagnosticResult) => d.status === "PENDING").length ?? 0,
+    alerts: diagnostics?.filter((d: DiagnosticResult) => d.status === "ALERT").length ?? 0,
   };
 
   const filterButtons = [
@@ -132,7 +135,7 @@ export default function DiagnosticsPage() {
           )}
 
           {!isLoading &&
-            filteredData.map((dx: any) => {
+            filteredData.map((dx: DiagnosticResult) => {
               const status = STATUS_CONFIG[dx.status] ?? STATUS_CONFIG.PENDING;
               const StatusIcon = status.icon;
               return (
@@ -166,9 +169,9 @@ export default function DiagnosticsPage() {
                           </Badge>
                         </div>
                         <h3 className="text-lg font-bold text-slate-900 dark:text-white truncate">
-                          {dx.patientName ?? dx.patient ?? "—"}{" "}
-                          <span className="text-slate-400 font-normal text-sm">
-                            ({dx.ownerName ?? dx.owner ?? "—"})
+                           {dx.patientName ?? "—"}{" "}
+                           <span className="text-slate-400 font-normal text-sm">
+                             ({dx.ownerName ?? "—"})
                           </span>
                         </h3>
                         <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
@@ -249,27 +252,38 @@ export default function DiagnosticsPage() {
               </h3>
             </div>
             <div className="p-4 space-y-1">
-              <Button
-                variant="ghost"
-                onClick={() => toast.success("Pedido de Laboratório iniciado.")}
-                className="w-full justify-start gap-3 font-medium h-11 rounded-xl hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-900/20"
-              >
-                <FlaskConical size={18} /> Novo Pedido Laboratório
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => toast.success("Solicitação de RX Digital aberta.")}
-                className="w-full justify-start gap-3 font-medium h-11 rounded-xl hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20"
-              >
-                <ImageIcon size={18} /> Solicitar RX Digital
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => toast.info("A preparar lote para exportação...")}
-                className="w-full justify-start gap-3 font-medium h-11 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5"
-              >
-                <Download size={18} /> Exportar Lote de Resultados
-              </Button>
+              {isFeatureEnabled("hl7Integration") && (
+                <Button
+                  variant="ghost"
+                  onClick={() => toast.success("Pedido de Laboratório iniciado.")}
+                  className="w-full justify-start gap-3 font-medium h-11 rounded-xl hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-900/20"
+                >
+                  <FlaskConical size={18} /> Novo Pedido Laboratório
+                </Button>
+              )}
+              {isFeatureEnabled("dicomIntegration") && (
+                <Button
+                  variant="ghost"
+                  onClick={() => toast.success("Solicitação de RX Digital aberta.")}
+                  className="w-full justify-start gap-3 font-medium h-11 rounded-xl hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20"
+                >
+                  <ImageIcon size={18} /> Solicitar RX Digital
+                </Button>
+              )}
+              {isFeatureEnabled("accountingExports") && (
+                <Button
+                  variant="ghost"
+                  onClick={() => toast.info("A preparar lote para exportação...")}
+                  className="w-full justify-start gap-3 font-medium h-11 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5"
+                >
+                  <Download size={18} /> Exportar Lote de Resultados
+                </Button>
+              )}
+              {!isFeatureEnabled("hl7Integration") && !isFeatureEnabled("dicomIntegration") && !isFeatureEnabled("accountingExports") && (
+                <div className="text-center py-4 text-slate-400 text-xs">
+                  Nenhuma integração ativa. Configure em Definições &gt; Integrações.
+                </div>
+              )}
             </div>
           </PremiumCard>
 

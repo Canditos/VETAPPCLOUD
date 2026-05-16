@@ -26,6 +26,7 @@ import { pt } from "date-fns/locale";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { isFeatureEnabled } from "@/lib/features";
 
 const hours = [
   "08:00","09:00","10:00","11:00","12:00","13:00",
@@ -778,10 +779,16 @@ function CalendarContent() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
-                      <Button variant="outline" className="h-9 rounded-lg font-medium text-xs gap-1.5 border-slate-200"
-                        onClick={() => toast.info("SMS enviado para " + selectedApp.patient?.owner?.name)}>
-                        <MessageSquare size={13} /> SMS
-                      </Button>
+                      {isFeatureEnabled("smsNotifications") ? (
+                        <Button variant="outline" className="h-9 rounded-lg font-medium text-xs gap-1.5 border-slate-200"
+                          onClick={() => toast.info("SMS enviado para " + selectedApp.patient?.owner?.name)}>
+                          <MessageSquare size={13} /> SMS
+                        </Button>
+                      ) : (
+                        <Button variant="outline" className="h-9 rounded-lg font-medium text-xs gap-1.5 border-slate-200 opacity-50 cursor-not-allowed" disabled>
+                          <MessageSquare size={13} /> SMS
+                        </Button>
+                      )}
                       <Button variant="outline" className="h-9 rounded-lg font-medium text-xs gap-1.5 border-slate-200"
                         onClick={() => toast.info("Email enviado")}>
                         <Mail size={13} /> Email

@@ -290,7 +290,7 @@ export interface CreateConsultationDTO {
 }
 
 export interface BillingItem {
-  id?: string;
+  id: string;
   name: string;
   description?: string;
   quantity: number;

@@ -23,6 +23,7 @@ import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { AddPatientForm } from "@/components/forms/AddPatientForm";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import type { Patient } from "@/types";
 import Link from "next/link";
 
 // PatientAvatar is kept local as it's specific to patients list
@@ -168,7 +169,7 @@ function PatientsPageContent() {
               description="Tente ajustar os filtros ou adicione um novo registo."
             />
           ) : (
-            patients.map((patient: any) => (
+            patients.map((patient: Patient) => (
               <Link
                 key={patient.id}
                 href={`/dashboard/patients/${patient.id}`}

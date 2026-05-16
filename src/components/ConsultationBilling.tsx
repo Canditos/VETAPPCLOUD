@@ -32,15 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { useIntegrationHealth } from "@/hooks/useIntegrationHealth";
-
-interface BillingItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  type: "PRODUCT" | "SERVICE";
-  vatRate: number;
-}
+import type { Product, BillingItem } from "@/types";
 
 const VAT_RATES = [6, 13, 23];
 
@@ -58,7 +50,7 @@ export function ConsultationBilling({ onItemsChange }: { onItemsChange: (items: 
     enabled: search.length > 2
   });
 
-  const addItem = (product: any) => {
+  const addItem = (product: Product) => {
     const existing = items.find(i => i.id === product.id);
     let newItems;
     if (existing) {
@@ -138,7 +130,7 @@ export function ConsultationBilling({ onItemsChange }: { onItemsChange: (items: 
         {searchResults && searchResults.length > 0 && (
           <Card className="absolute top-full left-0 right-0 mt-2 z-50 border-none shadow-2xl rounded-2xl overflow-hidden bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/10">
             <CardContent className="p-0">
-              {searchResults.map((product: any) => (
+              {searchResults.map((product: Product) => (
                 <div 
                   key={product.id}
                   className="p-4 hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer flex justify-between items-center border-b border-slate-50 dark:border-white/5 last:border-none transition-colors"

@@ -20,10 +20,11 @@ import { PremiumCard } from "@/components/PremiumCard";
 import { PageHeader } from "@/components/PageHeader";
 import { StatsGrid } from "@/components/StatsGrid";
 import { EmptyState } from "@/components/EmptyState";
+import type { Prescription, PrescriptionItem } from "@/types";
 
 const fmt = (d: string) => format(new Date(d), "dd MMM yyyy", { locale: pt });
 
-function StatusBadge({ validUntil }: { validUntil: string | null }) {
+function StatusBadge({ validUntil }: { validUntil: string | null | undefined }) {
   if (!validUntil) return <Badge variant="outline" className="text-[10px] border-slate-200 dark:border-white/10 text-slate-400">Sem validade</Badge>;
   if (isPast(new Date(validUntil))) {
     return <Badge className="bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400 border-none text-[10px] gap-1 font-medium"><AlertCircle size={10} /> Expirada</Badge>;
@@ -50,18 +51,18 @@ export default function PrescricoesPage() {
     },
   });
 
-  const filtered = prescriptions.filter((rx: any) => {
+  const filtered = prescriptions.filter((rx: Prescription) => {
     if (!search) return true;
     const q = search.toLowerCase();
     return (
       rx.patient?.name?.toLowerCase().includes(q) ||
       rx.veterinarian?.name?.toLowerCase().includes(q) ||
-      rx.items?.some((i: any) => i.medicineName?.toLowerCase().includes(q))
+      rx.items?.some((i: PrescriptionItem) => i.medicineName?.toLowerCase().includes(q))
     );
   });
 
-  const active = filtered.filter((rx: any) => rx.validUntil && !isPast(new Date(rx.validUntil)));
-  const expired = filtered.filter((rx: any) => !rx.validUntil || isPast(new Date(rx.validUntil)));
+  const active = filtered.filter((rx: Prescription) => rx.validUntil && !isPast(new Date(rx.validUntil)));
+  const expired = filtered.filter((rx: Prescription) => !rx.validUntil || isPast(new Date(rx.validUntil)));
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-[1600px] mx-auto p-4 md:p-8">
@@ -83,9 +84,9 @@ export default function PrescricoesPage() {
       {/* Stats */}
       <StatsGrid
         items={[
-          { label: "Total", value: filtered.length, icon: Pill, color: "slate", sub: "prescrições emitidas" },
-          { label: "Ativas", value: active.length, icon: CheckCircle2, color: "emerald", sub: "dentro da validade" },
-          { label: "Expiradas", value: expired.length, icon: AlertCircle, color: "rose", sub: "fora de validade" },
+          { label: "Total", value: filtered.length, icon: Pill, color: "slate", subtext: "prescrições emitidas" },
+          { label: "Ativas", value: active.length, icon: CheckCircle2, color: "emerald", subtext: "dentro da validade" },
+          { label: "Expiradas", value: expired.length, icon: AlertCircle, color: "rose", subtext: "fora de validade" },
         ]}
       />
 
@@ -130,7 +131,7 @@ export default function PrescricoesPage() {
             </div>
           ) : (
             <div className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filtered.map((rx: any) => (
+              {filtered.map((rx: Prescription) => (
                 <div
                   key={rx.id}
                   className="flex items-start gap-5 px-6 py-5 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer group"
@@ -146,7 +147,7 @@ export default function PrescricoesPage() {
                       <StatusBadge validUntil={rx.validUntil} />
                     </div>
                     <div className="flex flex-wrap gap-1 mb-2">
-                      {rx.items?.map((item: any, i: number) => (
+                      {rx.items?.map((item: PrescriptionItem, i: number) => (
                         <span key={i} className="text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-lg">
                           {item.medicineName}
                         </span>
