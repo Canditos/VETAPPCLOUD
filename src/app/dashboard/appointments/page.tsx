@@ -334,6 +334,7 @@ function CalendarContent() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const colCount = activeDays.length;
   const SLOT_HEIGHT_PX = 112; // h-28 = 7rem = 112px
 
   /** Calculates target {day, hour} from drag delta — pure math, no collision detection */
@@ -401,8 +402,6 @@ function CalendarContent() {
   };
 
   const activeApp = activeId ? rawAppointments.find((a: any) => a.id === activeId) : null;
-
-  const colCount = activeDays.length;
 
   return (
     <DndContext
