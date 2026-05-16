@@ -48,7 +48,7 @@ const getTypeConfig = (type: string) => {
 
 // ── Draggable appointment card ──────────────────────────────────────────────
 function DraggableAppointment({ app, hour, config, vetColor, onClick, isOverlay }: any) {
-  const { attributes, listeners, setNodeRef, transform: dndTransform, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: app.id, data: { app },
   });
 
@@ -360,6 +360,9 @@ function CalendarContent() {
       onDragStart={(e) => setActiveId(e.active.id as string)}
       onDragEnd={handleDragEnd}
       collisionDetection={pointerWithin}
+      measuring={{
+        droppable: { strategy: MeasuringStrategy.Always },
+      }}
     >
       <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-slate-50/30 dark:bg-slate-950 max-w-[1600px] mx-auto">
         {/* ── Top Bar ─────────────────────────────────────────────────── */}
@@ -541,7 +544,7 @@ function CalendarContent() {
                 className="grid border-b border-slate-200/40 dark:border-white/[0.03] group/row"
                 style={{ gridTemplateColumns: `80px repeat(${colCount}, 1fr)` }}
               >
-                <div className="py-12 px-2 text-[10px] font-bold text-slate-400 dark:text-slate-600 text-right pr-6 flex items-start justify-end sticky left-0 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md z-10 border-r border-slate-200/60 dark:border-white/10 group-hover/row:bg-slate-100 dark:group-hover/row:bg-slate-800/80 transition-colors shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] dark:shadow-none">
+                <div className="h-28 px-2 text-[10px] font-bold text-slate-400 dark:text-slate-600 text-right pr-6 flex items-start pt-2 justify-end sticky left-0 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md z-10 border-r border-slate-200/60 dark:border-white/10 group-hover/row:bg-slate-100 dark:group-hover/row:bg-slate-800/80 transition-colors shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] dark:shadow-none">
                   {hour}
                 </div>
                 {activeDays.map(day => {
@@ -791,24 +794,19 @@ function CalendarContent() {
                     <Button
                       className="w-full h-10 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm gap-2 shadow-md shadow-blue-500/10"
                       onClick={() => {
-                        const patientId = typeof selectedApp.patientId === "object" ? selectedApp.patientId.id : selectedApp.patientId;
-                        router.push(`/dashboard/consultations?patientId=${patientId}&appointmentId=${selectedApp.id}`);
+                        router.push(`/dashboard/consultations?patientId=${selectedApp.patientId}&appointmentId=${selectedApp.id}`);
+                        setSelectedApp(null);
                       }}
                     >
-                      <Activity size={15} /> Iniciar Consulta
+                      <Clock size={16} /> Iniciar Consulta
                     </Button>
 
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button variant="outline" className="h-9 rounded-lg border-slate-200 font-medium text-xs"
-                        onClick={() => { setSelectedApp(null); setNewSlot(null); setIsAddOpen(true); }}>
-                        Remarcar
+                    <div className="pt-4 border-t border-slate-100 dark:border-white/5 flex justify-between gap-3">
+                      <Button variant="ghost" className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-500/10 font-bold text-xs"
+                        onClick={() => { if (confirm("Cancelar esta marcação?")) cancelAppointment.mutate(selectedApp.id); }}>
+                        Cancelar Marcação
                       </Button>
-                      <Button variant="outline"
-                        className="h-9 rounded-lg border-rose-200 font-medium text-xs text-rose-600 hover:bg-rose-50"
-                        disabled={cancelAppointment.isPending}
-                        onClick={() => cancelAppointment.mutate(selectedApp.id)}>
-                        {cancelAppointment.isPending ? "..." : "Cancelar"}
-                      </Button>
+                      <Button variant="ghost" onClick={() => setSelectedApp(null)} className="font-bold text-xs">Fechar</Button>
                     </div>
                   </div>
                 </div>
@@ -816,107 +814,86 @@ function CalendarContent() {
             })()}
           </DialogContent>
         </Dialog>
-      {/* ── Approval Modal ────────────────────────────────────────────── */}
-      <Dialog open={isApprovalOpen} onOpenChange={setIsApprovalOpen}>
-        <DialogContent className="sm:max-w-[560px] rounded-2xl p-0 overflow-hidden bg-white dark:bg-slate-950 border-none shadow-2xl">
-          <div className="bg-amber-500 p-6 text-white relative overflow-hidden">
-            <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
-            <div className="flex items-center gap-5 relative z-10">
-              <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center text-white ring-4 ring-white/10">
-                <Calendar size={26} strokeWidth={2.5} />
-              </div>
-              <div>
-                <DialogTitle className="text-xl font-bold tracking-tighter">Pedido de Marcação</DialogTitle>
-                <p className="text-[10px] font-bold text-white/80 tracking-wider mt-1.5">Recebido via Portal do Tutor</p>
-              </div>
-            </div>
-          </div>
 
-          <div className="p-6 space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
-                <span className="text-[9px] font-bold text-slate-400 tracking-widest block mb-1">Paciente</span>
-                <p className="text-sm font-bold text-slate-900 dark:text-white">{pendingRequest?.patient?.name}</p>
-              </div>
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
-                <span className="text-[9px] font-bold text-slate-400 tracking-widest block mb-1">Tutor</span>
-                <p className="text-sm font-bold text-slate-900 dark:text-white">{pendingRequest?.owner?.name}</p>
+        {/* ── Approval Modal ───────────────────────────────────────────── */}
+        <Dialog open={isApprovalOpen} onOpenChange={setIsApprovalOpen}>
+          <DialogContent className="sm:max-w-[500px] rounded-2xl p-0 overflow-hidden bg-white dark:bg-slate-900 border-none shadow-2xl ring-1 ring-black/5 dark:ring-white/10">
+            <div className="bg-blue-600 p-8 text-white relative overflow-hidden">
+              <div className="absolute -right-8 -top-8 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
+              <div className="relative z-10">
+                <Badge className="bg-white/20 hover:bg-white/30 text-white border-none mb-4 font-bold tracking-widest px-3 py-1">SOLICITAÇÃO WEB</Badge>
+                <h2 className="text-2xl font-bold tracking-tighter">Novo Pedido de Agendamento</h2>
+                <p className="text-blue-100/80 text-xs font-bold mt-2 tracking-wide uppercase">Recebido via Portal do Tutor</p>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-slate-400 tracking-widest">Data Sugerida</span>
-                <p className="text-sm font-bold text-slate-900 dark:text-white">
-                  {pendingRequest?.requestedDate && format(new Date(pendingRequest.requestedDate), "d 'de' MMMM", { locale: pt })}
-                </p>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-slate-400 tracking-widest">Período</span>
-                <Badge variant="secondary" className="font-bold text-[9px]">{pendingRequest?.requestedPeriod}</Badge>
-              </div>
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
-                <span className="text-[10px] font-bold text-slate-400 tracking-widest block mb-2">Observações do Tutor</span>
-                <p className="text-xs font-medium text-slate-600 dark:text-slate-400 leading-relaxed italic">
-                  "{pendingRequest?.notes || "Nenhuma observação adicional."}"
-                </p>
-              </div>
-            </div>
+            {pendingRequest && (
+              <div className="p-8 space-y-8">
+                <div className="flex items-center gap-5 p-5 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200/50 dark:border-white/5 shadow-inner">
+                  <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                    <PawPrint size={28} />
+                  </div>
+                  <div>
+                    <p className="text-xl font-bold text-slate-900 dark:text-white tracking-tighter">{pendingRequest.patientName}</p>
+                    <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider mt-1 uppercase">Animal Registado</p>
+                  </div>
+                </div>
 
-            <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-white/5">
-              <div className="space-y-3">
-                <label className="text-[10px] font-bold text-slate-400 tracking-widest">Atribuir Veterinário</label>
-                <Select value={newVetId} onValueChange={setNewVetId}>
-                  <SelectTrigger className="h-10 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-bold text-sm px-6">
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-2xl">
-                    {vets.map((v: any) => (
-                      <SelectItem key={v.id} value={v.id} className="font-bold">{v.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 tracking-widest uppercase ml-1">Data Pretendida</label>
+                    <div className="p-4 rounded-xl bg-slate-100/50 dark:bg-white/5 border border-slate-200/50 font-bold text-sm text-slate-900 dark:text-white">
+                      {format(new Date(pendingRequest.requestedDate), "dd 'de' MMMM", { locale: pt })}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 tracking-widest uppercase ml-1">Período</label>
+                    <div className="p-4 rounded-xl bg-slate-100/50 dark:bg-white/5 border border-slate-200/50 font-bold text-sm text-slate-900 dark:text-white">
+                      {pendingRequest.requestedPeriod === "MORNING" ? "Manhã" : "Tarde"}
+                    </div>
+                  </div>
+                </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <Button 
-                  className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-white font-bold text-[10px] tracking-widest hover:bg-rose-500 hover:text-white transition-all"
-                  onClick={() => {
-                    // Logic to reject
-                    toast.info("Pedido rejeitado");
-                    setIsApprovalOpen(false);
-                    router.push("/dashboard/appointments");
-                  }}
-                >
-                  Rejeitar
-                </Button>
-                <Button 
-                  className="h-14 rounded-2xl bg-blue-600 text-white font-bold text-[10px] tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
-                  disabled={!newVetId || approveMutation.isPending}
-                  onClick={() => approveMutation.mutate()}
-                >
-                  {approveMutation.isPending ? "A processar..." : "Confirmar e Propor Horário"}
-                </Button>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-bold text-blue-600 tracking-widest uppercase ml-1">Atribuir Médico e Propor Hora</label>
+                  <Select value={newVetId} onValueChange={setNewVetId}>
+                    <SelectTrigger className="h-14 rounded-2xl bg-white dark:bg-slate-800 border-2 border-blue-600/20 font-bold text-sm px-6 shadow-sm">
+                      <SelectValue placeholder="Escolha o veterinário..." />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl bg-slate-900 border-white/10 text-white p-2">
+                      {vets.map((v: any) => (
+                        <SelectItem key={v.id} value={v.id} className="rounded-xl focus:bg-blue-600 p-3 font-bold">{v.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex gap-4">
+                  <Button 
+                    variant="ghost" 
+                    className="flex-1 h-14 rounded-2xl font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10"
+                    onClick={() => setIsApprovalOpen(false)}
+                  >Rejeitar</Button>
+                  <Button 
+                    className="flex-2 h-14 px-10 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-xl shadow-blue-500/20 disabled:opacity-50"
+                    disabled={!newVetId || approveMutation.isPending}
+                    onClick={() => approveMutation.mutate()}
+                  >
+                    {approveMutation.isPending ? "A enviar..." : "Aprovar e Enviar Proposta"}
+                  </Button>
+                </div>
               </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
-  </DndContext>
-);
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
+    </DndContext>
+  );
 }
 
-export default function CalendarPage() {
+export default function AppointmentsPage() {
   return (
-    <Suspense fallback={
-      <div className="flex h-screen w-full items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-sm font-bold text-slate-900 dark:text-white tracking-widest">Carregando Agenda...</p>
-        </div>
-      </div>
-    }>
+    <Suspense fallback={<Skeleton className="w-full h-full" />}>
       <CalendarContent />
     </Suspense>
   );
