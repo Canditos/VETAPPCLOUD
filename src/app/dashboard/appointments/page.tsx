@@ -60,7 +60,6 @@ function DraggableAppointment({ app, hour, config, vetColor, onClick, isOverlay 
     <div
       ref={setNodeRef}
       style={{
-        ...(dndTransform ? { transform: `translate3d(${dndTransform.x}px,${dndTransform.y}px,0)` } : {}),
         borderLeftColor: config.color,
         backgroundColor: `color-mix(in srgb, ${config.color}, transparent 92%)`,
       }}
@@ -360,7 +359,7 @@ function CalendarContent() {
       sensors={sensors}
       onDragStart={(e) => setActiveId(e.active.id as string)}
       onDragEnd={handleDragEnd}
-      collisionDetection={rectIntersection}
+      collisionDetection={pointerWithin}
     >
       <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-slate-50/30 dark:bg-slate-950 max-w-[1600px] mx-auto">
         {/* ── Top Bar ─────────────────────────────────────────────────── */}
