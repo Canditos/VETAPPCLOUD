@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import {
   DndContext, DragOverlay, PointerSensor, useSensor, useSensors,
-  pointerWithin, useDraggable, useDroppable, MeasuringStrategy,
+  rectIntersection, pointerWithin, useDraggable, useDroppable, MeasuringStrategy,
 } from "@dnd-kit/core";
 import { restrictToFirstScrollableAncestor } from "@dnd-kit/modifiers";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
