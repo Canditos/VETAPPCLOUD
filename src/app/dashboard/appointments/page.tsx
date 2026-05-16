@@ -28,11 +28,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { isFeatureEnabled } from "@/lib/features";
 
-const hours = [
-  "08:00","09:00","10:00","11:00","12:00","13:00",
-  "14:00","15:00","16:00","17:00","18:00","19:00",
-  "20:00","21:00","22:00","23:00",
-];
+// 30-min slots 08:00 → 23:30
+const halfHours: string[] = [];
+for (let h = 8; h < 24; h++) {
+  halfHours.push(`${String(h).padStart(2,'0')}:00`);
+  halfHours.push(`${String(h).padStart(2,'0')}:30`);
+}
+const SLOT_H = 44; // px per 30-min slot
 
 const VET_COLORS = ["#3b82f6","#8b5cf6","#10b981","#f59e0b","#f43f5e","#6366f1"];
 
@@ -46,80 +48,40 @@ const getTypeConfig = (type: string) => {
   }
 };
 
-// ── Draggable appointment card ──────────────────────────────────────────────
-function DraggableAppointment({ app, hour, config, vetColor, onClick, isOverlay }: any) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: app.id, data: { app },
-  });
-
-  if (isDragging && !isOverlay) {
-    return <div ref={setNodeRef} className="h-full w-full" style={{ visibility: "hidden" }} />;
-  }
-
+// ── Draggable appointment card (absolutely positioned, duration-aware) ────────
+function AppCard({ app, config, onClick, isOverlay, topPx, heightPx }: any) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: app.id, data: { app } });
+  const compact = (heightPx ?? SLOT_H) < 56;
+  if (isDragging && !isOverlay) return <div ref={setNodeRef} style={{ position:'absolute', top: topPx, height: heightPx, left:3, right:3, visibility:'hidden' }} />;
+  const cardStyle: React.CSSProperties = isOverlay
+    ? { borderLeftColor: config.color, backgroundColor: `color-mix(in srgb,${config.color},transparent 85%)` }
+    : { position:'absolute', top: topPx, height: (heightPx??SLOT_H)-2, left:3, right:3, borderLeftColor: config.color, backgroundColor: `color-mix(in srgb,${config.color},transparent 88%)` };
   return (
-    <div
-      ref={setNodeRef}
-      style={{
-        borderLeftColor: config.color,
-        backgroundColor: `color-mix(in srgb, ${config.color}, transparent 92%)`,
-      }}
-      {...attributes} {...listeners}
-      onClick={(e) => { e.stopPropagation(); onClick(app); }}
-      className={cn(
-        "p-3 rounded-xl h-full border-l-4 transition-all cursor-grab active:cursor-grabbing group relative overflow-hidden mb-1.5 last:mb-0 shadow-sm",
-        isOverlay ? "scale-105 rotate-1 shadow-2xl cursor-grabbing ring-4 ring-blue-500/20 z-[1000]" : "hover:shadow-md hover:-translate-y-0.5 active:scale-95"
-      )}
-    >
-      <div className="flex justify-between items-start relative z-10">
-        <div className="flex items-center gap-1.5">
-          <div className="p-1 rounded-md bg-white/60 dark:bg-black/40 shadow-sm">
-            <config.icon size={11} strokeWidth={3} style={{ color: config.color }} />
-          </div>
-          <span className="text-[8px] font-bold tracking-wider" style={{ color: config.color }}>{config.label}</span>
-        </div>
-        <span className="text-[8px] font-bold opacity-40 tabular-nums dark:text-white/60">{hour}</span>
+    <div ref={setNodeRef} style={cardStyle} {...attributes} {...listeners}
+      onClick={e => { e.stopPropagation(); onClick(app); }}
+      className={cn('rounded-md border-l-[3px] cursor-grab select-none overflow-hidden px-2 flex flex-col justify-center gap-0.5 shadow-sm hover:shadow-md hover:z-20 z-10 transition-shadow',
+        isOverlay && 'scale-105 shadow-2xl cursor-grabbing ring-2 ring-blue-500/30 z-[1000] rounded-lg w-52')}>
+      <div className="flex items-center gap-1">
+        <config.icon size={9} strokeWidth={3} style={{color:config.color}} className="shrink-0" />
+        <span className="font-bold text-[11px] truncate dark:text-white text-slate-800 leading-none flex-1">{app.patient?.name}</span>
+        <span className="text-[9px] text-slate-400 dark:text-slate-500 shrink-0 tabular-nums">{format(new Date(app.startTime),'HH:mm')}</span>
       </div>
-      <div className="mt-2 relative z-10">
-        <p className="font-bold text-[12px] tracking-tight line-clamp-1 leading-tight text-slate-900 dark:text-white">{app.patient?.name}</p>
-        <p className="text-[9px] font-bold opacity-60 tracking-tighter line-clamp-1 mt-0.5 text-slate-500 dark:text-slate-400">{app.patient?.owner?.name}</p>
-      </div>
-      {/* Background Micro-Icon */}
-      <div className="absolute -bottom-1 -right-1 opacity-10 group-hover:opacity-20 transition-all duration-700 pointer-events-none -rotate-12 group-hover:rotate-0">
-        <config.icon size={45} strokeWidth={1.5} style={{ color: config.color }} />
-      </div>
+      {!compact && <span className="text-[9px] text-slate-500 dark:text-slate-400 truncate">{app.patient?.owner?.name}</span>}
     </div>
   );
 }
 
-// ── Droppable time slot ─────────────────────────────────────────────────────
-function DroppableSlot({ id, children, day, hour, isToday, onAddClick, isHighlighted }: any) {
-  const { setNodeRef } = useDroppable({ id, data: { day, hour } });
+// ── Drop target slot (thin, fixed-height background element) ────────────────
+function DropSlot({ id, day, slotTime, isToday, isHighlighted, onAddClick }: any) {
+  const { setNodeRef } = useDroppable({ id, data: { day, hour: slotTime } });
+  const isHalf = slotTime.endsWith(':30');
   return (
-    <div
-      ref={setNodeRef}
-      className={cn(
-        "p-2 border-l border-slate-100 dark:border-white/[0.04] transition-all duration-150 min-h-[110px] flex flex-col gap-1.5 relative group/slot",
-        isToday && "bg-blue-600/[0.015] dark:bg-blue-400/[0.01]",
-        isHighlighted && "bg-blue-600/10 ring-2 ring-inset ring-blue-500/40 z-40 rounded-lg"
-      )}
-    >
-      {/* Drop target indicator shown when dragging over this slot */}
-      {isHighlighted && (
-        <div className="absolute inset-1 rounded-lg border-2 border-dashed border-blue-500/50 pointer-events-none z-10 flex items-center justify-center">
-          <span className="text-[9px] font-bold text-blue-500/70 tracking-widest bg-blue-50/80 dark:bg-blue-950/80 px-2 py-0.5 rounded-full">{hour}</span>
-        </div>
-      )}
-      {children}
-      <button
-        onClick={() => onAddClick?.({ day, hour })}
-        className={cn(
-          "opacity-0 group-hover/slot:opacity-100 flex items-center justify-center transition-all active:scale-90 rounded-xl border-2 border-dashed border-slate-100 dark:border-white/5 hover:border-blue-400/50 hover:bg-blue-50 dark:hover:bg-blue-500/10 text-blue-400/40 hover:text-blue-600",
-          children?.length ? "h-10 w-full mt-auto" : "flex-1"
-        )}
-      >
-        <Plus size={children?.length ? 18 : 24} strokeWidth={2.5} />
-      </button>
-    </div>
+    <div ref={setNodeRef} onClick={() => onAddClick?.({ day, hour: slotTime })}
+      style={{ height: SLOT_H }}
+      className={cn('border-b cursor-pointer transition-colors duration-75 group/slot relative',
+        isHalf ? 'border-slate-100/20 dark:border-white/[0.015]' : 'border-slate-200/40 dark:border-white/[0.04]',
+        isToday && !isHighlighted && 'bg-blue-600/[0.008]',
+        isHighlighted && 'bg-blue-500/10 border-blue-400/40')} />
   );
 }
 
@@ -131,7 +93,7 @@ function CalendarContent() {
   const queryClient = useQueryClient();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedVet, setSelectedVet] = useState<string>("all");
-  const [view, setView] = useState<"week" | "day">("week");
+  const [view, setView] = useState<"week" | "day">("day");
   const [selectedApp, setSelectedApp] = useState<any>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [hoverSlotKey, setHoverSlotKey] = useState<string | null>(null);
@@ -225,19 +187,18 @@ function CalendarContent() {
     staleTime: 30000,
   });
 
-  const groupedAppointments = useMemo(() => {
+  // Group appointments by day (for absolute positioning)
+  const groupedByDay = useMemo(() => {
     const map = new Map<string, any[]>();
     rawAppointments.forEach((app: any) => {
       if (selectedVet !== "all" && app.veterinarianId !== selectedVet) return;
       try {
-        const date = new Date(app.startTime);
-        if (isNaN(date.getTime())) return;
-        const key = `${format(date, "yyyy-MM-dd")}-${format(date, "HH:00")}`;
+        const d = new Date(app.startTime);
+        if (isNaN(d.getTime())) return;
+        const key = format(d, "yyyy-MM-dd");
         if (!map.has(key)) map.set(key, []);
         map.get(key)!.push(app);
-      } catch (e) {
-        console.error("Error formatting appointment date:", e);
-      }
+      } catch {}
     });
     return map;
   }, [rawAppointments, selectedVet]);
@@ -335,27 +296,27 @@ function CalendarContent() {
   });
 
   const colCount = activeDays.length;
-  const SLOT_HEIGHT_PX = 112; // h-28 = 7rem = 112px
 
-  /** Calculates target {day, hour} from drag delta — pure math, no collision detection */
+  /** Calculates target {day, hour} from drag delta — 30-min precision */
   const calcTargetSlot = useCallback((active: any, delta: { x: number; y: number }) => {
     const app = active.data.current?.app;
     if (!app?.startTime) return null;
     const origDate = new Date(app.startTime);
-    const origHourIndex = hours.indexOf(format(origDate, "HH:00"));
-    if (origHourIndex === -1) return null;
-    const hourDelta = Math.round(delta.y / SLOT_HEIGHT_PX);
-    const newHourIndex = Math.max(0, Math.min(hours.length - 1, origHourIndex + hourDelta));
-    const newHour = hours[newHourIndex];
-    const colWidthPx = (window.innerWidth - 80) / colCount;
+    const origMin = origDate.getMinutes() < 30 ? '00' : '30';
+    const origSlotKey = `${String(origDate.getHours()).padStart(2,'0')}:${origMin}`;
+    const origIdx = halfHours.indexOf(origSlotKey);
+    if (origIdx === -1) return null;
+    const slotDelta = Math.round(delta.y / SLOT_H);
+    const newIdx = Math.max(0, Math.min(halfHours.length - 1, origIdx + slotDelta));
+    const newHour = halfHours[newIdx];
+    const colWidthPx = (window.innerWidth - 64) / colCount;
     const dayDelta = Math.round(delta.x / colWidthPx);
-    const origDayIndex = activeDays.findIndex(d => d.fullDate === format(origDate, "yyyy-MM-dd"));
-    const newDayIndex = Math.max(0, Math.min(activeDays.length - 1, origDayIndex + dayDelta));
-    const newDay = activeDays[newDayIndex]?.fullDate ?? format(origDate, "yyyy-MM-dd");
+    const origDayIdx = activeDays.findIndex(d => d.fullDate === format(origDate, "yyyy-MM-dd"));
+    const newDayIdx = Math.max(0, Math.min(activeDays.length - 1, origDayIdx + dayDelta));
+    const newDay = activeDays[newDayIdx]?.fullDate ?? format(origDate, "yyyy-MM-dd");
     return { day: newDay, hour: newHour };
   }, [activeDays, colCount]);
 
-  /** Real-time hover highlight during drag */
   const handleDragMove = useCallback((event: any) => {
     const slot = calcTargetSlot(event.active, event.delta);
     setHoverSlotKey(slot ? `${slot.day}-${slot.hour}` : null);
@@ -365,27 +326,20 @@ function CalendarContent() {
     const { active, delta } = event;
     setActiveId(null);
     setHoverSlotKey(null);
-
     const slot = calcTargetSlot(active, delta);
     if (!slot) return;
     const { day: newDay, hour: newHour } = slot;
-
     const app = active.data.current?.app;
     if (!app?.startTime) return;
     const origDate = new Date(app.startTime);
-
-    // Don't save if nothing changed
-    if (newHour === format(origDate, "HH:00") && newDay === format(origDate, "yyyy-MM-dd")) return;
-
-    // Optimistic update — move card in local cache immediately
+    const origMin = origDate.getMinutes() < 30 ? '00' : '30';
+    const origSlot = `${String(origDate.getHours()).padStart(2,'0')}:${origMin}`;
+    if (newHour === origSlot && newDay === format(origDate, "yyyy-MM-dd")) return;
     const newStartTime = `${newDay}T${newHour}:00`;
     queryClient.setQueryData(
       ["appointments", weekDays[0]?.fullDate, selectedVet],
-      (old: any[]) => old?.map(a =>
-        a.id === active.id ? { ...a, startTime: newStartTime } : a
-      ) ?? []
+      (old: any[]) => old?.map(a => a.id === active.id ? { ...a, startTime: newStartTime } : a) ?? []
     );
-
     try {
       const res = await fetch(`/api/appointments/${active.id}`, {
         method: "PATCH",
@@ -395,7 +349,6 @@ function CalendarContent() {
       if (!res.ok) throw new Error();
       toast.success(`Movido para ${newHour} — ${format(new Date(newDay), "EEE d MMM", { locale: pt })}`);
     } catch {
-      // Revert on error
       refetch();
       toast.error("Erro ao reagendar marcação");
     }
@@ -525,16 +478,15 @@ function CalendarContent() {
         {/* ── Calendar grid ─────────────────────────────────────────────── */}
         <div className="flex-1 overflow-auto bg-white/50 dark:bg-slate-950/50">
           {/* Day headers */}
-          <div 
-            className="grid sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border-b border-slate-200/60 dark:border-white/10 shadow-sm"
-            style={{ gridTemplateColumns: `80px repeat(${colCount}, 1fr)` }}
-          >
-            <div className="h-24 flex items-center justify-center border-r border-slate-200/60 dark:border-white/10 bg-slate-50/50 dark:bg-slate-900/50">
-              <RefreshCw className={cn("w-4 h-4 text-slate-400 dark:text-slate-600", isLoading && "animate-spin")} />
+          <div className="flex sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border-b border-slate-200/60 dark:border-white/10 shadow-sm">
+            {/* Corner cell */}
+            <div className="w-16 shrink-0 h-16 flex items-center justify-center border-r border-slate-200/60 dark:border-white/10 bg-slate-50/50 dark:bg-slate-900/50">
+              <RefreshCw className={cn("w-3.5 h-3.5 text-slate-400 dark:text-slate-600", isLoading && "animate-spin")} />
             </div>
+            <div className="flex flex-1">
             {activeDays.map(day => (
               <div key={day.fullDate}
-                className={cn("h-24 flex flex-col items-center justify-center border-l border-slate-200/40 dark:border-white/5 transition-all relative overflow-hidden",
+                className={cn("h-16 flex-1 flex flex-col items-center justify-center border-l border-slate-200/40 dark:border-white/5 transition-all relative overflow-hidden",
                   day.isToday && "bg-blue-600/[0.04] dark:bg-blue-400/[0.02]",
                   day.isSunday && "bg-slate-50/50 dark:bg-white/[0.02]")}
               >
@@ -562,83 +514,85 @@ function CalendarContent() {
                 </div>
               </div>
             ))}
+            </div>
           </div>
 
-          <div className="relative">
-            {/* Now Indicator Line */}
-            {mounted && now && activeDays.some(d => d.isToday) && (
-              <div 
-                className="absolute left-0 right-0 z-30 pointer-events-none transition-all duration-1000"
-                style={{ 
-                  top: `${((now.getHours() - 8) * 60 + now.getMinutes()) * (128 / 60) + 1}px`,
-                  display: now.getHours() >= 8 && now.getHours() < 24 ? "block" : "none"
-                }}
-              >
-                <div className="flex items-center">
-                  <div className="w-20 pr-3 flex justify-end">
-                    <span className="bg-rose-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-lg shadow-rose-500/30 animate-pulse tracking-widest">Agora</span>
+          <div className="relative flex" style={{ minHeight: halfHours.length * SLOT_H }}>
+            {/* Time column */}
+            <div className="sticky left-0 z-20 w-16 shrink-0 bg-slate-50/95 dark:bg-slate-900/95 border-r border-slate-200/40 dark:border-white/[0.06]">
+              {halfHours.map((slot) => {
+                const isHalf = slot.endsWith(':30');
+                return (
+                  <div key={slot} style={{ height: SLOT_H }}
+                    className={cn("flex items-start justify-end pr-2 border-b",
+                      isHalf ? "border-slate-100/20 dark:border-white/[0.015]" : "border-slate-200/40 dark:border-white/[0.04]")}>
+                    {!isHalf && (
+                      <span className="text-[9px] font-bold text-slate-400 dark:text-slate-600 -translate-y-[6px] tabular-nums">{slot}</span>
+                    )}
                   </div>
-                  <div className="flex-1 h-0.5 bg-rose-500/40 relative">
-                    <div className="absolute -left-1 -top-1.5 w-3.5 h-3.5 rounded-full bg-rose-500 ring-4 ring-rose-500/20 shadow-lg shadow-rose-500/40" />
+                );
+              })}
+            </div>
+
+            {/* Day columns */}
+            <div className="flex flex-1 min-w-0">
+              {activeDays.map(day => {
+                const dayApps = groupedByDay.get(day.fullDate) ?? [];
+                return (
+                  <div key={day.fullDate} className="relative flex-1 border-l border-slate-100 dark:border-white/[0.04]"
+                    style={{ minHeight: halfHours.length * SLOT_H }}>
+                    {/* Drop targets */}
+                    {halfHours.map((slotTime) => (
+                      <DropSlot key={slotTime} id={`${day.fullDate}-${slotTime}`}
+                        day={day.fullDate} slotTime={slotTime} isToday={day.isToday}
+                        isHighlighted={hoverSlotKey === `${day.fullDate}-${slotTime}`}
+                        onAddClick={(s: any) => { setNewSlot(s); setIsAddOpen(true); }} />
+                    ))}
+                    {/* Appointment cards — absolutely positioned */}
+                    {dayApps.map((app: any) => {
+                      const start = new Date(app.startTime);
+                      const end = app.endTime ? new Date(app.endTime) : new Date(start.getTime() + 30 * 60000);
+                      const startMins = (start.getHours() - 8) * 60 + start.getMinutes();
+                      const durMins = Math.max(30, (end.getTime() - start.getTime()) / 60000);
+                      const topPx = (startMins / 30) * SLOT_H;
+                      const heightPx = (durMins / 30) * SLOT_H;
+                      return (
+                        <AppCard key={app.id} app={app} config={getTypeConfig(app.type)}
+                          vetColor={getVetColor(app.veterinarianId)}
+                          onClick={setSelectedApp} topPx={topPx} heightPx={heightPx} />
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Now indicator */}
+            {mounted && now && activeDays.some(d => d.isToday) && now.getHours() >= 8 && now.getHours() < 24 && (
+              <div className="absolute left-0 right-0 z-30 pointer-events-none"
+                style={{ top: ((now.getHours() - 8) * 60 + now.getMinutes()) / 30 * SLOT_H }}>
+                <div className="flex items-center">
+                  <div className="w-16 flex justify-end pr-2 shrink-0">
+                    <span className="bg-rose-500 text-white text-[7px] font-bold px-1 py-0.5 rounded-full animate-pulse tracking-widest">Agora</span>
+                  </div>
+                  <div className="flex-1 h-px bg-rose-500/60 relative">
+                    <div className="absolute -left-1 -top-1 w-2 h-2 rounded-full bg-rose-500 shadow-sm shadow-rose-500/40" />
                   </div>
                 </div>
               </div>
             )}
-
-            {hours.map(hour => (
-              <div 
-                key={hour} 
-                className="grid border-b border-slate-200/40 dark:border-white/[0.03] group/row"
-                style={{ gridTemplateColumns: `80px repeat(${colCount}, 1fr)` }}
-              >
-                <div className="h-28 px-2 text-[10px] font-bold text-slate-400 dark:text-slate-600 text-right pr-6 flex items-start pt-2 justify-end sticky left-0 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md z-10 border-r border-slate-200/60 dark:border-white/10 group-hover/row:bg-slate-100 dark:group-hover/row:bg-slate-800/80 transition-colors shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] dark:shadow-none">
-                  {hour}
-                </div>
-                {activeDays.map(day => {
-                  const apps = groupedAppointments.get(`${day.fullDate}-${hour}`);
-                  return (
-                    <DroppableSlot
-                      key={`${day.fullDate}-${hour}`}
-                      id={`${day.fullDate}-${hour}`}
-                      day={day.fullDate}
-                      hour={hour}
-                      isToday={day.isToday}
-                      isHighlighted={hoverSlotKey === `${day.fullDate}-${hour}`}
-                      onAddClick={(slot: any) => { setNewSlot(slot); setIsAddOpen(true); }}
-                    >
-                      {apps?.map((app: any) => (
-                        <DraggableAppointment
-                          key={app.id}
-                          app={app}
-                          hour={hour}
-                          config={getTypeConfig(app.type)}
-                          vetColor={getVetColor(app.veterinarianId)}
-                          onClick={setSelectedApp}
-                        />
-                      ))}
-                    </DroppableSlot>
-                  );
-                })}
-              </div>
-            ))}
           </div>
         </div>
 
         {/* Drag overlay */}
         <DragOverlay>
           {activeApp && (
-            <div className="w-[180px] pointer-events-none">
-              <DraggableAppointment
-                app={activeApp}
-                hour={activeApp?.startTime ? format(new Date(activeApp.startTime), "HH:mm") : "--:--"}
-                config={getTypeConfig(activeApp?.type)}
-                vetColor={getVetColor(activeApp?.veterinarianId)}
-                onClick={() => {}}
-                isOverlay
-              />
-            </div>
+            <AppCard app={activeApp} config={getTypeConfig(activeApp?.type)}
+              vetColor={getVetColor(activeApp?.veterinarianId)}
+              onClick={() => {}} isOverlay topPx={0} heightPx={SLOT_H * 2} />
           )}
         </DragOverlay>
+
 
         {/* ── New appointment modal ─────────────────────────────────────── */}
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
