@@ -23,6 +23,7 @@ import { format, isPast, differenceInDays, differenceInYears, differenceInMonths
 import { pt } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useClinicalSummary } from "@/hooks/useClinicalSummary";
+import { useAISummary } from "@/hooks/useAISummary";
 import { PremiumCard } from "@/components/PremiumCard";
 import type { Vaccination, VitalSign, Prescription } from "@/types";
 
@@ -93,9 +94,11 @@ function ClinicalTimeline({ events }: { events: TimelineEvent[] }) {
 
 // ── Clinical Summary Banner Component ─────────────────────────────────────
 function ClinicalSummaryBanner({ patientId }: { patientId: string }) {
-  const { data: summary, isLoading } = useClinicalSummary(patientId);
+  const { data: summary, isLoading: isLocalLoading } = useClinicalSummary(patientId);
+  const [aiEnabled, setAiEnabled] = React.useState(false);
+  const { data: aiSummary, isLoading: isAILoading } = useAISummary(patientId, aiEnabled);
 
-  if (isLoading) {
+  if (isLocalLoading) {
     return (
       <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl p-8 shadow-xl shadow-blue-500/10 animate-pulse">
         <div className="h-24 bg-white/10 rounded-2xl" />
@@ -106,6 +109,7 @@ function ClinicalSummaryBanner({ patientId }: { patientId: string }) {
   if (!summary) return null;
 
   const hasAlerts = summary.safetyAlerts.length > 0 || summary.vaccines.expired.length > 0 || summary.deworming.overdue;
+  const isLoadingAI = aiEnabled && isAILoading;
 
   return (
     <div className={`relative overflow-hidden rounded-3xl p-8 shadow-xl shadow-blue-500/10 group ${
@@ -114,53 +118,97 @@ function ClinicalSummaryBanner({ patientId }: { patientId: string }) {
       <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-32 translate-x-32 group-hover:bg-white/20 transition-all duration-700" />
       <div className="relative z-10 flex flex-col lg:flex-row lg:items-start justify-between gap-8">
         <div className="space-y-4 max-w-2xl">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <div className="bg-white/20 p-2 rounded-xl text-white"><Sparkles size={18} /></div>
             <h3 className="text-lg font-bold text-white">Resumo Clínico</h3>
-            <span className="text-[10px] font-medium text-white/70 bg-white/10 px-2 py-0.5 rounded-full">
-              Local — 100% privado
+            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+              aiEnabled
+                ? "bg-purple-400/30 text-purple-100"
+                : "bg-white/10 text-white/70"
+            }`}>
+              {aiEnabled ? "IA Groq (Anonimizado)" : "Local — 100% privado"}
             </span>
+            <button
+              onClick={() => setAiEnabled(!aiEnabled)}
+              className="text-[10px] font-medium text-white/80 bg-white/10 hover:bg-white/20 px-2 py-0.5 rounded-full transition-colors"
+            >
+              {aiEnabled ? "↩ Voltar Local" : "✨ Analisar com IA"}
+            </button>
           </div>
 
-          <p className="text-blue-50 text-base font-medium leading-relaxed">
-            {summary.patientName} é um {summary.species.toLowerCase()} {summary.gender.toLowerCase()} de {summary.breed}, {summary.ageText}.
-            {summary.lastConsultation
-              ? ` Última consulta há ${summary.lastConsultation.daysAgo} dias com ${summary.lastConsultation.veterinarian}.`
-              : " Sem consultas registadas."}
-          </p>
-
-          {/* Safety Alerts */}
-          {summary.safetyAlerts.length > 0 && (
-            <div className="space-y-1">
-              {summary.safetyAlerts.map((alert, i) => (
-                <div key={i} className="flex items-center gap-2 text-rose-100 text-sm font-semibold">
-                  <AlertCircle size={14} /> {alert}
+          {isLoadingAI ? (
+            <div className="space-y-2 animate-pulse">
+              <div className="h-4 bg-white/20 rounded w-3/4" />
+              <div className="h-4 bg-white/20 rounded w-1/2" />
+            </div>
+          ) : aiEnabled && aiSummary ? (
+            <>
+              <p className="text-blue-50 text-base font-medium leading-relaxed">
+                {aiSummary.summary}
+              </p>
+              {aiSummary.alerts.length > 0 && (
+                <div className="space-y-1">
+                  {aiSummary.alerts.map((alert, i) => (
+                    <div key={i} className="flex items-center gap-2 text-rose-100 text-sm font-semibold">
+                      <AlertCircle size={14} /> {alert}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
+              )}
+              {aiSummary.recommendations.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {aiSummary.recommendations.map((rec, i) => (
+                    <span key={i} className="text-xs font-medium text-white bg-white/20 px-3 py-1 rounded-full">
+                      💡 {rec}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <p className="text-[10px] text-white/50">{aiSummary.disclaimer}</p>
+            </>
+          ) : (
+            <>
+              <p className="text-blue-50 text-base font-medium leading-relaxed">
+                {summary.patientName} é um {summary.species.toLowerCase()} {summary.gender.toLowerCase()} de {summary.breed}, {summary.ageText}.
+                {summary.lastConsultation
+                  ? ` Última consulta há ${summary.lastConsultation.daysAgo} dias com ${summary.lastConsultation.veterinarian}.`
+                  : " Sem consultas registadas."}
+              </p>
 
-          {/* Vaccine Status */}
-          {summary.vaccines.expired.length > 0 && (
-            <p className="text-amber-100 text-sm font-semibold">
-              ⚠️ {summary.vaccines.expired.length} vacina(s) expirada(s): {summary.vaccines.expired.join(", ")}
-            </p>
-          )}
-          {summary.vaccines.upcoming.length > 0 && (
-            <p className="text-blue-100 text-sm">
-              📅 {summary.vaccines.upcoming.map(v => `${v.name} (em ${v.daysLeft}d)`).join(", ")}
-            </p>
-          )}
+              {/* Safety Alerts */}
+              {summary.safetyAlerts.length > 0 && (
+                <div className="space-y-1">
+                  {summary.safetyAlerts.map((alert, i) => (
+                    <div key={i} className="flex items-center gap-2 text-rose-100 text-sm font-semibold">
+                      <AlertCircle size={14} /> {alert}
+                    </div>
+                  ))}
+                </div>
+              )}
 
-          {/* Recommendations */}
-          {summary.recommendations.length > 0 && (
-            <div className="flex flex-wrap gap-2 pt-1">
-              {summary.recommendations.map((rec, i) => (
-                <span key={i} className="text-xs font-medium text-white bg-white/20 px-3 py-1 rounded-full">
-                  💡 {rec}
-                </span>
-              ))}
-            </div>
+              {/* Vaccine Status */}
+              {summary.vaccines.expired.length > 0 && (
+                <p className="text-amber-100 text-sm font-semibold">
+                  ⚠️ {summary.vaccines.expired.length} vacina(s) expirada(s): {summary.vaccines.expired.join(", ")}
+                </p>
+              )}
+              {summary.vaccines.upcoming.length > 0 && (
+                <p className="text-blue-100 text-sm">
+                  📅 {summary.vaccines.upcoming.map(v => `${v.name} (em ${v.daysLeft}d)`).join(", ")}
+                </p>
+              )}
+
+              {/* Recommendations */}
+              {summary.recommendations.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {summary.recommendations.map((rec, i) => (
+                    <span key={i} className="text-xs font-medium text-white bg-white/20 px-3 py-1 rounded-full">
+                      💡 {rec}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
 
