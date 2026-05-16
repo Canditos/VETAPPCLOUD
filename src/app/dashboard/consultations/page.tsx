@@ -145,10 +145,10 @@ function ConsultationContent() {
 
   if (!patientId || patientError) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh] gap-8 animate-in fade-in zoom-in-95 duration-1000">
+      <div className="flex flex-col items-center justify-center min-h-[70vh] gap-6 animate-in fade-in zoom-in-95 duration-1000">
         <div className="relative">
           <div className="absolute inset-0 bg-blue-500/10 blur-[80px] rounded-full animate-pulse" />
-          <div className="w-40 h-40 bg-white dark:bg-slate-900 rounded-[3.5rem] flex items-center justify-center text-blue-600 dark:text-blue-400 border border-slate-100 dark:border-white/5 shadow-2xl relative z-10">
+          <div className="w-40 h-40 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-400 border border-slate-100 dark:border-white/5 shadow-2xl relative z-10">
              <Stethoscope size={80} strokeWidth={1} />
           </div>
           <div className="absolute -right-4 -bottom-4 w-16 h-16 bg-slate-900 dark:bg-white rounded-3xl flex items-center justify-center text-white dark:text-slate-900 shadow-2xl z-20 animate-bounce delay-500">
@@ -156,16 +156,16 @@ function ConsultationContent() {
           </div>
         </div>
         <div className="text-center space-y-4 relative z-10">
-          <h2 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">Clinical Environment</h2>
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tighter">Clinical Environment</h2>
           <p className="text-slate-500 dark:text-slate-400 font-bold max-w-md mx-auto text-xl leading-relaxed">
             Selecione um paciente na <span className="text-blue-600">Agenda</span> ou <span className="text-blue-600">Base de Dados</span> para iniciar um atendimento clínico de alta performance.
           </p>
         </div>
         <div className="flex gap-4">
-          <Button onClick={() => router.push("/dashboard/appointments")} className="h-16 rounded-[2rem] bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:scale-105 px-10 font-black transition-all active:scale-95 shadow-2xl shadow-blue-500/20 uppercase tracking-widest text-xs">
+          <Button onClick={() => router.push("/dashboard/appointments")} className="h-16 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:scale-105 px-10 font-bold transition-all active:scale-95 shadow-2xl shadow-blue-500/20 tracking-widest text-xs">
             Abrir Agenda
           </Button>
-          <Button variant="outline" onClick={() => router.push("/dashboard/patients")} className="h-16 rounded-[2rem] bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white hover:scale-105 px-10 font-black transition-all active:scale-95 uppercase tracking-widest text-xs">
+          <Button variant="outline" onClick={() => router.push("/dashboard/patients")} className="h-16 rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white hover:scale-105 px-10 font-bold transition-all active:scale-95 tracking-widest text-xs">
             Procurar Paciente
           </Button>
         </div>
@@ -175,15 +175,15 @@ function ConsultationContent() {
 
   if (isPatientLoading) {
     return (
-      <div className="space-y-10 animate-pulse p-8 max-w-[1600px] mx-auto">
+      <div className="space-y-6 animate-pulse p-6 max-w-[1600px] mx-auto">
         <div className="flex justify-between items-end">
-          <div className="flex gap-8">
-            <Skeleton className="h-24 w-24 rounded-[2.5rem]" />
+          <div className="flex gap-6">
+            <Skeleton className="h-24 w-24 rounded-2xl" />
             <div className="space-y-4"><Skeleton className="h-10 w-80" /><Skeleton className="h-5 w-60" /></div>
           </div>
           <div className="flex gap-3"><Skeleton className="h-14 w-32 rounded-2xl" /><Skeleton className="h-14 w-48 rounded-2xl" /></div>
         </div>
-        <Skeleton className="h-[500px] w-full rounded-[3rem]" />
+        <Skeleton className="h-[500px] w-full rounded-2xl" />
       </div>
     );
   }
@@ -192,10 +192,10 @@ function ConsultationContent() {
   const lastVitals = history?.find((h: { type: string; data?: { weight?: number } }) => h.type === "VITALS")?.data;
 
   return (
-    <div className="space-y-8 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-[1600px] mx-auto px-4 sm:px-0">
+    <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-[1600px] mx-auto px-4 sm:px-0">
       
       {/* Header Context Bar */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-white dark:bg-slate-900 p-8 rounded-3xl ring-1 ring-slate-100 dark:ring-white/5 shadow-sm">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-white dark:bg-slate-900 p-6 rounded-3xl ring-1 ring-slate-100 dark:ring-white/5 shadow-sm">
         <div className="flex items-center gap-6">
           <div className="w-20 h-20 bg-slate-900 dark:bg-white rounded-2xl flex items-center justify-center text-white dark:text-slate-900 font-bold text-3xl shadow-lg transition-transform hover:rotate-3">
             {patient?.name?.[0] || "?"}
@@ -240,7 +240,7 @@ function ConsultationContent() {
       {/* Main Clinical Navigation */}
       <Tabs value={activeTab} onValueChange={updateTab} className="w-full">
         <div className="mb-10 overflow-x-auto -mx-4 px-4 md:-mx-8 md:px-8 no-scrollbar">
-          <TabsList className="inline-flex w-auto min-w-full bg-slate-100/50 dark:bg-slate-900/50 p-1.5 rounded-[2.5rem] ring-1 ring-slate-200/50 dark:ring-white/5 gap-1">
+          <TabsList className="inline-flex w-auto min-w-full bg-slate-100/50 dark:bg-slate-900/50 p-1.5 rounded-2xl ring-1 ring-slate-200/50 dark:ring-white/5 gap-1">
             {[
               { val: "clinical", label: "Histórico & SOAP", icon: ClipboardCheck },
               { val: "vaccines", label: "Vacinação & Prevenção", icon: Syringe },
@@ -258,16 +258,16 @@ function ConsultationContent() {
 
         {/* CLINICAL / SOAP TAB */}
         <TabsContent value="clinical" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div className="lg:col-span-8 space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-8 space-y-6">
               <PremiumCard padding="none">
-                <div className="px-8 py-6 pb-4 border-b border-slate-50 dark:border-white/5 bg-slate-50/30 dark:bg-white/5">
+                <div className="px-6 py-6 pb-4 border-b border-slate-50 dark:border-white/5 bg-slate-50/30 dark:bg-white/5">
                   <div className="flex justify-between items-center">
                     <h2 className="text-lg font-bold text-slate-900 dark:text-white">Protocolo Clínico SOAP</h2>
                     <Badge className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-medium px-3 py-1 rounded-lg">Standard Workflow</Badge>
                   </div>
                 </div>
-                <div className="p-8 space-y-8">
+                <div className="p-6 space-y-6">
                   
                   {/* Vitals Input */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-slate-50 dark:bg-slate-800/40 rounded-3xl border border-slate-100 dark:border-white/5">
@@ -290,7 +290,7 @@ function ConsultationContent() {
                     ))}
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-3">
                       <Label className="text-xs font-semibold text-slate-500 dark:text-slate-400 ml-1">S: Subjective</Label>
                       <Textarea className="min-h-[140px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-100 dark:border-white/5 focus-visible:ring-blue-500/20 resize-none text-sm" value={notes.subjective} onChange={(e) => setNotes({ ...notes, subjective: e.target.value })} placeholder="Relato do proprietário, motivo da consulta..." />
@@ -317,7 +317,7 @@ function ConsultationContent() {
                </PremiumCard>
              </div>
 
-            <div className="lg:col-span-4 space-y-8">
+            <div className="lg:col-span-4 space-y-6">
               <PremiumCard padding="none" className="h-full flex flex-col">
                 <div className="px-6 py-4 bg-slate-50/50 dark:bg-white/5 border-b border-slate-100 dark:border-white/5">
                   <div className="flex items-center justify-between">
@@ -329,9 +329,9 @@ function ConsultationContent() {
                    <ClinicalTimeline history={history} isLoading={isHistoryLoading} />
                  </div>
                </PremiumCard>
-            </div>
-          </div>
-        </TabsContent>
+             </div>
+           </div>
+         </TabsContent>
 
         {/* VACCINES TAB */}
         <TabsContent value="vaccines" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -340,19 +340,19 @@ function ConsultationContent() {
 
         {/* PRESCRIPTIONS TAB */}
         <TabsContent value="prescriptions" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 space-y-8">
+           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-6">
                   <PremiumCard padding="lg">
-                     <div className="mb-8">
+                     <div className="mb-6">
                         <h3 className="text-lg font-bold text-slate-900 dark:text-white">Emissão de Prescrição</h3>
                         <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-1">Registo de medicamentos e protocolos de tratamento.</p>
                      </div>
                      {patientId && <PrescriptionForm patientId={patientId} consultationId={appointmentId || undefined} />}
                   </PremiumCard>
                </div>
-               <div className="space-y-8">
+               <div className="space-y-6">
                   <PremiumCard variant="purple" className="!bg-slate-900 dark:!bg-slate-800 text-white overflow-hidden relative">
-                     <div className="absolute top-0 right-0 p-8 opacity-10"><Pill size={80} /></div>
+                     <div className="absolute top-0 right-0 p-6 opacity-10"><Pill size={80} /></div>
                      <div className="relative z-10">
                         <h3 className="text-base font-bold mb-4">Notas Legais</h3>
                         <p className="text-slate-400 text-sm leading-relaxed mb-6">Prescrições de antibióticos requerem todos os campos para conformidade legal.</p>
@@ -370,7 +370,7 @@ function ConsultationContent() {
         <TabsContent value="billing" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
            <div className="max-w-5xl mx-auto">
                <PremiumCard padding="lg">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 mb-8">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 mb-6">
                      <div>
                         <Badge className={
                           health?.inventorySync?.status === "active"
@@ -390,7 +390,7 @@ function ConsultationContent() {
 
         {/* EXAMS TAB - Unified with Diagnostics */}
         <TabsContent value="exams" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-           <div className="space-y-8">
+           <div className="space-y-6">
               {/* Request Exams */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <PremiumCard padding="lg">
@@ -433,7 +433,7 @@ function ConsultationContent() {
                   </div>
                   <div className="p-6">
                      {!diagnostics || diagnostics.length === 0 ? (
-                       <div className="py-12 text-center bg-slate-50 dark:bg-slate-800/50 rounded-[2rem] border-2 border-dashed border-slate-100 dark:border-white/5">
+                       <div className="py-12 text-center bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-100 dark:border-white/5">
                           <FlaskConical size={32} className="mx-auto text-slate-200 dark:text-slate-700 mb-3" />
                           <p className="text-slate-400 font-bold text-sm">Sem resultados para este paciente</p>
                           <p className="text-slate-400 text-xs mt-1">Os resultados aparecerão aqui quando recebidos dos integradores.</p>
@@ -447,13 +447,13 @@ function ConsultationContent() {
                                       {dx.type === 'LAB' ? <FlaskConical size={18} /> : <ImageIcon size={18} />}
                                    </div>
                                    <div>
-                                      <p className="font-black text-sm text-slate-900 dark:text-white">{dx.summary ?? dx.testName ?? "—"}</p>
+                                      <p className="font-bold text-sm text-slate-900 dark:text-white">{dx.summary ?? dx.testName ?? "—"}</p>
                                       <p className="text-[10px] text-slate-400 font-bold">{dx.source} • {dx.createdAt ? formatDistanceToNow(new Date(dx.createdAt), { addSuffix: true, locale: pt }) : "—"}</p>
                                    </div>
                                 </div>
                                 <div className="flex items-center gap-3">
                                    <Badge className={cn(
-                                      "border-none font-black text-[8px] uppercase",
+                                      "border-none font-bold text-[8px]",
                                       dx.status === "COMPLETED" ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" :
                                       dx.status === "ALERT" ? "bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400" :
                                       "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"

@@ -110,13 +110,13 @@ export default function InventoryPage() {
   }, [products]);
 
   return (
-    <div className="max-w-full mx-auto space-y-8 p-4 md:p-6 animate-premium">
+    <div className="max-w-[1600px] mx-auto space-y-6 p-4 md:p-6 animate-premium">
       {/* Painel de Gestão de Inventário Unificado */}
-      <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 shadow-sm ring-1 ring-slate-200/60 dark:ring-white/5 space-y-8">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 shadow-sm ring-1 ring-slate-200/60 dark:ring-white/5 space-y-6">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">Inventário & Stock</h1>
-            <div className="flex items-center gap-2 text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em]">
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tighter">Inventário & Stock</h1>
+            <div className="flex items-center gap-2 text-slate-400 font-bold text-[10px] uppercase tracking-wider">
                <Box size={14} className="text-blue-600" />
                <span>Controlo de Medicamentos e Consumíveis</span>
             </div>
@@ -126,7 +126,7 @@ export default function InventoryPage() {
             <Button 
               variant="outline" 
               onClick={() => toast.info("Histórico de stock em desenvolvimento...")}
-              className="h-10 rounded-xl px-4 gap-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-black text-[10px] uppercase tracking-widest hover:bg-white transition-all active:scale-95"
+              className="h-10 rounded-xl px-4 gap-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:bg-white transition-all active:scale-95"
             >
               <History size={16} strokeWidth={2.5} />
               <span>Movimentos</span>
@@ -135,7 +135,7 @@ export default function InventoryPage() {
             <Button 
               variant="outline" 
               onClick={() => toast.success("Exportação iniciada...")}
-              className="h-10 rounded-xl px-4 gap-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-black text-[10px] uppercase tracking-widest hover:bg-white transition-all active:scale-95"
+              className="h-10 rounded-xl px-4 gap-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:bg-white transition-all active:scale-95"
             >
               <Download size={16} strokeWidth={2.5} />
               <span>Exportar</span>
@@ -143,36 +143,36 @@ export default function InventoryPage() {
             
             <Dialog>
               <DialogTrigger asChild>
-                <Button className="h-10 rounded-xl gap-2 bg-blue-600 hover:bg-blue-700 text-white font-black px-5 shadow-sm transition-all active:scale-95">
+                <Button className="h-10 rounded-xl gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 shadow-sm transition-all active:scale-95">
                   <Plus size={16} strokeWidth={3} />
                   <span className="text-[10px] uppercase tracking-widest">Novo Artigo</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px] rounded-[3rem] border-none shadow-3xl p-0 overflow-hidden bg-white dark:bg-slate-900">
+              <DialogContent className="sm:max-w-[500px] rounded-2xl border-none shadow-3xl p-0 overflow-hidden bg-white dark:bg-slate-900">
                 <div className="bg-blue-600 p-8 text-white">
-                  <DialogTitle className="text-2xl font-black tracking-tight">Adicionar ao Catálogo</DialogTitle>
+                  <DialogTitle className="text-2xl font-bold tracking-tight">Adicionar ao Catálogo</DialogTitle>
                   <p className="text-blue-100 text-xs font-bold uppercase tracking-widest mt-1 opacity-80">Registe novos artigos com IVA e Lote.</p>
                 </div>
                 <div className="p-8 space-y-6">
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Designação</Label>
+                    <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Designação</Label>
                     <Input placeholder="Ex: Clavaseptin 500mg" className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Preço (€)</Label>
+                      <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Preço (€)</Label>
                       <Input type="number" placeholder="0.00" className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Taxa IVA</Label>
-                      <select className="h-12 w-full rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-3 text-xs font-black">
+                      <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Taxa IVA</Label>
+                      <select className="h-12 w-full rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-3 text-xs font-bold">
                         <option value="23">23% (Normal)</option>
                         <option value="13">13% (Intermédia)</option>
                         <option value="6">6% (Reduzida)</option>
                       </select>
                     </div>
                   </div>
-                  <Button className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs uppercase tracking-widest" onClick={() => toast.success("Artigo registado!")}>
+                  <Button className="w-full h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-widest" onClick={() => toast.success("Artigo registado!")}>
                     Registar Artigo
                   </Button>
                 </div>
@@ -194,8 +194,8 @@ export default function InventoryPage() {
                 <stat.icon size={18} strokeWidth={2.5} />
               </div>
               <div>
-                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-tight">{stat.label}</p>
-                <p className="text-lg font-black text-slate-900 dark:text-white tracking-tight">{stat.value}</p>
+                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-tight">{stat.label}</p>
+                <p className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">{stat.value}</p>
               </div>
             </div>
           ))}
@@ -215,7 +215,7 @@ export default function InventoryPage() {
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-12 rounded-xl px-4 gap-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 font-black text-[10px] uppercase tracking-widest text-slate-600 dark:text-slate-400 hover:bg-white transition-all">
+              <Button variant="ghost" className="h-10 rounded-xl px-4 gap-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 font-bold text-[10px] uppercase tracking-widest text-slate-600 dark:text-slate-400 hover:bg-white transition-all">
                 <Filter size={16} strokeWidth={2.5} />
                 <span>{filterCategory === "all" ? "Todas as Categorias" : filterCategory}</span>
               </Button>
@@ -236,15 +236,15 @@ export default function InventoryPage() {
       </div>
 
         {/* List Content - Premium Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {isLoading ? (
             Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-48 rounded-[2.5rem] bg-white dark:bg-slate-900 animate-pulse ring-1 ring-slate-100 dark:ring-slate-800" />
+              <div key={i} className="h-48 rounded-2xl bg-white dark:bg-slate-900 animate-pulse ring-1 ring-slate-100 dark:ring-slate-800" />
             ))
           ) : filteredProducts.length === 0 ? (
-            <div className="col-span-full py-32 text-center bg-white/40 dark:bg-slate-900/40 backdrop-blur-sm rounded-[3rem] border-2 border-dashed border-slate-100 dark:border-slate-800">
+            <div className="col-span-full py-32 text-center bg-white/40 dark:bg-slate-900/40 backdrop-blur-sm rounded-2xl border-2 border-dashed border-slate-100 dark:border-slate-800">
                <Package size={64} className="mx-auto text-slate-200 dark:text-slate-800 mb-4" />
-               <h3 className="text-xl font-black text-slate-900 dark:text-white">Sem resultados</h3>
+               <h3 className="text-xl font-bold text-slate-900 dark:text-white">Sem resultados</h3>
                <p className="text-slate-500 font-medium">Tente ajustar a sua pesquisa ou filtros.</p>
             </div>
           ) : (
@@ -256,20 +256,20 @@ export default function InventoryPage() {
               return (
                 <div 
                   key={p.id} 
-                  className="group relative bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] ring-1 ring-slate-100 dark:ring-slate-800 hover:ring-blue-500/30 dark:hover:ring-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-500 flex flex-col gap-6"
+                  className="group relative bg-white dark:bg-slate-900 p-6 rounded-2xl ring-1 ring-slate-100 dark:ring-slate-800 hover:ring-blue-500/30 dark:hover:ring-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-500 flex flex-col gap-4"
                 >
                   {/* Card Header: Icon + Price */}
                   <div className="flex justify-between items-start">
                     <div className="flex gap-4 items-center">
-                      <div className="w-16 h-16 rounded-[1.5rem] bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-inner">
+                      <div className="w-16 h-16 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-inner">
                         <Box size={28} strokeWidth={2} />
                       </div>
                       <div className="min-w-0">
-                        <h3 className="font-black text-xl text-slate-900 dark:text-white truncate tracking-tight leading-none group-hover:text-blue-600 transition-colors">
+                        <h3 className="font-bold text-xl text-slate-900 dark:text-white truncate tracking-tight leading-none group-hover:text-blue-600 transition-colors">
                           {p.name}
                         </h3>
                         <div className="flex items-center gap-2 mt-2">
-                          <Badge variant="secondary" className="text-[9px] font-black bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 uppercase tracking-widest border-none px-2">
+                          <Badge variant="secondary" className="text-[9px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 uppercase tracking-widest border-none px-2">
                             {p.category || "GERAL"}
                           </Badge>
                           {p.batchNumber && (
@@ -281,10 +281,10 @@ export default function InventoryPage() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
+                      <p className="text-2xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none">
                         €{Number(p.price).toFixed(2)}
                       </p>
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">IVA {p.vatRate}%</p>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">IVA {p.vatRate}%</p>
                     </div>
                   </div>
 
@@ -293,11 +293,11 @@ export default function InventoryPage() {
                     <div className="flex justify-between items-end">
                       <div className="flex items-center gap-2">
                         <div className={`w-2 h-2 rounded-full ${isLowStock ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`} />
-                        <span className={`text-sm font-black uppercase tracking-widest ${isLowStock ? 'text-red-600' : 'text-slate-400'}`}>
+                        <span className={`text-sm font-bold uppercase tracking-widest ${isLowStock ? 'text-red-600' : 'text-slate-400'}`}>
                           {isLowStock ? 'Stock Crítico' : 'Stock Operacional'}
                         </span>
                       </div>
-                      <span className="text-2xl font-black text-slate-900 dark:text-white leading-none">
+                      <span className="text-2xl font-bold text-slate-900 dark:text-white leading-none">
                         {p.stockQuantity} <span className="text-[10px] text-slate-400 font-bold uppercase ml-1">UN</span>
                       </span>
                     </div>
@@ -312,7 +312,7 @@ export default function InventoryPage() {
                   {/* Footer: Expiry + Actions */}
                   <div className="flex items-center justify-between pt-2 mt-auto">
                     <div className="flex flex-col">
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Validade</p>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Validade</p>
                       <p className={`text-xs font-bold mt-1 ${isExpired ? 'text-red-500' : 'text-slate-700 dark:text-slate-300'}`}>
                         {expiry ? format(expiry, "dd MMM yyyy", { locale: pt }) : "S/ VALIDADE"}
                       </p>

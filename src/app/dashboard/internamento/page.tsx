@@ -66,22 +66,20 @@ function vitalLabel(tasks: any[]) {
 
 function StatCard({ label, value, icon: Icon, trend, color, bg }: any) {
   return (
-    <Card className="border-none shadow-sm transition-all duration-300 group overflow-hidden bg-white dark:bg-card ring-1 ring-slate-100 dark:ring-white/10 rounded-[2rem]">
-      <CardContent className="p-7">
-        <div className="flex justify-between items-start">
-          <div className={`p-4 rounded-2xl ${bg || 'bg-blue-50'} dark:bg-blue-500/10 ${color || 'text-blue-600'} group-hover:scale-110 group-hover:rotate-3 transition-all duration-500`}>
-            <Icon size={26} strokeWidth={2.5} />
-          </div>
-          {trend && (
-            <Badge variant="outline" className="text-[10px] font-black border-slate-100 dark:border-white/10 text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2 py-1">
-              {trend}
-            </Badge>
-          )}
+    <Card className="border-none shadow-sm transition-all duration-300 group overflow-hidden bg-white dark:bg-card ring-1 ring-slate-100 dark:ring-white/10 rounded-2xl">
+      <CardHeader className="flex flex-row items-start justify-between border-b pb-4">
+        <div className={`p-4 rounded-2xl ${bg || 'bg-blue-50'} dark:bg-blue-500/10 ${color || 'text-blue-600'} group-hover:scale-110 group-hover:rotate-3 transition-all duration-500`}>
+          <Icon size={26} strokeWidth={2.5} />
         </div>
-        <div className="mt-6">
-          <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{label}</p>
-          <p className="text-4xl font-black text-slate-900 dark:text-slate-100 mt-2 tracking-tighter">{value}</p>
-        </div>
+        {trend && (
+          <Badge variant="outline" className="text-[10px] font-bold border-slate-100 dark:border-white/10 text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2 py-1">
+            {trend}
+          </Badge>
+        )}
+      </CardHeader>
+      <CardContent className="pt-4">
+        <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{label}</p>
+        <p className="text-4xl font-bold text-slate-900 dark:text-slate-100 mt-2 tracking-tighter">{value}</p>
       </CardContent>
     </Card>
   );
@@ -143,7 +141,7 @@ function AdmitDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[480px] rounded-3xl border-none shadow-2xl bg-white dark:bg-slate-900">
         <DialogHeader>
-          <DialogTitle className="text-xl font-black text-slate-900 dark:text-slate-100">
+          <DialogTitle className="text-xl font-bold text-slate-900 dark:text-slate-100">
             Admitir Paciente — {boxNumber}
           </DialogTitle>
         </DialogHeader>
@@ -176,11 +174,11 @@ function AdmitDialog({
                     }}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-black text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                      <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                         {p.name[0]}
                       </div>
                       <div>
-                        <p className="font-black text-slate-900 dark:text-slate-200 leading-none mb-1">{p.name}</p>
+                        <p className="font-bold text-slate-900 dark:text-slate-200 leading-none mb-1">{p.name}</p>
                         <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">
                           {p.species} <span className="mx-1 opacity-20">|</span> {p.owner?.name}
                         </p>
@@ -212,7 +210,7 @@ function AdmitDialog({
             />
           </div>
           <Button
-            className="w-full h-12 rounded-xl bg-blue-600 font-black"
+            className="w-full h-10 rounded-xl bg-blue-600 font-bold"
             disabled={!selectedPatient || !reason || admit.isPending}
             onClick={() => admit.mutate()}
           >
@@ -229,7 +227,7 @@ function TaskItem({ task, onComplete }: { task: any; onComplete: (id: string) =>
   const isSkipped = task.status === "SKIPPED";
   return (
     <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 transition-colors">
-      <div className="text-xs font-black text-slate-400 dark:text-slate-500 w-12 shrink-0">
+      <div className="text-xs font-bold text-slate-400 dark:text-slate-500 w-12 shrink-0">
         {new Date(task.scheduledTime).toLocaleTimeString("pt-PT", {
           hour: "2-digit",
           minute: "2-digit",
@@ -241,11 +239,11 @@ function TaskItem({ task, onComplete }: { task: any; onComplete: (id: string) =>
       {isDone ? (
         <CheckCircle2 size={18} className="text-green-500 shrink-0" />
       ) : isSkipped ? (
-        <span className="text-xs text-slate-400 dark:text-slate-600 shrink-0 uppercase font-black tracking-tighter">Saltado</span>
+        <span className="text-xs text-slate-400 dark:text-slate-600 shrink-0 uppercase font-bold tracking-tighter">Saltado</span>
       ) : (
         <Button
           size="sm"
-          className="h-7 rounded-lg text-[10px] font-black uppercase shrink-0 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-400"
+          className="h-7 rounded-lg text-[10px] font-bold uppercase shrink-0 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-400"
           onClick={() => onComplete(task.id)}
         >
           Fazer
@@ -297,7 +295,7 @@ function AddTaskDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[420px] rounded-3xl border-none shadow-2xl bg-white dark:bg-slate-900">
         <DialogHeader>
-          <DialogTitle className="text-xl font-black text-slate-900 dark:text-slate-100">Nova Tarefa</DialogTitle>
+          <DialogTitle className="text-xl font-bold text-slate-900 dark:text-slate-100">Nova Tarefa</DialogTitle>
           <DialogDescription className="text-slate-400">Adicionar ao plano de tratamento.</DialogDescription>
         </DialogHeader>
         <div className="space-y-5 mt-2">
@@ -322,7 +320,7 @@ function AddTaskDialog({
             </select>
           </div>
           <Button
-            className="w-full h-12 rounded-xl bg-blue-600 font-black"
+            className="w-full h-10 rounded-xl bg-blue-600 font-bold"
             disabled={!description || createTask.isPending}
             onClick={() => createTask.mutate()}
           >
@@ -443,8 +441,8 @@ export default function InternamentoPage() {
   }, [hospitalizations, selectedHosp]);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="max-w-[1600px] mx-auto space-y-6 animate-in fade-in duration-700 p-4 md:p-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Ocupação" value={`${hospitalizations.length}/${TOTAL_BOXES}`} icon={Bed} color="text-blue-600" bg="bg-blue-50" trend={`${Math.round((hospitalizations.length / TOTAL_BOXES) * 100)}% Capacidade`} />
         <StatCard label="Críticos" value={stats.criticos} icon={AlertCircle} color="text-rose-600" bg="bg-rose-50" trend="Atenção" />
         <StatCard label="Tratamentos Hoje" value={stats.tratamentosHoje} icon={Activity} color="text-emerald-600" bg="bg-emerald-50" trend="Concluídos" />
@@ -453,7 +451,7 @@ export default function InternamentoPage() {
 
       <div className="flex flex-wrap justify-between items-end gap-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Internamento</h1>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Internamento</h1>
           <p className="text-slate-500 dark:text-slate-400 font-medium">
             Gestão de boxes, planos de tratamento e monitorização 24h.
           </p>
@@ -463,7 +461,7 @@ export default function InternamentoPage() {
             <Button
               variant={view === "grid" ? "default" : "ghost"}
               size="sm"
-              className={`rounded-lg font-black text-[10px] uppercase gap-2 ${view === "grid" ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm hover:bg-white dark:hover:bg-slate-700' : 'text-slate-400 dark:text-slate-500'}`}
+              className={`rounded-lg font-bold text-[10px] uppercase gap-2 ${view === "grid" ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm hover:bg-white dark:hover:bg-slate-700' : 'text-slate-400 dark:text-slate-500'}`}
               onClick={() => setView("grid")}
             >
               <LayoutGrid size={14} /> Grelha
@@ -471,7 +469,7 @@ export default function InternamentoPage() {
             <Button
               variant={view === "list" ? "default" : "ghost"}
               size="sm"
-              className={`rounded-lg font-black text-[10px] uppercase gap-2 ${view === "list" ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm hover:bg-white dark:hover:bg-slate-700' : 'text-slate-400 dark:text-slate-500'}`}
+              className={`rounded-lg font-bold text-[10px] uppercase gap-2 ${view === "list" ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm hover:bg-white dark:hover:bg-slate-700' : 'text-slate-400 dark:text-slate-500'}`}
               onClick={() => setView("list")}
             >
               <List size={14} /> Lista
@@ -479,7 +477,7 @@ export default function InternamentoPage() {
             <Button
               variant={view === "map" ? "default" : "ghost"}
               size="sm"
-              className={`rounded-lg font-black text-[10px] uppercase gap-2 ${view === "map" ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm hover:bg-white dark:hover:bg-slate-700' : 'text-slate-400 dark:text-slate-500'}`}
+              className={`rounded-lg font-bold text-[10px] uppercase gap-2 ${view === "map" ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm hover:bg-white dark:hover:bg-slate-700' : 'text-slate-400 dark:text-slate-500'}`}
               onClick={() => setView("map")}
             >
               <Activity size={14} /> Mapa
@@ -493,7 +491,7 @@ export default function InternamentoPage() {
             <RefreshCw size={16} /> Atualizar
           </Button>
           <Button
-            className="rounded-xl bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-100 dark:shadow-none font-black gap-2"
+            className="rounded-xl bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-100 dark:shadow-none font-bold gap-2"
             onClick={() => setAdmitBox(firstAvailableBox)}
           >
             <Plus size={20} /> Admitir Paciente
@@ -514,7 +512,7 @@ export default function InternamentoPage() {
             onClick={() => setSelectedZone(zone.id)}
           >
             <zone.icon size={20} />
-            <span className="text-[10px] font-black uppercase tracking-widest">{zone.name}</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest">{zone.name}</span>
           </Button>
         ))}
       </div>
@@ -530,7 +528,7 @@ export default function InternamentoPage() {
       )}
 
       {view === "grid" ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {isLoading
             ? Array.from({ length: 4 }).map((_, i) => (
                 <Card key={i} className="border-none shadow-sm rounded-3xl overflow-hidden bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/5">
@@ -552,26 +550,26 @@ export default function InternamentoPage() {
                 return (
                   <Card
                     key={hosp.id}
-                    className="border-none shadow-sm transition-all rounded-[2.5rem] overflow-hidden group cursor-pointer ring-1 ring-slate-100 dark:ring-white/10 bg-white dark:bg-slate-900 hover:ring-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/5 duration-500"
+                    className="border-none shadow-sm transition-all rounded-2xl overflow-hidden group cursor-pointer ring-1 ring-slate-100 dark:ring-white/10 bg-white dark:bg-slate-900 hover:ring-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/5 duration-500"
                     onClick={() => setSelectedHosp(hosp)}
                   >
                     <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
-                      <Badge className="font-black text-[10px] uppercase bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-none px-3 h-7 rounded-xl">
+                      <Badge className="font-bold text-[10px] uppercase bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-none px-3 h-7 rounded-xl">
                         {hosp.boxNumber ?? "Box —"}
                       </Badge>
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</span>
                         <div className={`w-2.5 h-2.5 rounded-full ${dotColor} ring-4 ring-white dark:ring-slate-900 shadow-sm`} />
                       </div>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
                         <div className="flex items-center gap-4">
-                           <div className="w-14 h-14 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-900 dark:text-white font-black text-xl shadow-inner">
+                           <div className="w-14 h-10 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-900 dark:text-white font-bold text-xl shadow-inner">
                              {hosp.patient.name[0]}
                            </div>
                            <div>
-                             <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-none mb-1">{hosp.patient.name}</h3>
+                             <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight leading-none mb-1">{hosp.patient.name}</h3>
                              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-tight">
                                {hosp.patient.species}
                                {hosp.patient.breed ? ` • ${hosp.patient.breed}` : ""}
@@ -580,7 +578,7 @@ export default function InternamentoPage() {
                         </div>
                         {tasks.length > 0 && (
                           <div className="space-y-2 bg-slate-50/50 dark:bg-slate-800/30 p-4 rounded-2xl border border-slate-100/50 dark:border-white/5">
-                            <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">
+                            <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">
                               <span>Tratamentos</span>
                               <span>{completed}/{tasks.length}</span>
                             </div>
@@ -602,7 +600,7 @@ export default function InternamentoPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 text-[10px] font-black uppercase text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl px-4"
+                            className="h-8 text-[10px] font-bold uppercase text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl px-4"
                             onClick={(e) => {
                               e.stopPropagation();
                               setSelectedHosp(hosp);
@@ -621,15 +619,15 @@ export default function InternamentoPage() {
             emptyBoxes.map((boxLabel) => (
               <Card
                 key={boxLabel}
-                className="border-none bg-slate-50/30 dark:bg-slate-800/10 border-2 border-dashed border-slate-200 dark:border-white/5 shadow-none rounded-[2.5rem] overflow-hidden cursor-pointer hover:border-blue-500/30 hover:bg-blue-50/20 dark:hover:bg-blue-900/5 transition-all duration-500"
+                className="border-none bg-slate-50/30 dark:bg-slate-800/10 border-2 border-dashed border-slate-200 dark:border-white/5 shadow-none rounded-2xl overflow-hidden cursor-pointer hover:border-blue-500/30 hover:bg-blue-50/20 dark:hover:bg-blue-900/5 transition-all duration-500"
                 onClick={() => setAdmitBox(boxLabel)}
               >
                 <CardContent className="flex flex-col items-center justify-center py-12 text-slate-300 dark:text-slate-700 space-y-4">
-                  <div className="w-16 h-16 rounded-[2rem] bg-white dark:bg-slate-900 shadow-sm flex items-center justify-center ring-1 ring-slate-100 dark:ring-white/5">
+                  <div className="w-16 h-16 rounded-2xl bg-white dark:bg-slate-900 shadow-sm flex items-center justify-center ring-1 ring-slate-100 dark:ring-white/5">
                     <Bed size={28} strokeWidth={1.5} className="text-slate-200 dark:text-slate-800" />
                   </div>
                   <div className="text-center">
-                    <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-600">{boxLabel}</p>
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-600">{boxLabel}</p>
                     <p className="text-[10px] font-bold text-slate-300 dark:text-slate-700 uppercase tracking-widest mt-1">Disponível</p>
                   </div>
                 </CardContent>
@@ -637,16 +635,16 @@ export default function InternamentoPage() {
             ))}
         </div>
       ) : view === "list" ? (
-        <Card className="border-none shadow-sm rounded-[2.5rem] overflow-hidden bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/10">
+        <Card className="border-none shadow-sm rounded-2xl overflow-hidden bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/10">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-50 dark:border-white/5 bg-slate-50/50 dark:bg-slate-900">
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Status</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Box</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Paciente</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Proprietário</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Tratamentos</th>
+                  <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Status</th>
+                  <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Box</th>
+                  <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Paciente</th>
+                  <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Proprietário</th>
+                  <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Tratamentos</th>
                   <th className="px-8 py-5 text-right"></th>
                 </tr>
               </thead>
@@ -664,17 +662,17 @@ export default function InternamentoPage() {
                       </div>
                     </td>
                     <td className="px-8 py-6">
-                       <Badge variant="outline" className="rounded-lg font-black text-[10px] border-slate-200 dark:border-white/10 text-slate-500 uppercase tracking-tighter">
+                       <Badge variant="outline" className="rounded-lg font-bold text-[10px] border-slate-200 dark:border-white/10 text-slate-500 uppercase tracking-tighter">
                          {hosp.boxNumber}
                        </Badge>
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-black text-slate-900 dark:text-white">
+                        <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-900 dark:text-white">
                           {hosp.patient.name[0]}
                         </div>
                         <div>
-                          <p className="font-black text-slate-900 dark:text-white leading-none mb-1">{hosp.patient.name}</p>
+                          <p className="font-bold text-slate-900 dark:text-white leading-none mb-1">{hosp.patient.name}</p>
                           <p className="text-[10px] text-slate-400 font-bold uppercase">{hosp.patient.species} • {hosp.patient.breed}</p>
                         </div>
                       </div>
@@ -689,7 +687,7 @@ export default function InternamentoPage() {
                             value={((hosp.tasks?.filter((t:any) => t.status === "COMPLETED").length || 0) / (hosp.tasks?.length || 1)) * 100} 
                             className="w-24 h-1.5" 
                           />
-                          <span className="text-[10px] font-black text-slate-400 uppercase">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase">
                             {hosp.tasks?.filter((t:any) => t.status === "COMPLETED").length || 0}/{hosp.tasks?.length || 0}
                           </span>
                        </div>
@@ -721,7 +719,7 @@ export default function InternamentoPage() {
                       <Badge className="bg-white/20 text-white border-none mb-2">
                         {selectedHospLive.boxNumber ?? "Box —"}
                       </Badge>
-                      <DialogTitle className="text-3xl font-black">
+                      <DialogTitle className="text-3xl font-bold">
                         {selectedHospLive.patient.name}
                       </DialogTitle>
                       <p className="text-blue-100 font-medium">
@@ -741,13 +739,13 @@ export default function InternamentoPage() {
 
               <div className="p-8 space-y-6">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                     Plano de Tratamento
                   </h4>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 rounded-lg text-[10px] font-black uppercase text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                    className="h-7 rounded-lg text-[10px] font-bold uppercase text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
                     onClick={() => setIsAddTaskOpen(true)}
                   >
                     <Plus size={14} className="mr-1" /> Adicionar
@@ -773,7 +771,7 @@ export default function InternamentoPage() {
 
                 <div className="flex gap-3">
                   <Button 
-                    className="flex-1 rounded-xl bg-rose-600 hover:bg-rose-700 font-black h-12 gap-2"
+                    className="flex-1 rounded-xl bg-rose-600 hover:bg-rose-700 font-bold h-10 gap-2"
                     disabled={dischargePatient.isPending}
                     onClick={() => dischargePatient.mutate(selectedHospLive.id)}
                   >
@@ -782,7 +780,7 @@ export default function InternamentoPage() {
                   </Button>
                   <Button 
                     variant="outline" 
-                    className="flex-1 rounded-xl font-black h-12 border-slate-200 dark:border-white/10 dark:text-white"
+                    className="flex-1 rounded-xl font-bold h-10 border-slate-200 dark:border-white/10 dark:text-white"
                     onClick={() => toast.info("Funcionalidade de biométricos em desenvolvimento")}
                   >
                     Registar Biométricos

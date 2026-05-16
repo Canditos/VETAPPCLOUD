@@ -76,13 +76,13 @@ function DraggableAppointment({ app, hour, config, vetColor, onClick, isOverlay 
           <div className="p-1 rounded-md bg-white/60 dark:bg-black/40 shadow-sm">
             <config.icon size={11} strokeWidth={3} style={{ color: config.color }} />
           </div>
-          <span className="text-[8px] font-black uppercase tracking-[0.15em]" style={{ color: config.color }}>{config.label}</span>
+          <span className="text-[8px] font-bold tracking-wider" style={{ color: config.color }}>{config.label}</span>
         </div>
-        <span className="text-[8px] font-black opacity-40 tabular-nums dark:text-white/60">{hour}</span>
+        <span className="text-[8px] font-bold opacity-40 tabular-nums dark:text-white/60">{hour}</span>
       </div>
       <div className="mt-2 relative z-10">
-        <p className="font-black text-[12px] tracking-tight line-clamp-1 leading-tight text-slate-900 dark:text-white">{app.patient?.name}</p>
-        <p className="text-[9px] font-bold opacity-60 uppercase tracking-tighter line-clamp-1 mt-0.5 text-slate-500 dark:text-slate-400">{app.patient?.owner?.name}</p>
+        <p className="font-bold text-[12px] tracking-tight line-clamp-1 leading-tight text-slate-900 dark:text-white">{app.patient?.name}</p>
+        <p className="text-[9px] font-bold opacity-60 tracking-tighter line-clamp-1 mt-0.5 text-slate-500 dark:text-slate-400">{app.patient?.owner?.name}</p>
       </div>
       {/* Background Micro-Icon */}
       <div className="absolute -bottom-1 -right-1 opacity-10 group-hover:opacity-20 transition-all duration-700 pointer-events-none -rotate-12 group-hover:rotate-0">
@@ -368,17 +368,17 @@ function CalendarContent() {
       modifiers={[restrictToFirstScrollableAncestor]}
       collisionDetection={closestCorners}
     >
-      <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-slate-50/30 dark:bg-slate-950">
+      <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-slate-50/30 dark:bg-slate-950 max-w-[1600px] mx-auto">
         {/* ── Top Bar ─────────────────────────────────────────────────── */}
-        <div className="bg-white/80 dark:bg-slate-900/50 backdrop-blur-xl border-b border-slate-200/60 dark:border-white/5 p-5 flex flex-wrap items-center justify-between gap-6 sticky top-0 z-50 shadow-sm">
-          <div className="flex items-center gap-8">
+        <div className="bg-white/80 dark:bg-slate-900/50 backdrop-blur-xl border-b border-slate-200/60 dark:border-white/5 p-5 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50 shadow-sm">
+          <div className="flex items-center gap-4">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 ring-4 ring-blue-500/10">
                 <Stethoscope size={24} strokeWidth={2.5} />
               </div>
               <div>
-                <h1 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none">Agenda Clínica</h1>
-                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mt-1.5">Gestão de Marcações e Fluxo</p>
+                <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none">Agenda Clínica</h1>
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider mt-1.5">Gestão de Marcações e Fluxo</p>
               </div>
             </div>
 
@@ -391,7 +391,7 @@ function CalendarContent() {
                 }} className="h-9 w-9 rounded-xl hover:bg-white dark:hover:bg-white/10 transition-all text-slate-600 dark:text-slate-400">
                   <ChevronLeft size={18} strokeWidth={3} />
                 </Button>
-                <Button variant="ghost" onClick={() => setCurrentDate(new Date())} className="h-9 px-4 font-black text-[10px] uppercase tracking-widest hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all text-slate-900 dark:text-white">
+                <Button variant="ghost" onClick={() => setCurrentDate(new Date())} className="h-9 px-4 font-bold text-[10px] tracking-widest hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all text-slate-900 dark:text-white">
                   Hoje
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => {
@@ -409,7 +409,7 @@ function CalendarContent() {
                   <Input 
                     key={format(currentDate, "yyyy-MM-dd")}
                     defaultValue={format(currentDate, "dd/MM/yyyy")}
-                    className="h-9 w-[110px] bg-transparent border-none font-black text-[11px] uppercase tracking-widest text-slate-900 dark:text-white p-0 text-center focus:ring-0 focus:bg-slate-200/50 dark:focus:bg-white/5 rounded-lg transition-all"
+                    className="h-9 w-[110px] bg-transparent border-none font-bold text-[11px] tracking-widest text-slate-900 dark:text-white p-0 text-center focus:ring-0 focus:bg-slate-200/50 dark:focus:bg-white/5 rounded-lg transition-all"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         const val = (e.target as HTMLInputElement).value;
@@ -433,7 +433,7 @@ function CalendarContent() {
                       <CalendarDays size={18} strokeWidth={2.5} />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-4 rounded-[1.5rem] bg-white dark:bg-slate-900 border-none shadow-2xl ring-1 ring-black/5 dark:ring-white/10 z-[110]" align="end">
+                  <PopoverContent className="w-auto p-4 rounded-2xl bg-white dark:bg-slate-900 border-none shadow-2xl ring-1 ring-black/5 dark:ring-white/10 z-[110]" align="end">
                     <Calendar
                       mode="single"
                       selected={currentDate}
@@ -453,12 +453,12 @@ function CalendarContent() {
             <div className="flex gap-2 border-r border-slate-200/60 dark:border-white/10 pr-6 overflow-x-auto max-w-[500px] no-scrollbar">
               <button
                 onClick={() => setSelectedVet("all")}
-                className={cn("px-5 h-10 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-sm",
+                className={cn("px-5 h-10 rounded-2xl font-bold text-[10px] tracking-widest transition-all shadow-sm",
                   selectedVet === "all" ? "bg-blue-600 text-white" : "bg-white dark:bg-white/5 text-slate-400 hover:bg-slate-50 dark:hover:bg-white/10")}
               >Todos</button>
               {vets.map((vet: any) => (
                 <button key={vet.id} onClick={() => setSelectedVet(vet.id)}
-                  className={cn("px-5 h-10 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap shadow-sm border border-transparent",
+                  className={cn("px-5 h-10 rounded-2xl font-bold text-[10px] tracking-widest transition-all flex items-center gap-2 whitespace-nowrap shadow-sm border border-transparent",
                     selectedVet === vet.id ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white" : "bg-white dark:bg-white/5 text-slate-400 hover:bg-slate-50 dark:hover:bg-white/10")}
                 >
                   <div className="w-2 h-2 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.1)]" style={{ backgroundColor: vet.color }} />
@@ -468,11 +468,11 @@ function CalendarContent() {
             </div>
 
             <div className="flex bg-slate-100/50 dark:bg-white/5 p-1.5 rounded-2xl border border-slate-200/50 dark:border-white/5">
-              <button onClick={() => setView("day")} className={cn("px-5 h-9 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all", view === "day" ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300")}>Dia</button>
-              <button onClick={() => setView("week")} className={cn("px-5 h-9 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all", view === "week" ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300")}>Semana</button>
+              <button onClick={() => setView("day")} className={cn("px-5 h-9 rounded-xl font-bold text-[10px] tracking-widest transition-all", view === "day" ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300")}>Dia</button>
+              <button onClick={() => setView("week")} className={cn("px-5 h-9 rounded-xl font-bold text-[10px] tracking-widest transition-all", view === "week" ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300")}>Semana</button>
             </div>
 
-            <Button onClick={() => { setNewSlot(null); setIsAddOpen(true); }} className="h-12 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-blue-500/25 active:scale-95 transition-all flex items-center gap-2">
+            <Button onClick={() => { setNewSlot(null); setIsAddOpen(true); }} className="h-10 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold text-[10px] tracking-wider shadow-lg shadow-blue-500/25 active:scale-95 transition-all flex items-center gap-2">
               <Plus size={18} strokeWidth={3} />
               Agendar
             </Button>
@@ -498,7 +498,7 @@ function CalendarContent() {
                 {day.isToday && (
                   <div className="absolute top-0 left-0 right-0 h-1 bg-blue-600 shadow-[0_2px_8px_rgba(37,99,235,0.4)]" />
                 )}
-                <span className={cn("text-[10px] font-black uppercase tracking-[0.25em] mb-2",
+                <span className={cn("text-[10px] font-bold tracking-wider mb-2",
                   day.isToday ? "text-blue-600" : "text-slate-400 dark:text-slate-500")}>
                   {day.name}
                 </span>
@@ -507,12 +507,12 @@ function CalendarContent() {
                     "flex items-center justify-center rounded-2xl transition-all duration-500",
                     day.isToday ? "bg-blue-600 text-white w-12 h-12 shadow-lg shadow-blue-500/30" : ""
                   )}>
-                    <span className={cn("text-2xl font-black tracking-tighter leading-none",
+                    <span className={cn("text-2xl font-bold tracking-tighter leading-none",
                       day.isToday ? "text-white" : "text-slate-900 dark:text-white")}>
                       {day.date}
                     </span>
                   </div>
-                  <span className={cn("text-[10px] font-black uppercase tracking-widest",
+                  <span className={cn("text-[10px] font-bold tracking-widest",
                     day.isToday ? "text-blue-600" : "text-slate-400 dark:text-slate-600")}>
                     {day.month}
                   </span>
@@ -533,7 +533,7 @@ function CalendarContent() {
               >
                 <div className="flex items-center">
                   <div className="w-20 pr-3 flex justify-end">
-                    <span className="bg-rose-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full shadow-lg shadow-rose-500/30 animate-pulse uppercase tracking-widest">Agora</span>
+                    <span className="bg-rose-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-lg shadow-rose-500/30 animate-pulse tracking-widest">Agora</span>
                   </div>
                   <div className="flex-1 h-0.5 bg-rose-500/40 relative">
                     <div className="absolute -left-1 -top-1.5 w-3.5 h-3.5 rounded-full bg-rose-500 ring-4 ring-rose-500/20 shadow-lg shadow-rose-500/40" />
@@ -548,7 +548,7 @@ function CalendarContent() {
                 className="grid border-b border-slate-200/40 dark:border-white/[0.03] group/row"
                 style={{ gridTemplateColumns: `80px repeat(${colCount}, 1fr)` }}
               >
-                <div className="py-12 px-2 text-[10px] font-black text-slate-400 dark:text-slate-600 text-right pr-6 flex items-start justify-end sticky left-0 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md z-10 border-r border-slate-200/60 dark:border-white/10 group-hover/row:bg-slate-100 dark:group-hover/row:bg-slate-800/80 transition-colors shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] dark:shadow-none">
+                <div className="py-12 px-2 text-[10px] font-bold text-slate-400 dark:text-slate-600 text-right pr-6 flex items-start justify-end sticky left-0 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md z-10 border-r border-slate-200/60 dark:border-white/10 group-hover/row:bg-slate-100 dark:group-hover/row:bg-slate-800/80 transition-colors shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] dark:shadow-none">
                   {hour}
                 </div>
                 {activeDays.map(day => {
@@ -598,16 +598,16 @@ function CalendarContent() {
 
         {/* ── New appointment modal ─────────────────────────────────────── */}
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <DialogContent className="sm:max-w-[560px] rounded-[2.5rem] p-0 overflow-hidden bg-white dark:bg-slate-950 border-none shadow-[0_0_50px_rgba(0,0,0,0.3)] ring-1 ring-white/10">
-            <div className="bg-slate-50 dark:bg-slate-900/50 p-8 border-b border-slate-200 dark:border-white/5 relative overflow-hidden">
+          <DialogContent className="sm:max-w-[560px] rounded-2xl p-0 overflow-hidden bg-white dark:bg-slate-950 border-none shadow-[0_0_50px_rgba(0,0,0,0.3)] ring-1 ring-white/10">
+            <div className="bg-slate-50 dark:bg-slate-900/50 p-6 border-b border-slate-200 dark:border-white/5 relative overflow-hidden">
               <div className="absolute -right-8 -top-8 w-32 h-32 bg-blue-600/10 rounded-full blur-3xl" />
               <div className="flex items-center gap-5 relative z-10">
-                <div className="w-14 h-14 bg-blue-600 rounded-[1.25rem] flex items-center justify-center text-white shadow-xl shadow-blue-500/20 ring-4 ring-blue-500/10">
+                <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-xl shadow-blue-500/20 ring-4 ring-blue-500/10">
                   <CalendarDays size={26} strokeWidth={2.5} />
                 </div>
                 <div>
-                  <DialogTitle className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Nova Marcação</DialogTitle>
-                  <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mt-1.5 flex items-center gap-2">
+                  <DialogTitle className="text-xl font-bold text-slate-900 dark:text-white tracking-tighter">Nova Marcação</DialogTitle>
+                  <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider mt-1.5 flex items-center gap-2">
                     <Clock size={12} strokeWidth={3} />
                     {newSlot
                       ? `${format(new Date(newSlot.day), "d 'de' MMMM", { locale: pt })} às ${newSlot.hour}`
@@ -617,31 +617,31 @@ function CalendarContent() {
               </div>
             </div>
 
-            <div className="p-8 space-y-8">
+            <div className="p-6 space-y-6">
               <div className="space-y-3">
-                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1">Paciente</label>
+                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider ml-1">Paciente</label>
                 <div className="relative group">
                   <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600 group-focus-within:text-blue-500 transition-colors" size={18} />
                   <input
-                    className="w-full h-14 pl-14 pr-6 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-black text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
+                    className="w-full h-14 pl-14 pr-6 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-bold text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
                     placeholder="Procurar animal ou tutor..."
                     value={patientSearch}
                     onChange={(e) => { setPatientSearch(e.target.value); setSelectedPatient(null); }}
                   />
                   
                   {filteredPatients.length > 0 && !selectedPatient && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden z-[60] animate-in fade-in slide-in-from-top-2 duration-300 ring-1 ring-black/5">
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden z-[60] animate-in fade-in slide-in-from-top-2 duration-300 ring-1 ring-black/5">
                       {filteredPatients.map((p: any) => (
                         <button key={p.id}
                           className="w-full text-left px-6 py-4 hover:bg-blue-600 group/item transition-all flex justify-between items-center border-b border-slate-100 dark:border-white/5 last:border-0"
                           onClick={() => { setSelectedPatient(p); setPatientSearch(p.name); }}
                         >
                           <div className="flex flex-col">
-                            <span className="font-black text-slate-900 dark:text-white group-hover/item:text-white">{p.name}</span>
-                            <span className="text-[10px] font-bold text-slate-400 group-hover/item:text-blue-100 uppercase tracking-widest">{p.species}</span>
+                            <span className="font-bold text-slate-900 dark:text-white group-hover/item:text-white">{p.name}</span>
+                            <span className="text-[10px] font-bold text-slate-400 group-hover/item:text-blue-100 tracking-widest">{p.species}</span>
                           </div>
                           <div className="text-right">
-                            <span className="text-[10px] font-black text-slate-400 group-hover/item:text-white uppercase tracking-tighter block">{p.owner?.name}</span>
+                            <span className="text-[10px] font-bold text-slate-400 group-hover/item:text-white tracking-tighter block">{p.owner?.name}</span>
                           </div>
                         </button>
                       ))}
@@ -656,8 +656,8 @@ function CalendarContent() {
                         <PawPrint size={18} />
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-black text-blue-600 dark:text-blue-400 text-sm leading-none">{selectedPatient.name}</span>
-                        <span className="text-[10px] font-bold text-blue-600/60 dark:text-blue-400/40 uppercase tracking-widest mt-1">{selectedPatient.owner?.name}</span>
+                        <span className="font-bold text-blue-600 dark:text-blue-400 text-sm leading-none">{selectedPatient.name}</span>
+                        <span className="text-[10px] font-bold text-blue-600/60 dark:text-blue-400/40 tracking-widest mt-1">{selectedPatient.owner?.name}</span>
                       </div>
                     </div>
                     <button onClick={() => { setSelectedPatient(null); setPatientSearch(""); }} className="p-2 hover:bg-blue-600/10 rounded-lg transition-colors">
@@ -667,14 +667,14 @@ function CalendarContent() {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1">Médico Responsável</label>
+                  <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider ml-1">Médico Responsável</label>
                   <Select value={newVetId} onValueChange={setNewVetId}>
-                    <SelectTrigger className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-black text-sm px-6">
+                    <SelectTrigger className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-bold text-sm px-6">
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <SelectContent className="rounded-[1.5rem] bg-slate-900 border-white/10 text-white p-2">
+                    <SelectContent className="rounded-2xl bg-slate-900 border-white/10 text-white p-2">
                       {vets.map((v: any) => (
                         <SelectItem key={v.id} value={v.id} className="rounded-xl focus:bg-blue-600 p-3 font-bold">{v.name}</SelectItem>
                       ))}
@@ -683,12 +683,12 @@ function CalendarContent() {
                 </div>
 
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1">Tipo de Serviço</label>
+                  <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider ml-1">Tipo de Serviço</label>
                   <Select value={newType} onValueChange={setNewType}>
-                    <SelectTrigger className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-black text-sm px-6">
+                    <SelectTrigger className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-bold text-sm px-6">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="rounded-[1.5rem] bg-slate-900 border-white/10 text-white p-2">
+                    <SelectContent className="rounded-2xl bg-slate-900 border-white/10 text-white p-2">
                       <SelectItem value="CONSULTA" className="rounded-xl focus:bg-blue-600 p-3 font-bold">Consulta Geral</SelectItem>
                       <SelectItem value="VACINA" className="rounded-xl focus:bg-blue-600 p-3 font-bold">Vacinação</SelectItem>
                       <SelectItem value="CIRURGIA" className="rounded-xl focus:bg-blue-600 p-3 font-bold">Cirurgia</SelectItem>
@@ -698,14 +698,14 @@ function CalendarContent() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1">Duração Prevista</label>
+                  <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider ml-1">Duração Prevista</label>
                   <Select value={newDuration} onValueChange={setNewDuration}>
-                    <SelectTrigger className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-black text-sm px-6">
+                    <SelectTrigger className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-bold text-sm px-6">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="rounded-[1.5rem] bg-slate-900 border-white/10 text-white p-2">
+                    <SelectContent className="rounded-2xl bg-slate-900 border-white/10 text-white p-2">
                       <SelectItem value="15" className="rounded-xl focus:bg-blue-600 p-3 font-bold">15 minutos</SelectItem>
                       <SelectItem value="30" className="rounded-xl focus:bg-blue-600 p-3 font-bold">30 minutos</SelectItem>
                       <SelectItem value="45" className="rounded-xl focus:bg-blue-600 p-3 font-bold">45 minutos</SelectItem>
@@ -716,12 +716,12 @@ function CalendarContent() {
                 </div>
                 {!newSlot && (
                   <div className="space-y-3">
-                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1">Hora de Início</label>
+                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider ml-1">Hora de Início</label>
                     <Select onValueChange={(v) => setNewSlot({ day: format(new Date(), "yyyy-MM-dd"), hour: v })}>
-                      <SelectTrigger className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-black text-sm px-6">
+                      <SelectTrigger className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-bold text-sm px-6">
                         <SelectValue placeholder="Escolher..." />
                       </SelectTrigger>
-                      <SelectContent className="rounded-[1.5rem] bg-slate-900 border-white/10 text-white p-2">
+                      <SelectContent className="rounded-2xl bg-slate-900 border-white/10 text-white p-2">
                         {hours.map(h => <SelectItem key={h} value={h} className="rounded-xl focus:bg-blue-600 p-3 font-bold">{h}</SelectItem>)}
                       </SelectContent>
                     </Select>
@@ -730,7 +730,7 @@ function CalendarContent() {
               </div>
 
               <Button
-                className="w-full h-16 rounded-[2rem] bg-blue-600 hover:bg-blue-700 text-white font-black text-sm uppercase tracking-[0.2em] shadow-xl shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"
+                className="w-full h-16 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm tracking-wider shadow-xl shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"
                 disabled={!selectedPatient || !newVetId || !newSlot || createAppointment.isPending}
                 onClick={() => createAppointment.mutate()}
               >
@@ -742,20 +742,20 @@ function CalendarContent() {
 
         {/* ── Appointment detail modal ──────────────────────────────────── */}
         <Dialog open={!!selectedApp} onOpenChange={() => setSelectedApp(null)}>
-          <DialogContent className="sm:max-w-[480px] rounded-3xl border-none shadow-2xl p-0 overflow-hidden bg-white dark:bg-slate-900">
+          <DialogContent className="sm:max-w-[480px] rounded-2xl border-none shadow-2xl p-0 overflow-hidden bg-white dark:bg-slate-900">
             {selectedApp && (() => {
               const config = getTypeConfig(selectedApp.type);
               const vet = vets.find((v: any) => v.id === selectedApp.veterinarianId);
               return (
                 <div>
-                  <div className="bg-slate-50 dark:bg-slate-800/50 p-8 border-b border-slate-200 dark:border-white/10">
+                  <div className="bg-slate-50 dark:bg-slate-800/50 p-6 border-b border-slate-200 dark:border-white/10">
                     <div className="flex justify-between items-start">
                       <div className="space-y-3">
-                        <Badge className="font-black text-[9px] px-3 py-1 rounded-full uppercase tracking-widest shadow-sm" style={{ backgroundColor: config.color, color: "#fff" }}>
+                        <Badge className="font-bold text-[9px] px-3 py-1 rounded-full tracking-widest shadow-sm" style={{ backgroundColor: config.color, color: "#fff" }}>
                           {selectedApp.type ?? "Geral"}
                         </Badge>
-                        <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{selectedApp.patient?.name}</h2>
-                        <p className="text-slate-500 dark:text-slate-400 font-bold text-xs flex items-center gap-2 uppercase tracking-wide">
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tighter">{selectedApp.patient?.name}</h2>
+                        <p className="text-slate-500 dark:text-slate-400 font-bold text-xs flex items-center gap-2 tracking-wide">
                           <UserIcon size={14} strokeWidth={3} className="text-blue-600" /> {selectedApp.patient?.owner?.name}
                         </p>
                       </div>
@@ -765,16 +765,16 @@ function CalendarContent() {
                     </div>
                   </div>
 
-                  <div className="p-8 space-y-6">
+                  <div className="p-6 space-y-6">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 shadow-inner">
-                        <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-2">Horário</span>
-                        <p className="text-xl font-black text-slate-900 dark:text-white tabular-nums">{format(new Date(selectedApp.startTime), "HH:mm")}</p>
-                        <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-tighter">{format(new Date(selectedApp.startTime), "EEEE, dd MMM", { locale: pt })}</p>
+                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-widest block mb-2">Horário</span>
+                        <p className="text-xl font-bold text-slate-900 dark:text-white tabular-nums">{format(new Date(selectedApp.startTime), "HH:mm")}</p>
+                        <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1 tracking-tighter">{format(new Date(selectedApp.startTime), "EEEE, dd MMM", { locale: pt })}</p>
                       </div>
                       <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 shadow-inner">
-                        <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-2">Médico</span>
-                        <p className="text-sm font-black text-slate-900 dark:text-white line-clamp-2 uppercase tracking-tight">{vet?.name ?? "—"}</p>
+                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-widest block mb-2">Médico</span>
+                        <p className="text-sm font-bold text-slate-900 dark:text-white line-clamp-2 tracking-tight">{vet?.name ?? "—"}</p>
                       </div>
                     </div>
 
@@ -825,45 +825,45 @@ function CalendarContent() {
         </Dialog>
       {/* ── Approval Modal ────────────────────────────────────────────── */}
       <Dialog open={isApprovalOpen} onOpenChange={setIsApprovalOpen}>
-        <DialogContent className="sm:max-w-[560px] rounded-[2.5rem] p-0 overflow-hidden bg-white dark:bg-slate-950 border-none shadow-2xl">
-          <div className="bg-amber-500 p-8 text-white relative overflow-hidden">
+        <DialogContent className="sm:max-w-[560px] rounded-2xl p-0 overflow-hidden bg-white dark:bg-slate-950 border-none shadow-2xl">
+          <div className="bg-amber-500 p-6 text-white relative overflow-hidden">
             <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
             <div className="flex items-center gap-5 relative z-10">
-              <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-[1.25rem] flex items-center justify-center text-white ring-4 ring-white/10">
+              <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center text-white ring-4 ring-white/10">
                 <Calendar size={26} strokeWidth={2.5} />
               </div>
               <div>
-                <DialogTitle className="text-xl font-black uppercase tracking-tighter">Pedido de Marcação</DialogTitle>
-                <p className="text-[10px] font-black text-white/80 uppercase tracking-[0.2em] mt-1.5">Recebido via Portal do Tutor</p>
+                <DialogTitle className="text-xl font-bold tracking-tighter">Pedido de Marcação</DialogTitle>
+                <p className="text-[10px] font-bold text-white/80 tracking-wider mt-1.5">Recebido via Portal do Tutor</p>
               </div>
             </div>
           </div>
 
-          <div className="p-8 space-y-8">
+          <div className="p-6 space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Paciente</span>
-                <p className="text-sm font-black text-slate-900 dark:text-white uppercase">{pendingRequest?.patient?.name}</p>
+                <span className="text-[9px] font-bold text-slate-400 tracking-widest block mb-1">Paciente</span>
+                <p className="text-sm font-bold text-slate-900 dark:text-white">{pendingRequest?.patient?.name}</p>
               </div>
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Tutor</span>
-                <p className="text-sm font-black text-slate-900 dark:text-white uppercase">{pendingRequest?.owner?.name}</p>
+                <span className="text-[9px] font-bold text-slate-400 tracking-widest block mb-1">Tutor</span>
+                <p className="text-sm font-bold text-slate-900 dark:text-white">{pendingRequest?.owner?.name}</p>
               </div>
             </div>
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Data Sugerida</span>
-                <p className="text-sm font-black text-slate-900 dark:text-white uppercase">
+                <span className="text-[10px] font-bold text-slate-400 tracking-widest">Data Sugerida</span>
+                <p className="text-sm font-bold text-slate-900 dark:text-white">
                   {pendingRequest?.requestedDate && format(new Date(pendingRequest.requestedDate), "d 'de' MMMM", { locale: pt })}
                 </p>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Período</span>
-                <Badge variant="secondary" className="font-black text-[9px] uppercase">{pendingRequest?.requestedPeriod}</Badge>
+                <span className="text-[10px] font-bold text-slate-400 tracking-widest">Período</span>
+                <Badge variant="secondary" className="font-bold text-[9px]">{pendingRequest?.requestedPeriod}</Badge>
               </div>
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Observações do Tutor</span>
+                <span className="text-[10px] font-bold text-slate-400 tracking-widest block mb-2">Observações do Tutor</span>
                 <p className="text-xs font-medium text-slate-600 dark:text-slate-400 leading-relaxed italic">
                   "{pendingRequest?.notes || "Nenhuma observação adicional."}"
                 </p>
@@ -872,9 +872,9 @@ function CalendarContent() {
 
             <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-white/5">
               <div className="space-y-3">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Atribuir Veterinário</label>
+                <label className="text-[10px] font-bold text-slate-400 tracking-widest">Atribuir Veterinário</label>
                 <Select value={newVetId} onValueChange={setNewVetId}>
-                  <SelectTrigger className="h-12 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-black text-sm px-6">
+                  <SelectTrigger className="h-10 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-bold text-sm px-6">
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl">
@@ -887,7 +887,7 @@ function CalendarContent() {
 
               <div className="grid grid-cols-2 gap-3">
                 <Button 
-                  className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-white font-black text-[10px] uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all"
+                  className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-white font-bold text-[10px] tracking-widest hover:bg-rose-500 hover:text-white transition-all"
                   onClick={() => {
                     // Logic to reject
                     toast.info("Pedido rejeitado");
@@ -898,7 +898,7 @@ function CalendarContent() {
                   Rejeitar
                 </Button>
                 <Button 
-                  className="h-14 rounded-2xl bg-blue-600 text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
+                  className="h-14 rounded-2xl bg-blue-600 text-white font-bold text-[10px] tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
                   disabled={!newVetId || approveMutation.isPending}
                   onClick={() => approveMutation.mutate()}
                 >
@@ -920,7 +920,7 @@ export default function CalendarPage() {
       <div className="flex h-screen w-full items-center justify-center bg-slate-50 dark:bg-slate-950">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Carregando Agenda...</p>
+          <p className="text-sm font-bold text-slate-900 dark:text-white tracking-widest">Carregando Agenda...</p>
         </div>
       </div>
     }>

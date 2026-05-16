@@ -114,19 +114,19 @@ export default function TeamPage() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 max-w-[1600px] mx-auto p-4 md:p-8">
+    <div className="space-y-6 animate-in fade-in duration-500 max-w-[1600px] mx-auto p-4 md:p-8">
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">Equipa & Acessos</h1>
+          <h1 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight">Equipa & Acessos</h1>
           <p className="text-slate-500 dark:text-slate-400 font-medium">Faça a gestão dos utilizadores e permissões da clínica.</p>
         </div>
         <Dialog>
           <DialogTrigger asChild>
-            <Button className="rounded-xl gap-2 bg-blue-600 hover:bg-blue-700 h-12 px-6 font-black shadow-lg shadow-blue-500/20">
+            <Button className="rounded-xl gap-2 bg-blue-600 hover:bg-blue-700 h-10 px-6 font-bold shadow-lg shadow-blue-500/20">
               <UserPlus size={18} /> Convidar Membro
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px] rounded-[2rem] border-none shadow-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-white/10">
+          <DialogContent className="sm:max-w-[425px] rounded-2xl border-none shadow-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-white/10">
             <DialogHeader>
               <DialogTitle className="text-xl font-bold text-slate-900 dark:text-white">Adicionar Membro</DialogTitle>
               <DialogDescription className="text-slate-500 dark:text-slate-400">O novo utilizador receberá um email para definir a palavra-passe.</DialogDescription>
@@ -180,36 +180,36 @@ export default function TeamPage() {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="border-none shadow-sm rounded-[2rem] bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/5">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="border-none shadow-sm rounded-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/5">
           <CardHeader className="pb-2">
-            <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Staff</CardTitle>
+            <CardTitle className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Staff</CardTitle>
           </CardHeader>
           <CardContent>
-             <p className="text-4xl font-black text-slate-900 dark:text-white">{team.length}</p>
+             <p className="text-4xl font-bold text-slate-900 dark:text-white">{team.length}</p>
              <p className="text-xs text-blue-600 font-bold mt-1">Colaboradores ativos</p>
           </CardContent>
         </Card>
-        <Card className="border-none shadow-sm rounded-[2rem] bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/5">
+        <Card className="border-none shadow-sm rounded-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/5">
           <CardHeader className="pb-2">
-            <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Acessos Ativos</CardTitle>
+            <CardTitle className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Acessos Ativos</CardTitle>
           </CardHeader>
           <CardContent>
-             <p className="text-4xl font-black text-slate-900 dark:text-white">{team.filter(u => u.role === 'ADMIN' || u.role === 'VETERINARIAN').length}</p>
+             <p className="text-4xl font-bold text-slate-900 dark:text-white">{team.filter(u => u.role === 'ADMIN' || u.role === 'VETERINARIAN').length}</p>
              <p className="text-xs text-slate-400 font-bold mt-1">Gestão & Área Clínica</p>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="border-none shadow-sm overflow-hidden rounded-[2.5rem] bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/5">
+      <Card className="border-none shadow-sm overflow-hidden rounded-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/5">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
-                <TableHead className="px-8 py-5 text-slate-400 font-black text-[10px] uppercase tracking-widest">Colaborador</TableHead>
-                <TableHead className="px-8 py-5 text-slate-400 font-black text-[10px] uppercase tracking-widest">Permissões</TableHead>
-                <TableHead className="px-8 py-5 text-slate-400 font-black text-[10px] uppercase tracking-widest">Desde</TableHead>
-                <TableHead className="px-8 py-5 text-right font-black text-[10px] uppercase tracking-widest text-slate-400">Ações</TableHead>
+                <TableHead className="px-8 py-5 text-slate-400 font-bold text-[10px] uppercase tracking-widest">Colaborador</TableHead>
+                <TableHead className="px-8 py-5 text-slate-400 font-bold text-[10px] uppercase tracking-widest">Permissões</TableHead>
+                <TableHead className="px-8 py-5 text-slate-400 font-bold text-[10px] uppercase tracking-widest">Desde</TableHead>
+                <TableHead className="px-8 py-5 text-right font-bold text-[10px] uppercase tracking-widest text-slate-400">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -217,11 +217,11 @@ export default function TeamPage() {
                 <TableRow key={m.id} className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02] border-slate-100 dark:border-white/5 transition-colors">
                   <TableCell className="px-8 py-6">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center font-black text-lg">
+                      <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center font-bold text-lg">
                         {m.name[0]}
                       </div>
                       <div>
-                        <p className="font-black text-slate-900 dark:text-white text-lg tracking-tight leading-none">{m.name}</p>
+                        <p className="font-bold text-slate-900 dark:text-white text-lg tracking-tight leading-none">{m.name}</p>
                         <p className="text-sm text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1.5 mt-2 tracking-tight">
                           <Mail size={14} className="opacity-40" /> {m.email}
                         </p>
@@ -241,7 +241,7 @@ export default function TeamPage() {
                       variant="ghost" 
                       size="sm" 
                       onClick={() => toast.info(`A abrir definições de ${m.name}...`)}
-                      className="font-black text-[10px] uppercase tracking-widest text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl px-4 h-9"
+                      className="font-bold text-[10px] uppercase tracking-widest text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl px-4 h-9"
                     >
                       Configurar
                     </Button>

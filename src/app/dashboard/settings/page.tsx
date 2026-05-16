@@ -86,16 +86,16 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700 max-w-[1600px] mx-auto">
+    <div className="space-y-6 animate-in fade-in duration-700 max-w-[1400px] mx-auto">
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight">Definições</h1>
+          <h1 className="text-3xl font-bold text-white tracking-tight">Definições</h1>
           <p className="text-slate-400 font-medium">Configure a identidade e integrações da sua clínica.</p>
         </div>
         <Button 
           onClick={handleSave}
           disabled={saving}
-          className="rounded-xl gap-2 bg-blue-600 h-12 px-6 font-black shadow-lg shadow-blue-500/20"
+          className="rounded-xl gap-2 bg-blue-600 h-10 px-6 font-bold shadow-lg shadow-blue-500/20"
         >
           {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
           Guardar Tudo
@@ -119,7 +119,7 @@ export default function SettingsPage() {
         </TabsList>
 
         <TabsContent value="general">
-          <Card className="border-none shadow-sm bg-slate-900/50 backdrop-blur-xl ring-1 ring-white/5 rounded-[2rem]">
+          <Card className="border-none shadow-sm bg-slate-900/50 backdrop-blur-xl ring-1 ring-white/5 rounded-2xl">
             <CardHeader>
               <CardTitle className="text-lg font-bold text-white">Informação da Clínica</CardTitle>
               <CardDescription className="text-slate-400">Estes dados serão usados nos cabeçalhos das faturas e relatórios.</CardDescription>
@@ -172,7 +172,7 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="billing">
-          <Card className="border-none shadow-sm border-l-4 border-l-blue-500 bg-slate-900/50 backdrop-blur-xl ring-1 ring-white/5 rounded-[2rem]">
+          <Card className="border-none shadow-sm border-l-4 border-l-blue-500 bg-slate-900/50 backdrop-blur-xl ring-1 ring-white/5 rounded-2xl">
             <CardHeader>
               <div className="flex items-center gap-3">
                  <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-400">
@@ -209,13 +209,13 @@ export default function SettingsPage() {
                 <Button 
                   variant="outline" 
                   onClick={() => toast.info("A testar comunicação com Vendus...")}
-                  className="h-12 rounded-xl border-slate-200 dark:border-white/10 dark:text-white font-bold px-6"
+                  className="h-10 rounded-xl border-slate-200 dark:border-white/10 dark:text-white font-bold px-6"
                 >
                   Testar Ligação
                 </Button>
                 <Button 
                   onClick={handleSave}
-                  className="h-12 rounded-xl gap-2 bg-blue-600 font-black px-6 shadow-lg shadow-blue-500/20"
+                  className="h-10 rounded-xl gap-2 bg-blue-600 font-bold px-6 shadow-lg shadow-blue-500/20"
                 >
                   <Save size={16} /> Ativar Integração
                 </Button>

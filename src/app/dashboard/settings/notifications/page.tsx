@@ -50,56 +50,55 @@ export default function NotificationSettings() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-5xl mx-auto pb-20">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-[1400px] mx-auto pb-20">
       
       {/* Header */}
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">Notificações & Gateway</h1>
+          <h1 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tighter">Notificações & Gateway</h1>
           <p className="text-slate-500 dark:text-slate-400 font-bold mt-2">Configure o motor de comunicação e integração SMS.</p>
         </div>
-        <Button className="rounded-2xl gap-2 bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-[10px] tracking-widest px-6 shadow-xl shadow-blue-500/20">
+        <Button className="rounded-2xl gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase text-[10px] tracking-widest px-6 shadow-xl shadow-blue-500/20">
            <Save size={14} strokeWidth={3} /> Guardar Configurações
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
         {/* Connection Status Card */}
-        <Card className="border-none shadow-xl rounded-[2.5rem] bg-slate-900 text-white overflow-hidden relative p-8">
+        <Card className="border-none shadow-xl rounded-2xl bg-slate-900 text-white overflow-hidden relative flex flex-col">
            <div className="absolute -top-4 -right-4 opacity-10">
               <Wifi size={120} />
            </div>
-           <div className="relative z-10 flex flex-col justify-between h-full min-h-[220px]">
-              <div>
-                <Badge className={cn(
-                  "border-none font-black text-[9px] uppercase tracking-widest px-3 py-1 mb-4",
-                  gatewayStatus === "online" ? "bg-emerald-500 text-white" : "bg-rose-500 text-white"
-                )}>
-                  {gatewayStatus === "online" ? "Gateway Online" : "Gateway Offline"}
-                </Badge>
-                <h3 className="text-2xl font-black tracking-tighter mb-2">Teltonika RUT240</h3>
-                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">IP: 192.168.1.1 (LAN)</p>
-              </div>
-              
+           <CardHeader className="border-b border-white/10 relative z-10 p-8 pb-6">
+              <Badge className={cn(
+                "border-none font-bold text-[9px] uppercase tracking-widest px-3 py-1 mb-2",
+                gatewayStatus === "online" ? "bg-emerald-500 text-white" : "bg-rose-500 text-white"
+              )}>
+                {gatewayStatus === "online" ? "Gateway Online" : "Gateway Offline"}
+              </Badge>
+              <CardTitle className="text-2xl font-bold tracking-tighter">Teltonika RUT240</CardTitle>
+              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">IP: 192.168.1.1 (LAN)</p>
+           </CardHeader>
+           <CardContent className="relative z-10 p-8 pt-6 flex-1 flex flex-col justify-between min-h-[140px]">
               <div className="space-y-4">
-                 <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-500">
+                 <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-slate-500">
                     <span>Sinal GSM</span>
                     <span className="text-white">Excelente (-65dBm)</span>
                  </div>
                  <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
                     <div className="bg-blue-500 h-full w-[85%] rounded-full" />
                  </div>
-                 <Button variant="ghost" className="w-full text-blue-400 hover:text-blue-300 hover:bg-white/5 font-black text-[10px] uppercase tracking-widest gap-2" onClick={() => setGatewayStatus(s => s === "online" ? "offline" : "online")}>
+                 <Button variant="ghost" className="w-full text-blue-400 hover:text-blue-300 hover:bg-white/5 font-bold text-[10px] uppercase tracking-widest gap-2" onClick={() => setGatewayStatus(s => s === "online" ? "offline" : "online")}>
                     <RefreshCw size={12} /> Forçar Reconexão
                  </Button>
               </div>
-           </div>
+           </CardContent>
         </Card>
 
         {/* Global Switches */}
         <div className="md:col-span-2 space-y-4">
-           <Card className="border-none shadow-sm rounded-[2.5rem] bg-white dark:bg-slate-900 p-8 ring-1 ring-slate-100 dark:ring-white/5">
+           <Card className="border-none shadow-sm rounded-2xl bg-white dark:bg-slate-900 p-8 ring-1 ring-slate-100 dark:ring-white/5">
               <div className="space-y-6">
                  {[
                    { id: "sms-auto", label: "SMS Automático de Consultas", desc: "Envia lembrete 24h antes da consulta agendada.", icon: Bell },
@@ -112,7 +111,7 @@ export default function NotificationSettings() {
                             <item.icon size={20} />
                          </div>
                          <div>
-                            <p className="font-black text-slate-900 dark:text-white uppercase text-[11px] tracking-tight">{item.label}</p>
+                            <p className="font-bold text-slate-900 dark:text-white uppercase text-[11px] tracking-tight">{item.label}</p>
                             <p className="text-xs text-slate-500 font-medium">{item.desc}</p>
                          </div>
                       </div>
@@ -125,59 +124,61 @@ export default function NotificationSettings() {
       </div>
 
       <Tabs defaultValue="gateway" className="w-full">
-        <TabsList className="bg-slate-100/50 dark:bg-slate-900/50 p-1.5 rounded-[2rem] ring-1 ring-slate-200 dark:ring-white/5 mb-8">
-           <TabsTrigger value="gateway" className="flex-1 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest py-4 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 shadow-sm transition-all">Configuração Gateway</TabsTrigger>
-           <TabsTrigger value="templates" className="flex-1 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest py-4 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 shadow-sm transition-all">Templates de Mensagem</TabsTrigger>
-           <TabsTrigger value="logs" className="flex-1 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest py-4 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 shadow-sm transition-all">Histórico de Envios</TabsTrigger>
+        <TabsList className="bg-slate-100/50 dark:bg-slate-900/50 p-1.5 rounded-2xl ring-1 ring-slate-200 dark:ring-white/5 mb-8">
+           <TabsTrigger value="gateway" className="flex-1 rounded-xl font-bold text-[10px] uppercase tracking-widest py-4 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 shadow-sm transition-all">Configuração Gateway</TabsTrigger>
+           <TabsTrigger value="templates" className="flex-1 rounded-xl font-bold text-[10px] uppercase tracking-widest py-4 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 shadow-sm transition-all">Templates de Mensagem</TabsTrigger>
+           <TabsTrigger value="logs" className="flex-1 rounded-xl font-bold text-[10px] uppercase tracking-widest py-4 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 shadow-sm transition-all">Histórico de Envios</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="gateway" className="space-y-8 animate-in fade-in duration-500">
-           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <Card className="border-none shadow-xl rounded-[3rem] bg-white dark:bg-slate-900 p-10 ring-1 ring-slate-100 dark:ring-white/5">
-                 <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-8 flex items-center gap-2">
-                    <Settings2 size={20} className="text-blue-600" /> Parâmetros Técnicos
-                 </h3>
-                 <div className="space-y-6">
+        <TabsContent value="gateway" className="space-y-6 animate-in fade-in duration-500">
+           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="border-none shadow-xl rounded-2xl bg-white dark:bg-slate-900 overflow-hidden ring-1 ring-slate-100 dark:ring-white/5">
+                 <CardHeader className="border-b p-10 pb-8">
+                   <CardTitle className="text-xl font-bold text-slate-900 dark:text-white tracking-tighter flex items-center gap-2">
+                      <Settings2 size={20} className="text-blue-600" /> Parâmetros Técnicos
+                   </CardTitle>
+                 </CardHeader>
+                 <CardContent className="p-10 pt-8 space-y-6">
                     <div className="grid grid-cols-2 gap-4">
                        <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Endereço IP Gateway</Label>
+                          <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Endereço IP Gateway</Label>
                           <Input defaultValue="192.168.1.1" className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none font-bold" />
                        </div>
                        <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Porta (HTTP/S)</Label>
+                          <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Porta (HTTP/S)</Label>
                           <Input defaultValue="80" className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none font-bold" />
                        </div>
                     </div>
                     <div className="space-y-2">
-                       <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Utilizador API</Label>
+                       <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Utilizador API</Label>
                        <Input defaultValue="admin" className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none font-bold" />
                     </div>
                     <div className="space-y-2">
-                       <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Palavra-passe API</Label>
+                       <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Palavra-passe API</Label>
                        <div className="relative">
                           <Input type="password" defaultValue="admin01" className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none font-bold pr-10" />
                           <Lock size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300" />
-                       </div>
-                    </div>
-                 </div>
-              </Card>
+                        </div>
+                     </div>
+                  </CardContent>
+               </Card>
 
-              <Card className="border-none shadow-2xl rounded-[3rem] bg-blue-600 text-white p-10 flex flex-col justify-between">
-                 <div>
-                    <h3 className="text-xl font-black uppercase tracking-tighter mb-2">Teste de Diagnóstico</h3>
-                    <p className="text-blue-100 text-xs font-medium">Valide a conectividade com o hardware RUT240.</p>
-                 </div>
-                 
-                 <div className="space-y-4">
-                    <div className="space-y-2">
-                       <Label className="text-[10px] font-black uppercase tracking-widest text-blue-200">Telemóvel para Teste</Label>
-                       <Input placeholder="+351 912 345 678" className="h-12 rounded-xl bg-white/10 border-none text-white placeholder:text-blue-300 font-bold" />
-                    </div>
-                    <Button 
-                      className="w-full h-14 rounded-2xl bg-white text-blue-600 hover:bg-blue-50 font-black uppercase tracking-widest gap-2 shadow-lg"
-                      onClick={handleTestSMS}
-                      disabled={isTesting}
-                    >
+               <Card className="border-none shadow-2xl rounded-2xl bg-blue-600 text-white p-0 flex flex-col justify-between overflow-hidden">
+                  <CardHeader className="border-b border-white/10 p-10 pb-6">
+                     <CardTitle className="text-xl font-bold tracking-tighter">Teste de Diagnóstico</CardTitle>
+                     <CardDescription className="text-blue-100 text-xs font-medium mt-1">Valide a conectividade com o hardware RUT240.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-10 pt-6 flex-1 flex flex-col justify-between">
+                  <div className="space-y-4">
+                     <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-blue-200">Telemóvel para Teste</Label>
+                        <Input placeholder="+351 912 345 678" className="h-10 rounded-xl bg-white/10 border-none text-white placeholder:text-blue-300 font-bold" />
+                     </div>
+                     <Button 
+                       className="w-full h-10 rounded-2xl bg-white text-blue-600 hover:bg-blue-50 font-bold uppercase tracking-widest gap-2 shadow-lg"
+                       onClick={handleTestSMS}
+                       disabled={isTesting}
+                     >
                        {isTesting ? <RefreshCw className="animate-spin" size={18} /> : <Send size={18} />}
                        {isTesting ? "A enviar..." : "Enviar SMS de Teste"}
                     </Button>
@@ -191,23 +192,24 @@ export default function NotificationSettings() {
                         <p className="text-xs font-bold leading-relaxed">{testResult.message}</p>
                       </div>
                     )}
-                 </div>
-              </Card>
-           </div>
-        </TabsContent>
+                  </div>
+                  </CardContent>
+               </Card>
+            </div>
+         </TabsContent>
         
         <TabsContent value="templates">
-           <div className="text-center py-20 bg-slate-50 dark:bg-slate-900/50 rounded-[3rem] border border-dashed border-slate-200 dark:border-white/5">
+           <div className="text-center py-20 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-200 dark:border-white/5">
               <Database size={48} className="mx-auto mb-4 text-slate-300" />
-              <h4 className="font-black text-slate-900 dark:text-white uppercase tracking-widest">Gestão de Templates</h4>
+              <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-widest">Gestão de Templates</h4>
               <p className="text-sm text-slate-500 font-medium mt-2">Crie e edite as mensagens que os seus clientes recebem.</p>
            </div>
         </TabsContent>
 
         <TabsContent value="logs">
-           <div className="text-center py-20 bg-slate-50 dark:bg-slate-900/50 rounded-[3rem] border border-dashed border-slate-200 dark:border-white/5">
+           <div className="text-center py-20 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-200 dark:border-white/5">
               <History size={48} className="mx-auto mb-4 text-slate-300" />
-              <h4 className="font-black text-slate-900 dark:text-white uppercase tracking-widest">Logs de Comunicação</h4>
+              <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-widest">Logs de Comunicação</h4>
               <p className="text-sm text-slate-500 font-medium mt-2">Nenhum log disponível para o período selecionado.</p>
            </div>
         </TabsContent>
