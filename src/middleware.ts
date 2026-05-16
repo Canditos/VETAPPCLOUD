@@ -15,7 +15,7 @@ Welcome to the VetConnect Agent Interface.
 ## Available Resources
 - [Dashboard](/dashboard) - Overview of clinical operations
 - [Patients](/dashboard/patients) - Manage animal health records
-- [Agenda](/dashboard/calendar) - View and manage appointments
+- [Agenda](/dashboard/appointments) - View and manage appointments
 - [Customers](/dashboard/customers) - Manage client data
 
 ## API Documentation

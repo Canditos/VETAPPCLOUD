@@ -159,7 +159,7 @@ export default function DashboardPage() {
   });
 
   const stats = [
-    { name: "Consultas Hoje", value: data?.consultationsToday ?? 0, icon: Calendar, color: "text-blue-600", bg: "bg-blue-50", trend: "Hoje", href: "/dashboard/calendar" },
+    { name: "Consultas Hoje", value: data?.consultationsToday ?? 0, icon: Calendar, color: "text-blue-600", bg: "bg-blue-50", trend: "Hoje", href: "/dashboard/appointments" },
     { name: "Novos Pacientes", value: data?.newPatients ?? 0, icon: Users, color: "text-indigo-600", bg: "bg-indigo-50", trend: "30 dias", href: "/dashboard/patients" },
     { name: "Faturação Hoje", value: eur(data?.revenueToday ?? 0), icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-50", trend: "Real", href: "/dashboard/billing" },
     { name: "Stock Crítico", value: data?.criticalStock ?? 0, icon: AlertCircle, color: "text-rose-600", bg: "bg-rose-50", trend: "Urgente", href: "/dashboard/inventory" },
@@ -196,7 +196,7 @@ export default function DashboardPage() {
             className="h-12 rounded-2xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 font-black px-6">
             Relatórios
           </Button>
-          <Button onClick={() => router.push("/dashboard/calendar")}
+          <Button onClick={() => router.push("/dashboard/appointments")}
             className="h-12 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black px-8 gap-2 active:scale-95">
             <Plus size={20} strokeWidth={3} /> Nova Consulta
           </Button>
@@ -242,7 +242,7 @@ export default function DashboardPage() {
                 {isLoading ? "..." : `${data?.todayAppointments?.length ?? 0} marcações`}
               </p>
             </div>
-            <Link href="/dashboard/calendar" className="text-blue-600 dark:text-blue-400 font-black flex items-center gap-1 group text-sm">
+            <Link href="/dashboard/appointments" className="text-blue-600 dark:text-blue-400 font-black flex items-center gap-1 group text-sm">
               Ver agenda <ChevronRight size={15} className="group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
@@ -258,7 +258,7 @@ export default function DashboardPage() {
               <div className="p-14 text-center bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] border-2 border-dashed border-slate-200 dark:border-slate-800">
                 <Calendar className="mx-auto text-slate-300 mb-4" size={44} strokeWidth={1.5} />
                 <p className="text-slate-500 font-bold">Sem marcações para hoje.</p>
-                <Button onClick={() => router.push("/dashboard/calendar")} variant="link" className="text-blue-600 font-black mt-2">
+                <Button onClick={() => router.push("/dashboard/appointments")} variant="link" className="text-blue-600 font-black mt-2">
                   Abrir agenda →
                 </Button>
               </div>
@@ -312,7 +312,7 @@ export default function DashboardPage() {
           <Card className="border-none shadow-sm bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-slate-800 rounded-[2rem] overflow-hidden">
             <CardHeader className="p-6 pb-3 flex flex-row justify-between items-center space-y-0">
               <CardTitle className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Atividade Recente</CardTitle>
-              <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/calendar")}
+              <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/appointments")}
                 className="text-[10px] font-black uppercase text-blue-600 h-7 px-2 rounded-lg">
                 Ver Tudo
               </Button>

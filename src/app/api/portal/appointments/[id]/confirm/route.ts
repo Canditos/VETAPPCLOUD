@@ -37,7 +37,7 @@ export async function POST(
       title: "✅ Marcação Confirmada pelo Tutor",
       message: `O tutor confirmou o horário proposto para ${appointment.startTime.toLocaleTimeString()}.`,
       type: "INFO",
-      link: `/dashboard/calendar`
+      link: `/dashboard/appointments`
     }
   });
 

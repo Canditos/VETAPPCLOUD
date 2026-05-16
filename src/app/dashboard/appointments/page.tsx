@@ -321,7 +321,7 @@ function CalendarContent() {
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
       toast.success("Proposta enviada ao tutor!");
       setIsApprovalOpen(false);
-      router.push("/dashboard/calendar");
+      router.push("/dashboard/appointments");
     },
     onError: (e: any) => toast.error(e.message),
   });
