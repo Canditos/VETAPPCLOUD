@@ -105,14 +105,15 @@ function DroppableSlot({ id, children, day, hour, isToday, onAddClick }: any) {
       )}
     >
       {children}
-      {!children?.length && (
-        <button
-          onClick={() => onAddClick?.({ day, hour })}
-          className="flex-1 opacity-0 group-hover/slot:opacity-100 flex items-center justify-center text-blue-400/40 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all active:scale-90 rounded-xl border-2 border-dashed border-slate-100 dark:border-white/5"
-        >
-          <Plus size={24} strokeWidth={2.5} />
-        </button>
-      )}
+      <button
+        onClick={() => onAddClick?.({ day, hour })}
+        className={cn(
+          "opacity-0 group-hover/slot:opacity-100 flex items-center justify-center transition-all active:scale-90 rounded-xl border-2 border-dashed border-slate-100 dark:border-white/5 hover:border-blue-400/50 hover:bg-blue-50 dark:hover:bg-blue-500/10 text-blue-400/40 hover:text-blue-600",
+          children?.length ? "h-10 w-full mt-auto" : "flex-1"
+        )}
+      >
+        <Plus size={children?.length ? 18 : 24} strokeWidth={2.5} />
+      </button>
     </div>
   );
 }
