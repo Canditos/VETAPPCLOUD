@@ -98,10 +98,12 @@ function DroppableSlot({ id, children, day, hour, isToday, onAddClick }: any) {
   return (
     <div
       ref={setNodeRef}
+      data-day={day}
+      data-hour={hour}
       className={cn(
-        "p-2 border-l border-slate-100 dark:border-white/[0.04] transition-all duration-300 min-h-[110px] flex flex-col gap-1.5 relative group/slot",
+        "p-2 border-l border-slate-100 dark:border-white/[0.04] transition-all duration-150 min-h-[110px] flex flex-col gap-1.5 relative group/slot",
         isToday && "bg-blue-600/[0.015] dark:bg-blue-400/[0.01]",
-        isOver && "bg-blue-600/10 ring-2 ring-inset ring-blue-600/30 z-40 scale-[1.01] rounded-lg shadow-lg shadow-blue-500/10 dark:shadow-none"
+        isOver && "bg-blue-600/10 ring-2 ring-inset ring-blue-600/30 z-40 rounded-lg shadow-lg shadow-blue-500/10 dark:shadow-none"
       )}
     >
       {children}
@@ -168,7 +170,7 @@ function CalendarContent() {
     }
   }, [requestData]);
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
   const weekDays = useMemo(() => {
     const start = startOfWeek(currentDate, { weekStartsOn: 1 });
@@ -360,7 +362,7 @@ function CalendarContent() {
       sensors={sensors}
       onDragStart={(e) => setActiveId(e.active.id as string)}
       onDragEnd={handleDragEnd}
-      collisionDetection={rectIntersection}
+      collisionDetection={pointerWithin}
     >
       <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-slate-50/30 dark:bg-slate-950 max-w-[1600px] mx-auto">
         {/* ── Top Bar ─────────────────────────────────────────────────── */}
