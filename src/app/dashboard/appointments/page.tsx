@@ -332,17 +332,11 @@ function CalendarContent() {
     setActiveId(null);
     if (!over || active.id === over.id) return;
 
-    const [newDate, newHour] = over.id.split("T").length > 1
-      ? [over.id.split("T")[0], over.id.split("T")[1]]
-      : over.id.split(/-(?=\d{2}:\d{2}$)/);
-
-    const slotKey = `${newDate}-${newHour}`;
-    const [date, hour] = [over.data.current?.day, over.data.current?.hour];
-
-    if (!date || !hour) return;
+    const { day, hour } = over.data.current || {};
+    if (!day || !hour) return;
 
     try {
-      const startTime = `${date}T${hour}:00`;
+      const startTime = `${day}T${hour}:00`;
       const res = await fetch(`/api/appointments/${active.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -365,8 +359,7 @@ function CalendarContent() {
       sensors={sensors}
       onDragStart={(e) => setActiveId(e.active.id as string)}
       onDragEnd={handleDragEnd}
-      modifiers={[restrictToFirstScrollableAncestor]}
-      collisionDetection={pointerWithin}
+      collisionDetection={rectIntersection}
     >
       <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-slate-50/30 dark:bg-slate-950 max-w-[1600px] mx-auto">
         {/* ── Top Bar ─────────────────────────────────────────────────── */}
