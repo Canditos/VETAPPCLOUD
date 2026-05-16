@@ -1,66 +1,79 @@
+/**
+ * API ROUTE: /api/diagnostics/request
+ *
+ * Responsabilidade: Criar um pedido de exame diagnóstico (LAB ou IMAGING)
+ * e guardá-lo na base de dados. Simula o envio para integradores HL7/DICOM.
+ *
+ * Tenant: Sim
+ * Auth: Requer sessão
+ */
+
 export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import prisma, { getTenantClient } from "@/lib/prisma";
+import { withAuth } from "@/lib/api-wrapper";
+import { z } from "zod";
 
-export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session || !(session.user as any).clinicId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+const RequestSchema = z.object({
+  patientId: z.string().min(1),
+  consultationId: z.string().optional(),
+  type: z.enum(["LAB", "IMAGING"]),
+  source: z.string().min(1),
+  testName: z.string().min(1),
+});
 
-  const clinicId = (session.user as any).clinicId;
-  const tenantPrisma = getTenantClient(clinicId);
+export const POST = withAuth(async ({ tenantPrisma, clinicId, userId, req }) => {
   const body = await req.json();
+  const validation = RequestSchema.safeParse(body);
 
-  const { 
-    patientId, 
-    consultationId, 
-    type, 
-    source, 
-    items 
-  } = body;
-
-  try {
-    // 1. Create a Diagnostic Request in the DB
-    // Depending on the type, it would create a record in LabResult (pending) or ImagingStudy (pending)
-    let record;
-
-    if (type === "LAB") {
-      record = await tenantPrisma.labResult.create({
-        data: {
-          patientId,
-          consultationId,
-          source, // e.g., "Fuji DX-500"
-          status: "PENDING",
-          rawHL7: `MSH|^~\\&|VETCONNECT|${clinicId}|FUJI|LAB|...`, // Mocking HL7 header
-        }
-      });
-
-      // Here we would trigger the HL7 message sending to the local analyzer via MQTT or TCP Bridge
-      console.log(`[INTEGRATION] Sending HL7 Request to ${source} for patient ${patientId}`);
-    } else if (type === "IMAGING") {
-      record = await tenantPrisma.imagingStudy.create({
-        data: {
-          patientId,
-          consultationId,
-          type: "XRAY",
-          status: "PENDING",
-        }
-      });
-      
-      // Here we would send a DICOM Modality Worklist (MWL) request to Examion
-      console.log(`[INTEGRATION] Sending DICOM MWL Request to Examion for patient ${patientId}`);
-    }
-
-    return NextResponse.json({ 
-      success: true, 
-      requestId: record?.id,
-      message: `Pedido enviado com sucesso para ${source}` 
-    });
-  } catch (error) {
-    console.error("Error requesting diagnostic:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  if (!validation.success) {
+    return NextResponse.json(
+      { error: "Dados inválidos", details: validation.error.format() },
+      { status: 400 }
+    );
   }
-}
+
+  const { patientId, consultationId, type, source, testName } = validation.data;
+
+  // Verify patient belongs to clinic
+  const patient = await tenantPrisma.patient.findFirst({
+    where: { id: patientId, clinicId },
+  });
+
+  if (!patient) {
+    return NextResponse.json({ error: "Paciente não encontrado" }, { status: 404 });
+  }
+
+  if (type === "LAB") {
+    const labResult = await tenantPrisma.labResult.create({
+      data: {
+        clinicId,
+        patientId,
+        source,
+        dataJson: { testName, requestedBy: userId, requestedAt: new Date().toISOString() },
+        abnormalFlags: false,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `Pedido de ${testName} registado em ${source}. Resultado pendente.`,
+      id: labResult.id,
+    });
+  } else {
+    const imagingStudy = await tenantPrisma.imagingStudy.create({
+      data: {
+        clinicId,
+        patientId,
+        dicomUrl: "pending",
+        metadataJson: { testName, requestedBy: userId, requestedAt: new Date().toISOString() },
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `Pedido de ${testName} registado em ${source}. Estudo pendente.`,
+      id: imagingStudy.id,
+    });
+  }
+});

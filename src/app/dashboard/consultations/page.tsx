@@ -91,7 +91,7 @@ function ConsultationContent() {
     toast.promise(
       fetch("/api/diagnostics/request", {
         method: "POST",
-        body: JSON.stringify({ patientId, consultationId: "current", type, source, testName }),
+        body: JSON.stringify({ patientId, type, source, testName }),
         headers: { "Content-Type": "application/json" },
       }).then(res => res.json()),
       {

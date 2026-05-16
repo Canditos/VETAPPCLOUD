@@ -72,6 +72,53 @@ export function withAuth(handler: ApiHandler) {
   };
 }
 
+export type ApiHandlerWithParams<T = { id: string }> = (
+  ctx: ApiContext,
+  params: T
+) => Promise<NextResponse> | NextResponse;
+
+/**
+ * Wrapper para API routes COM parâmetros dinâmicos (ex: [id]).
+ *
+ * @example
+ * // src/app/api/patients/[id]/route.ts
+ * export const GET = withAuthParams(async ({ tenantPrisma, clinicId }, { id }) => {
+ *   const patient = await tenantPrisma.patient.findFirst({ where: { id, clinicId } });
+ *   return NextResponse.json(patient);
+ * });
+ */
+export function withAuthParams<T = { id: string }>(handler: ApiHandlerWithParams<T>) {
+  return async (req: NextRequest, { params }: { params: Promise<T> }): Promise<NextResponse> => {
+    try {
+      const session = await getServerSession(authOptions);
+      if (!session || !(session.user as any).clinicId) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
+      const clinicId = (session.user as any).clinicId as string;
+      const userId = (session.user as any).id as string;
+      const tenantPrisma = getTenantClient(clinicId);
+      const resolvedParams = await params;
+
+      const ctx: ApiContext = {
+        req,
+        session: session as ApiContext["session"],
+        tenantPrisma,
+        clinicId,
+        userId,
+      };
+
+      return await handler(ctx, resolvedParams);
+    } catch (error) {
+      console.error(`[API_ERROR] ${req.method} ${req.url}`, error);
+      return NextResponse.json(
+        { error: "Internal Server Error", message: error instanceof Error ? error.message : "Unknown error" },
+        { status: 500 }
+      );
+    }
+  };
+}
+
 /**
  * Wrapper para rotas públicas (sem autenticação).
  * Usar com cuidado — apenas para webhooks e auth callbacks.

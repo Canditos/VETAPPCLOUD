@@ -252,38 +252,13 @@ export default function DiagnosticsPage() {
               </h3>
             </div>
             <div className="p-4 space-y-1">
-              {isFeatureEnabled("hl7Integration") && (
-                <Button
-                  variant="ghost"
-                  onClick={() => toast.success("Pedido de Laboratório iniciado.")}
-                  className="w-full justify-start gap-3 font-medium h-11 rounded-xl hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-900/20"
-                >
-                  <FlaskConical size={18} /> Novo Pedido Laboratório
-                </Button>
-              )}
-              {isFeatureEnabled("dicomIntegration") && (
-                <Button
-                  variant="ghost"
-                  onClick={() => toast.success("Solicitação de RX Digital aberta.")}
-                  className="w-full justify-start gap-3 font-medium h-11 rounded-xl hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20"
-                >
-                  <ImageIcon size={18} /> Solicitar RX Digital
-                </Button>
-              )}
-              {isFeatureEnabled("accountingExports") && (
-                <Button
-                  variant="ghost"
-                  onClick={() => toast.info("A preparar lote para exportação...")}
-                  className="w-full justify-start gap-3 font-medium h-11 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5"
-                >
-                  <Download size={18} /> Exportar Lote de Resultados
-                </Button>
-              )}
-              {!isFeatureEnabled("hl7Integration") && !isFeatureEnabled("dicomIntegration") && !isFeatureEnabled("accountingExports") && (
-                <div className="text-center py-4 text-slate-400 text-xs">
-                  Nenhuma integração ativa. Configure em Definições &gt; Integrações.
-                </div>
-              )}
+              <Button
+                variant="ghost"
+                onClick={() => window.open("/api/diagnostics/export", "_blank")}
+                className="w-full justify-start gap-3 font-medium h-11 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5"
+              >
+                <Download size={18} /> Exportar Lote de Resultados
+              </Button>
             </div>
           </PremiumCard>
 

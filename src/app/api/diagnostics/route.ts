@@ -1,57 +1,58 @@
+/**
+ * API ROUTE: /api/diagnostics
+ *
+ * Responsabilidade: Listar todos os resultados diagnósticos
+ * (laboratório + imagiologia) da clínica, formatados para consumo UI.
+ *
+ * Tenant: Sim
+ * Auth: Requer sessão
+ */
+
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { withAuth } from "@/lib/api-wrapper";
+import type { DiagnosticResult } from "@/types";
 
-export async function GET() {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
+export const GET = withAuth(async ({ tenantPrisma, clinicId }) => {
+  const [labResults, imagingStudies] = await Promise.all([
+    tenantPrisma.labResult.findMany({
+      where: { clinicId },
+      include: { patient: { select: { name: true, owner: { select: { name: true } } } } },
+      orderBy: { createdAt: "desc" },
+    }),
+    tenantPrisma.imagingStudy.findMany({
+      where: { clinicId },
+      include: { patient: { select: { name: true, owner: { select: { name: true } } } } },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
 
-    const [labResults, imagingStudies] = await Promise.all([
-      prisma.labResult.findMany({
-        where: { clinicId: (session.user as any).clinicId },
-        include: { patient: true },
-        orderBy: { createdAt: "desc" },
-      }),
-      prisma.imagingStudy.findMany({
-        where: { clinicId: (session.user as any).clinicId },
-        include: { patient: true },
-        orderBy: { createdAt: "desc" },
-      }),
-    ]);
+  const formattedLab: DiagnosticResult[] = labResults.map((lr) => ({
+    id: lr.id,
+    patientId: lr.patientId,
+    patientName: lr.patient?.name ?? "—",
+    ownerName: lr.patient?.owner?.name ?? "—",
+    type: "LAB",
+    source: lr.source,
+    status: lr.abnormalFlags ? "ALERT" : "COMPLETED",
+    createdAt: lr.createdAt.toISOString(),
+    summary: (lr.dataJson as { testName?: string })?.testName ?? "Análises Clínicas",
+  }));
 
-    const formattedLab = labResults.map((lr: any) => ({
-      id: lr.id,
-      patient: lr.patient.name,
-      owner: "Consultar Ficha", // Seria necessário incluir o owner no prisma se quiséssemos o nome aqui direto
-      type: "LAB",
-      source: lr.source,
-      status: lr.abnormalFlags ? "ALERT" : "COMPLETED",
-      createdAt: lr.createdAt,
-      summary: (lr.dataJson as any)?.testName || "Análises Clínicas",
-    }));
+  const formattedImaging: DiagnosticResult[] = imagingStudies.map((is) => ({
+    id: is.id,
+    patientId: is.patientId,
+    patientName: is.patient?.name ?? "—",
+    ownerName: is.patient?.owner?.name ?? "—",
+    type: "IMAGING",
+    source: "Examion RX",
+    status: "COMPLETED",
+    createdAt: is.createdAt.toISOString(),
+    summary: (is.metadataJson as { studyDescription?: string })?.studyDescription ?? "Exame de Imagem",
+  }));
 
-    const formattedImaging = imagingStudies.map((is: any) => ({
-      id: is.id,
-      patient: is.patient.name,
-      owner: "Consultar Ficha",
-      type: "IMAGING",
-      source: "Examion RX", // Ou puxar do metadataJson se existir
-      status: "COMPLETED",
-      createdAt: is.createdAt,
-      summary: (is.metadataJson as any)?.studyDescription || "Exame de Imagem",
-    }));
+  const allDiagnostics = [...formattedLab, ...formattedImaging].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
 
-    const allDiagnostics = [...formattedLab, ...formattedImaging].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-
-    return NextResponse.json(allDiagnostics);
-  } catch (error) {
-    console.error("[DIAGNOSTICS_GET]", error);
-    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
-  }
-}
+  return NextResponse.json(allDiagnostics);
+});
