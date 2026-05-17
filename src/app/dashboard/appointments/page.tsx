@@ -479,6 +479,7 @@ function CalendarContent() {
   return (
     <DndContext
       sensors={sensors}
+      collisionDetection={pointerWithin}
       onDragStart={(e) => { setActiveId(e.active.id as string); setHoverSlotKey(null); }}
       onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
