@@ -167,18 +167,32 @@ function AppCard({ app, config, onClick, isOverlay, topPx, heightPx, leftPct = 0
 function DropSlot({ id, day, slotTime, isToday, isHighlighted, activeColor, onAddClick }: any) {
   const { setNodeRef } = useDroppable({ id, data: { day, hour: slotTime } });
   const isHalf = slotTime.endsWith(':30');
-  
-  // Highlight background matches the dragged card's type color (with opacity)
+
   const highlightStyle = isHighlighted && activeColor
     ? { backgroundColor: activeColor + '1a', borderBottomColor: activeColor + '40' }
     : {};
 
   return (
-    <div ref={setNodeRef} onClick={() => onAddClick?.({ day, hour: slotTime })}
+    <div
+      ref={setNodeRef}
+      onClick={() => onAddClick?.({ day, hour: slotTime })}
       style={{ height: SLOT_H, ...highlightStyle }}
-      className={cn('border-b cursor-pointer transition-all duration-150 group/slot relative',
+      className={cn(
+        'border-b cursor-pointer transition-all duration-150 group/slot relative',
         isHalf ? 'border-slate-100/20 dark:border-white/[0.015]' : 'border-slate-200/40 dark:border-white/[0.04]',
-        isToday && !isHighlighted && 'bg-blue-600/[0.008]')} />
+        isToday && !isHighlighted && 'bg-blue-600/[0.008]'
+      )}
+    >
+      {/* + button — visible on hover */}
+      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/slot:opacity-100 transition-opacity duration-100 pointer-events-none">
+        <div className="flex items-center gap-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-0.5 shadow-sm">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="text-blue-500">
+            <path d="M5 1v8M1 5h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+          <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{slotTime}</span>
+        </div>
+      </div>
+    </div>
   );
 }
 
