@@ -116,6 +116,7 @@ function layoutAppointments(appointments: any[]) {
     for (const app of cluster) {
       app.leftPct = (app.colIndex / totalCols) * 100;
       app.widthPct = 100 / totalCols;
+      app.isRightmost = app.colIndex === totalCols - 1;
       result.push(app);
     }
   }
@@ -128,7 +129,7 @@ function layoutAppointments(appointments: any[]) {
 function AppCard({ app, config, onClick, isOverlay, topPx, heightPx, leftPct = 0, widthPct = 100, vetColor }: any) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: app.id, data: { app } });
   const compact = (heightPx ?? SLOT_H) < 56;
-  if (isDragging && !isOverlay) return <div ref={setNodeRef} style={{ position:'absolute', top: topPx, height: heightPx, left: `calc(${leftPct}% + 2px)`, width: `calc(${widthPct}% - 28px)`, visibility:'hidden' }} />;
+  if (isDragging && !isOverlay) return <div ref={setNodeRef} style={{ position:'absolute', top: topPx, height: heightPx, left: `calc(${leftPct}% + 2px)`, width: app.isRightmost ? `calc(${widthPct}% - 28px)` : `calc(${widthPct}% - 4px)`, visibility:'hidden' }} />;
   
   // Opacity 10% for grid cards, 15% for overlay cards
   const bgOpacity = isOverlay ? '26' : '1a';
@@ -139,7 +140,7 @@ function AppCard({ app, config, onClick, isOverlay, topPx, heightPx, leftPct = 0
         top: topPx, 
         height: (heightPx??SLOT_H)-2, 
         left: `calc(${leftPct}% + 2px)`, 
-        width: `calc(${widthPct}% - 28px)`, 
+        width: app.isRightmost ? `calc(${widthPct}% - 28px)` : `calc(${widthPct}% - 4px)`, 
         borderLeftColor: config.color, 
         backgroundColor: config.color + bgOpacity 
       };
@@ -185,8 +186,9 @@ function DropSlot({ id, day, slotTime, isToday, isHighlighted, activeColor, isOc
     >
       {/* Subtle premium + button — visible in the right side lane of the slot on hover (even if occupied) */}
       <div className="absolute inset-y-0 right-0 flex items-center pr-1.5 opacity-0 group-hover/slot:opacity-100 transition-all duration-150 pointer-events-none z-30">
-        <div className="flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white rounded-lg w-5 h-5 shadow-md scale-90 group-hover/slot:scale-100 transition-all duration-150 pointer-events-auto active:scale-95 cursor-pointer" title="Nova consulta neste horário">
-          <Plus size={11} strokeWidth={3} className="text-white" />
+        <div className="flex items-center gap-1 bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-2 py-0.5 shadow-md scale-90 group-hover/slot:scale-100 transition-all duration-150 pointer-events-auto active:scale-95 cursor-pointer" title="Nova consulta neste horário">
+          <Plus size={9} strokeWidth={3} className="text-white shrink-0" />
+          <span className="text-[9px] font-extrabold uppercase tracking-wider tabular-nums leading-none text-white/90">{slotTime}</span>
         </div>
       </div>
     </div>
