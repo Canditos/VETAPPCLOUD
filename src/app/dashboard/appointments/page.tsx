@@ -674,29 +674,43 @@ function CalendarContent() {
 
                     {/* Interactive timezone-safe add buttons overlay — absolutely positioned above all cards at z-30 */}
                     <div className="absolute inset-0 pointer-events-none z-30">
-                      {halfHours.map((slotTime, idx) => (
-                        <div key={slotTime}
-                          style={{
-                            position: "absolute",
-                            top: idx * SLOT_H,
-                            height: SLOT_H,
-                            left: 0,
-                            right: 0,
-                          }}
-                          className="flex items-center justify-center"
-                        >
-                          <button
-                            onClick={() => {
-                              setNewSlot({ day: day.fullDate, hour: slotTime });
-                              setIsAddOpen(true);
+                      {halfHours.map((slotTime, idx) => {
+                        const [sh, sm] = slotTime.split(":").map(Number);
+                        const slotMins = sh * 60 + sm;
+                        const isOccupied = dayApps.some((app: any) => {
+                          const start = new Date(app.startTime);
+                          const end = app.endTime ? new Date(app.endTime) : new Date(start.getTime() + 30 * 60000);
+                          const startM = start.getHours() * 60 + start.getMinutes();
+                          const endM = end.getHours() * 60 + end.getMinutes();
+                          return slotMins >= startM && slotMins < endM;
+                        });
+
+                        if (isOccupied) return null;
+
+                        return (
+                          <div key={slotTime}
+                            style={{
+                              position: "absolute",
+                              top: idx * SLOT_H,
+                              height: SLOT_H,
+                              left: 0,
+                              right: 0,
                             }}
-                            className="flex items-center gap-1.5 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-0.5 shadow-md opacity-0 group-hover/column:opacity-30 hover:!opacity-100 pointer-events-auto transition-all duration-150 active:scale-95 shrink-0"
+                            className="flex items-center justify-center"
                           >
-                            <Plus size={10} strokeWidth={3} className="text-blue-500" />
-                            <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 tabular-nums uppercase tracking-widest">{slotTime}</span>
-                          </button>
-                        </div>
-                      ))}
+                            <button
+                              onClick={() => {
+                                setNewSlot({ day: day.fullDate, hour: slotTime });
+                                setIsAddOpen(true);
+                              }}
+                              className="flex items-center gap-1.5 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-0.5 shadow-md opacity-0 group-hover/column:opacity-30 hover:!opacity-100 pointer-events-auto transition-all duration-150 active:scale-95 shrink-0"
+                            >
+                              <Plus size={10} strokeWidth={3} className="text-blue-500" />
+                              <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 tabular-nums uppercase tracking-widest">{slotTime}</span>
+                            </button>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 );
