@@ -122,7 +122,6 @@ function layoutAppointments(appointments: any[]) {
 
   return result;
 }
-}
 
 
 // ── Draggable appointment card (absolutely positioned, duration-aware) ────────
