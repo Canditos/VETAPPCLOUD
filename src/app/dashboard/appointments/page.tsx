@@ -128,7 +128,7 @@ function layoutAppointments(appointments: any[]) {
 // ── Draggable appointment card (absolutely positioned, duration-aware) ────────
 function AppCard({ app, config, onClick, isOverlay, topPx, heightPx, leftPct = 0, widthPct = 100, vetColor }: any) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: app.id, data: { app } });
-  const compact = (heightPx ?? SLOT_H) < 56;
+  const compact = (heightPx ?? SLOT_H) < 40;
   if (isDragging && !isOverlay) return <div ref={setNodeRef} style={{ position:'absolute', top: topPx, height: heightPx, left: `calc(${leftPct}% + 2px)`, width: app.isRightmost ? `calc(${widthPct}% - 28px)` : `calc(${widthPct}% - 4px)`, visibility:'hidden' }} />;
   
   // Opacity 10% for grid cards, 15% for overlay cards
