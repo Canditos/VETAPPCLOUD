@@ -128,7 +128,7 @@ function layoutAppointments(appointments: any[]) {
 function AppCard({ app, config, onClick, isOverlay, topPx, heightPx, leftPct = 0, widthPct = 100, vetColor }: any) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: app.id, data: { app } });
   const compact = (heightPx ?? SLOT_H) < 56;
-  if (isDragging && !isOverlay) return <div ref={setNodeRef} style={{ position:'absolute', top: topPx, height: heightPx, left: `${leftPct}%`, width: `${widthPct}%`, visibility:'hidden' }} />;
+  if (isDragging && !isOverlay) return <div ref={setNodeRef} style={{ position:'absolute', top: topPx, height: heightPx, left: `calc(${leftPct}% + 2px)`, width: `calc(${widthPct}% - 28px)`, visibility:'hidden' }} />;
   
   // Opacity 10% for grid cards, 15% for overlay cards
   const bgOpacity = isOverlay ? '26' : '1a';
@@ -139,7 +139,7 @@ function AppCard({ app, config, onClick, isOverlay, topPx, heightPx, leftPct = 0
         top: topPx, 
         height: (heightPx??SLOT_H)-2, 
         left: `calc(${leftPct}% + 2px)`, 
-        width: `calc(${widthPct}% - 4px)`, 
+        width: `calc(${widthPct}% - 28px)`, 
         borderLeftColor: config.color, 
         backgroundColor: config.color + bgOpacity 
       };
@@ -174,24 +174,21 @@ function DropSlot({ id, day, slotTime, isToday, isHighlighted, activeColor, isOc
   return (
     <div
       ref={setNodeRef}
-      onClick={() => !isOccupied && onAddClick?.({ day, hour: slotTime })}
+      onClick={() => onAddClick?.({ day, hour: slotTime })}
       style={{ height: SLOT_H, ...highlightStyle }}
       className={cn(
-        'border-b transition-all duration-150 relative group/slot',
+        'border-b transition-all duration-150 relative group/slot hover:z-20',
         isHalf ? 'border-slate-100/20 dark:border-white/[0.015]' : 'border-slate-200/40 dark:border-white/[0.04]',
         isToday && !isHighlighted && 'bg-blue-600/[0.008]',
-        isOccupied ? 'cursor-default' : 'cursor-pointer'
+        'cursor-pointer'
       )}
     >
-      {/* Subtle premium + button — visible ONLY when hovering this specific unoccupied slot */}
-      {!isOccupied && (
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/slot:opacity-100 transition-all duration-150 pointer-events-none">
-          <div className="flex items-center gap-1 bg-blue-500 text-white rounded-lg px-2.5 py-0.5 shadow-md scale-90 group-hover/slot:scale-100 transition-all duration-150 pointer-events-auto hover:bg-blue-600 active:scale-95">
-            <Plus size={9} strokeWidth={3} className="text-white" />
-            <span className="text-[9px] font-extrabold uppercase tracking-wider tabular-nums">{slotTime}</span>
-          </div>
+      {/* Subtle premium + button — visible in the right side lane of the slot on hover (even if occupied) */}
+      <div className="absolute inset-y-0 right-0 flex items-center pr-1.5 opacity-0 group-hover/slot:opacity-100 transition-all duration-150 pointer-events-none z-30">
+        <div className="flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white rounded-lg w-5 h-5 shadow-md scale-90 group-hover/slot:scale-100 transition-all duration-150 pointer-events-auto active:scale-95 cursor-pointer" title="Nova consulta neste horário">
+          <Plus size={11} strokeWidth={3} className="text-white" />
         </div>
-      )}
+      </div>
     </div>
   );
 }
