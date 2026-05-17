@@ -598,27 +598,27 @@ function CalendarContent() {
           {/* Day headers */}
           <div className="flex sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border-b border-slate-200/60 dark:border-white/10 shadow-sm">
             {/* Corner cell */}
-            <div className="w-16 shrink-0 h-16 flex items-center justify-center border-r border-slate-200/60 dark:border-white/10 bg-slate-50/50 dark:bg-slate-900/50">
+            <div className="w-16 shrink-0 h-20 flex items-center justify-center border-r border-slate-200/60 dark:border-white/10 bg-slate-50/50 dark:bg-slate-900/50">
               <RefreshCw className={cn("w-3.5 h-3.5 text-slate-400 dark:text-slate-600", isLoading && "animate-spin")} />
             </div>
             <div className="flex flex-1">
             {activeDays.map(day => (
               <div key={day.fullDate}
-                className={cn("h-16 flex-1 flex flex-col items-center justify-center border-l border-slate-200/40 dark:border-white/5 transition-all relative overflow-hidden",
+                className={cn("h-20 flex-1 flex flex-col items-center justify-center border-l border-slate-200/40 dark:border-white/5 transition-all relative overflow-hidden",
                   day.isToday && "bg-blue-600/[0.04] dark:bg-blue-400/[0.02]",
                   day.isSunday && "bg-slate-50/50 dark:bg-white/[0.02]")}
               >
                 {day.isToday && (
                   <div className="absolute top-0 left-0 right-0 h-1 bg-blue-600 shadow-[0_2px_8px_rgba(37,99,235,0.4)]" />
                 )}
-                <span className={cn("text-[10px] font-bold tracking-wider mb-2",
-                  day.isToday ? "text-blue-600" : "text-slate-400 dark:text-slate-500")}>
+                <span className={cn("text-[10px] font-bold tracking-wider mb-1 uppercase text-slate-400 dark:text-slate-500",
+                  day.isToday && "text-blue-600")}>
                   {day.name}
                 </span>
                 <div className="flex items-center gap-2">
                   <div className={cn(
                     "flex items-center justify-center rounded-2xl transition-all duration-500",
-                    day.isToday ? "bg-blue-600 text-white w-12 h-12 shadow-lg shadow-blue-500/30" : ""
+                    day.isToday ? "bg-blue-600 text-white w-10 h-10 shadow-lg shadow-blue-500/30" : ""
                   )}>
                     <span className={cn("text-2xl font-bold tracking-tighter leading-none",
                       day.isToday ? "text-white" : "text-slate-900 dark:text-white")}>
