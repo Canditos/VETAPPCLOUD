@@ -177,21 +177,11 @@ function DropSlot({ id, day, slotTime, isToday, isHighlighted, activeColor, onAd
       onClick={() => onAddClick?.({ day, hour: slotTime })}
       style={{ height: SLOT_H, ...highlightStyle }}
       className={cn(
-        'border-b cursor-pointer transition-all duration-150 group/slot relative',
+        'border-b cursor-pointer transition-all duration-150 relative',
         isHalf ? 'border-slate-100/20 dark:border-white/[0.015]' : 'border-slate-200/40 dark:border-white/[0.04]',
         isToday && !isHighlighted && 'bg-blue-600/[0.008]'
       )}
-    >
-      {/* + button — visible on hover */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/slot:opacity-100 transition-opacity duration-100 pointer-events-none">
-        <div className="flex items-center gap-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-0.5 shadow-sm">
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="text-blue-500">
-            <path d="M5 1v8M1 5h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
-          <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{slotTime}</span>
-        </div>
-      </div>
-    </div>
+    />
   );
 }
 
@@ -656,7 +646,7 @@ function CalendarContent() {
               {activeDays.map(day => {
                 const dayApps = groupedByDay.get(day.fullDate) ?? [];
                 return (
-                  <div key={day.fullDate} className="relative flex-1 border-l border-slate-100 dark:border-white/[0.04]"
+                  <div key={day.fullDate} className="relative flex-1 border-l border-slate-100 dark:border-white/[0.04] group/column"
                     style={{ minHeight: halfHours.length * SLOT_H }}>
                     {/* Drop targets */}
                     {halfHours.map((slotTime) => (
@@ -681,6 +671,33 @@ function CalendarContent() {
                           leftPct={app.leftPct} widthPct={app.widthPct} />
                       );
                     })}
+
+                    {/* Interactive timezone-safe add buttons overlay — absolutely positioned above all cards at z-30 */}
+                    <div className="absolute inset-0 pointer-events-none z-30">
+                      {halfHours.map((slotTime, idx) => (
+                        <div key={slotTime}
+                          style={{
+                            position: "absolute",
+                            top: idx * SLOT_H,
+                            height: SLOT_H,
+                            left: 0,
+                            right: 0,
+                          }}
+                          className="flex items-center justify-center"
+                        >
+                          <button
+                            onClick={() => {
+                              setNewSlot({ day: day.fullDate, hour: slotTime });
+                              setIsAddOpen(true);
+                            }}
+                            className="flex items-center gap-1.5 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-0.5 shadow-md opacity-0 group-hover/column:opacity-30 hover:!opacity-100 pointer-events-auto transition-all duration-150 active:scale-95 shrink-0"
+                          >
+                            <Plus size={10} strokeWidth={3} className="text-blue-500" />
+                            <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 tabular-nums uppercase tracking-widest">{slotTime}</span>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 );
               })}
