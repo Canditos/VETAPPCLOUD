@@ -322,18 +322,21 @@ function CalendarContent() {
   const createAppointment = useMutation({
     mutationFn: async () => {
       if (!selectedPatient || !newVetId || !newSlot) throw new Error("Campos em falta");
-      const startTime = `${newSlot.day}T${newSlot.hour}:00`;
-      const endDate = new Date(startTime);
-      endDate.setMinutes(endDate.getMinutes() + parseInt(newDuration));
-      const endTime = endDate.toISOString();
+      const [y, m, d] = newSlot.day.split("-").map(Number);
+      const [h, min] = newSlot.hour.split(":").map(Number);
+      const localDate = new Date(y, m - 1, d, h, min, 0, 0);
+      const startTime = localDate.toISOString();
+      const localEndDate = new Date(localDate.getTime() + parseInt(newDuration) * 60000);
+      const endTime = localEndDate.toISOString();
 
       const res = await fetch("/api/appointments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ patientId: selectedPatient.id, veterinarianId: newVetId, startTime, endTime, type: newType }),
       });
-      if (!res.ok) throw new Error("Erro ao criar marcação");
-      return res.json();
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro ao criar marcação");
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
@@ -391,56 +394,39 @@ function CalendarContent() {
 
   const colCount = activeDays.length;
 
-  /** Calculates target {day, hour} from drag delta — 30-min precision */
-  const calcTargetSlot = useCallback((active: any, delta: { x: number; y: number }) => {
-    const app = active.data.current?.app;
-    if (!app?.startTime) return null;
-    const origDate = new Date(app.startTime);
-    const origMin = origDate.getMinutes() < 30 ? '00' : '30';
-    const origSlotKey = `${String(origDate.getHours()).padStart(2,'0')}:${origMin}`;
-    const origIdx = halfHours.indexOf(origSlotKey);
-    if (origIdx === -1) return null;
-    const slotDelta = Math.round(delta.y / SLOT_H);
-    const newIdx = Math.max(0, Math.min(halfHours.length - 1, origIdx + slotDelta));
-    const newHour = halfHours[newIdx];
-    
-    // Calculates exact col width based on columnsRef bounding client rect
-    const containerWidth = columnsRef.current ? columnsRef.current.getBoundingClientRect().width : (window.innerWidth - 64);
-    const colWidthPx = containerWidth / colCount;
-    
-    const dayDelta = Math.round(delta.x / colWidthPx);
-    const origDayIdx = activeDays.findIndex(d => d.fullDate === format(origDate, "yyyy-MM-dd"));
-    const newDayIdx = Math.max(0, Math.min(activeDays.length - 1, origDayIdx + dayDelta));
-    const newDay = activeDays[newDayIdx]?.fullDate ?? format(origDate, "yyyy-MM-dd");
-    return { day: newDay, hour: newHour };
-  }, [activeDays, colCount]);
-
   const handleDragMove = useCallback((event: any) => {
-    const slot = calcTargetSlot(event.active, event.delta);
-    setHoverSlotKey(slot ? `${slot.day}-${slot.hour}` : null);
-  }, [calcTargetSlot]);
+    const { over } = event;
+    setHoverSlotKey(over ? (over.id as string) : null);
+  }, []);
 
   const handleDragEnd = async (event: any) => {
-    const { active, delta } = event;
+    const { active, over } = event;
     setActiveId(null);
     setHoverSlotKey(null);
-    const slot = calcTargetSlot(active, delta);
-    if (!slot) return;
-    const { day: newDay, hour: newHour } = slot;
+    if (!over) return;
+
+    const parts = (over.id as string).split("-");
+    const newDay = `${parts[0]}-${parts[1]}-${parts[2]}`;
+    const newHour = parts[3];
+
     const app = active.data.current?.app;
     if (!app?.startTime) return;
     const origDate = new Date(app.startTime);
     const origMin = origDate.getMinutes() < 30 ? '00' : '30';
     const origSlot = `${String(origDate.getHours()).padStart(2,'0')}:${origMin}`;
     if (newHour === origSlot && newDay === format(origDate, "yyyy-MM-dd")) return;
-    const newStartTime = `${newDay}T${newHour}:00`;
 
-    // Preservar a duração original no update otimista local
+    // Constrói objeto Date no fuso horário local do navegador de forma robusta
+    const [y, m, d] = newDay.split("-").map(Number);
+    const [h, min] = newHour.split(":").map(Number);
+    const localDate = new Date(y, m - 1, d, h, min, 0, 0);
+    const newStartTime = localDate.toISOString();
+
+    // Preservar a duração original convertida para UTC
     const origStart = new Date(app.startTime);
     const origEnd = app.endTime ? new Date(app.endTime) : new Date(origStart.getTime() + 30 * 60000);
     const durationMs = origEnd.getTime() - origStart.getTime();
-    const newStart = new Date(newStartTime);
-    const newEndTime = new Date(newStart.getTime() + durationMs).toISOString();
+    const newEndTime = new Date(localDate.getTime() + durationMs).toISOString();
 
     queryClient.setQueryData(
       ["appointments", weekDays[0]?.fullDate, selectedVet],
@@ -450,7 +436,7 @@ function CalendarContent() {
       const res = await fetch(`/api/appointments/${active.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ startTime: newStartTime }),
+        body: JSON.stringify({ startTime: newStartTime, endTime: newEndTime }),
       });
       if (!res.ok) throw new Error();
       const updatedApp = await res.json();
@@ -461,7 +447,7 @@ function CalendarContent() {
         (old: any[]) => old?.map(a => a.id === active.id ? updatedApp : a) ?? []
       );
       
-      toast.success(`Movido para ${newHour} — ${format(new Date(newDay), "EEE d MMM", { locale: pt })}`);
+      toast.success(`Movido para ${newHour} — ${format(localDate, "EEE d MMM", { locale: pt })}`);
     } catch {
       refetch();
       toast.error("Erro ao reagendar marcação");
@@ -702,11 +688,17 @@ function CalendarContent() {
 
         {/* Drag overlay */}
         <DragOverlay>
-          {activeApp && (
-            <AppCard app={activeApp} config={getTypeConfig(activeApp?.type)}
-              vetColor={getVetColor(activeApp?.veterinarianId)}
-              onClick={() => {}} isOverlay topPx={0} heightPx={SLOT_H * 2} />
-          )}
+          {activeApp && (() => {
+            const start = new Date(activeApp.startTime);
+            const end = activeApp.endTime ? new Date(activeApp.endTime) : new Date(start.getTime() + 30 * 60000);
+            const durMins = Math.max(30, (end.getTime() - start.getTime()) / 60000);
+            const heightPx = (durMins / 30) * SLOT_H;
+            return (
+              <AppCard app={activeApp} config={getTypeConfig(activeApp?.type)}
+                vetColor={getVetColor(activeApp?.veterinarianId)}
+                onClick={() => {}} isOverlay topPx={0} heightPx={heightPx} />
+            );
+          })()}
         </DragOverlay>
 
 
@@ -724,7 +716,11 @@ function CalendarContent() {
                   <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider mt-1.5 flex items-center gap-2">
                     <Clock size={12} strokeWidth={3} />
                     {newSlot
-                      ? `${format(new Date(newSlot.day), "d 'de' MMMM", { locale: pt })} às ${newSlot.hour}`
+                      ? (() => {
+                          const [y, m, d] = newSlot.day.split('-').map(Number);
+                          const localDate = new Date(y, m - 1, d);
+                          return `${format(localDate, "d 'de' MMMM", { locale: pt })} às ${newSlot.hour}`;
+                        })()
                       : "Selecione o horário disponível"}
                   </p>
                 </div>
@@ -831,7 +827,7 @@ function CalendarContent() {
                 {!newSlot && (
                   <div className="space-y-3">
                     <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider ml-1">Hora de Início</label>
-                    <Select onValueChange={(v) => setNewSlot({ day: format(new Date(), "yyyy-MM-dd"), hour: v })}>
+                    <Select onValueChange={(v) => setNewSlot({ day: format(currentDate, "yyyy-MM-dd"), hour: v })}>
                       <SelectTrigger className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-bold text-sm px-6">
                         <SelectValue placeholder="Escolher..." />
                       </SelectTrigger>
