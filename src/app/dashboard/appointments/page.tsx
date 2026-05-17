@@ -52,13 +52,20 @@ const getTypeConfig = (type: string) => {
 function layoutAppointments(appointments: any[]) {
   if (!appointments || appointments.length === 0) return [];
 
-  // Clone and project appointments into visual day-minutes
+  // Deep clone to avoid mutating React state objects
   const sorted = appointments.map(app => {
     const start = new Date(app.startTime);
     const end = app.endTime ? new Date(app.endTime) : new Date(start.getTime() + 30 * 60000);
     const startMin = start.getHours() * 60 + start.getMinutes();
     const endMin = end.getHours() * 60 + end.getMinutes();
-    return { ...app, startMin, endMin };
+    return {
+      ...app,
+      startMin,
+      endMin,
+      colIndex: 0,
+      leftPct: 0,
+      widthPct: 100,
+    };
   }).sort((a, b) => {
     if (a.startMin !== b.startMin) return a.startMin - b.startMin;
     return (b.endMin - b.startMin) - (a.endMin - a.startMin);
@@ -81,9 +88,7 @@ function layoutAppointments(appointments: any[]) {
       maxEnd = app.endMin;
     }
   }
-  if (currentCluster.length > 0) {
-    clusters.push(currentCluster);
-  }
+  if (currentCluster.length > 0) clusters.push(currentCluster);
 
   const result: any[] = [];
 
@@ -92,7 +97,6 @@ function layoutAppointments(appointments: any[]) {
 
     for (const app of cluster) {
       let placed = false;
-
       for (let i = 0; i < columns.length; i++) {
         const lastApp = columns[i][columns[i].length - 1];
         if (app.startMin >= lastApp.endMin) {
@@ -102,7 +106,6 @@ function layoutAppointments(appointments: any[]) {
           break;
         }
       }
-
       if (!placed) {
         columns.push([app]);
         app.colIndex = columns.length - 1;
@@ -118,6 +121,7 @@ function layoutAppointments(appointments: any[]) {
   }
 
   return result;
+}
 }
 
 
