@@ -2,6 +2,7 @@
 
 import { AlertTriangle, CheckCircle, Info, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 interface AlertItem {
   level: "critical" | "warning" | "info";
@@ -33,7 +34,15 @@ const levelConfig = {
 };
 
 export function SmartAlerts({ alerts, className }: SmartAlertsProps) {
+  const router = useRouter();
+
   if (!alerts || alerts.length === 0) return null;
+
+  const handleActionClick = (action: string) => {
+    if (action.toLowerCase() === "agendar") {
+      router.push("/dashboard/appointments");
+    }
+  };
 
   return (
     <div className={cn("space-y-2", className)}>
@@ -53,7 +62,10 @@ export function SmartAlerts({ alerts, className }: SmartAlertsProps) {
               <p className="font-medium">{alert.message}</p>
             </div>
             {alert.action && (
-              <button className="text-xs font-semibold underline opacity-80 hover:opacity-100">
+              <button 
+                onClick={() => handleActionClick(alert.action!)}
+                className="text-xs font-semibold underline opacity-80 hover:opacity-100"
+              >
                 {alert.action}
               </button>
             )}
