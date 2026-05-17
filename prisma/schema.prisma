@@ -167,6 +167,7 @@ model Appointment {
   startTime      DateTime
   endTime        DateTime
   type           String?
+  reason         String?
   status         ConsultationStatus @default(SCHEDULED)
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt

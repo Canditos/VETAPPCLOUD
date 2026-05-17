@@ -158,7 +158,8 @@ function AppCard({ app, config, onClick, isOverlay, topPx, heightPx, leftPct = 0
         <span className="font-bold text-[11px] truncate dark:text-white text-slate-800 leading-none flex-1">{app.patient?.name}</span>
         <span className="text-[9px] text-slate-400 dark:text-slate-500 shrink-0 tabular-nums">{format(new Date(app.startTime),'HH:mm')}</span>
       </div>
-      {!compact && <span className="text-[9px] text-slate-500 dark:text-slate-400 truncate">{app.patient?.owner?.name}</span>}
+      {!compact && app.reason && <span className="text-[10px] text-slate-600 dark:text-slate-300 truncate font-medium">{app.reason}</span>}
+      {!compact && !app.reason && <span className="text-[9px] text-slate-500 dark:text-slate-400 truncate">{app.patient?.owner?.name}</span>}
     </div>
   );
 }
@@ -218,6 +219,7 @@ function CalendarContent() {
   const [newVetId, setNewVetId] = useState("");
   const [newType, setNewType] = useState("CONSULTA");
   const [newDuration, setNewDuration] = useState("30");
+  const [newReason, setNewReason] = useState("");
   const [now, setNow] = useState<Date | null>(null);
   const [mounted, setMounted] = useState(false);
 
@@ -349,7 +351,7 @@ function CalendarContent() {
       const res = await fetch("/api/appointments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ patientId: selectedPatient.id, veterinarianId: newVetId, startTime, endTime, type: newType }),
+        body: JSON.stringify({ patientId: selectedPatient.id, veterinarianId: newVetId, startTime, endTime, type: newType, reason: newReason }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erro ao criar marcação");
@@ -363,6 +365,7 @@ function CalendarContent() {
       setPatientSearch("");
       setNewVetId("");
       setNewType("CONSULTA");
+      setNewReason("");
     },
     onError: (e: any) => toast.error(e.message || "Erro ao criar marcação"),
   });
@@ -838,6 +841,16 @@ function CalendarContent() {
                 </div>
               </div>
 
+              <div className="space-y-3">
+                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider ml-1">Motivo / Notas</label>
+                <Input 
+                  className="w-full h-14 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-medium text-sm text-slate-900 dark:text-white placeholder:text-slate-400 px-6 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
+                  placeholder="Ex: Vacina anual, check-up, claudicação..."
+                  value={newReason}
+                  onChange={(e) => setNewReason(e.target.value)}
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-3">
                   <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider ml-1">Duração Prevista</label>
@@ -895,7 +908,10 @@ function CalendarContent() {
                           {selectedApp.type ?? "Geral"}
                         </Badge>
                         <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tighter">{selectedApp.patient?.name}</h2>
-                        <p className="text-slate-500 dark:text-slate-400 font-bold text-xs flex items-center gap-2 tracking-wide">
+                        {selectedApp.reason && (
+                          <p className="text-slate-600 dark:text-slate-300 font-medium text-sm mt-1">{selectedApp.reason}</p>
+                        )}
+                        <p className="text-slate-500 dark:text-slate-400 font-bold text-xs flex items-center gap-2 tracking-wide mt-2">
                           <UserIcon size={14} strokeWidth={3} className="text-blue-600" /> {selectedApp.patient?.owner?.name}
                         </p>
                       </div>

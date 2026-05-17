@@ -19,7 +19,7 @@ import { withAuthParams } from "@/lib/api-wrapper";
 import { differenceInDays, differenceInMonths, differenceInYears, isPast } from "date-fns";
 
 export const GET = withAuthParams(async ({ tenantPrisma, clinicId }, { id: patientId }) => {
-  const patient = await tenantPrisma.patient.findFirst({
+  const patient = (await tenantPrisma.patient.findFirst({
     where: { id: patientId, clinicId },
     include: {
       owner: { select: { name: true, phone: true } },
@@ -30,9 +30,9 @@ export const GET = withAuthParams(async ({ tenantPrisma, clinicId }, { id: patie
         take: 3,
         include: { notes: true, veterinarian: { select: { name: true } } },
       },
-      vitalSigns: { orderBy: { date: "desc" }, take: 2 },
+      vitalSigns: { orderBy: { recordedAt: "desc" }, take: 2 },
     },
-  });
+  })) as any;
 
   if (!patient) {
     return NextResponse.json({ error: "Paciente não encontrado" }, { status: 404 });
@@ -56,8 +56,8 @@ export const GET = withAuthParams(async ({ tenantPrisma, clinicId }, { id: patie
   }
 
   // ─── Vacinas ───
-  const expiredVaccines = patient.vaccinations.filter((v) => v.expiresAt && isPast(new Date(v.expiresAt)));
-  const upcomingVaccines = patient.vaccinations.filter((v) => {
+  const expiredVaccines = patient.vaccinations.filter((v: any) => v.expiresAt && isPast(new Date(v.expiresAt)));
+  const upcomingVaccines = patient.vaccinations.filter((v: any) => {
     if (!v.expiresAt) return false;
     const daysLeft = differenceInDays(new Date(v.expiresAt), now);
     return daysLeft >= 0 && daysLeft <= 30;
@@ -137,8 +137,8 @@ export const GET = withAuthParams(async ({ tenantPrisma, clinicId }, { id: patie
 
     vaccines: {
       total: patient.vaccinations.length,
-      expired: expiredVaccines.map((v) => v.vaccineName),
-      upcoming: upcomingVaccines.map((v) => ({
+      expired: expiredVaccines.map((v: any) => v.vaccineName),
+      upcoming: upcomingVaccines.map((v: any) => ({
         name: v.vaccineName,
         daysLeft: differenceInDays(new Date(v.expiresAt!), now),
       })),

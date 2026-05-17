@@ -64,7 +64,8 @@ export async function POST(req: Request) {
     veterinarianId, 
     startTime, 
     endTime, 
-    type 
+    type,
+    reason
   } = body;
 
   try {
@@ -119,6 +120,7 @@ export async function POST(req: Request) {
         startTime: start,
         endTime: end,
         type,
+        reason,
         status: "SCHEDULED",
       },
     });

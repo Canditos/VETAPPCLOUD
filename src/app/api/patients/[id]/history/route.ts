@@ -135,7 +135,7 @@ export async function GET(
         status: "COMPLETED",
         data: v
       })),
-      ...messages.map(m => ({
+      ...messages.map((m: any) => ({
         type: "MESSAGE",
         id: m.id,
         date: m.createdAt,
@@ -144,7 +144,7 @@ export async function GET(
         status: "READ",
         data: m
       })),
-      ...payments.map(p => ({
+      ...payments.map((p: any) => ({
         type: "PAYMENT",
         id: p.id,
         date: p.createdAt,
@@ -153,7 +153,7 @@ export async function GET(
         status: "PAID",
         data: p
       }))
-    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    ].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     return NextResponse.json(history);
   } catch (error) {

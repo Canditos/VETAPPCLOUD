@@ -39,6 +39,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { InvoiceDownloadBtn } from "@/components/InvoicePDF";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -47,6 +48,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 
 export default function CustomerProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({ name: "", email: "", phone: "", vatNumber: "", address: "", notes: "" });

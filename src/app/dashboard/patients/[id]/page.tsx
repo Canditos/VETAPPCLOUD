@@ -467,7 +467,7 @@ export default function PatientDetailPage() {
                     </Button>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {vaccinations.map((v: Vaccination) => (
+                    {vaccinations.map((v: any) => (
                       <div key={v.id} className="group flex items-center justify-between p-5 rounded-2xl bg-white dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-900 transition-all shadow-sm">
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-12 rounded-xl bg-blue-100/50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform"><Shield size={20} /></div>
@@ -478,7 +478,7 @@ export default function PatientDetailPage() {
                             </p>
                           </div>
                         </div>
-                        <VaccineStatusBadge expiresAt={v.expiresAt} />
+                        <VaccineStatusBadge expiresAt={v.expiresAt || null} />
                       </div>
                     ))}
                   </div>
@@ -497,7 +497,7 @@ export default function PatientDetailPage() {
                     </Button>
                   </div>
                   <div className="space-y-3">
-                    {vitals.map((v: VitalSign) => (
+                    {vitals.map((v: any) => (
                       <div key={v.id} className="p-5 rounded-2xl bg-white dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 shadow-sm">
                          <div className="flex flex-wrap gap-8">
                             <div className="space-y-1">
@@ -509,7 +509,7 @@ export default function PatientDetailPage() {
                                <p className="text-lg font-bold">{v.temperature || "—"} °C</p>
                             </div>
                          </div>
-                         <Badge className="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full px-3 text-xs">{fmt(v.createdAt)}</Badge>
+                         <Badge className="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full px-3 text-xs">{fmt(v.recordedAt || v.createdAt)}</Badge>
                       </div>
                     ))}
                   </div>

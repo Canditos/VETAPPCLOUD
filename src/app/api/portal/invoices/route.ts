@@ -29,11 +29,11 @@ export async function GET(req: Request) {
       orderBy: { createdAt: "desc" },
     });
 
-    const stats = {
-      totalInvoiced: invoices.reduce((acc, inv) => acc + Number(inv.total), 0),
+     const stats = {
+      totalInvoiced: invoices.reduce((acc: any, inv: any) => acc + Number(inv.total), 0),
       outstandingBalance: invoices
-        .filter(inv => inv.status !== "PAID")
-        .reduce((acc, inv) => acc + Number(inv.total), 0),
+        .filter((inv: any) => inv.status !== "PAID")
+        .reduce((acc: any, inv: any) => acc + Number(inv.total), 0),
     };
 
     return NextResponse.json({ invoices, stats });

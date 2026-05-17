@@ -5,9 +5,10 @@ import prisma from "@/lib/prisma";
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     if (!session || !(session.user as any).clinicId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -16,7 +17,7 @@ export async function PATCH(
 
     // Verify the appointment belongs to this clinic
     const existing = await prisma.appointment.findFirst({
-      where: { id: params.id, clinicId },
+      where: { id, clinicId },
     });
     if (!existing) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -40,7 +41,7 @@ export async function PATCH(
       // Limite global: Máximo de 5 consultas na mesma clínica em simultâneo
       const totalOverlapping = await prisma.appointment.count({
         where: {
-          id: { not: params.id },
+          id: { not: id },
           status: { not: "CANCELLED" },
           OR: [
             {
@@ -61,7 +62,7 @@ export async function PATCH(
       // Verificação específica: O membro não pode ter outra marcação na mesma hora
       const overlapping = await prisma.appointment.findFirst({
         where: {
-          id: { not: params.id },
+          id: { not: id },
           veterinarianId: newVeterinarianId,
           status: { not: "CANCELLED" },
           OR: [
@@ -82,7 +83,7 @@ export async function PATCH(
     }
 
     const appointment = await prisma.appointment.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(startTime && { startTime: new Date(startTime) }),
         ...(computedEndTime && { endTime: computedEndTime }),
@@ -103,9 +104,10 @@ export async function PATCH(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     if (!session || !(session.user as any).clinicId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -113,13 +115,13 @@ export async function DELETE(
     const clinicId = (session.user as any).clinicId;
 
     const existing = await prisma.appointment.findFirst({
-      where: { id: params.id, clinicId },
+      where: { id, clinicId },
     });
     if (!existing) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    await prisma.appointment.delete({ where: { id: params.id } });
+    await prisma.appointment.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: "Erro ao eliminar marcação" }, { status: 500 });

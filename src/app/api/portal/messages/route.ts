@@ -43,13 +43,12 @@ export async function GET(req: Request) {
       }
     });
 
-    // Unificar e formatar para o Inbox
     const combined = [
-      ...chatMessages.map(m => ({
+      ...chatMessages.map((m: any) => ({
         ...m,
         type: "CHAT"
       })),
-      ...appointmentRequests.map(r => ({
+      ...appointmentRequests.map((r: any) => ({
         id: r.id,
         content: `Pedido de Marcação para ${r.patient.name}: ${r.reason}`,
         createdAt: r.createdAt,
@@ -63,7 +62,7 @@ export async function GET(req: Request) {
         patientName: r.patient.name,
         preferred: r.preferred
       }))
-    ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    ].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return NextResponse.json(combined);
   }
