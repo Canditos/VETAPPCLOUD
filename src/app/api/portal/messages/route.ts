@@ -58,7 +58,10 @@ export async function GET(req: Request) {
         clinicId: r.clinicId,
         requestId: r.id,
         owner: r.owner,
-        type: "APPOINTMENT_REQUEST"
+        type: "APPOINTMENT_REQUEST",
+        status: r.status,
+        patientName: r.patient.name,
+        preferred: r.preferred
       }))
     ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
