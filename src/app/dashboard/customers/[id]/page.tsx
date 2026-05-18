@@ -264,17 +264,17 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
       </div>
 
       <Tabs defaultValue="animals" className="w-full">
-        <TabsList className="bg-slate-100/50 dark:bg-slate-800/50 p-1.5 rounded-[2rem] h-auto gap-2 mb-8">
-          <TabsTrigger value="animals" className="rounded-2xl px-8 py-3 font-black text-slate-500 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 data-[state=active]:shadow-lg transition-all gap-2">
+        <TabsList className="bg-slate-100/50 dark:bg-slate-800/50 p-1.5 rounded-[2rem] h-auto gap-2 mb-8 w-full flex">
+          <TabsTrigger value="animals" className="flex-1 rounded-2xl py-3 font-black text-slate-500 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 data-[state=active]:shadow-lg transition-all gap-2 justify-center">
             <PawPrint size={18} /> Animais
           </TabsTrigger>
-          <TabsTrigger value="financial" className="rounded-2xl px-8 py-3 font-black text-slate-500 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 data-[state=active]:shadow-lg transition-all gap-2">
+          <TabsTrigger value="financial" className="flex-1 rounded-2xl py-3 font-black text-slate-500 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 data-[state=active]:shadow-lg transition-all gap-2 justify-center">
             <CreditCard size={18} /> Financeiro
           </TabsTrigger>
-          <TabsTrigger value="budgets" className="rounded-2xl px-8 py-3 font-black text-slate-500 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 data-[state=active]:shadow-lg transition-all gap-2">
+          <TabsTrigger value="budgets" className="flex-1 rounded-2xl py-3 font-black text-slate-500 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 data-[state=active]:shadow-lg transition-all gap-2 justify-center">
             <FileText size={18} /> Orçamentos
           </TabsTrigger>
-          <TabsTrigger value="history" className="rounded-2xl px-8 py-3 font-black text-slate-500 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 data-[state=active]:shadow-lg transition-all gap-2">
+          <TabsTrigger value="history" className="flex-1 rounded-2xl py-3 font-black text-slate-500 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 data-[state=active]:shadow-lg transition-all gap-2 justify-center">
             <HistoryIcon size={18} /> Histórico Clínico
           </TabsTrigger>
         </TabsList>

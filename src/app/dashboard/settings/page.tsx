@@ -103,17 +103,17 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="bg-slate-800/50 p-1.5 rounded-2xl ring-1 ring-white/5">
-          <TabsTrigger value="general" className="rounded-xl gap-2 data-[state=active]:bg-slate-700 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-400">
+        <TabsList className="bg-slate-800/50 p-1.5 rounded-2xl ring-1 ring-white/5 w-full flex">
+          <TabsTrigger value="general" className="flex-1 rounded-xl gap-2 data-[state=active]:bg-slate-700 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-400 justify-center">
             <Building2 size={16} /> Geral
           </TabsTrigger>
-          <TabsTrigger value="billing" className="rounded-xl gap-2 data-[state=active]:bg-slate-700 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-400">
+          <TabsTrigger value="billing" className="flex-1 rounded-xl gap-2 data-[state=active]:bg-slate-700 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-400 justify-center">
             <CreditCard size={16} /> Faturação (Vendus)
           </TabsTrigger>
-          <TabsTrigger value="integrations" className="rounded-xl gap-2 data-[state=active]:bg-slate-700 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-400">
+          <TabsTrigger value="integrations" className="flex-1 rounded-xl gap-2 data-[state=active]:bg-slate-700 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-400 justify-center">
             <Database size={16} /> Laboratório & RX
           </TabsTrigger>
-          <TabsTrigger value="security" className="rounded-xl gap-2 data-[state=active]:bg-slate-700 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-400">
+          <TabsTrigger value="security" className="flex-1 rounded-xl gap-2 data-[state=active]:bg-slate-700 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-400 justify-center">
             <Shield size={16} /> Segurança
           </TabsTrigger>
         </TabsList>

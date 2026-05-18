@@ -124,10 +124,10 @@ export default function NotificationSettings() {
       </div>
 
       <Tabs defaultValue="gateway" className="w-full">
-        <TabsList className="bg-slate-100/50 dark:bg-slate-900/50 p-1.5 rounded-2xl ring-1 ring-slate-200 dark:ring-white/5 mb-8">
-           <TabsTrigger value="gateway" className="flex-1 rounded-xl font-bold text-[10px] uppercase tracking-widest py-4 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 shadow-sm transition-all">Configuração Gateway</TabsTrigger>
-           <TabsTrigger value="templates" className="flex-1 rounded-xl font-bold text-[10px] uppercase tracking-widest py-4 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 shadow-sm transition-all">Templates de Mensagem</TabsTrigger>
-           <TabsTrigger value="logs" className="flex-1 rounded-xl font-bold text-[10px] uppercase tracking-widest py-4 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 shadow-sm transition-all">Histórico de Envios</TabsTrigger>
+        <TabsList className="bg-slate-100/50 dark:bg-slate-900/50 p-1.5 rounded-2xl ring-1 ring-slate-200 dark:ring-white/5 mb-8 w-full flex">
+           <TabsTrigger value="gateway" className="flex-1 rounded-xl font-bold text-[10px] uppercase tracking-widest py-4 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 shadow-sm transition-all justify-center">Configuração Gateway</TabsTrigger>
+           <TabsTrigger value="templates" className="flex-1 rounded-xl font-bold text-[10px] uppercase tracking-widest py-4 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 shadow-sm transition-all justify-center">Templates de Mensagem</TabsTrigger>
+           <TabsTrigger value="logs" className="flex-1 rounded-xl font-bold text-[10px] uppercase tracking-widest py-4 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 shadow-sm transition-all justify-center">Histórico de Envios</TabsTrigger>
         </TabsList>
 
         <TabsContent value="gateway" className="space-y-6 animate-in fade-in duration-500">

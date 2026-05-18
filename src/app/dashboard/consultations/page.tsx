@@ -239,8 +239,8 @@ function ConsultationContent() {
 
       {/* Main Clinical Navigation */}
       <Tabs value={activeTab} onValueChange={updateTab} className="w-full">
-        <div className="mb-10 overflow-x-auto -mx-4 px-4 md:-mx-8 md:px-8 no-scrollbar">
-          <TabsList className="inline-flex w-auto min-w-full bg-slate-100/50 dark:bg-slate-900/50 p-1.5 rounded-2xl ring-1 ring-slate-200/50 dark:ring-white/5 gap-1">
+        <div className="mb-10 overflow-x-auto -mx-4 px-4 md:-mx-8 md:px-8 no-scrollbar w-full">
+          <TabsList className="flex w-full bg-slate-100/50 dark:bg-slate-900/50 p-1.5 rounded-2xl ring-1 ring-slate-200/50 dark:ring-white/5 gap-1">
             {[
               { val: "clinical", label: "Histórico & SOAP", icon: ClipboardCheck },
               { val: "vaccines", label: "Vacinação & Prevenção", icon: Syringe },
@@ -249,7 +249,7 @@ function ConsultationContent() {
               { val: "billing", label: "Farmácia & Faturação", icon: Receipt }
             ].map(t => (
               <TabsTrigger key={t.val} value={t.val}
-                className="rounded-2xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-md font-semibold text-xs transition-all gap-2 py-3 px-4 dark:text-slate-400 dark:data-[state=active]:text-white whitespace-nowrap shrink-0">
+                className="flex-1 rounded-2xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-md font-semibold text-xs transition-all gap-2 py-3 px-4 dark:text-slate-400 dark:data-[state=active]:text-white whitespace-nowrap justify-center">
                 <t.icon className="w-4 h-4 shrink-0" strokeWidth={2.5} />{t.label}
               </TabsTrigger>
             ))}

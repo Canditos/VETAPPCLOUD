@@ -89,14 +89,14 @@ export default function ManagementDashboard() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6" onValueChange={setActiveTab}>
-        <TabsList className="bg-slate-100 dark:bg-white/5 p-1.5 rounded-2xl border border-slate-200 dark:border-white/10 h-12 w-full">
-          <TabsTrigger value="overview" className="rounded-xl font-bold text-[10px] uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-blue-600 dark:data-[state=active]:text-white transition-all flex-1 h-full">
+        <TabsList className="bg-slate-100 dark:bg-white/5 p-1.5 rounded-2xl border border-slate-200 dark:border-white/10 h-12 w-full flex">
+          <TabsTrigger value="overview" className="rounded-xl font-bold text-[10px] uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-blue-600 dark:data-[state=active]:text-white transition-all flex-1 h-full justify-center">
             <Activity className="mr-2" size={14} /> Visão Geral
           </TabsTrigger>
-          <TabsTrigger value="finance" className="rounded-xl font-bold text-[10px] uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-blue-600 dark:data-[state=active]:text-white transition-all flex-1 h-full">
+          <TabsTrigger value="finance" className="rounded-xl font-bold text-[10px] uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-blue-600 dark:data-[state=active]:text-white transition-all flex-1 h-full justify-center">
             <Euro className="mr-2" size={14} /> Financeiro & IVA
           </TabsTrigger>
-          <TabsTrigger value="performance" className="rounded-xl font-bold text-[10px] uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-blue-600 dark:data-[state=active]:text-white transition-all flex-1 h-full">
+          <TabsTrigger value="performance" className="rounded-xl font-bold text-[10px] uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-blue-600 dark:data-[state=active]:text-white transition-all flex-1 h-full justify-center">
             <TrendingUp className="mr-2" size={14} /> Performance
           </TabsTrigger>
         </TabsList>

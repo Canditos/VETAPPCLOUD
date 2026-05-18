@@ -396,6 +396,30 @@ export default function PatientDetailPage() {
             </CardContent>
           </Card>
 
+          {/* Alergias & Observações */}
+          <Card className="border-none shadow-lg bg-white dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl ring-1 ring-slate-200/60 dark:ring-slate-800 overflow-hidden">
+            <CardHeader className="px-6 py-5 border-b border-slate-100 dark:border-slate-800/60">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-500 animate-pulse">
+                  <AlertCircle size={14} strokeWidth={2.5} />
+                </div>
+                <CardTitle className="text-sm font-bold text-slate-500 uppercase tracking-wider">Alergias & Observações</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="p-6">
+              {patient.allergies ? (
+                <div className="p-4 rounded-2xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 text-rose-800 dark:text-rose-300">
+                  <p className="text-sm font-semibold leading-relaxed whitespace-pre-wrap">{patient.allergies}</p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-4 text-slate-400 gap-2">
+                  <Heart size={24} className="text-emerald-500/80" strokeWidth={1.5} />
+                  <p className="text-xs font-semibold text-slate-400">Sem alergias ou observações.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Responsável */}
           <Card className="border-none shadow-lg bg-white dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl ring-1 ring-slate-200/60 dark:ring-slate-800 overflow-hidden">
             <CardHeader className="px-6 py-5 border-b border-slate-100 dark:border-slate-800/60">
@@ -432,17 +456,17 @@ export default function PatientDetailPage() {
           <Card className="border-none shadow-lg bg-white dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl ring-1 ring-slate-200/60 dark:ring-slate-800 min-h-[600px] flex flex-col overflow-hidden">
             <Tabs defaultValue="history" className="w-full flex-1 flex flex-col">
               <div className="px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800/60">
-                <TabsList className="bg-slate-100/70 dark:bg-slate-800/50 rounded-2xl p-1.5 h-12 w-full gap-1">
-                  <TabsTrigger value="history" className="rounded-xl flex-1 px-3 h-full font-bold text-xs uppercase tracking-wider data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm transition-all">
+                <TabsList className="bg-slate-100/70 dark:bg-slate-800/50 rounded-2xl p-1.5 h-12 w-full gap-1 flex">
+                  <TabsTrigger value="history" className="rounded-xl flex-1 px-3 h-full font-bold text-xs uppercase tracking-wider data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm transition-all justify-center">
                     Histórico
                   </TabsTrigger>
-                  <TabsTrigger value="clinical" className="rounded-xl flex-1 px-3 h-full font-bold text-xs uppercase tracking-wider data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm transition-all">
+                  <TabsTrigger value="clinical" className="rounded-xl flex-1 px-3 h-full font-bold text-xs uppercase tracking-wider data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm transition-all justify-center">
                     Vacinas
                   </TabsTrigger>
-                  <TabsTrigger value="vitals" className="rounded-xl flex-1 px-3 h-full font-bold text-xs uppercase tracking-wider data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm transition-all">
+                  <TabsTrigger value="vitals" className="rounded-xl flex-1 px-3 h-full font-bold text-xs uppercase tracking-wider data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm transition-all justify-center">
                     Biométricos
                   </TabsTrigger>
-                  <TabsTrigger value="prescriptions" className="rounded-xl flex-1 px-3 h-full font-bold text-xs uppercase tracking-wider data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm transition-all">
+                  <TabsTrigger value="prescriptions" className="rounded-xl flex-1 px-3 h-full font-bold text-xs uppercase tracking-wider data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm transition-all justify-center">
                     Receituário
                   </TabsTrigger>
                 </TabsList>
