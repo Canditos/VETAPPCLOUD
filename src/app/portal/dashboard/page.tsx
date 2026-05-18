@@ -262,7 +262,7 @@ function WeatherWidget() {
         else if (code >= 95) { icon = CloudLightning; text = "Trovoada"; }
 
         setWeather({ temp: Math.round(data.current_weather.temperature), icon, text });
-      } catch (e) { console.error(e); }
+      } catch (e) { if (process.env.NODE_ENV !== "production") { console.error(e); } }
     };
 
     if ("geolocation" in navigator) {
@@ -325,7 +325,9 @@ export default function PortalPage() {
       await fetch("/api/portal/auth/logout", { method: "POST" });
       router.push("/portal");
     } catch (error) {
-      console.error("Erro ao sair", error);
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Erro ao sair", error);
+      }
     }
   };
 
@@ -594,8 +596,8 @@ export default function PortalPage() {
                         <div className="pt-6 border-t border-white/5">
                            <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-4">Horário de Hoje</p>
                            <div className="flex justify-between items-center text-sm font-bold">
-                              <span className="text-white">Segunda a Sexta</span>
-                              <span className="text-blue-400">09:00 - 20:00</span>
+                              <span className="text-white">{clinic.hours?.days || "Segunda a Sexta"}</span>
+                              <span className="text-blue-400">{clinic.hours?.schedule || "09:00 - 20:00"}</span>
                            </div>
                         </div>
                       </div>

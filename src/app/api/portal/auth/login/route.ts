@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     }
 
     // Gera o token JWT para o portal
-    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || "temp-fallback-secret-do-not-use-in-prod");
+    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
     const jwt = await new SignJWT({ ownerId: owner.id, clinicId: owner.clinicId })
       .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()

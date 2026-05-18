@@ -10,7 +10,9 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Microchip is required" }, { status: 400 });
   }
 
-  console.log(`[SIAC] Verificando microchip: ${microchip}`);
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`[SIAC] Verificando microchip: ${microchip}`);
+  }
 
   try {
     // 1. Em produção, usaríamos um scraper real ou API oficial.
@@ -47,7 +49,9 @@ export async function GET(req: Request) {
     }
 
   } catch (error) {
-    console.error("[SIAC ERROR]", error);
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[SIAC ERROR]", error);
+    }
     return NextResponse.json({ error: "Falha na comunicação com o SIAC" }, { status: 500 });
   }
 }

@@ -14,7 +14,7 @@ export async function GET() {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || "temp-fallback-secret-do-not-use-in-prod");
+    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
     let payload;
     try {
       const { payload: jwtPayload } = await jwtVerify(token, secret);

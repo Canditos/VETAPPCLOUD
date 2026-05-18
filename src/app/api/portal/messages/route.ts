@@ -25,6 +25,8 @@ export async function GET(req: Request) {
         ...(ownerIdParam ? { ownerId: ownerIdParam } : {}),
         ...(requestIdParam ? { requestId: requestIdParam } : {})
       },
+      orderBy: { createdAt: "desc" },
+      take: 100,
       include: {
         owner: { select: { name: true, email: true } }
       }
@@ -37,6 +39,8 @@ export async function GET(req: Request) {
         ...(ownerIdParam ? { ownerId: ownerIdParam } : {}),
         ...(requestIdParam ? { id: requestIdParam } : {})
       },
+      orderBy: { createdAt: "desc" },
+      take: 100,
       include: {
         owner: { select: { name: true, email: true } },
         patient: { select: { name: true } }
@@ -76,7 +80,8 @@ export async function GET(req: Request) {
         ownerId: portalSession.ownerId,
         ...(requestIdParam ? { requestId: requestIdParam } : {})
       },
-      orderBy: { createdAt: "asc" }
+      orderBy: { createdAt: "asc" },
+      take: 100
     });
     return NextResponse.json(messages);
   }

@@ -8,7 +8,7 @@ export async function GET() {
   const maskedUrl = dbUrl.substring(0, 30) + "..." + dbUrl.substring(dbUrl.length - 10);
   
   try {
-    const clinics = await prisma.clinic.findMany();
+    const clinics = await prisma.clinic.findMany({ take: 10 });
     return NextResponse.json({ clinics, dbUrl: maskedUrl });
   } catch (error: any) {
     return NextResponse.json({ 

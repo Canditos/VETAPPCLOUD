@@ -8,7 +8,9 @@ import { multiTenantExtension } from './prisma-tenant-ext'
 
 const prismaClientSingleton = () => {
   if (process.env.NEXT_PHASE === 'phase-production-build' && !process.env.DATABASE_URL) {
-    console.warn("Using No-Op Prisma Proxy during build phase");
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("Using No-Op Prisma Proxy during build phase");
+    }
     return new Proxy({} as any, {
       get: (target, prop) => {
         if (prop === '$extends') return () => prisma;
@@ -38,7 +40,9 @@ const prismaClientSingleton = () => {
 
     // Check if Accelerate is configured
     if (process.env.PRISMA_ACCELERATE_URL) {
-      console.log("Using Prisma Accelerate for global caching");
+      if (process.env.NODE_ENV !== "production") {
+        console.log("Using Prisma Accelerate for global caching");
+      }
       return new PrismaClient({
         datasourceUrl: process.env.PRISMA_ACCELERATE_URL,
       }).$extends(withAccelerate());
@@ -57,7 +61,9 @@ const prismaClientSingleton = () => {
     const adapter = new PrismaPg(pool);
     return new PrismaClient({ adapter });
   } catch (err) {
-    console.error("Failed to initialize Prisma Client:", err);
+    if (process.env.NODE_ENV !== "production") {
+      console.error("Failed to initialize Prisma Client:", err);
+    }
     throw err;
   }
 }

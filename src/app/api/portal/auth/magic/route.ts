@@ -31,7 +31,7 @@ export async function GET(req: Request) {
     const owner = portalToken.owner;
 
     // Gera o token JWT para o portal (MESMA LÓGICA DO LOGIN)
-    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || "temp-fallback-secret-do-not-use-in-prod");
+    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
     const jwt = await new SignJWT({ ownerId: owner.id, clinicId: owner.clinicId })
       .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()

@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { format, isAfter } from "date-fns";
 import { pt } from "date-fns/locale";
+import { useIntegrationHealth } from "@/hooks/useIntegrationHealth";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 const greeting = () => {
@@ -146,6 +147,7 @@ function AppointmentRow({ appt, now }: { appt: any; now: Date }) {
 export default function DashboardPage() {
   const router = useRouter();
   const now = new Date();
+  const { data: health } = useIntegrationHealth();
 
   const { data, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ["dashboard-stats"],
@@ -357,7 +359,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex justify-between items-center mb-2 relative z-10">
                   <span className="text-[10px] font-bold opacity-70 uppercase tracking-wider">Vendus Cloud</span>
-                  <Badge className="bg-emerald-400/20 text-emerald-300 border-none text-[10px] px-2">Online</Badge>
+                  <Badge className={cn("text-[10px] px-2 border-none", health?.vendus?.status === "connected" ? "bg-emerald-400/20 text-emerald-300" : "bg-red-400/20 text-red-300")}>{health?.vendus?.status === "connected" ? "Online" : "Offline"}</Badge>
                 </div>
                 <div className="flex items-center gap-2.5 relative z-10">
                   <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center backdrop-blur-md">
