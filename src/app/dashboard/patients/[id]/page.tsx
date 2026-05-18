@@ -466,22 +466,26 @@ export default function PatientDetailPage() {
                       <Plus size={16} strokeWidth={2.5} /> Nova Vacinação
                     </Button>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {vaccinations.map((v: any) => (
-                      <div key={v.id} className="group flex items-center justify-between p-5 rounded-2xl bg-white dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-900 transition-all shadow-sm">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-xl bg-blue-100/50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform"><Shield size={20} /></div>
-                          <div>
-                            <p className="font-bold text-slate-900 dark:text-white text-base leading-tight">{v.vaccineName}</p>
-                            <p className="text-xs text-slate-400 font-medium mt-0.5 uppercase tracking-tighter">
-                              {v.appliedAt ? fmt(v.appliedAt) : "Sem data"} {v.veterinarian?.name ? `· Dr. ${v.veterinarian.name}` : ""}
-                            </p>
+                  {vaccinations.length === 0 ? (
+                    <EmptyState icon={Shield} text="Ainda não existem vacinas registadas." />
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {vaccinations.map((v: any) => (
+                        <div key={v.id} className="group flex items-center justify-between p-5 rounded-2xl bg-white dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-900 transition-all shadow-sm">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-blue-100/50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform"><Shield size={20} /></div>
+                            <div>
+                              <p className="font-bold text-slate-900 dark:text-white text-base leading-tight">{v.vaccineName}</p>
+                              <p className="text-xs text-slate-400 font-medium mt-0.5 uppercase tracking-tighter">
+                                {v.appliedAt ? fmt(v.appliedAt) : "Sem data"} {v.veterinarian?.name ? `· Dr. ${v.veterinarian.name}` : ""}
+                              </p>
+                            </div>
                           </div>
+                          <VaccineStatusBadge expiresAt={v.expiresAt || null} />
                         </div>
-                        <VaccineStatusBadge expiresAt={v.expiresAt || null} />
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </TabsContent>
 
                 {/* ── BIOMÉTRICOS ── */}
@@ -497,39 +501,107 @@ export default function PatientDetailPage() {
                     </Button>
                   </div>
                   <div className="space-y-3">
-                    {vitals.map((v: any) => (
-                      <div key={v.id} className="p-5 rounded-2xl bg-white dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 shadow-sm">
-                         <div className="flex flex-wrap gap-8">
-                            <div className="space-y-1">
-                               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Peso</p>
-                               <p className="text-lg font-bold">{v.weight || "—"} kg</p>
-                            </div>
-                            <div className="space-y-1">
-                               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Temp</p>
-                               <p className="text-lg font-bold">{v.temperature || "—"} °C</p>
-                            </div>
-                         </div>
-                         <Badge className="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full px-3 text-xs">{fmt(v.recordedAt || v.createdAt)}</Badge>
-                      </div>
-                    ))}
+                    {vitals.length === 0 ? (
+                      <EmptyState icon={Activity} text="Ainda não existem registos biométricos." />
+                    ) : (
+                      vitals.map((v: any) => (
+                        <div key={v.id} className="p-5 rounded-2xl bg-white dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+                           <div className="flex flex-wrap gap-6 md:gap-8">
+                              <div className="space-y-1">
+                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Peso</p>
+                                 <p className="text-lg font-bold">{v.weight || "—"} kg</p>
+                              </div>
+                              <div className="space-y-1">
+                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Temp</p>
+                                 <p className="text-lg font-bold">{v.temperature || "—"} °C</p>
+                              </div>
+                              {v.heartRate && (
+                                <div className="space-y-1">
+                                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">FC</p>
+                                   <p className="text-lg font-bold">{v.heartRate} bpm</p>
+                                </div>
+                              )}
+                              {v.respiratoryRate && (
+                                <div className="space-y-1">
+                                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">FR</p>
+                                   <p className="text-lg font-bold">{v.respiratoryRate} rpm</p>
+                                </div>
+                              )}
+                           </div>
+                           <Badge className="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full px-3 text-xs">{fmt(v.recordedAt || v.createdAt)}</Badge>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </TabsContent>
 
                 {/* ── RECEITUÁRIO ── */}
-                <TabsContent value="prescriptions" className="m-0 space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-                  {prescriptions.map((rx: Prescription) => (
-                    <div key={rx.id} className="p-5 rounded-2xl bg-white dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
-                       <div className="flex justify-between items-start">
+                <TabsContent value="prescriptions" className="m-0 space-y-4 animate-in fade-in slide-in-from-right-4 duration-500">
+                  {prescriptions.length === 0 ? (
+                    <EmptyState icon={Pill} text="Ainda não existem prescrições registadas." />
+                  ) : (
+                    prescriptions.map((rx: Prescription) => (
+                      <div key={rx.id} className="rounded-2xl bg-white dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
+                        {/* Header */}
+                        <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
                           <div className="flex items-center gap-3">
-                             <div className="w-11 h-11 rounded-xl bg-emerald-100/50 text-emerald-600 flex items-center justify-center"><Pill size={20} /></div>
-                             <div>
-                                <p className="font-bold text-slate-900 dark:text-white text-base">{rx.items?.length} Medicamentos</p>
-                                <p className="text-xs text-slate-400 font-medium uppercase tracking-tighter">{fmt(rx.createdAt)}</p>
-                             </div>
+                            <div className="w-11 h-11 rounded-xl bg-emerald-100/50 text-emerald-600 flex items-center justify-center">
+                              <Pill size={20} />
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-900 dark:text-white text-base">Receituário #{rx.id.slice(0, 8)}</p>
+                              <p className="text-xs text-slate-400 font-medium">
+                                {fmt(rx.createdAt)}
+                                {rx.veterinarian?.name && ` · Dr. ${rx.veterinarian.name}`}
+                              </p>
+                            </div>
                           </div>
-                       </div>
-                    </div>
-                  ))}
+                          <div className="flex items-center gap-2">
+                            {rx.validUntil && (
+                              <Badge className={cn(
+                                "rounded-full text-[10px] px-3 py-1",
+                                isPast(new Date(rx.validUntil))
+                                  ? "bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400 border-none"
+                                  : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 border-none"
+                              )}>
+                                {isPast(new Date(rx.validUntil)) ? "Expirada" : `Válida até ${fmt(new Date(rx.validUntil))}`}
+                              </Badge>
+                            )}
+                            <Badge className="rounded-full text-[10px] px-3 py-1 bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 border-none">
+                              {rx.items?.length || 0} medicamento{rx.items?.length !== 1 ? "s" : ""}
+                            </Badge>
+                          </div>
+                        </div>
+                        {/* Items */}
+                        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                          {rx.items?.map((item, idx) => (
+                            <div key={idx} className="px-5 py-4 flex flex-wrap items-start justify-between gap-4">
+                              <div className="flex-1 min-w-[200px]">
+                                <p className="font-bold text-slate-900 dark:text-white text-sm">{item.medicineName}</p>
+                                {item.notes && (
+                                  <p className="text-xs text-slate-400 mt-1">{item.notes}</p>
+                                )}
+                              </div>
+                              <div className="flex flex-wrap gap-4 text-xs">
+                                <div className="text-center">
+                                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Dosagem</p>
+                                  <p className="font-bold text-slate-700 dark:text-slate-200 mt-0.5">{item.dosage}</p>
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Frequência</p>
+                                  <p className="font-bold text-slate-700 dark:text-slate-200 mt-0.5">{item.frequency}</p>
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Duração</p>
+                                  <p className="font-bold text-slate-700 dark:text-slate-200 mt-0.5">{item.duration}</p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </TabsContent>
               </div>
             </Tabs>
