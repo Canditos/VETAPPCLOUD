@@ -187,7 +187,7 @@ function HistoryEvent({ event }: HistoryEventProps) {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {[
                       { label: "Peso", value: event.data?.weight ? `${event.data.weight} kg` : "---", color: "text-blue-500" },
-                      { label: "Temp", value: event.data?.temperature ? `${event.data.temperature} ºC` : "---", color: "text-orange-500" },
+                      { label: "Temp", value: event.data?.temperature ? `${event.data.temperature} ºC` : "---", color: "text-blue-500" },
                       { label: "FC", value: event.data?.heartRate || "---", color: "text-rose-500" },
                       { label: "FR", value: event.data?.respiratoryRate || "---", color: "text-indigo-500" },
                     ].map((v, i) => (

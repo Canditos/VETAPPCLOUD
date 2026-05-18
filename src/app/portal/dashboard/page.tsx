@@ -133,8 +133,8 @@ function PatientCard({ patient }: { patient: any }) {
             <div className="grid grid-cols-2 gap-2">
               {[
                 { icon: Weight,      color: "text-blue-400",    label: "Peso",  val: lastVital.weight ? `${lastVital.weight}kg` : null },
-                { icon: Thermometer, color: "text-orange-400",  label: "Temp",  val: lastVital.temperature ? `${lastVital.temperature}°C` : null },
-                { icon: Heart,       color: "text-rose-400",    label: "FC",    val: lastVital.heartRate ? `${lastVital.heartRate}bpm` : null },
+                { icon: Thermometer, color: "text-blue-400",  label: "Temp",  val: lastVital.temperature ? `${lastVital.temperature}°C` : null },
+                { icon: Heart,       color: "text-blue-300",    label: "FC",    val: lastVital.heartRate ? `${lastVital.heartRate}bpm` : null },
                 { icon: Activity,    color: "text-emerald-400", label: "FR",    val: lastVital.respiratoryRate ? `${lastVital.respiratoryRate}rpm` : null },
               ].filter(x => x.val).map(({ icon: Ic, color, label, val }) => (
                 <div key={label} className="bg-white/5 rounded-2xl p-3 flex items-center gap-2">

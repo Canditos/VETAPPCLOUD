@@ -113,7 +113,7 @@ function ClinicalSummaryBanner({ patientId }: { patientId: string }) {
 
   return (
     <div className={`relative overflow-hidden rounded-3xl p-8 shadow-xl shadow-blue-500/10 group ${
-      hasAlerts ? "bg-gradient-to-r from-rose-600 to-orange-600" : "bg-gradient-to-r from-blue-600 to-indigo-700"
+      hasAlerts ? "bg-gradient-to-r from-blue-700 to-indigo-800" : "bg-gradient-to-r from-blue-600 to-indigo-700"
     }`}>
       <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-32 translate-x-32 group-hover:bg-white/20 transition-all duration-700" />
       <div className="relative z-10 flex flex-col lg:flex-row lg:items-start justify-between gap-8">
@@ -149,7 +149,7 @@ function ClinicalSummaryBanner({ patientId }: { patientId: string }) {
               {aiSummary.alerts.length > 0 && (
                 <div className="space-y-1">
                   {aiSummary.alerts.map((alert, i) => (
-                    <div key={i} className="flex items-center gap-2 text-rose-100 text-sm font-semibold">
+                    <div key={i} className="flex items-center gap-2 text-blue-100 text-sm font-semibold">
                       <AlertCircle size={14} /> {alert}
                     </div>
                   ))}
@@ -179,7 +179,7 @@ function ClinicalSummaryBanner({ patientId }: { patientId: string }) {
               {summary.safetyAlerts.length > 0 && (
                 <div className="space-y-1">
                   {summary.safetyAlerts.map((alert, i) => (
-                    <div key={i} className="flex items-center gap-2 text-rose-100 text-sm font-semibold">
+                    <div key={i} className="flex items-center gap-2 text-blue-100 text-sm font-semibold">
                       <AlertCircle size={14} /> {alert}
                     </div>
                   ))}
@@ -217,7 +217,7 @@ function ClinicalSummaryBanner({ patientId }: { patientId: string }) {
             <p className="text-[10px] font-semibold text-blue-200 mb-1">Peso</p>
             <p className="text-2xl font-bold text-white">{summary.weight ?? "—"}</p>
             {summary.weightTrend && (
-              <p className={`text-xs font-medium mt-1 ${summary.weightTrend.startsWith("+") ? "text-rose-200" : "text-emerald-200"}`}>
+              <p className={`text-xs font-medium mt-1 ${summary.weightTrend.startsWith("+") ? "text-blue-200" : "text-emerald-200"}`}>
                 {summary.weightTrend}
               </p>
             )}
@@ -230,7 +230,7 @@ function ClinicalSummaryBanner({ patientId }: { patientId: string }) {
             <p className="text-[10px] font-semibold text-blue-200 mb-1">Vacinas</p>
             <p className="text-2xl font-bold text-white">{summary.vaccines.total}</p>
             {summary.vaccines.expired.length > 0 && (
-              <p className="text-xs text-rose-200 mt-1">{summary.vaccines.expired.length} exp.</p>
+              <p className="text-xs text-blue-200 mt-1">{summary.vaccines.expired.length} exp.</p>
             )}
           </div>
         </div>
