@@ -432,7 +432,7 @@ export default function PatientDetailPage() {
           <Card className="border-none shadow-lg bg-white dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl ring-1 ring-slate-200/60 dark:ring-slate-800 min-h-[600px] flex flex-col overflow-hidden">
             <Tabs defaultValue="history" className="w-full flex-1 flex flex-col">
               <div className="px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800/60">
-                <TabsList className="bg-slate-100/70 dark:bg-slate-800/50 rounded-2xl p-1.5 h-12 w-full max-w-2xl gap-1">
+                <TabsList className="bg-slate-100/70 dark:bg-slate-800/50 rounded-2xl p-1.5 h-12 w-full gap-1">
                   <TabsTrigger value="history" className="rounded-xl flex-1 px-3 h-full font-bold text-xs uppercase tracking-wider data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm transition-all">
                     Histórico
                   </TabsTrigger>
