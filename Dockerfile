@@ -19,6 +19,7 @@ COPY . .
 # Generate Prisma client & build Next.js
 ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
+ENV NODE_OPTIONS="--max-old-space-size=1536"
 RUN npx prisma generate
 RUN npx prisma db push --accept-data-loss
 RUN npm run build

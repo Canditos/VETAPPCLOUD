@@ -6,6 +6,12 @@ const nextConfig: NextConfig = {
   typescript: { ignoreBuildErrors: true },
   // Keep Node.js-only packages out of the client bundle
   serverExternalPackages: ['twilio', 'bcryptjs', 'pg', '@prisma/client', '@prisma/adapter-pg'],
+  // Severe memory optimizations for builds on limited hardware (RPi 4)
+  experimental: {
+    webpackMemoryOptimizations: true,
+    workerThreads: false,
+    cpus: 1,
+  },
   async headers() {
     return [
       {
