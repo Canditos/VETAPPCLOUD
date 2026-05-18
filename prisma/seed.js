@@ -1,5 +1,9 @@
 const { PrismaClient } = require("@prisma/client");
-require("dotenv").config();
+try {
+  require("dotenv").config();
+} catch (e) {
+  // Ignorar erro em produção
+}
 const bcrypt = require("bcryptjs");
 
 const prisma = new PrismaClient({});
