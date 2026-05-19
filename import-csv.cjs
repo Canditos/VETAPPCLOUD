@@ -1,26 +1,59 @@
-/**
- * CSV Import Script
- * 
- * Reads client_export.csv and animal_export.csv from the project root
- * and imports them into the PostgreSQL database via Prisma.
- * 
- * Usage: npx tsx scripts/import-csv.ts
- */
-
-import "dotenv/config";
-import { PrismaClient } from "@prisma/client";
-import fs from "fs";
-import path from "path";
+const { PrismaClient } = require("@prisma/client");
+const fs = require("fs");
+const path = require("path");
 
 const prisma = new PrismaClient();
 
 const CLINIC_ID = "c1-demo-clinic";
 
-async function main() {
-  console.log("🏥 CSV Import — Hospital Veterinário Gato Escondido");
-  console.log("═".repeat(60));
+function parseMultiLineCSV(raw, expectedColumns) {
+  const lines = raw.split(/\r?\n/);
+  const records = [];
+  let currentRecord = [];
 
-  // ─── 1. Ensure clinic exists ────────────────────────────────────────
+  for (const line of lines) {
+    const fields = line.split(";");
+    if (fields.length >= expectedColumns - 3) {
+      if (currentRecord.length > 0) records.push(currentRecord);
+      currentRecord = fields;
+    } else if (currentRecord.length > 0) {
+      const lastIdx = currentRecord.length - 1;
+      currentRecord[lastIdx] = (currentRecord[lastIdx] || "") + "\n" + line;
+    }
+  }
+
+  if (currentRecord.length > 0) records.push(currentRecord);
+  return records;
+}
+
+function normalizeSpecies(raw) {
+  if (!raw) return "Outro";
+  const lower = raw.toLowerCase();
+  if (lower.includes("can") || lower.includes("cão")) return "Cão";
+  if (lower.includes("fel") || lower.includes("gato")) return "Gato";
+  if (lower.includes("ave") || lower.includes("pássaro") || lower.includes("psit")) return "Ave";
+  if (lower.includes("lago") || lower.includes("coelho")) return "Coelho";
+  if (lower.includes("rept") || lower.includes("tartaruga")) return "Réptil";
+  if (lower.includes("roedor") || lower.includes("hamster") || lower.includes("porquinho")) return "Roedor";
+  if (lower.includes("equ")) return "Equídeo";
+  return raw;
+}
+
+function normalizeGender(raw) {
+  if (!raw) return "Desconhecido";
+  const lower = raw.toLowerCase().trim();
+  if (lower === "m" || lower.startsWith("masc")) return "M";
+  if (lower === "f" || lower.startsWith("fem")) return "F";
+  if (lower === "mc" || lower.includes("castrado")) return "MC";
+  if (lower === "fc" || lower.includes("esteriliz")) return "FC";
+  return raw;
+}
+
+async function main() {
+  console.log("CSV Import — Hospital Veterinário Gato Escondido");
+  console.log("=".repeat(60));
+
+  // 1. Ensure clinic exists
   await prisma.clinic.upsert({
     where: { id: CLINIC_ID },
     update: {},
@@ -33,20 +66,20 @@ async function main() {
       email: "geral@gatoescondido.pt",
     },
   });
-  console.log("✅ Clínica verificada\n");
+  console.log("Clinica verificada\n");
 
-  // ─── 2. Import Clients ─────────────────────────────────────────────
+  // 2. Import Clients
   const clientPath = path.join(process.cwd(), "client_export.csv");
   if (!fs.existsSync(clientPath)) {
-    console.error("❌ client_export.csv não encontrado na raiz do projeto");
+    console.error("client_export.csv nao encontrado na raiz do projeto");
     return;
   }
 
-  console.log("📋 A importar clientes...");
+  console.log("A importar clientes...");
   const clientRaw = fs.readFileSync(clientPath, "latin1");
   const clientRecords = parseMultiLineCSV(clientRaw, 15);
-  
-  const clientIdMap = new Map<string, string>();
+
+  const clientIdMap = new Map();
   let clientsImported = 0;
   let clientsSkipped = 0;
   let clientsErrors = 0;
@@ -54,7 +87,7 @@ async function main() {
   for (const row of clientRecords) {
     const csvId = row[0]?.trim();
     const name = row[2]?.trim();
-    
+
     if (!csvId || !name || csvId === "ID" || name.startsWith("*")) {
       clientsSkipped++;
       continue;
@@ -73,7 +106,7 @@ async function main() {
 
     try {
       const dbId = `csv-${csvId}`;
-      
+
       const owner = await prisma.owner.upsert({
         where: { id: dbId },
         update: {
@@ -101,9 +134,8 @@ async function main() {
       if (clientsImported % 200 === 0) {
         process.stdout.write(`   ${clientsImported} clientes importados...\r`);
       }
-    } catch (error: any) {
+    } catch (error) {
       if (error?.code === "P2002") {
-        // Duplicate email — try to find existing and map
         try {
           const existing = await prisma.owner.findFirst({
             where: { OR: [{ id: `csv-${csvId}` }] },
@@ -112,7 +144,6 @@ async function main() {
             clientIdMap.set(csvId, existing.id);
             clientsSkipped++;
           } else {
-            // Create without email
             const owner = await prisma.owner.create({
               data: {
                 id: `csv-${csvId}`,
@@ -135,23 +166,23 @@ async function main() {
       }
     }
   }
-  
-  console.log(`\n   ✅ Importados: ${clientsImported}`);
-  console.log(`   ⏭️  Saltados:   ${clientsSkipped}`);
-  console.log(`   ❌ Erros:      ${clientsErrors}`);
-  console.log(`   🔑 IDs mapeados: ${clientIdMap.size}\n`);
 
-  // ─── 3. Import Animals ─────────────────────────────────────────────
+  console.log(`\n   Importados: ${clientsImported}`);
+  console.log(`   Saltados:   ${clientsSkipped}`);
+  console.log(`   Erros:      ${clientsErrors}`);
+  console.log(`   IDs mapeados: ${clientIdMap.size}\n`);
+
+  // 3. Import Animals
   const animalPath = path.join(process.cwd(), "animal_export.csv");
   if (!fs.existsSync(animalPath)) {
-    console.error("❌ animal_export.csv não encontrado na raiz do projeto");
+    console.error("animal_export.csv nao encontrado na raiz do projeto");
     return;
   }
 
-  console.log("🐾 A importar animais...");
+  console.log("A importar animais...");
   const animalRaw = fs.readFileSync(animalPath, "latin1");
   const animalRecords = parseMultiLineCSV(animalRaw, 12);
-  
+
   let animalsImported = 0;
   let animalsSkipped = 0;
   let animalsErrors = 0;
@@ -168,19 +199,16 @@ async function main() {
     const deathDateStr = row[10]?.trim();
     const observations = row[11]?.trim() || null;
 
-    // Skip header
     if (!animalNumber || !name || animalNumber === "Número" || animalNumber === "N\u00famero") {
       animalsSkipped++;
       continue;
     }
 
-    // Skip deceased animals
     if (deathDateStr && deathDateStr.length > 0) {
       animalsSkipped++;
       continue;
     }
 
-    // Must have a valid owner
     const ownerId = clientIdMap.get(clientCsvId);
     if (!ownerId) {
       animalsSkipped++;
@@ -190,18 +218,17 @@ async function main() {
     const species = normalizeSpecies(speciesRaw);
     const gender = normalizeGender(genderRaw);
 
-    let birthDate: Date | null = null;
+    let birthDate = null;
     if (birthDateStr && /^\d{4}-\d{2}-\d{2}$/.test(birthDateStr)) {
       const d = new Date(birthDateStr);
       if (!isNaN(d.getTime())) birthDate = d;
     }
 
-    // Validate chip: only use if non-empty and reasonable
     const validChip = chip && chip.length >= 10 ? chip : null;
 
     try {
       const dbId = `csv-animal-${animalNumber}`;
-      
+
       await prisma.patient.upsert({
         where: { id: dbId },
         update: {
@@ -231,9 +258,8 @@ async function main() {
       if (animalsImported % 500 === 0) {
         process.stdout.write(`   ${animalsImported} animais importados...\r`);
       }
-    } catch (error: any) {
+    } catch (error) {
       if (error?.code === "P2002") {
-        // Duplicate microchip — try without it
         try {
           const dbId = `csv-animal-${animalNumber}`;
           await prisma.patient.upsert({
@@ -268,70 +294,19 @@ async function main() {
     }
   }
 
-  console.log(`\n   ✅ Importados: ${animalsImported}`);
-  console.log(`   ⏭️  Saltados:   ${animalsSkipped}`);
-  console.log(`   ❌ Erros:      ${animalsErrors}`);
-  
-  console.log("\n" + "═".repeat(60));
-  console.log(`🎉 Importação concluída!`);
-  console.log(`   Total Clientes: ${clientsImported}`);
-  console.log(`   Total Animais:  ${animalsImported}`);
-}
+  console.log(`\n   Importados: ${animalsImported}`);
+  console.log(`   Saltados:   ${animalsSkipped}`);
+  console.log(`   Erros:      ${animalsErrors}`);
 
-function parseMultiLineCSV(raw: string, expectedColumns: number): string[][] {
-  const lines = raw.split(/\r?\n/);
-  const records: string[][] = [];
-  let currentRecord: string[] = [];
-  
-  for (const line of lines) {
-    const fields = line.split(";");
-    
-    // A new record has at least (expectedColumns - 3) semicolons
-    if (fields.length >= expectedColumns - 3) {
-      if (currentRecord.length > 0) {
-        records.push(currentRecord);
-      }
-      currentRecord = fields;
-    } else if (currentRecord.length > 0) {
-      // Continuation of previous record (multi-line observation field)
-      const lastIdx = currentRecord.length - 1;
-      currentRecord[lastIdx] = (currentRecord[lastIdx] || "") + "\n" + line;
-    }
-  }
-  
-  if (currentRecord.length > 0) {
-    records.push(currentRecord);
-  }
-  
-  return records;
-}
-
-function normalizeSpecies(raw: string | undefined): string {
-  if (!raw) return "Outro";
-  const lower = raw.toLowerCase();
-  if (lower.includes("can") || lower.includes("cão")) return "Cão";
-  if (lower.includes("fel") || lower.includes("gato")) return "Gato";
-  if (lower.includes("ave") || lower.includes("pássaro") || lower.includes("psit")) return "Ave";
-  if (lower.includes("lago") || lower.includes("coelho")) return "Coelho";
-  if (lower.includes("rept") || lower.includes("tartaruga")) return "Réptil";
-  if (lower.includes("roedor") || lower.includes("hamster") || lower.includes("porquinho")) return "Roedor";
-  if (lower.includes("equ")) return "Equídeo";
-  return raw;
-}
-
-function normalizeGender(raw: string | undefined): string {
-  if (!raw) return "Desconhecido";
-  const lower = raw.toLowerCase().trim();
-  if (lower === "m" || lower.startsWith("masc")) return "M";
-  if (lower === "f" || lower.startsWith("fem")) return "F";
-  if (lower === "mc" || lower.includes("castrado")) return "MC";
-  if (lower === "fc" || lower.includes("esteriliz")) return "FC";
-  return raw;
+  console.log("\n" + "=".repeat(60));
+  console.log(`Importacao concluida!`);
+  console.log(`Total Clientes: ${clientsImported}`);
+  console.log(`Total Animais:  ${animalsImported}`);
 }
 
 main()
   .catch((e) => {
-    console.error("💥 Erro fatal:", e);
+    console.error("Erro fatal:", e);
     process.exit(1);
   })
   .finally(async () => {
