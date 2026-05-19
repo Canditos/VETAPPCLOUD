@@ -2,57 +2,39 @@
 
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { 
-  Package, 
-  Plus, 
-  Search, 
-  AlertTriangle,
-  ArrowUpDown,
-  MoreHorizontal,
-  PlusCircle,
-  MinusCircle,
-  Calendar,
-  Layers,
-  History,
-  TrendingDown,
-  TrendingUp,
-  Filter,
-  PackageCheck,
-  Tag,
-  Euro,
-  Box,
-  ChevronRight,
-  Download
+import {
+  Package, Plus, Search, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown,
+  MoreHorizontal, PlusCircle, MinusCircle, Calendar, Layers, History,
+  TrendingDown, TrendingUp, Filter, PackageCheck, Tag, Euro, Box,
+  ChevronRight, Download, ChevronLeft, AlertCircle
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogTitle, 
-  DialogTrigger 
+import {
+  Dialog, DialogContent, DialogTitle, DialogTrigger
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 
+const PAGE_SIZE = 50;
+
+type SortKey = "name" | "category" | "stockQuantity" | "price" | "expiryDate";
+type SortDir = "asc" | "desc";
 
 export default function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
+  const [page, setPage] = useState(1);
+  const [sortKey, setSortKey] = useState<SortKey>("name");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
   const queryClient = useQueryClient();
 
   const { data: products, isLoading } = useQuery({
@@ -65,7 +47,7 @@ export default function InventoryPage() {
   });
 
   const adjustStockMutation = useMutation({
-    mutationFn: async ({ productId, type, quantity }: { productId: string, type: "IN" | "OUT", quantity: number }) => {
+    mutationFn: async ({ productId, type, quantity }: { productId: string; type: "IN" | "OUT"; quantity: number }) => {
       const res = await fetch("/api/inventory/adjust", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -78,73 +60,100 @@ export default function InventoryPage() {
       queryClient.invalidateQueries({ queryKey: ["inventory"] });
       toast.success("Stock atualizado!");
     },
-    onError: (err: any) => {
-      toast.error(err.message || "Erro ao atualizar stock.");
-    }
+    onError: (err: any) => toast.error(err.message || "Erro ao atualizar stock.")
   });
 
-  const filteredProducts = useMemo(() => {
+  const categories = useMemo(() => {
     if (!products) return [];
-    return products.filter((p: any) => {
-      const matchesSearch = 
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        (p.barcode && p.barcode.includes(searchTerm));
-      const matchesCategory = filterCategory === "all" || p.category === filterCategory;
-      return matchesSearch && matchesCategory;
-    });
-  }, [products, searchTerm, filterCategory]);
+    return Array.from(new Set(products.map((p: any) => p.category))).filter(Boolean) as string[];
+  }, [products]);
+
+  // critério inteligente: usa minStock do produto, ou fallback para 5
+  const isLowStock = (p: any) => p.stockQuantity <= (p.minStock ?? 5);
+  const isExpired = (p: any) => p.expiryDate && new Date(p.expiryDate) < new Date();
 
   const stats = useMemo(() => {
     if (!products) return { lowStock: 0, totalValue: 0, expired: 0 };
     return products.reduce((acc: any, p: any) => {
-      if (p.stockQuantity <= 5) acc.lowStock++;
+      if (isLowStock(p)) acc.lowStock++;
       acc.totalValue += Number(p.price) * p.stockQuantity;
-      if (p.expiryDate && new Date(p.expiryDate) < new Date()) acc.expired++;
+      if (isExpired(p)) acc.expired++;
       return acc;
     }, { lowStock: 0, totalValue: 0, expired: 0 });
   }, [products]);
 
-  const categories = useMemo(() => {
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc");
+    else { setSortKey(key); setSortDir("asc"); }
+    setPage(1);
+  };
+
+  const filtered = useMemo(() => {
     if (!products) return [];
-    return Array.from(new Set(products.map((p: any) => p.category))).filter(Boolean);
-  }, [products]);
+    let rows = products.filter((p: any) => {
+      const q = searchTerm.toLowerCase();
+      const matchSearch = p.name.toLowerCase().includes(q) || (p.barcode ?? "").includes(q) || (p.category ?? "").toLowerCase().includes(q);
+      const matchCat = filterCategory === "all" || p.category === filterCategory;
+      return matchSearch && matchCat;
+    });
+
+    rows = [...rows].sort((a: any, b: any) => {
+      let av: any = a[sortKey] ?? "";
+      let bv: any = b[sortKey] ?? "";
+      if (sortKey === "price" || sortKey === "stockQuantity") { av = Number(av); bv = Number(bv); }
+      if (sortKey === "expiryDate") { av = av ? new Date(av).getTime() : 0; bv = bv ? new Date(bv).getTime() : 0; }
+      if (av < bv) return sortDir === "asc" ? -1 : 1;
+      if (av > bv) return sortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+
+    return rows;
+  }, [products, searchTerm, filterCategory, sortKey, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const SortIcon = ({ k }: { k: SortKey }) => {
+    if (sortKey !== k) return <ArrowUpDown size={12} className="opacity-30" />;
+    return sortDir === "asc" ? <ArrowUp size={12} className="text-blue-500" /> : <ArrowDown size={12} className="text-blue-500" />;
+  };
+
+  const ColHeader = ({ label, k, className }: { label: string; k: SortKey; className?: string }) => (
+    <th
+      className={cn("px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors whitespace-nowrap", className)}
+      onClick={() => handleSort(k)}
+    >
+      <div className="flex items-center gap-1.5">
+        {label} <SortIcon k={k} />
+      </div>
+    </th>
+  );
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-6 p-4 md:p-6 animate-premium">
-      {/* Painel de Gestão de Inventário Unificado */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 shadow-sm ring-1 ring-slate-200/60 dark:ring-white/5 space-y-6">
+    <div className="max-w-[1600px] mx-auto space-y-5 p-4 md:p-6">
+
+      {/* ── Cabeçalho + Stats ─────────────────────────────────────── */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm ring-1 ring-slate-200/60 dark:ring-white/5 space-y-5">
+        {/* Título + Ações */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tighter">Inventário & Stock</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tighter">Inventário & Stock</h1>
             <div className="flex items-center gap-2 text-slate-400 font-bold text-[10px] uppercase tracking-wider">
-               <Box size={14} className="text-blue-600" />
-               <span>Controlo de Medicamentos e Consumíveis</span>
+              <Box size={13} className="text-blue-600" />
+              <span>Controlo de Medicamentos e Consumíveis</span>
             </div>
           </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <Button 
-              variant="outline" 
-              onClick={() => toast.info("Histórico de stock em desenvolvimento...")}
-              className="h-10 rounded-xl px-4 gap-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:bg-white transition-all active:scale-95"
-            >
-              <History size={16} strokeWidth={2.5} />
-              <span>Movimentos</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" onClick={() => toast.info("Histórico em desenvolvimento...")} className="h-9 rounded-xl px-4 gap-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:bg-white transition-all active:scale-95">
+              <History size={15} strokeWidth={2.5} /> Movimentos
             </Button>
-
-            <Button 
-              variant="outline" 
-              onClick={() => toast.success("Exportação iniciada...")}
-              className="h-10 rounded-xl px-4 gap-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:bg-white transition-all active:scale-95"
-            >
-              <Download size={16} strokeWidth={2.5} />
-              <span>Exportar</span>
+            <Button variant="outline" onClick={() => toast.success("Exportação iniciada...")} className="h-9 rounded-xl px-4 gap-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:bg-white transition-all active:scale-95">
+              <Download size={15} strokeWidth={2.5} /> Exportar
             </Button>
-            
             <Dialog>
               <DialogTrigger asChild>
-                <Button className="h-10 rounded-xl gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 shadow-sm transition-all active:scale-95">
-                  <Plus size={16} strokeWidth={3} />
+                <Button className="h-9 rounded-xl gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 shadow-sm transition-all active:scale-95">
+                  <Plus size={15} strokeWidth={3} />
                   <span className="text-[10px] uppercase tracking-widest">Novo Artigo</span>
                 </Button>
               </DialogTrigger>
@@ -153,19 +162,19 @@ export default function InventoryPage() {
                   <DialogTitle className="text-2xl font-bold tracking-tight">Adicionar ao Catálogo</DialogTitle>
                   <p className="text-blue-100 text-xs font-bold uppercase tracking-widest mt-1 opacity-80">Registe novos artigos com IVA e Lote.</p>
                 </div>
-                <div className="p-8 space-y-6">
+                <div className="p-8 space-y-5">
                   <div className="space-y-2">
                     <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Designação</Label>
-                    <Input placeholder="Ex: Clavaseptin 500mg" className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
+                    <Input placeholder="Ex: Clavaseptin 500mg" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Preço (€)</Label>
-                      <Input type="number" placeholder="0.00" className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
+                      <Input type="number" placeholder="0.00" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Taxa IVA</Label>
-                      <select className="h-12 w-full rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-3 text-xs font-bold">
+                      <select className="h-11 w-full rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-3 text-xs font-bold">
                         <option value="23">23% (Normal)</option>
                         <option value="13">13% (Intermédia)</option>
                         <option value="6">6% (Reduzida)</option>
@@ -181,52 +190,51 @@ export default function InventoryPage() {
           </div>
         </div>
 
-        {/* Stats Row - Compact & Integrated */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* KPI Strip */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { label: "Total Artigos", value: products?.length || 0, icon: Package, color: "text-blue-600", bg: "bg-blue-50/50" },
-            { label: "Stock Crítico", value: stats.lowStock, icon: AlertTriangle, color: stats.lowStock > 0 ? "text-amber-600" : "text-slate-400", bg: stats.lowStock > 0 ? "bg-amber-50/50" : "bg-slate-50/50" },
-            { label: "Expirados", value: stats.expired, icon: Calendar, color: stats.expired > 0 ? "text-rose-600" : "text-slate-400", bg: stats.expired > 0 ? "bg-rose-50/50" : "bg-slate-50/50" },
-            { label: "Valor de Stock", value: `€${Math.floor(stats.totalValue).toLocaleString()}`, icon: TrendingUp, color: "text-slate-900 dark:text-white", bg: "bg-slate-900/5 dark:bg-white/5" }
-          ].map((stat, i) => (
-            <div key={i} className="flex items-center gap-4 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/20">
-              <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm ring-1 ring-black/5 dark:ring-white/5", stat.bg, stat.color)}>
-                <stat.icon size={18} strokeWidth={2.5} />
+            { label: "Total Artigos", value: products?.length ?? 0, icon: Package, color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-900/20" },
+            { label: "Stock Crítico", value: stats.lowStock, icon: AlertTriangle, color: stats.lowStock > 0 ? "text-amber-600" : "text-slate-400", bg: stats.lowStock > 0 ? "bg-amber-50 dark:bg-amber-900/20" : "bg-slate-50 dark:bg-slate-800" },
+            { label: "Expirados", value: stats.expired, icon: AlertCircle, color: stats.expired > 0 ? "text-rose-600" : "text-slate-400", bg: stats.expired > 0 ? "bg-rose-50 dark:bg-rose-900/20" : "bg-slate-50 dark:bg-slate-800" },
+            { label: "Valor de Stock", value: `€${Math.floor(stats.totalValue).toLocaleString("pt-PT")}`, icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
+          ].map((s, i) => (
+            <div key={i} className={cn("flex items-center gap-3 p-3.5 rounded-xl border border-slate-100 dark:border-slate-800", s.bg)}>
+              <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", s.color)}>
+                <s.icon size={17} strokeWidth={2.5} />
               </div>
               <div>
-                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-tight">{stat.label}</p>
-                <p className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">{stat.value}</p>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">{s.label}</p>
+                <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight mt-0.5">{s.value}</p>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Search & Filter - Bottom Row of the Panel */}
-        <div className="flex flex-col lg:flex-row gap-4 pt-6 border-t border-slate-100 dark:border-slate-800/50">
+        {/* Search + Filter */}
+        <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-100 dark:border-slate-800/50">
           <div className="relative flex-1 group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={16} />
-            <Input 
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={15} />
+            <Input
               placeholder="Pesquisar por nome, categoria ou código de barras..."
-              className="h-12 pl-12 pr-4 rounded-xl border-none bg-slate-50 dark:bg-slate-800/50 ring-1 ring-slate-100 dark:ring-slate-800 focus-visible:ring-2 focus-visible:ring-blue-500/50 font-bold text-sm"
+              className="h-10 pl-11 pr-4 rounded-xl border-none bg-slate-50 dark:bg-slate-800/50 ring-1 ring-slate-100 dark:ring-slate-800 focus-visible:ring-2 focus-visible:ring-blue-500/50 font-medium text-sm"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
             />
           </div>
-          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-10 rounded-xl px-4 gap-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 font-bold text-[10px] uppercase tracking-widest text-slate-600 dark:text-slate-400 hover:bg-white transition-all">
-                <Filter size={16} strokeWidth={2.5} />
-                <span>{filterCategory === "all" ? "Todas as Categorias" : filterCategory}</span>
+              <Button variant="ghost" className="h-10 rounded-xl px-4 gap-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 font-bold text-[10px] uppercase tracking-widest text-slate-600 dark:text-slate-400 hover:bg-white transition-all shrink-0">
+                <Filter size={14} strokeWidth={2.5} />
+                <span className="max-w-[140px] truncate">{filterCategory === "all" ? "Todas as Categorias" : filterCategory}</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="rounded-xl border-none shadow-2xl p-2 w-64 bg-white dark:bg-slate-900">
-              <DropdownMenuItem onClick={() => setFilterCategory("all")} className="font-bold rounded-lg p-3 text-xs uppercase tracking-widest">
+            <DropdownMenuContent align="end" className="rounded-xl border-none shadow-2xl p-2 w-60 bg-white dark:bg-slate-900">
+              <DropdownMenuItem onClick={() => { setFilterCategory("all"); setPage(1); }} className="font-bold rounded-lg p-3 text-xs uppercase tracking-widest">
                 Todas as Categorias
               </DropdownMenuItem>
               <DropdownMenuSeparator className="opacity-50" />
-              {(categories as string[]).map((cat: string) => (
-                <DropdownMenuItem key={cat} onClick={() => setFilterCategory(cat)} className="font-bold rounded-lg p-3 text-xs uppercase tracking-widest">
+              {categories.map((cat) => (
+                <DropdownMenuItem key={cat} onClick={() => { setFilterCategory(cat); setPage(1); }} className="font-bold rounded-lg p-3 text-xs uppercase tracking-widest">
                   {cat}
                 </DropdownMenuItem>
               ))}
@@ -235,121 +243,215 @@ export default function InventoryPage() {
         </div>
       </div>
 
-        {/* List Content - Premium Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {isLoading ? (
-            Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-48 rounded-2xl bg-white dark:bg-slate-900 animate-pulse ring-1 ring-slate-100 dark:ring-slate-800" />
-            ))
-          ) : filteredProducts.length === 0 ? (
-            <div className="col-span-full py-32 text-center bg-white/40 dark:bg-slate-900/40 backdrop-blur-sm rounded-2xl border-2 border-dashed border-slate-100 dark:border-slate-800">
-               <Package size={64} className="mx-auto text-slate-200 dark:text-slate-800 mb-4" />
-               <h3 className="text-xl font-bold text-slate-900 dark:text-white">Sem resultados</h3>
-               <p className="text-slate-500 font-medium">Tente ajustar a sua pesquisa ou filtros.</p>
-            </div>
-          ) : (
-            filteredProducts.map((p: any) => {
-              const isLowStock = p.stockQuantity <= 5;
-              const expiry = p.expiryDate ? new Date(p.expiryDate) : null;
-              const isExpired = expiry ? expiry < new Date() : false;
+      {/* ── Tabela ─────────────────────────────────────────────────── */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm ring-1 ring-slate-200/60 dark:ring-white/5 overflow-hidden">
 
-              return (
-                <div 
-                  key={p.id} 
-                  className="group relative bg-white dark:bg-slate-900 p-6 rounded-2xl ring-1 ring-slate-100 dark:ring-slate-800 hover:ring-blue-500/30 dark:hover:ring-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-500 flex flex-col gap-4"
-                >
-                  {/* Card Header: Icon + Price */}
-                  <div className="flex justify-between items-start">
-                    <div className="flex gap-4 items-center">
-                      <div className="w-16 h-16 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-inner">
-                        <Box size={28} strokeWidth={2} />
-                      </div>
-                      <div className="min-w-0">
-                        <h3 className="font-bold text-xl text-slate-900 dark:text-white truncate tracking-tight leading-none group-hover:text-blue-600 transition-colors">
-                          {p.name}
-                        </h3>
-                        <div className="flex items-center gap-2 mt-2">
-                          <Badge variant="secondary" className="text-[9px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 uppercase tracking-widest border-none px-2">
-                            {p.category || "GERAL"}
-                          </Badge>
-                          {p.batchNumber && (
-                            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-600 font-mono">
-                              LOTE: {p.batchNumber}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none">
-                        €{Number(p.price).toFixed(2)}
-                      </p>
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">IVA {p.vatRate}%</p>
-                    </div>
-                  </div>
-
-                  {/* Stock Status Bar */}
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-end">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${isLowStock ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`} />
-                        <span className={`text-sm font-bold uppercase tracking-widest ${isLowStock ? 'text-red-600' : 'text-slate-400'}`}>
-                          {isLowStock ? 'Stock Crítico' : 'Stock Operacional'}
-                        </span>
-                      </div>
-                      <span className="text-2xl font-bold text-slate-900 dark:text-white leading-none">
-                        {p.stockQuantity} <span className="text-[10px] text-slate-400 font-bold uppercase ml-1">UN</span>
-                      </span>
-                    </div>
-                    <div className="h-2 w-full bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden">
-                       <div 
-                         className={`h-full transition-all duration-1000 ${isLowStock ? 'bg-red-500' : 'bg-emerald-500'}`}
-                         style={{ width: `${Math.min(100, (p.stockQuantity / 20) * 100)}%` }}
-                       />
-                    </div>
-                  </div>
-
-                  {/* Footer: Expiry + Actions */}
-                  <div className="flex items-center justify-between pt-2 mt-auto">
-                    <div className="flex flex-col">
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Validade</p>
-                      <p className={`text-xs font-bold mt-1 ${isExpired ? 'text-red-500' : 'text-slate-700 dark:text-slate-300'}`}>
-                        {expiry ? format(expiry, "dd MMM yyyy", { locale: pt }) : "S/ VALIDADE"}
-                      </p>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-11 w-11 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all active:scale-90"
-                        onClick={() => adjustStockMutation.mutate({ productId: p.id, type: "IN", quantity: 1 })}
-                      >
-                        <Plus size={20} strokeWidth={3} />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-11 w-11 rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-400 hover:bg-slate-900 dark:hover:bg-white hover:text-white dark:hover:text-slate-900 transition-all active:scale-90"
-                        onClick={() => adjustStockMutation.mutate({ productId: p.id, type: "OUT", quantity: 1 })}
-                        disabled={p.stockQuantity === 0}
-                      >
-                        <MinusCircle size={20} strokeWidth={2.5} />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-11 w-11 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 hover:bg-blue-600 hover:text-white transition-all active:scale-90"
-                      >
-                        <ChevronRight size={20} strokeWidth={3} />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
+        {/* Resultado count */}
+        <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+            {filtered.length.toLocaleString("pt-PT")} artigo{filtered.length !== 1 ? "s" : ""} encontrado{filtered.length !== 1 ? "s" : ""}
+          </p>
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+            Página {page} / {totalPages}
+          </p>
         </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50/80 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800">
+              <tr>
+                <ColHeader label="Designação" k="name" className="pl-5 min-w-[260px]" />
+                <ColHeader label="Categoria" k="category" className="min-w-[120px]" />
+                <ColHeader label="Stock" k="stockQuantity" className="min-w-[100px]" />
+                <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Estado</th>
+                <ColHeader label="Preço" k="price" className="min-w-[100px]" />
+                <ColHeader label="Validade" k="expiryDate" className="min-w-[110px]" />
+                <th className="px-4 py-3 text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest pr-5">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {isLoading ? (
+                Array.from({ length: 12 }).map((_, i) => (
+                  <tr key={i}>
+                    {Array.from({ length: 7 }).map((_, j) => (
+                      <td key={j} className="px-4 py-4">
+                        <div className="h-4 rounded-md bg-slate-100 dark:bg-slate-800 animate-pulse" style={{ width: j === 0 ? "70%" : "50%" }} />
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : paginated.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-24 text-center">
+                    <Package size={48} className="mx-auto text-slate-200 dark:text-slate-800 mb-3" />
+                    <p className="font-bold text-slate-700 dark:text-slate-300">Sem resultados</p>
+                    <p className="text-sm text-slate-400 mt-1">Tente ajustar a pesquisa ou os filtros.</p>
+                  </td>
+                </tr>
+              ) : (
+                paginated.map((p: any) => {
+                  const low = isLowStock(p);
+                  const expired = isExpired(p);
+                  const expiry = p.expiryDate ? new Date(p.expiryDate) : null;
+
+                  return (
+                    <tr key={p.id} className={cn(
+                      "group hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors",
+                      low && "bg-amber-50/30 dark:bg-amber-900/5",
+                      expired && "bg-rose-50/30 dark:bg-rose-900/5"
+                    )}>
+                      {/* Designação */}
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 shrink-0">
+                            <Box size={15} strokeWidth={1.8} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-slate-900 dark:text-white leading-tight text-sm truncate max-w-[280px]">{p.name}</p>
+                            {p.batchNumber && (
+                              <p className="text-[10px] font-mono text-slate-400 mt-0.5">Lote: {p.batchNumber}</p>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Categoria */}
+                      <td className="px-4 py-3.5">
+                        <Badge variant="secondary" className="text-[9px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 uppercase tracking-widest border-none px-2 py-0.5">
+                          {p.category || "Geral"}
+                        </Badge>
+                      </td>
+
+                      {/* Stock */}
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-2">
+                          <span className={cn(
+                            "text-base font-bold tabular-nums",
+                            low ? "text-amber-600" : "text-slate-900 dark:text-white"
+                          )}>
+                            {p.stockQuantity}
+                          </span>
+                          <span className="text-[9px] font-bold text-slate-400 uppercase">un.</span>
+                        </div>
+                      </td>
+
+                      {/* Estado */}
+                      <td className="px-4 py-3.5">
+                        {expired ? (
+                          <span className="inline-flex items-center gap-1 text-[9px] font-bold text-rose-600 uppercase tracking-widest bg-rose-50 dark:bg-rose-900/20 px-2 py-1 rounded-lg">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" /> Expirado
+                          </span>
+                        ) : low ? (
+                          <span className="inline-flex items-center gap-1 text-[9px] font-bold text-amber-600 uppercase tracking-widest bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-lg">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" /> Crítico
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-600 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-lg">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> OK
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Preço */}
+                      <td className="px-4 py-3.5">
+                        <p className="font-bold text-slate-900 dark:text-white tabular-nums">
+                          {Number(p.price).toFixed(2)} €
+                        </p>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase">IVA {p.vatRate ?? 23}%</p>
+                      </td>
+
+                      {/* Validade */}
+                      <td className="px-4 py-3.5">
+                        {expiry ? (
+                          <span className={cn("text-xs font-semibold", expired ? "text-rose-500" : "text-slate-600 dark:text-slate-400")}>
+                            {format(expiry, "dd MMM yyyy", { locale: pt })}
+                          </span>
+                        ) : (
+                          <span className="text-xs font-medium text-slate-400">—</span>
+                        )}
+                      </td>
+
+                      {/* Ações */}
+                      <td className="px-4 py-3.5 pr-5">
+                        <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="ghost" size="icon"
+                            className="h-8 w-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all active:scale-90"
+                            onClick={() => adjustStockMutation.mutate({ productId: p.id, type: "IN", quantity: 1 })}
+                            title="Entrada de stock"
+                          >
+                            <PlusCircle size={15} strokeWidth={2.5} />
+                          </Button>
+                          <Button
+                            variant="ghost" size="icon"
+                            className="h-8 w-8 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-500 hover:bg-slate-900 hover:text-white dark:hover:bg-white dark:hover:text-slate-900 transition-all active:scale-90"
+                            onClick={() => adjustStockMutation.mutate({ productId: p.id, type: "OUT", quantity: 1 })}
+                            disabled={p.stockQuantity === 0}
+                            title="Saída de stock"
+                          >
+                            <MinusCircle size={15} strokeWidth={2.5} />
+                          </Button>
+                          <Button
+                            variant="ghost" size="icon"
+                            className="h-8 w-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 hover:bg-blue-600 hover:text-white transition-all active:scale-90"
+                            title="Ver detalhe"
+                          >
+                            <ChevronRight size={15} strokeWidth={2.5} />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* ── Paginação ── */}
+        {totalPages > 1 && (
+          <div className="px-5 py-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4">
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+              A mostrar {Math.min((page - 1) * PAGE_SIZE + 1, filtered.length)}–{Math.min(page * PAGE_SIZE, filtered.length)} de {filtered.length.toLocaleString("pt-PT")}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost" size="icon"
+                className="h-8 w-8 rounded-lg"
+                disabled={page === 1}
+                onClick={() => setPage(p => p - 1)}
+              >
+                <ChevronLeft size={15} />
+              </Button>
+              {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
+                const pg = page <= 3 ? i + 1 : page - 2 + i;
+                if (pg > totalPages) return null;
+                return (
+                  <Button
+                    key={pg}
+                    variant="ghost" size="icon"
+                    className={cn(
+                      "h-8 w-8 rounded-lg text-xs font-bold",
+                      pg === page ? "bg-blue-600 text-white hover:bg-blue-600" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    )}
+                    onClick={() => setPage(pg)}
+                  >
+                    {pg}
+                  </Button>
+                );
+              })}
+              <Button
+                variant="ghost" size="icon"
+                className="h-8 w-8 rounded-lg"
+                disabled={page === totalPages}
+                onClick={() => setPage(p => p + 1)}
+              >
+                <ChevronRight size={15} />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
+    </div>
   );
 }
