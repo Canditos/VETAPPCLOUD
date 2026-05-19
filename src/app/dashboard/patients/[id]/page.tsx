@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft, PawPrint, User, Phone, Mail, Calendar, Activity,
   Stethoscope, Syringe, AlertCircle, Dog, Cat, FileText, Heart,
   Thermometer, Weight, Plus, Pill, Shield, TrendingUp, Info, Clock, 
-  Sparkles, ChevronRight, Microscope
+  Sparkles, ChevronRight, Microscope, Edit3
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -243,8 +243,22 @@ function ClinicalSummaryBanner({ patientId }: { patientId: string }) {
 export default function PatientDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const patientId = params?.id as string;
-  const [dialog, setDialog] = useState<"vaccine" | "vitals" | "prescription" | null>(null);
+  const [dialog, setDialog] = useState<"vaccine" | "vitals" | "prescription" | "edit" | null>(null);
+
+  const [editForm, setEditForm] = useState({
+    name: "",
+    species: "",
+    breed: "",
+    gender: "M",
+    birthDate: "",
+    microchip: "",
+    status: "ACTIVE",
+    allergies: "",
+  });
+  const [isSaving, setIsSaving] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
 
   // ── Patient base data ─────────────────────────────────────────────────────
   const { data: patient, isLoading, isError, error } = useQuery({
@@ -346,6 +360,26 @@ export default function PatientDetailPage() {
         </div>
         
         <div className="flex items-center gap-3">
+          <Button
+            onClick={() => {
+              setEditForm({
+                name: patient.name || "",
+                species: patient.species || "",
+                breed: patient.breed || "",
+                gender: patient.gender || "M",
+                birthDate: patient.birthDate ? patient.birthDate.split("T")[0] : "",
+                microchip: patient.microchip || "",
+                status: patient.status || "ACTIVE",
+                allergies: patient.allergies || "",
+              });
+              setDialog("edit");
+            }}
+            variant="outline"
+            size="lg"
+            className="rounded-xl h-12 px-6 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-50 dark:hover:bg-slate-800/80 shadow-sm gap-2 transition-all active:scale-95"
+          >
+            <Edit3 size={16} /> Editar Ficha
+          </Button>
           <Button 
             onClick={() => router.push(`/dashboard/consultations?patientId=${patientId}`)}
             size="lg" 
@@ -398,13 +432,33 @@ export default function PatientDetailPage() {
 
           {/* Alergias & Observações */}
           <Card className="border-none shadow-lg bg-white dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl ring-1 ring-slate-200/60 dark:ring-slate-800 overflow-hidden">
-            <CardHeader className="px-6 py-5 border-b border-slate-100 dark:border-slate-800/60">
+            <CardHeader className="px-6 py-5 border-b border-slate-100 dark:border-slate-800/60 flex flex-row items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-500 animate-pulse">
                   <AlertCircle size={14} strokeWidth={2.5} />
                 </div>
                 <CardTitle className="text-sm font-bold text-slate-500 uppercase tracking-wider">Alergias & Observações</CardTitle>
               </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                onClick={() => {
+                  setEditForm({
+                    name: patient.name || "",
+                    species: patient.species || "",
+                    breed: patient.breed || "",
+                    gender: patient.gender || "M",
+                    birthDate: patient.birthDate ? patient.birthDate.split("T")[0] : "",
+                    microchip: patient.microchip || "",
+                    status: patient.status || "ACTIVE",
+                    allergies: patient.allergies || "",
+                  });
+                  setDialog("edit");
+                }}
+              >
+                <Edit3 size={14} />
+              </Button>
             </CardHeader>
             <CardContent className="p-6">
               {patient.allergies ? (
@@ -635,12 +689,207 @@ export default function PatientDetailPage() {
 
       {/* ── Dialogs ── */}
       <Dialog open={dialog === "vaccine"} onOpenChange={(o) => !o && setDialog(null)}>
-        <DialogContent className="sm:max-w-[500px] rounded-3xl border-none shadow-2xl p-0 overflow-hidden">
+        <DialogContent className="sm:max-w-[500px] rounded-3xl border-none shadow-2xl p-0 overflow-hidden bg-white dark:bg-slate-900">
           <div className="bg-blue-600 p-6 text-white"><DialogHeader><DialogTitle className="text-xl font-bold flex items-center gap-3">Registar Vacinação</DialogTitle></DialogHeader></div>
           <div className="p-6"><VaccinationForm patientId={patientId} onSuccess={() => { setDialog(null); refetchVax(); }} /></div>
         </DialogContent>
       </Dialog>
-      {/* ... other dialogs ... */}
+
+      <Dialog open={dialog === "vitals"} onOpenChange={(o) => !o && setDialog(null)}>
+        <DialogContent className="sm:max-w-[500px] rounded-3xl border-none shadow-2xl p-0 overflow-hidden bg-white dark:bg-slate-900">
+          <div className="bg-slate-900 dark:bg-slate-800 p-6 text-white"><DialogHeader><DialogTitle className="text-xl font-bold flex items-center gap-3">Registar Sinais Vitais</DialogTitle></DialogHeader></div>
+          <div className="p-6"><VitalSignsForm patientId={patientId} onSuccess={() => { setDialog(null); refetchVitals(); }} /></div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={dialog === "prescription"} onOpenChange={(o) => !o && setDialog(null)}>
+        <DialogContent className="sm:max-w-[600px] rounded-3xl border-none shadow-2xl p-0 overflow-hidden bg-white dark:bg-slate-900">
+          <div className="bg-emerald-600 p-6 text-white"><DialogHeader><DialogTitle className="text-xl font-bold flex items-center gap-3">Criar Prescrição</DialogTitle></DialogHeader></div>
+          <div className="p-6"><PrescriptionForm patientId={patientId} onSuccess={() => { setDialog(null); refetchRx(); }} /></div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={dialog === "edit"} onOpenChange={(o) => !o && !isSaving && !isEnhancing && setDialog(null)}>
+        <DialogContent className="sm:max-w-[600px] rounded-3xl border-none shadow-2xl p-0 overflow-hidden bg-white dark:bg-slate-900">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white flex justify-between items-center">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold flex items-center gap-3">
+                <Edit3 size={20} /> Editar Ficha do Paciente
+              </DialogTitle>
+            </DialogHeader>
+          </div>
+          
+          <div className="p-6 space-y-4 max-h-[80vh] overflow-y-auto relative">
+            {isEnhancing && (
+              <div className="absolute inset-0 bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-3 animate-in fade-in duration-300">
+                <div className="relative">
+                  <div className="w-12 h-12 rounded-full border-4 border-blue-500/20 border-t-blue-600 animate-spin" />
+                  <Sparkles size={20} className="absolute inset-0 m-auto text-blue-500 animate-pulse" />
+                </div>
+                <p className="text-sm font-bold text-slate-700 dark:text-slate-300 tracking-tight">IA a aprimorar descrição clínica...</p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5 col-span-2">
+                <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Nome</label>
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Espécie</label>
+                <input
+                  type="text"
+                  value={editForm.species}
+                  onChange={(e) => setEditForm({ ...editForm, species: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Raça</label>
+                <input
+                  type="text"
+                  value={editForm.breed}
+                  onChange={(e) => setEditForm({ ...editForm, breed: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Género</label>
+                <select
+                  value={editForm.gender}
+                  onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                >
+                  <option value="M">Macho</option>
+                  <option value="F">Fêmea</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Data de Nascimento</label>
+                <input
+                  type="date"
+                  value={editForm.birthDate}
+                  onChange={(e) => setEditForm({ ...editForm, birthDate: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Microchip</label>
+                <input
+                  type="text"
+                  value={editForm.microchip}
+                  onChange={(e) => setEditForm({ ...editForm, microchip: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  placeholder="Número do chip"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Status</label>
+                <select
+                  value={editForm.status}
+                  onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                >
+                  <option value="ACTIVE">Ativo</option>
+                  <option value="INACTIVE">Inativo</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5 col-span-2">
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Alergias & Observações Clínicas</label>
+                  <Button
+                    type="button"
+                    onClick={async () => {
+                      setIsEnhancing(true);
+                      try {
+                        const res = await fetch("/api/ai/enhance-description", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ patientId, text: editForm.allergies }),
+                        });
+                        if (res.ok) {
+                          const data = await res.json();
+                          if (data.text) {
+                            setEditForm((prev) => ({ ...prev, allergies: data.text }));
+                          }
+                        }
+                      } catch (err) {
+                        console.error(err);
+                      } finally {
+                        setIsEnhancing(false);
+                      }
+                    }}
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 font-bold gap-1 rounded-lg"
+                  >
+                    <Sparkles size={12} /> Melhorar com IA
+                  </Button>
+                </div>
+                <textarea
+                  value={editForm.allergies}
+                  onChange={(e) => setEditForm({ ...editForm, allergies: e.target.value })}
+                  rows={4}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-none"
+                  placeholder="Rascunho de observações, alergias, restrições alimentares..."
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setDialog(null)}
+                disabled={isSaving || isEnhancing}
+                className="rounded-xl font-bold h-11 px-5"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                onClick={async () => {
+                  setIsSaving(true);
+                  try {
+                    const res = await fetch(`/api/patients/${patientId}`, {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(editForm),
+                    });
+                    if (res.ok) {
+                      queryClient.invalidateQueries({ queryKey: ["patient", patientId] });
+                      queryClient.invalidateQueries({ queryKey: ["clinical-summary", patientId] });
+                      setDialog(null);
+                    }
+                  } catch (err) {
+                    console.error(err);
+                  } finally {
+                    setIsSaving(false);
+                  }
+                }}
+                disabled={isSaving || isEnhancing}
+                className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 px-5 shadow-lg shadow-blue-500/20"
+              >
+                {isSaving ? "A Guardar..." : "Guardar Alterações"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

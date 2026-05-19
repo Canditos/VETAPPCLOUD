@@ -34,6 +34,8 @@ export interface AnonymizedClinicalData {
   microchip: boolean;
   weightTrend: string | null;
   recommendations: string[];
+  recentConsultations?: { date: string; SOAP: string | null }[];
+  recentPrescriptions?: { date: string; medicines: string[] }[];
 }
 
 export interface AISummaryResponse {
@@ -65,6 +67,8 @@ export function anonymizeClinicalData(data: {
   microchip: string | null;
   weightTrend: string | null;
   recommendations: string[];
+  recentConsultations?: { date: string; SOAP: string | null }[];
+  recentPrescriptions?: { date: string; medicines: string[] }[];
 }): AnonymizedClinicalData {
   return {
     species: data.species,
@@ -82,6 +86,8 @@ export function anonymizeClinicalData(data: {
     microchip: !!data.microchip,
     weightTrend: data.weightTrend,
     recommendations: data.recommendations,
+    recentConsultations: data.recentConsultations,
+    recentPrescriptions: data.recentPrescriptions,
   };
 }
 
@@ -172,15 +178,29 @@ function buildVeterinaryPrompt(data: AnonymizedClinicalData): string {
       ? `Vacinas a expirar: ${data.upcomingVaccines.map((v) => `${v.name} (em ${v.daysLeft}d)`).join(", ")}`
       : "",
     data.dewormingOverdue ? "Desparasitação: EM ATRASO" : "",
-    data.allergies ? `Alergias: ${data.allergies}` : "Sem alergias conhecidas",
+    data.allergies ? `Alergias & Observações: ${data.allergies}` : "Sem observações/alergias conhecidas",
     data.aggressionLevel ? `Nível de agressão: ${data.aggressionLevel}` : "",
     data.microchip ? "Microchip: Sim" : "Microchip: Não",
   ];
 
+  if (data.recentConsultations && data.recentConsultations.length > 0) {
+    lines.push("\nHistórico Clínico Recente (Notas SOAP / Diagnósticos):");
+    data.recentConsultations.forEach((c, i) => {
+      lines.push(`- Consulta ${i + 1} (${new Date(c.date).toLocaleDateString("pt-PT")}):\n${c.SOAP || "Sem notas SOAP registadas"}`);
+    });
+  }
+
+  if (data.recentPrescriptions && data.recentPrescriptions.length > 0) {
+    lines.push("\nTratamentos / Medicamentos Recentes Prescritos:");
+    data.recentPrescriptions.forEach((p, i) => {
+      lines.push(`- Receita ${i + 1} (${new Date(p.date).toLocaleDateString("pt-PT")}): ${p.medicines.join(", ")}`);
+    });
+  }
+
   return `Analise os seguintes dados clínicos de um paciente veterinário e forneça:
-1. Um resumo clínico conciso (2-3 frases)
-2. 3 recomendações práticas prioritárias
-3. Alertas de segurança (se houver)
+1. Um resumo clínico conciso (2-3 frases) englobando a sua condição atual, histórico relevante e estado vacinal.
+2. 3 recomendações práticas prioritárias de tratamento ou monitorização.
+3. Alertas de segurança ou pontos de atenção (se houver).
 
 Dados:
 ${lines.filter(Boolean).join("\n")}
@@ -228,3 +248,77 @@ function parseAIResponse(content: string, data: AnonymizedClinicalData): AISumma
     disclaimer: "Gerado por IA (Llama 3.1 via Groq). Sempre verifique clinicamente.",
   };
 }
+
+/**
+ * Melhora e estrutura a descrição/alergias/observações do paciente com IA.
+ */
+export async function enhancePatientDescription(
+  draftText: string,
+  data: AnonymizedClinicalData
+): Promise<string> {
+  if (!GROQ_API_KEY) {
+    return draftText || "Nenhuma observação clínica relevante registada.";
+  }
+
+  const historyLines: string[] = [
+    `Espécie: ${data.species}`,
+    `Sexo: ${data.gender}`,
+    `Raça: ${data.breed}`,
+    `Idade: ${data.ageText}`,
+    data.allergies ? `Observações anteriores: ${data.allergies}` : "",
+  ];
+
+  if (data.recentConsultations && data.recentConsultations.length > 0) {
+    data.recentConsultations.forEach((c, i) => {
+      historyLines.push(`- Consulta ${i + 1} (${new Date(c.date).toLocaleDateString("pt-PT")}):\n${c.SOAP || "Sem notas"}`);
+    });
+  }
+
+  const prompt = `Melhore e organize o seguinte rascunho de descrição/observações de um paciente veterinário, integrando informações relevantes do seu histórico clínico quando aplicável.
+
+Rascunho atual escrito pelo médico:
+"${draftText || "(Vazio - gerar descrição com base apenas no histórico clínico)"}"
+
+Histórico Clínico do Paciente:
+${historyLines.filter(Boolean).join("\n")}
+
+Instruções:
+1. Reorganize o texto em formato profissional, claro e objetivo.
+2. Divida em secções concisas caso necessário (ex: Alergias conhecidas, Patologias Crónicas, Notas Comportamentais).
+3. Responda APENAS em português de Portugal.
+4. Responda EXATAMENTE com o texto final polido da descrição médica, sem qualquer introdução, notas de rodapé ou explicações (ex: Não escreva "Aqui está a descrição melhorada:").
+`;
+
+  try {
+    const response = await fetch(GROQ_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${GROQ_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "llama-3.1-8b-instant",
+        messages: [
+          {
+            role: "system",
+            content: "Você é um assistente de documentação clínica veterinária experiente. Policie e resuma observações médicas de forma estrita e profissional.",
+          },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.3,
+        max_tokens: 300,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Groq error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.choices[0]?.message?.content?.trim() ?? draftText;
+  } catch (error) {
+    console.error("[AI_SERVICE] enhancePatientDescription error:", error);
+    return draftText;
+  }
+}
+

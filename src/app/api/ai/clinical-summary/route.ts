@@ -38,7 +38,16 @@ export const POST = withAuth(async ({ tenantPrisma, clinicId, req }) => {
     include: {
       vaccinations: { orderBy: { appliedAt: "desc" } },
       dewormings: { orderBy: { appliedAt: "desc" } },
-      consultations: { orderBy: { date: "desc" }, take: 1 },
+      consultations: {
+        orderBy: { date: "desc" },
+        take: 3,
+        include: { notes: true },
+      },
+      prescriptions: {
+        orderBy: { createdAt: "desc" },
+        take: 3,
+        include: { items: true },
+      },
       vitalSigns: { orderBy: { recordedAt: "desc" }, take: 2 },
     },
   })) as any;
@@ -84,6 +93,22 @@ export const POST = withAuth(async ({ tenantPrisma, clinicId, req }) => {
     microchip: patient.microchip,
     weightTrend: weightTrend !== null ? `${weightTrend > 0 ? "+" : ""}${weightTrend.toFixed(2)} kg` : null,
     recommendations: [],
+    recentConsultations: patient.consultations.map((c: any) => {
+      const soap = [
+        c.notes?.subjective ? `S: ${c.notes.subjective}` : "",
+        c.notes?.objective ? `O: ${c.notes.objective}` : "",
+        c.notes?.assessment ? `A: ${c.notes.assessment}` : "",
+        c.notes?.plan ? `P: ${c.notes.plan}` : "",
+      ].filter(Boolean).join("\n");
+      return {
+        date: c.date.toISOString(),
+        SOAP: soap || null,
+      };
+    }),
+    recentPrescriptions: patient.prescriptions.map((p: any) => ({
+      date: p.createdAt.toISOString(),
+      medicines: p.items.map((item: any) => `${item.medicineName} (${item.dosage} - ${item.frequency})`),
+    })),
   });
 
   // Chamar IA
