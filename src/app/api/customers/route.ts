@@ -65,12 +65,12 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     
     if (!session) {
-      return NextResponse.json({ error: "Sessão expirada. Por favor faz login novamente." }, { status: 401 });
+      return NextResponse.json({ error: "Sessão expirada. Por favor faça login novamente." }, { status: 401 });
     }
     
     const user = session.user as any;
     if (!user.clinicId) {
-      return NextResponse.json({ error: "Utilizador sem clínica associada. Contacta o administrador." }, { status: 401 });
+      return NextResponse.json({ error: "Utilizador sem clínica associada. Contacte o administrador." }, { status: 401 });
     }
 
     const clinicId = user.clinicId;

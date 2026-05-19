@@ -128,7 +128,7 @@ export async function generateAISummary(
           {
             role: "system",
             content:
-              "Você é um assistente veterinário clínico experiente. Analise os dados do paciente e forneça um resumo conciso, recomendações práticas e alertas de segurança. Responda APENAS em português de Portugal. NUNCA inclua dados pessoais na resposta.",
+              "É um assistente veterinário clínico experiente. Analise os dados do paciente e forneça um resumo conciso, recomendações práticas e alertas de segurança. Responda APENAS em português de Portugal. NUNCA inclua dados pessoais na resposta.",
           },
           { role: "user", content: prompt },
         ],
@@ -301,7 +301,7 @@ Instruções:
         messages: [
           {
             role: "system",
-            content: "Você é um assistente de documentação clínica veterinária experiente. Policie e resuma observações médicas de forma estrita e profissional.",
+            content: "É um assistente de documentação clínica veterinária experiente. Policie e resuma observações médicas de forma estrita e profissional.",
           },
           { role: "user", content: prompt },
         ],
