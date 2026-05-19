@@ -302,10 +302,71 @@ async function main() {
   console.log(`   Saltados:   ${animalsSkipped}`);
   console.log(`   Erros:      ${animalsErrors}`);
 
+  // 4. Import Products/Inventory
+  const inventoryPath = path.join(process.cwd(), "inventory_export.csv");
+  let productsImported = 0, productsSkipped = 0, productsErrors = 0;
+  if (!fs.existsSync(inventoryPath)) {
+    console.warn("\ninventory_export.csv nao encontrado na raiz do projeto");
+  } else {
+    console.log("\n📦 A importar produtos...");
+    const invRaw = fs.readFileSync(inventoryPath, "latin1");
+    const invRecords = parseMultiLineCSV(invRaw, 6);
+
+
+    for (const row of invRecords) {
+      const codigo = row[0]?.trim() || null;
+      const nome = row[1]?.trim();
+      const categoria = row[2]?.trim() || null;
+      if (!nome || nome === "Nome" || nome.startsWith("*")) {
+        productsSkipped++;
+        continue;
+      }
+
+      const stockQty = Math.round(parseFloat(row[3]?.trim() || "0")) || 0;
+      const price = parseFloat((row[4]?.trim() || "0").replace(",", ".")) || 0;
+
+      try {
+        const dbId = `csv-inv-${productsImported + 1}`;
+
+        await prisma.product.upsert({
+          where: { id: dbId },
+          update: {
+            name: nome,
+            category: categoria || undefined,
+            stockQuantity: stockQty,
+            price,
+          },
+          create: {
+            id: dbId,
+            name: nome,
+            category: categoria,
+            stockQuantity: stockQty,
+            price,
+            barcode: codigo,
+            clinicId: CLINIC_ID,
+          },
+        });
+
+        productsImported++;
+
+        if (productsImported % 200 === 0) {
+          process.stdout.write(`   ${productsImported} produtos importados...\r`);
+        }
+      } catch (error) {
+        productsErrors++;
+      }
+    }
+
+    console.log(`\n   Importados: ${productsImported}`);
+    console.log(`   Saltados:   ${productsSkipped}`);
+    console.log(`   Erros:      ${productsErrors}`);
+  }
+
   console.log("\n" + "=".repeat(60));
   console.log(`Importacao concluida!`);
   console.log(`Total Clientes: ${clientsImported}`);
   console.log(`Total Animais:  ${animalsImported}`);
+  console.log(`Total Produtos: ${productsImported || 0}`);
 }
 
 main()
