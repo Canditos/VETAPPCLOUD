@@ -213,6 +213,7 @@ function CalendarContent() {
   const [pendingRequest, setPendingRequest] = useState<any>(null);
   const [newSlot, setNewSlot] = useState<{ day: string; hour: string } | null>(null);
   const columnsRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const [patientSearch, setPatientSearch] = useState("");
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
@@ -225,8 +226,18 @@ function CalendarContent() {
 
   useEffect(() => {
     setMounted(true);
-    setNow(new Date());
+    const d = new Date();
+    setNow(d);
     const timer = setInterval(() => setNow(new Date()), 60000);
+
+    // Scroll to current time on mount
+    requestAnimationFrame(() => {
+      if (scrollRef.current && d.getHours() >= 8 && d.getHours() < 24) {
+        const scrollTarget = ((d.getHours() - 8) * 60 + d.getMinutes()) / 30 * SLOT_H;
+        scrollRef.current.scrollTop = Math.max(0, scrollTarget - 200);
+      }
+    });
+
     return () => clearInterval(timer);
   }, []);
 
@@ -597,7 +608,7 @@ function CalendarContent() {
         </div>
 
         {/* ── Calendar grid ─────────────────────────────────────────────── */}
-        <div className="flex-1 overflow-auto bg-white/50 dark:bg-slate-950/50">
+        <div ref={scrollRef} className="flex-1 overflow-auto bg-white/50 dark:bg-slate-950/50">
           {/* Day headers */}
           <div className="flex sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border-b border-slate-200/60 dark:border-white/10 shadow-sm">
             {/* Corner cell */}
