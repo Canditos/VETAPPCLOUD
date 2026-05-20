@@ -1,10 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  if (process.env.NODE_ENV === "production") {
+    const secret = request.nextUrl.searchParams.get("secret");
+    if (!secret || secret !== process.env.SEED_SECRET) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+  }
+
   try {
     console.log("Starting API-driven idempotent seed...");
 
