@@ -116,6 +116,9 @@ export default function SettingsPage() {
           <TabsTrigger value="security" className="flex-1 rounded-xl gap-2 data-[state=active]:bg-slate-700 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-400 justify-center">
             <Shield size={16} /> Segurança
           </TabsTrigger>
+          <TabsTrigger value="notifications" onClick={() => window.location.href = "/dashboard/settings/notifications"} className="flex-1 rounded-xl gap-2 data-[state=active]:bg-slate-700 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-400 justify-center">
+            <Bell size={16} /> Notificações
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="general">
