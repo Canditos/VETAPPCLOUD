@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, use } from "react";
+import { useState, use, useMemo } from "react";
 import { 
   Users, 
   Stethoscope, 
@@ -28,7 +28,11 @@ import {
   Edit3,
   Save,
   X,
-  Copy
+  Copy,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Layers
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -36,6 +40,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import Link from "next/link";
@@ -122,6 +127,48 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
   if (!customer) return <div className="p-12 text-center text-red-500 font-bold">Cliente não encontrado.</div>;
 
   const balance = customer.stats?.outstandingBalance || 0;
+  const patients = customer.patients || [];
+  const [viewMode, setViewMode] = useState<"cards" | "table">(patients.length > 3 ? "table" : "cards");
+  const [sortKey, setSortKey] = useState<string>("name");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  const handleSort = (key: string) => {
+    if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc");
+    else { setSortKey(key); setSortDir("asc"); }
+  };
+
+  const sortedPatients = useMemo(() => {
+    return [...patients].sort((a: any, b: any) => {
+      let av: any = a[sortKey] ?? "";
+      let bv: any = b[sortKey] ?? "";
+      if (sortKey === "weight" || sortKey === "_count") {
+        av = sortKey === "_count" ? (a._count?.consultations || 0) : (Number(a.weight) || 0);
+        bv = sortKey === "_count" ? (b._count?.consultations || 0) : (Number(b.weight) || 0);
+      } else if (typeof av === "string") {
+        av = av.toLowerCase();
+        bv = (bv || "").toLowerCase();
+      }
+      if (av < bv) return sortDir === "asc" ? -1 : 1;
+      if (av > bv) return sortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [patients, sortKey, sortDir]);
+
+  const SortIcon = ({ k }: { k: string }) => {
+    if (sortKey !== k) return <ArrowUpDown size={12} className="opacity-30 inline ml-1" />;
+    return sortDir === "asc"
+      ? <ArrowUp size={12} className="text-blue-500 inline ml-1" />
+      : <ArrowDown size={12} className="text-blue-500 inline ml-1" />;
+  };
+
+  const patientSortHeader = (label: string, k: string, className?: string) => (
+    <th
+      className={cn("px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors whitespace-nowrap", className)}
+      onClick={() => handleSort(k)}
+    >
+      {label} <SortIcon k={k} />
+    </th>
+  );
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
@@ -281,52 +328,139 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
 
         {/* Animals Tab */}
         <TabsContent value="animals" className="animate-in fade-in slide-in-from-top-2 duration-500">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {customer.patients?.map((animal: any) => (
-              <Card key={animal.id} className="border-none shadow-xl shadow-slate-200/50 dark:shadow-none rounded-[2.5rem] overflow-hidden group hover:-translate-y-2 transition-all duration-500 bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-slate-800">
-                <div className="bg-slate-50 dark:bg-slate-800/50 p-8 flex items-center gap-6">
-                  <div className="h-20 w-20 rounded-3xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
-                    <PawPrint size={40} />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">{animal.name}</h3>
-                    <div className="flex gap-2 mt-1">
-                      <Badge variant="outline" className="border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 font-black text-[9px] uppercase">{animal.species}</Badge>
-                      <Badge variant="outline" className="border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 font-black text-[9px] uppercase">{animal.breed || "Indefinida"}</Badge>
-                    </div>
-                  </div>
-                </div>
-                <CardContent className="p-8 space-y-6 bg-white dark:bg-slate-900">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
-                      <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Peso Atual</p>
-                      <p className="text-lg font-black text-slate-900 dark:text-slate-100 mt-1">{animal.weight ? `${Number(animal.weight).toFixed(1)} kg` : "---"}</p>
-                    </div>
-                    <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
-                      <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Consultas</p>
-                      <p className="text-lg font-black text-slate-900 dark:text-slate-100 mt-1">{animal._count?.consultations || 0}</p>
-                    </div>
-                  </div>
-                  <div className="pt-4 border-t border-slate-50 dark:border-slate-800 flex gap-2">
-                    <Link href={`/dashboard/patients/${animal.id}`} className="flex-1">
-                      <Button className="w-full rounded-xl bg-slate-900 dark:bg-blue-600 font-black py-6 text-xs gap-2">
-                        Ver Histórico <ArrowUpRight size={14} />
-                      </Button>
-                    </Link>
-                    <Button variant="ghost" size="icon" className="rounded-xl h-12 w-12 bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500">
-                      <MoreHorizontal size={20} />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-            <Link href={`/dashboard/patients?new=true&ownerId=${id}`} className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 flex flex-col items-center justify-center gap-4 text-slate-300 dark:text-slate-700 hover:border-blue-300 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-all group">
-              <div className="p-6 bg-slate-50 dark:bg-slate-800 rounded-full group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
-                <Plus size={32} />
-              </div>
-              <span className="font-black text-sm uppercase tracking-[0.2em]">Adicionar Animal</span>
-            </Link>
+          <div className="flex items-center justify-end gap-2 mb-4">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mr-2">Vista:</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn("h-8 rounded-lg px-3 text-xs font-bold", viewMode === "cards" ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400" : "text-slate-400")}
+              onClick={() => setViewMode("cards")}
+            >
+              <PawPrint size={14} className="mr-1.5" /> Cards
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn("h-8 rounded-lg px-3 text-xs font-bold", viewMode === "table" ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400" : "text-slate-400")}
+              onClick={() => setViewMode("table")}
+            >
+              <Layers size={14} className="mr-1.5" /> Tabela
+            </Button>
           </div>
+          {viewMode === "cards" ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {patients.map((animal: any) => (
+                <Card key={animal.id} className="border-none shadow-xl shadow-slate-200/50 dark:shadow-none rounded-[2.5rem] overflow-hidden group hover:-translate-y-2 transition-all duration-500 bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-slate-800">
+                  <div className="bg-slate-50 dark:bg-slate-800/50 p-8 flex items-center gap-6">
+                    <div className="h-20 w-20 rounded-3xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
+                      <PawPrint size={40} />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">{animal.name}</h3>
+                      <div className="flex gap-2 mt-1">
+                        <Badge variant="outline" className="border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 font-black text-[9px] uppercase">{animal.species}</Badge>
+                        <Badge variant="outline" className="border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 font-black text-[9px] uppercase">{animal.breed || "Indefinida"}</Badge>
+                      </div>
+                    </div>
+                  </div>
+                  <CardContent className="p-8 space-y-6 bg-white dark:bg-slate-900">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Peso Atual</p>
+                        <p className="text-lg font-black text-slate-900 dark:text-slate-100 mt-1">{animal.weight ? `${Number(animal.weight).toFixed(1)} kg` : "---"}</p>
+                      </div>
+                      <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Consultas</p>
+                        <p className="text-lg font-black text-slate-900 dark:text-slate-100 mt-1">{animal._count?.consultations || 0}</p>
+                      </div>
+                    </div>
+                    <div className="pt-4 border-t border-slate-50 dark:border-slate-800 flex gap-2">
+                      <Link href={`/dashboard/patients/${animal.id}`} className="flex-1">
+                        <Button className="w-full rounded-xl bg-slate-900 dark:bg-blue-600 font-black py-6 text-xs gap-2">
+                          Ver Histórico <ArrowUpRight size={14} />
+                        </Button>
+                      </Link>
+                      <Button variant="ghost" size="icon" className="rounded-xl h-12 w-12 bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500">
+                        <MoreHorizontal size={20} />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              <Link href={`/dashboard/patients?new=true&ownerId=${id}`} className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 flex flex-col items-center justify-center gap-4 text-slate-300 dark:text-slate-700 hover:border-blue-300 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-all group">
+                <div className="p-6 bg-slate-50 dark:bg-slate-800 rounded-full group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
+                  <Plus size={32} />
+                </div>
+                <span className="font-black text-sm uppercase tracking-[0.2em]">Adicionar Animal</span>
+              </Link>
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm ring-1 ring-slate-200/60 dark:ring-white/5 overflow-hidden">
+              <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                  {patients.length} animal{patients.length !== 1 ? "is" : ""}
+                </p>
+                <Link href={`/dashboard/patients?new=true&ownerId=${id}`}>
+                  <Button className="h-8 rounded-xl gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] uppercase tracking-widest px-3">
+                    <Plus size={13} strokeWidth={3} /> Novo Animal
+                  </Button>
+                </Link>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50/80 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800">
+                    <tr>
+                      {patientSortHeader("Nome", "name", "pl-5 min-w-[180px]")}
+                      {patientSortHeader("Espécie", "species", "min-w-[100px]")}
+                      {patientSortHeader("Raça", "breed", "min-w-[140px]")}
+                      {patientSortHeader("Peso", "weight", "min-w-[90px]")}
+                      {patientSortHeader("Consultas", "_count", "min-w-[100px]")}
+                      <th className="px-4 py-3 text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest pr-5">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {sortedPatients.map((animal: any) => (
+                      <tr key={animal.id} className="group hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors">
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                              <PawPrint size={15} strokeWidth={1.8} />
+                            </div>
+                            <span className="font-semibold text-slate-900 dark:text-white">{animal.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <Badge variant="secondary" className="text-[9px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 uppercase tracking-widest border-none px-2 py-0.5">
+                            {animal.species || "---"}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3.5 text-sm font-medium text-slate-600 dark:text-slate-400">
+                          {animal.breed || "---"}
+                        </td>
+                        <td className="px-4 py-3.5 text-sm font-bold text-slate-900 dark:text-white tabular-nums">
+                          {animal.weight ? `${Number(animal.weight).toFixed(1)} kg` : "---"}
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <span className="text-sm font-bold text-slate-900 dark:text-white tabular-nums">
+                            {animal._count?.consultations || 0}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5 pr-5">
+                          <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Link href={`/dashboard/patients/${animal.id}`}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 hover:bg-blue-600 hover:text-white transition-all active:scale-90">
+                                <ArrowUpRight size={14} strokeWidth={2.5} />
+                              </Button>
+                            </Link>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </TabsContent>
 
         {/* Financial Tab */}
