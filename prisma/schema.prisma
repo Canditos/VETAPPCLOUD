@@ -564,6 +564,11 @@ model AutomationSettings {
   reminder24h    Boolean  @default(true)
   vaccineAlert   Boolean  @default(true)
   invoiceEmail   Boolean  @default(true)
+  rut240Ip       String?
+  rut240Port     Int      @default(80)
+  rut240User     String?
+  rut240Password String?
+  rut240Enabled  Boolean  @default(false)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   clinic         Clinic   @relation(fields: [clinicId], references: [id])

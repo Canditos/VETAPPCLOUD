@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Bell, 
   Smartphone, 
@@ -16,7 +16,8 @@ import {
   Database,
   History,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -26,28 +27,94 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export default function NotificationSettings() {
+  const queryClient = useQueryClient();
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
-  const [gatewayStatus, setGatewayStatus] = useState<"online" | "offline">("online");
+  const [gatewayStatus, setGatewayStatus] = useState<"online" | "offline">("offline");
+
+  const [rut240Ip, setRut240Ip] = useState("");
+  const [rut240Port, setRut240Port] = useState(80);
+  const [rut240User, setRut240User] = useState("");
+  const [rut240Password, setRut240Password] = useState("");
+  const [rut240Enabled, setRut240Enabled] = useState(false);
+  const [testPhone, setTestPhone] = useState("+351 912 345 678");
+
+  const { data: settings, isLoading } = useQuery({
+    queryKey: ["rut240-settings"],
+    queryFn: async () => {
+      const res = await fetch("/api/settings/rut240");
+      if (!res.ok) throw new Error("Erro ao carregar configurações");
+      return res.json();
+    }
+  });
+
+  useEffect(() => {
+    if (settings) {
+      setRut240Ip(settings.rut240Ip || "");
+      setRut240Port(settings.rut240Port || 80);
+      setRut240User(settings.rut240User || "");
+      setRut240Password(settings.rut240Password || "");
+      setRut240Enabled(settings.rut240Enabled || false);
+      if (settings.rut240Ip) setGatewayStatus("online");
+    }
+  }, [settings]);
+
+  const saveMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await fetch("/api/settings/rut240", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Erro ao guardar");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["rut240-settings"] });
+      toast.success("Configurações guardadas!");
+    },
+    onError: () => toast.error("Erro ao guardar configurações"),
+  });
+
+  const handleSave = () => {
+    saveMutation.mutate({ rut240Ip, rut240Port, rut240User, rut240Password, rut240Enabled });
+  };
 
   const handleTestSMS = async () => {
     setIsTesting(true);
     setTestResult(null);
     try {
-      // Simulation of gateway test
-      await new Promise(r => setTimeout(r, 2000));
-      setTestResult({ 
-        success: true, 
-        message: "SMS de teste enviado com sucesso via RUT240 (192.168.1.1)" 
+      const res = await fetch("/api/notifications/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "SMS",
+          ownerPhone: testPhone.replace(/\s+/g, ''),
+          message: "Teste de conectividade RUT240 - VetConnect",
+          patientName: "Teste"
+        }),
       });
+      const data = await res.json();
+      setTestResult({ success: data.success, message: data.message || "SMS enviado!" });
+      if (data.success) setGatewayStatus("online");
     } catch (e) {
       setTestResult({ success: false, message: "Falha na comunicação com o Gateway RUT240." });
     } finally {
       setIsTesting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 size={32} className="animate-spin text-slate-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-[1400px] mx-auto pb-20">
@@ -58,8 +125,9 @@ export default function NotificationSettings() {
           <h1 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tighter">Notificações & Gateway</h1>
           <p className="text-slate-500 dark:text-slate-400 font-bold mt-2">Configure o motor de comunicação e integração SMS.</p>
         </div>
-        <Button className="rounded-2xl gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase text-[10px] tracking-widest px-6 shadow-xl shadow-blue-500/20">
-           <Save size={14} strokeWidth={3} /> Guardar Configurações
+        <Button className="rounded-2xl gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase text-[10px] tracking-widest px-6 shadow-xl shadow-blue-500/20"
+          onClick={handleSave} disabled={saveMutation.isPending}>
+           {saveMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} strokeWidth={3} />} Guardar Configurações
         </Button>
       </div>
 
@@ -78,20 +146,18 @@ export default function NotificationSettings() {
                 {gatewayStatus === "online" ? "Gateway Online" : "Gateway Offline"}
               </Badge>
               <CardTitle className="text-2xl font-bold tracking-tighter">Teltonika RUT240</CardTitle>
-              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">IP: 192.168.1.1 (LAN)</p>
+              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">IP: {rut240Ip || "Não configurado"} {rut240Port !== 80 && `:${rut240Port}`}</p>
            </CardHeader>
            <CardContent className="relative z-10 p-8 pt-6 flex-1 flex flex-col justify-between min-h-[140px]">
               <div className="space-y-4">
                  <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                    <span>Sinal GSM</span>
-                    <span className="text-white">Excelente (-65dBm)</span>
+                    <span>Gateway RUT240</span>
+                    {rut240Enabled ? (
+                      <span className="text-emerald-400">Ativo</span>
+                    ) : (
+                      <span className="text-slate-500">Desativado</span>
+                    )}
                  </div>
-                 <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-blue-500 h-full w-[85%] rounded-full" />
-                 </div>
-                 <Button variant="ghost" className="w-full text-blue-400 hover:text-blue-300 hover:bg-white/5 font-bold text-[10px] uppercase tracking-widest gap-2" onClick={() => setGatewayStatus(s => s === "online" ? "offline" : "online")}>
-                    <RefreshCw size={12} /> Forçar Reconexão
-                 </Button>
               </div>
            </CardContent>
         </Card>
@@ -132,36 +198,43 @@ export default function NotificationSettings() {
 
         <TabsContent value="gateway" className="space-y-6 animate-in fade-in duration-500">
            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="border-none shadow-xl rounded-2xl bg-white dark:bg-slate-900 overflow-hidden ring-1 ring-slate-100 dark:ring-white/5">
-                 <CardHeader className="border-b p-10 pb-8">
-                   <CardTitle className="text-xl font-bold text-slate-900 dark:text-white tracking-tighter flex items-center gap-2">
-                      <Settings2 size={20} className="text-blue-600" /> Parâmetros Técnicos
-                   </CardTitle>
-                 </CardHeader>
-                 <CardContent className="p-10 pt-8 space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
-                       <div className="space-y-2">
-                          <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Endereço IP Gateway</Label>
-                          <Input defaultValue="192.168.1.1" className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none font-bold" />
+               <Card className="border-none shadow-xl rounded-2xl bg-white dark:bg-slate-900 overflow-hidden ring-1 ring-slate-100 dark:ring-white/5">
+                  <CardHeader className="border-b p-10 pb-8">
+                    <CardTitle className="text-xl font-bold text-slate-900 dark:text-white tracking-tighter flex items-center gap-2">
+                       <Settings2 size={20} className="text-blue-600" /> Parâmetros Técnicos
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-10 pt-8 space-y-6">
+                     <div className="flex items-center gap-4 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800">
+                       <Switch checked={rut240Enabled} onCheckedChange={setRut240Enabled} />
+                       <div>
+                         <p className="font-bold text-sm text-slate-900 dark:text-white">Gateway Ativo</p>
+                         <p className="text-[10px] text-slate-400 font-medium">Ligar/desligar envio de SMS via RUT240</p>
                        </div>
-                       <div className="space-y-2">
-                          <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Porta (HTTP/S)</Label>
-                          <Input defaultValue="80" className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none font-bold" />
-                       </div>
-                    </div>
-                    <div className="space-y-2">
-                       <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Utilizador API</Label>
-                       <Input defaultValue="admin" className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none font-bold" />
-                    </div>
-                    <div className="space-y-2">
-                       <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Palavra-passe API</Label>
-                       <div className="relative">
-                          <Input type="password" defaultValue="admin01" className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none font-bold pr-10" />
-                          <Lock size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300" />
+                     </div>
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                           <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Endereço IP Gateway</Label>
+                           <Input value={rut240Ip} onChange={(e) => setRut240Ip(e.target.value)} placeholder="192.168.1.1" className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none font-bold" />
+                        </div>
+                        <div className="space-y-2">
+                           <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Porta (HTTP/S)</Label>
+                           <Input type="number" value={rut240Port} onChange={(e) => setRut240Port(parseInt(e.target.value) || 80)} className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none font-bold" />
                         </div>
                      </div>
-                  </CardContent>
-               </Card>
+                     <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Utilizador API</Label>
+                        <Input value={rut240User} onChange={(e) => setRut240User(e.target.value)} placeholder="admin" className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none font-bold" />
+                     </div>
+                     <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Palavra-passe API</Label>
+                        <div className="relative">
+                           <Input type="password" value={rut240Password} onChange={(e) => setRut240Password(e.target.value)} placeholder="admin01" className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none font-bold pr-10" />
+                           <Lock size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300" />
+                         </div>
+                      </div>
+                   </CardContent>
+                </Card>
 
                <Card className="border-none shadow-2xl rounded-2xl bg-blue-600 text-white p-0 flex flex-col justify-between overflow-hidden">
                   <CardHeader className="border-b border-white/10 p-10 pb-6">
@@ -172,7 +245,7 @@ export default function NotificationSettings() {
                   <div className="space-y-4">
                      <div className="space-y-2">
                         <Label className="text-[10px] font-bold uppercase tracking-widest text-blue-200">Telemóvel para Teste</Label>
-                        <Input placeholder="+351 912 345 678" className="h-10 rounded-xl bg-white/10 border-none text-white placeholder:text-blue-300 font-bold" />
+                         <Input value={testPhone} onChange={(e) => setTestPhone(e.target.value)} className="h-10 rounded-xl bg-white/10 border-none text-white placeholder:text-blue-300 font-bold" />
                      </div>
                      <Button 
                        className="w-full h-10 rounded-2xl bg-white text-blue-600 hover:bg-blue-50 font-bold uppercase tracking-widest gap-2 shadow-lg"
