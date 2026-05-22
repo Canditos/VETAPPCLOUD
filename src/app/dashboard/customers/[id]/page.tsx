@@ -123,12 +123,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
     updateCustomer.mutate(editForm);
   };
 
-  if (isLoading) return <div className="p-12 text-center font-black text-slate-300 animate-pulse">A carregar Hub 360º...</div>;
-  if (!customer) return <div className="p-12 text-center text-red-500 font-bold">Cliente não encontrado.</div>;
-
-  const balance = customer.stats?.outstandingBalance || 0;
-  const patients = customer.patients || [];
-  const [viewMode, setViewMode] = useState<"cards" | "table">(patients.length > 3 ? "table" : "cards");
+  const [viewMode, setViewMode] = useState<"cards" | "table" | "auto">("auto");
   const [sortKey, setSortKey] = useState<string>("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
@@ -137,22 +132,33 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
     else { setSortKey(key); setSortDir("asc"); }
   };
 
+  const patients = customer?.patients || [];
+  const effectiveViewMode = viewMode === "auto" ? (patients.length > 3 ? "table" : "cards") : viewMode;
+
   const sortedPatients = useMemo(() => {
     return [...patients].sort((a: any, b: any) => {
-      let av: any = a[sortKey] ?? "";
-      let bv: any = b[sortKey] ?? "";
-      if (sortKey === "weight" || sortKey === "_count") {
-        av = sortKey === "_count" ? (a._count?.consultations || 0) : (Number(a.weight) || 0);
-        bv = sortKey === "_count" ? (b._count?.consultations || 0) : (Number(b.weight) || 0);
-      } else if (typeof av === "string") {
-        av = av.toLowerCase();
-        bv = (bv || "").toLowerCase();
+      let av: any, bv: any;
+      if (sortKey === "_count") {
+        av = a._count?.consultations ?? 0;
+        bv = b._count?.consultations ?? 0;
+      } else if (sortKey === "weight") {
+        av = Number(a.weight) || 0;
+        bv = Number(b.weight) || 0;
+      } else {
+        av = (a[sortKey] ?? "");
+        bv = (b[sortKey] ?? "");
+        if (typeof av === "string") { av = av.toLowerCase(); bv = String(bv).toLowerCase(); }
       }
       if (av < bv) return sortDir === "asc" ? -1 : 1;
       if (av > bv) return sortDir === "asc" ? 1 : -1;
       return 0;
     });
   }, [patients, sortKey, sortDir]);
+
+  const balance = customer?.stats?.outstandingBalance || 0;
+
+  if (isLoading) return <div className="p-12 text-center font-black text-slate-300 animate-pulse">A carregar Hub 360º...</div>;
+  if (!customer) return <div className="p-12 text-center text-red-500 font-bold">Cliente não encontrado.</div>;
 
   const SortIcon = ({ k }: { k: string }) => {
     if (sortKey !== k) return <ArrowUpDown size={12} className="opacity-30 inline ml-1" />;
@@ -333,7 +339,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
             <Button
               variant="ghost"
               size="sm"
-              className={cn("h-8 rounded-lg px-3 text-xs font-bold", viewMode === "cards" ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400" : "text-slate-400")}
+              className={cn("h-8 rounded-lg px-3 text-xs font-bold", effectiveViewMode === "cards" ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400" : "text-slate-400")}
               onClick={() => setViewMode("cards")}
             >
               <PawPrint size={14} className="mr-1.5" /> Cards
@@ -341,13 +347,13 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
             <Button
               variant="ghost"
               size="sm"
-              className={cn("h-8 rounded-lg px-3 text-xs font-bold", viewMode === "table" ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400" : "text-slate-400")}
+              className={cn("h-8 rounded-lg px-3 text-xs font-bold", effectiveViewMode === "table" ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400" : "text-slate-400")}
               onClick={() => setViewMode("table")}
             >
               <Layers size={14} className="mr-1.5" /> Tabela
             </Button>
           </div>
-          {viewMode === "cards" ? (
+          {effectiveViewMode === "cards" ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {patients.map((animal: any) => (
                 <Card key={animal.id} className="border-none shadow-xl shadow-slate-200/50 dark:shadow-none rounded-[2.5rem] overflow-hidden group hover:-translate-y-2 transition-all duration-500 bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-slate-800">
@@ -446,13 +452,11 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                           </span>
                         </td>
                         <td className="px-4 py-3.5 pr-5">
-                          <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Link href={`/dashboard/patients/${animal.id}`}>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 hover:bg-blue-600 hover:text-white transition-all active:scale-90">
-                                <ArrowUpRight size={14} strokeWidth={2.5} />
-                              </Button>
-                            </Link>
-                          </div>
+                          <Link href={`/dashboard/patients/${animal.id}`}>
+                            <Button className="h-8 rounded-lg text-xs font-bold gap-1 bg-slate-900 dark:bg-blue-600 text-white hover:bg-blue-600 dark:hover:bg-blue-700 transition-all active:scale-90 px-3">
+                              Histórico <ArrowUpRight size={12} strokeWidth={2.5} />
+                            </Button>
+                          </Link>
                         </td>
                       </tr>
                     ))}
