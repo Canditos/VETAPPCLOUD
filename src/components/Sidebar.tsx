@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
+import {
   LayoutDashboard, 
   PawPrint, 
   Stethoscope, 
@@ -18,7 +18,8 @@ import {
   ChevronRight,
   User,
   Pill,
-  Mail
+  Mail,
+  Send
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 
@@ -46,6 +47,7 @@ const menuGroups = [
     items: [
       { name: "Inventário", href: "/dashboard/inventory", icon: Package },
       { name: "Faturação", href: "/dashboard/billing", icon: Receipt },
+      { name: "Marketing SMS", href: "/dashboard/marketing", icon: Send },
       { name: "Relatórios", href: "/dashboard/management", icon: BarChart3 },
     ]
   },

@@ -43,11 +43,25 @@ export default function NotificationSettings() {
   const [rut240Enabled, setRut240Enabled] = useState(false);
   const [testPhone, setTestPhone] = useState("+351 912 345 678");
 
+  const [reminder24h, setReminder24h] = useState(true);
+  const [vaccineAlert, setVaccineAlert] = useState(true);
+  const [smsMarketing, setSmsMarketing] = useState(false);
+  const [isSavingAutomation, setIsSavingAutomation] = useState(false);
+
   const { data: settings, isLoading } = useQuery({
     queryKey: ["rut240-settings"],
     queryFn: async () => {
       const res = await fetch("/api/settings/rut240");
       if (!res.ok) throw new Error("Erro ao carregar configurações");
+      return res.json();
+    }
+  });
+
+  const { data: automations, isLoading: loadingAuto } = useQuery({
+    queryKey: ["automationSettings"],
+    queryFn: async () => {
+      const res = await fetch("/api/settings/automations");
+      if (!res.ok) throw new Error("Erro ao carregar automações");
       return res.json();
     }
   });
@@ -62,6 +76,14 @@ export default function NotificationSettings() {
       if (settings.rut240Ip) setGatewayStatus("online");
     }
   }, [settings]);
+
+  useEffect(() => {
+    if (automations) {
+      setReminder24h(automations.reminder24h ?? true);
+      setVaccineAlert(automations.vaccineAlert ?? true);
+      setSmsMarketing(automations.smsMarketing ?? false);
+    }
+  }, [automations]);
 
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -82,6 +104,24 @@ export default function NotificationSettings() {
 
   const handleSave = () => {
     saveMutation.mutate({ rut240Ip, rut240Port, rut240User, rut240Password, rut240Enabled });
+  };
+
+  const saveAutomationSwitches = async () => {
+    setIsSavingAutomation(true);
+    try {
+      const res = await fetch("/api/settings/automations", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reminder24h, vaccineAlert, smsMarketing }),
+      });
+      if (!res.ok) throw new Error("Erro ao guardar");
+      queryClient.invalidateQueries({ queryKey: ["automationSettings"] });
+      toast.success("Preferências de notificação guardadas!");
+    } catch {
+      toast.error("Erro ao guardar preferências");
+    } finally {
+      setIsSavingAutomation(false);
+    }
   };
 
   const handleTestSMS = async () => {
@@ -108,7 +148,7 @@ export default function NotificationSettings() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || loadingAuto) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 size={32} className="animate-spin text-slate-400" />
@@ -167,9 +207,9 @@ export default function NotificationSettings() {
            <Card className="border-none shadow-sm rounded-2xl bg-white dark:bg-slate-900 p-8 ring-1 ring-slate-100 dark:ring-white/5">
               <div className="space-y-6">
                  {[
-                   { id: "sms-auto", label: "SMS Automático de Consultas", desc: "Envia lembrete 24h antes da consulta agendada.", icon: Bell },
-                   { id: "sms-vaccines", label: "Alertas de Vacinação", desc: "Notifica proprietários sobre vacinas próximas do vencimento.", icon: Shield },
-                   { id: "sms-marketing", label: "Comunicações de Marketing", desc: "Permite envio de SMS em massa para campanhas.", icon: Send }
+                   { id: "sms-auto", label: "SMS Automático de Consultas", desc: "Envia lembrete 24h antes da consulta agendada.", icon: Bell, value: reminder24h, setter: setReminder24h },
+                   { id: "sms-vaccines", label: "Alertas de Vacinação", desc: "Notifica proprietários sobre vacinas próximas do vencimento.", icon: Shield, value: vaccineAlert, setter: setVaccineAlert },
+                   { id: "sms-marketing", label: "Comunicações de Marketing", desc: "Permite envio de SMS em massa para campanhas.", icon: Send, value: smsMarketing, setter: setSmsMarketing }
                  ].map((item) => (
                    <div key={item.id} className="flex items-center justify-between group">
                       <div className="flex items-center gap-4">
@@ -181,9 +221,15 @@ export default function NotificationSettings() {
                             <p className="text-xs text-slate-500 font-medium">{item.desc}</p>
                          </div>
                       </div>
-                      <Switch defaultChecked />
+                      <Switch checked={item.value} onCheckedChange={(val) => item.setter(val)} />
                    </div>
                  ))}
+              </div>
+              <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                <Button size="sm" className="rounded-xl gap-1 text-xs font-bold" onClick={saveAutomationSwitches} disabled={isSavingAutomation}>
+                  {isSavingAutomation ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                  Guardar Preferências
+                </Button>
               </div>
            </Card>
         </div>
@@ -280,13 +326,75 @@ export default function NotificationSettings() {
         </TabsContent>
 
         <TabsContent value="logs">
-           <div className="text-center py-20 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-200 dark:border-white/5">
-              <History size={48} className="mx-auto mb-4 text-slate-300" />
-              <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-widest">Logs de Comunicação</h4>
-              <p className="text-sm text-slate-500 font-medium mt-2">Nenhum log disponível para o período selecionado.</p>
-           </div>
+          <SmsLogView />
         </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+function SmsLogView() {
+  const { data: logs, isLoading } = useQuery({
+    queryKey: ["sms-logs"],
+    queryFn: async () => {
+      const res = await fetch("/api/sms-logs");
+      if (!res.ok) return [];
+      return res.json();
+    }
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 size={24} className="animate-spin text-slate-400" />
+      </div>
+    );
+  }
+
+  if (!logs || logs.length === 0) {
+    return (
+      <div className="text-center py-20 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-200 dark:border-white/5">
+        <History size={48} className="mx-auto mb-4 text-slate-300" />
+        <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-widest">Logs de Comunicação</h4>
+        <p className="text-sm text-slate-500 font-medium mt-2">Nenhum envio de SMS registado.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {logs.map((log: any) => (
+        <div key={log.id} className="flex items-center justify-between p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm">
+          <div className="flex items-start gap-4">
+            <div className={cn(
+              "h-10 w-10 rounded-xl flex items-center justify-center",
+              log.status === "SENT" ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+            )}>
+              {log.status === "SENT" ? <CheckCircle2 size={18} /> : <AlertTriangle size={18} />}
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-900 dark:text-white">{log.message}</p>
+              <div className="flex gap-3 mt-1.5">
+                <span className="text-[10px] font-bold text-slate-400">{log.phone}</span>
+                <span className="text-[10px] font-bold text-slate-300">•</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase">{log.type}</span>
+                {log.sentAt && (
+                  <>
+                    <span className="text-[10px] font-bold text-slate-300">•</span>
+                    <span className="text-[10px] font-bold text-slate-400">{new Date(log.sentAt).toLocaleString("pt-PT")}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+          <Badge className={cn(
+            "text-[9px] font-bold uppercase border-none",
+            log.status === "SENT" ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
+          )}>
+            {log.status === "SENT" ? "Enviado" : "Falhou"}
+          </Badge>
+        </div>
+      ))}
     </div>
   );
 }

@@ -42,6 +42,7 @@ model Clinic {
   users            User[]
   automationSettings AutomationSettings?
   notifications      Notification[]
+  smsLogs            SmsLog[]
 
   @@index([name])
 }
@@ -564,6 +565,7 @@ model AutomationSettings {
   reminder24h    Boolean  @default(true)
   vaccineAlert   Boolean  @default(true)
   invoiceEmail   Boolean  @default(true)
+  smsMarketing   Boolean  @default(false)
   rut240Ip       String?
   rut240Port     Int      @default(80)
   rut240User     String?
@@ -579,7 +581,7 @@ model Notification {
   clinicId  String
   title     String
   message   String
-  type      String   @default("INFO") // INFO, APPOINTMENT, URGENT, MESSAGE
+  type      String   @default("INFO") // INFO, APPOINTMENT, URGENT, MESSAGE, SMS
   isRead    Boolean  @default(false)
   link      String?
   ownerId   String?
@@ -590,6 +592,25 @@ model Notification {
   @@index([clinicId])
   @@index([isRead])
   @@index([ownerId])
+}
+
+model SmsLog {
+  id        String   @id @default(uuid())
+  clinicId  String
+  phone     String
+  message   String
+  status    String   @default("PENDING") // PENDING, SENT, FAILED
+  type      String   @default("MANUAL")  // MANUAL, REMINDER_24H, VACCINE_ALERT, MARKETING
+  patientId String?
+  ownerId   String?
+  error     String?
+  sentAt    DateTime?
+  createdAt DateTime @default(now())
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+
+  @@index([clinicId])
+  @@index([type])
+  @@index([createdAt])
 }
 
 model PortalMessage {

@@ -3,18 +3,27 @@ import twilio from "twilio";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { sendSMSViaRUT240 } from "@/lib/sms-rut240";
+import prisma from "@/lib/prisma";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const twilioNumber = process.env.TWILIO_PHONE_NUMBER;
 const client = accountSid && authToken ? twilio(accountSid, authToken) : null;
 
+async function logSms(clinicId: string, phone: string, message: string, status: string, type: string, error?: string, patientId?: string, ownerId?: string) {
+  try {
+    await prisma.smsLog.create({
+      data: { clinicId, phone, message, status, type, error, patientId, ownerId, sentAt: status === "SENT" ? new Date() : null }
+    });
+  } catch { /* silent */ }
+}
+
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     const clinicId = (session?.user as any)?.clinicId;
 
-    const { appointmentId, type, patientName, ownerPhone, message } = await req.json();
+    const { appointmentId, type, patientName, ownerPhone, message, patientId, ownerId, logType } = await req.json();
 
     const smsMessage = message || `Olá! Lembramos a sua consulta para ${patientName}. VetConnect.`;
 
@@ -22,6 +31,7 @@ export async function POST(req: Request) {
       // 1. Try RUT240 Gateway (reads from DB config or env vars)
       try {
         await sendSMSViaRUT240(ownerPhone, smsMessage, clinicId);
+        await logSms(clinicId, ownerPhone, smsMessage, "SENT", logType || "MANUAL", undefined, patientId, ownerId);
         return NextResponse.json({ success: true, message: "SMS enviado via Router RUT240." });
       } catch (rutError: any) {
         if (process.env.NODE_ENV !== "production") {
@@ -42,6 +52,7 @@ export async function POST(req: Request) {
             from: twilioNumber,
             to: cleanPhone,
           });
+          await logSms(clinicId, ownerPhone, smsMessage, "SENT", logType || "MANUAL", undefined, patientId, ownerId);
           return NextResponse.json({ success: true, message: "SMS enviado via Twilio." });
         } catch (twError: any) {
           if (process.env.NODE_ENV !== "production") {
@@ -55,6 +66,7 @@ export async function POST(req: Request) {
         console.log(`[NOTIFICATION MOCK] ${smsMessage}`);
       }
       await new Promise(resolve => setTimeout(resolve, 500));
+      await logSms(clinicId, ownerPhone, smsMessage, "SENT", logType || "MANUAL", undefined, patientId, ownerId);
     } else {
       if (process.env.NODE_ENV !== "production") {
         console.log(`[NOTIFICATION MOCK] Sending ${type} to ${ownerPhone}`);

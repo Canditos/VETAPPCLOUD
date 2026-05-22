@@ -947,16 +947,30 @@ function CalendarContent() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
-                      {isFeatureEnabled("smsNotifications") ? (
-                        <Button variant="outline" className="h-9 rounded-lg font-medium text-xs gap-1.5 border-slate-200"
-                          onClick={() => toast.info("SMS enviado para " + selectedApp.patient?.owner?.name)}>
-                          <MessageSquare size={13} /> SMS
-                        </Button>
-                      ) : (
-                        <Button variant="outline" className="h-9 rounded-lg font-medium text-xs gap-1.5 border-slate-200 opacity-50 cursor-not-allowed" disabled>
-                          <MessageSquare size={13} /> SMS
-                        </Button>
-                      )}
+                      <Button variant="outline" className="h-9 rounded-lg font-medium text-xs gap-1.5 border-slate-200"
+                        onClick={async () => {
+                          const app = selectedApp as any;
+                          const phone = app.patient?.owner?.phone;
+                          const name = app.patient?.owner?.name || "Tutor";
+                          if (!phone) { toast.error("Tutor sem telefone registado"); return; }
+                          try {
+                            const res = await fetch("/api/notifications/send", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                type: "SMS",
+                                ownerPhone: phone,
+                                patientName: app.patient?.name || "",
+                                message: `Olá ${name}, lembramos a consulta do(a) ${app.patient?.name} hoje às ${format(new Date(app.startTime), "HH:mm")}. VetConnect`
+                              }),
+                            });
+                            const data = await res.json();
+                            if (data.success) toast.success("SMS enviado com sucesso!");
+                            else toast.error("Erro ao enviar SMS");
+                          } catch { toast.error("Erro ao enviar SMS"); }
+                        }}>
+                        <MessageSquare size={13} /> SMS
+                      </Button>
                       <Button variant="outline" className="h-9 rounded-lg font-medium text-xs gap-1.5 border-slate-200"
                         onClick={() => toast.info("Email enviado")}>
                         <Mail size={13} /> Email

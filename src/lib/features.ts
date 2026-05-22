@@ -30,7 +30,7 @@ export const FEATURES = {
   dicomIntegration: false, // requer DICOM_PACS_URL
 
   /** Notificações SMS via Twilio/SMS gateway */
-  smsNotifications: false,
+  smsNotifications: true,
 
   /** Portal do Tutor (owner self-service) */
   ownerPortal: true,

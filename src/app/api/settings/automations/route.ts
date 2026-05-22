@@ -26,7 +26,8 @@ export async function GET(req: Request) {
           smsEnabled: false,
           reminder24h: true,
           vaccineAlert: true,
-          invoiceEmail: true
+          invoiceEmail: true,
+          smsMarketing: false
         }
       });
     }
@@ -49,7 +50,7 @@ export async function PUT(req: Request) {
 
   try {
     const body = await req.json();
-    const { emailEnabled, smsEnabled, reminder24h, vaccineAlert, invoiceEmail } = body;
+    const { emailEnabled, smsEnabled, reminder24h, vaccineAlert, invoiceEmail, smsMarketing } = body;
 
     const settings = await prisma.automationSettings.upsert({
       where: { clinicId },
@@ -58,7 +59,8 @@ export async function PUT(req: Request) {
         smsEnabled,
         reminder24h,
         vaccineAlert,
-        invoiceEmail
+        invoiceEmail,
+        smsMarketing: smsMarketing ?? false
       },
       create: {
         clinicId,
@@ -66,7 +68,8 @@ export async function PUT(req: Request) {
         smsEnabled: smsEnabled ?? false,
         reminder24h: reminder24h ?? true,
         vaccineAlert: vaccineAlert ?? true,
-        invoiceEmail: invoiceEmail ?? true
+        invoiceEmail: invoiceEmail ?? true,
+        smsMarketing: smsMarketing ?? false
       }
     });
 
