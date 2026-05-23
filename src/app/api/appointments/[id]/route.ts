@@ -1,20 +1,9 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { withAuthParams } from "@/lib/api-wrapper";
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const PATCH = withAuthParams(async ({ req, clinicId }, { id }) => {
   try {
-    const { id } = await params;
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const clinicId = (session.user as any).clinicId;
-
     // Verify the appointment belongs to this clinic
     const existing = await prisma.appointment.findFirst({
       where: { id, clinicId },
@@ -42,6 +31,7 @@ export async function PATCH(
       const totalOverlapping = await prisma.appointment.count({
         where: {
           id: { not: id },
+          clinicId,
           status: { not: "CANCELLED" },
           OR: [
             {
@@ -63,6 +53,7 @@ export async function PATCH(
       const overlapping = await prisma.appointment.findFirst({
         where: {
           id: { not: id },
+          clinicId,
           veterinarianId: newVeterinarianId,
           status: { not: "CANCELLED" },
           OR: [
@@ -100,20 +91,10 @@ export async function PATCH(
     console.error("[APPOINTMENT_PATCH]", error);
     return NextResponse.json({ error: "Erro ao atualizar marcação" }, { status: 500 });
   }
-}
+});
 
-export async function DELETE(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const DELETE = withAuthParams(async ({ clinicId }, { id }) => {
   try {
-    const { id } = await params;
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const clinicId = (session.user as any).clinicId;
-
     const existing = await prisma.appointment.findFirst({
       where: { id, clinicId },
     });
@@ -126,4 +107,4 @@ export async function DELETE(
   } catch (error) {
     return NextResponse.json({ error: "Erro ao eliminar marcação" }, { status: 500 });
   }
-}
+});

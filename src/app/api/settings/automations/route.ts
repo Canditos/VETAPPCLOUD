@@ -1,18 +1,9 @@
 import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { withAuth } from "@/lib/api-wrapper";
 
-export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
-  
-  if (!session || !(session.user as any).clinicId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const clinicId = (session.user as any).clinicId;
-
+export const GET = withAuth(async ({ clinicId }) => {
   try {
     let settings = await prisma.automationSettings.findUnique({
       where: { clinicId }
@@ -37,16 +28,12 @@ export async function GET(req: Request) {
     console.error("Error fetching automation settings:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-}
+});
 
-export async function PUT(req: Request) {
-  const session = await getServerSession(authOptions);
-  
-  if (!session || !(session.user as any).clinicId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export const PUT = withAuth(async ({ req, clinicId, session }) => {
+  if ((session.user as any).role !== "ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-
-  const clinicId = (session.user as any).clinicId;
 
   try {
     const body = await req.json();
@@ -78,4 +65,4 @@ export async function PUT(req: Request) {
     console.error("Error updating automation settings:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-}
+});

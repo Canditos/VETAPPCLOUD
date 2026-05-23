@@ -1,18 +1,11 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { withAuth } from "@/lib/api-wrapper";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: Request) {
+export const GET = withAuth(async ({ req, clinicId }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    
-    const clinicId = (session.user as any).clinicId;
     const { searchParams } = new URL(req.url);
     const month = searchParams.get("month") || new Date().toISOString().slice(0, 7);
 
@@ -67,4 +60,4 @@ export async function GET(req: Request) {
     console.error("[VAT_REPORT_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
-}
+});

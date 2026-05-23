@@ -6,17 +6,14 @@ import path from "path";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300; 
 
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { withAuth } from "@/lib/api-wrapper";
 
-export async function GET() {
-  const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    
-    const clinicId = (session.user as any).clinicId;
-    const results = { 
+export const GET = withAuth(async ({ clinicId, session }) => {
+  if ((session.user as any).role !== "ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const results = { 
       imported: 0, 
       skipped: 0, 
       errors: 0,
@@ -103,4 +100,4 @@ export async function GET() {
     console.error("[INVENTORY_IMPORT_ERROR]", error);
     return NextResponse.json({ error: error.message || "Internal Error" }, { status: 500 });
   }
-}
+});

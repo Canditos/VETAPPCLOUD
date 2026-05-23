@@ -1,17 +1,10 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { withAuth } from "@/lib/api-wrapper";
 import { startOfMonth, endOfMonth, eachDayOfInterval, format, startOfToday, endOfToday } from "date-fns";
 
-export async function GET() {
+export const GET = withAuth(async ({ clinicId }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
-
-    const clinicId = (session.user as any).clinicId;
     const today = new Date();
     const startMonth = startOfMonth(today);
     const endMonth = endOfMonth(today);
@@ -86,4 +79,4 @@ export async function GET() {
     console.error("[ANALYTICS_GET]", error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
-}
+});

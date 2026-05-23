@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import axios from "axios";
- // Se não estiver instalado, uso regex simples
+import { withAuth } from "@/lib/api-wrapper";
 
-export async function GET(req: Request) {
+export const GET = withAuth(async ({ req }) => {
   const { searchParams } = new URL(req.url);
   const microchip = searchParams.get("chip");
 
@@ -54,4 +53,4 @@ export async function GET(req: Request) {
     }
     return NextResponse.json({ error: "Falha na comunicação com o SIAC" }, { status: 500 });
   }
-}
+});

@@ -1,24 +1,9 @@
 import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import { getTenantClient } from "@/lib/prisma";
+import { withAuthParams } from "@/lib/api-wrapper";
 
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const GET = withAuthParams(async ({ tenantPrisma }, { id }) => {
   try {
-    const { id } = await params;
-    const session = await getServerSession(authOptions);
-    
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const clinicId = (session.user as any).clinicId;
-    const tenantPrisma = getTenantClient(clinicId);
-
     const hospitalization = await tenantPrisma.hospitalization.findUnique({
       where: { id },
       include: {
@@ -40,23 +25,10 @@ export async function GET(
     console.error("[HOSPITALIZATION_DETAIL_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
-}
+});
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const PATCH = withAuthParams(async ({ req, tenantPrisma }, { id }) => {
   try {
-    const { id } = await params;
-    const session = await getServerSession(authOptions);
-    
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const clinicId = (session.user as any).clinicId;
-    const tenantPrisma = getTenantClient(clinicId);
-
     const existing = await tenantPrisma.hospitalization.findUnique({
       where: { id },
     });
@@ -94,4 +66,4 @@ export async function PATCH(
     console.error("[HOSPITALIZATION_PATCH]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
-}
+});

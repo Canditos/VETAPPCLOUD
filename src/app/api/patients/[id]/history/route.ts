@@ -1,24 +1,9 @@
 import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import { getTenantClient } from "@/lib/prisma";
+import { withAuthParams } from "@/lib/api-wrapper";
 
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const session = await getServerSession(authOptions);
-  if (!session || !(session.user as any).clinicId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const clinicId = (session.user as any).clinicId;
-  const tenantPrisma = getTenantClient(clinicId);
-
+export const GET = withAuthParams(async ({ clinicId, tenantPrisma }, { id }) => {
   try {
-    const { id } = await params;
-
     const patient = await tenantPrisma.patient.findUnique({
       where: { id },
       select: { ownerId: true }
@@ -160,4 +145,4 @@ export async function GET(
     console.error("Error fetching patient history:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
-}
+});

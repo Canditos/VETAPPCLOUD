@@ -1,15 +1,18 @@
 import { NextResponse } from "next/server";
 import twilio from "twilio";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
 import { sendSMSViaRUT240 } from "@/lib/sms-rut240";
+<<<<<<< HEAD
 import prisma from "@/lib/prisma";
+=======
+import { withAuth } from "@/lib/api-wrapper";
+>>>>>>> 0ef987b (refactor: api-wrapper withAuth/withAuthParams for all routes + portal rate limiting + debug route gating)
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const twilioNumber = process.env.TWILIO_PHONE_NUMBER;
 const client = accountSid && authToken ? twilio(accountSid, authToken) : null;
 
+<<<<<<< HEAD
 async function logSms(clinicId: string, phone: string, message: string, status: string, type: string, error?: string, patientId?: string, ownerId?: string) {
   try {
     await prisma.smsLog.create({
@@ -24,6 +27,11 @@ export async function POST(req: Request) {
     const clinicId = (session?.user as any)?.clinicId;
 
     const { appointmentId, type, patientName, ownerPhone, message, patientId, ownerId, logType } = await req.json();
+=======
+export const POST = withAuth(async ({ req, clinicId }) => {
+  try {
+    const { appointmentId, type, patientName, ownerPhone, message } = await req.json();
+>>>>>>> 0ef987b (refactor: api-wrapper withAuth/withAuthParams for all routes + portal rate limiting + debug route gating)
 
     const smsMessage = message || `Olá! Lembramos a sua consulta para ${patientName}. VetConnect.`;
 
@@ -84,4 +92,4 @@ export async function POST(req: Request) {
     }
     return NextResponse.json({ error: "Erro ao processar notificação" }, { status: 500 });
   }
-}
+});

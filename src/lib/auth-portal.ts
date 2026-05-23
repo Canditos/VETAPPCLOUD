@@ -8,7 +8,11 @@ export async function getPortalSession() {
   if (!token) return null;
 
   try {
-    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || "temp-fallback-secret-do-not-use-in-prod");
+    if (!process.env.NEXTAUTH_SECRET) {
+      return null;
+    }
+
+    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
     const { payload } = await jwtVerify(token, secret);
     return payload as { ownerId: string; clinicId: string };
   } catch (error) {

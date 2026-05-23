@@ -1,24 +1,9 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { withAuth } from "@/lib/api-wrapper";
 
-export async function PATCH(req: Request) {
+export const PATCH = withAuth(async ({ req, tenantPrisma, clinicId }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      select: { clinicId: true }
-    });
-
-    if (!user?.clinicId) {
-      return new NextResponse("Clinic not found", { status: 404 });
-    }
-
     const body = await req.json();
     const { 
       name, 
@@ -30,7 +15,7 @@ export async function PATCH(req: Request) {
     } = body;
 
     const updatedClinic = await prisma.clinic.update({
-      where: { id: user.clinicId },
+      where: { id: clinicId },
       data: {
         name,
         vatNumber,
@@ -46,27 +31,18 @@ export async function PATCH(req: Request) {
     console.error("[CLINIC_PATCH]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
-}
+});
 
-export async function GET() {
+export const GET = withAuth(async ({ tenantPrisma, clinicId }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      include: { clinic: true }
-    });
-
-    if (!user?.clinic) {
+    const clinic = await tenantPrisma.clinic.findFirst({ where: { id: clinicId } });
+    if (!clinic) {
       return new NextResponse("Clinic not found", { status: 404 });
     }
 
-    return NextResponse.json(user.clinic);
+    return NextResponse.json(clinic);
   } catch (error) {
     console.error("[CLINIC_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
-}
+});

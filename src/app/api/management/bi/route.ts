@@ -1,19 +1,12 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { withAuth } from "@/lib/api-wrapper";
 import { startOfMonth, subMonths, endOfMonth } from "date-fns";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export const GET = withAuth(async ({ clinicId }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    
-    const clinicId = (session.user as any).clinicId;
     const now = new Date();
 
     // 1. Faturação Mensal (Últimos 6 meses)
@@ -81,4 +74,4 @@ export async function GET() {
     console.error("[BI_API_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
-}
+});

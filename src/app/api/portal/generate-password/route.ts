@@ -1,23 +1,24 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { withAuth } from "@/lib/api-wrapper";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(req: Request) {
+export const POST = withAuth(async ({ req, session, clinicId }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if ((session.user as any).role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const clinicId = (session.user as any).clinicId;
     const { ownerId, manualPassword } = await req.json();
 
     if (!ownerId) {
       return NextResponse.json({ error: "ownerId obrigatório" }, { status: 400 });
+    }
+
+    if (manualPassword && (typeof manualPassword !== "string" || manualPassword.length < 6)) {
+      return NextResponse.json({ error: "manualPassword deve ter pelo menos 6 caracteres" }, { status: 400 });
     }
 
     const owner = await prisma.owner.findFirst({
@@ -55,4 +56,4 @@ export async function POST(req: Request) {
     console.error("[GENERATE_PASSWORD]", error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
-}
+});

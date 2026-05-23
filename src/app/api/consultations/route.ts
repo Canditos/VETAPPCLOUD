@@ -19,10 +19,8 @@
 
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
 import { z } from "zod";
-import prisma, { getTenantClient } from "@/lib/prisma";
+import { withAuth } from "@/lib/api-wrapper";
 import { JasminService } from "@/lib/jasmin-service";
 import { VendusService } from "@/lib/vendus-service";
 
@@ -52,18 +50,11 @@ const ConsultationSchema = z.object({
   paymentMethod: z.string().optional(),
 });
 
-export async function POST(req: Request) {
+export const POST = withAuth(async ({ req, session, tenantPrisma, clinicId, userId }) => {
   if (process.env.NEXT_PHASE === 'phase-production-build') {
     return NextResponse.json({});
   }
-  
-  const session = await getServerSession(authOptions);
-  if (!session || !(session.user as any).clinicId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
 
-  const clinicId = (session.user as any).clinicId;
-  const tenantPrisma = getTenantClient(clinicId);
   const body = await req.json();
 
   // Validate request body
@@ -89,7 +80,7 @@ export async function POST(req: Request) {
     const consultation = await tenantPrisma.consultation.create({
       data: {
         patientId,
-        veterinarianId: (session.user as any).id,
+        veterinarianId: userId,
         date: new Date(),
         status: "COMPLETED",
         notes: {
@@ -114,7 +105,7 @@ export async function POST(req: Request) {
           heartRate: vitals.heartRate,
           respiratoryRate: vitals.respiratoryRate,
           date: new Date(),
-          veterinarianId: (session.user as any).id,
+          veterinarianId: userId,
         }
       });
     }
@@ -248,4 +239,4 @@ export async function POST(req: Request) {
     console.error("Error creating consultation:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
-}
+});

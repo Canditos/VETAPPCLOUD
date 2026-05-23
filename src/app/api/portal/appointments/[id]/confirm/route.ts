@@ -16,6 +16,7 @@ export async function POST(
   const appointment = await prisma.appointment.findFirst({
     where: { 
       id: appointmentId,
+      clinicId: session.clinicId,
       patient: { ownerId: session.ownerId },
       status: "PENDING_CONFIRMATION"
     }

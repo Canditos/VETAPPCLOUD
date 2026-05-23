@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import fs from "fs";
 import path from "path";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { withAuth } from "@/lib/api-wrapper";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300; // Allow up to 5 mins for large imports
@@ -14,14 +13,12 @@ export const maxDuration = 300; // Allow up to 5 mins for large imports
  * 
  * GET /api/import/csv
  */
-export async function GET() {
+export const GET = withAuth(async ({ clinicId, session }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if ((session.user as any).role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-    
-    const clinicId = (session.user as any).clinicId;
+
     const results = { 
       clients: { imported: 0, skipped: 0, errors: 0 }, 
       animals: { imported: 0, skipped: 0, errors: 0 },
@@ -202,7 +199,7 @@ export async function GET() {
     console.error("[CSV_IMPORT_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
-}
+});
 
 function parseMultiLineCSV(raw: string, expectedColumns: number): string[][] {
   const lines = raw.split(/\r?\n/);

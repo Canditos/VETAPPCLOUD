@@ -61,8 +61,15 @@ Services:
 
 ### 3. Configure Environment
 ```bash
-cp .env.local.example .env.local  # already created
-# Edit .env.local if needed (defaults work for local dev)
+# Create .env.local manually (if missing) and set at least:
+NEXTAUTH_SECRET=replace-with-a-long-random-secret
+DATABASE_URL=postgresql://vetconnect:vetconnect123@localhost:5432/vetconnect
+
+# Optional debug/dev tools (disabled by default)
+ENABLE_DEBUG_SEED=false
+SEED_SECRET=replace-with-seed-secret
+ENABLE_DEV_RUN_TESTS=false
+DEV_TOOLS_SECRET=replace-with-dev-tools-secret
 ```
 
 ### 4. Generate Prisma Client & Run Migrations

@@ -24,9 +24,14 @@ export async function GET() {
     }
 
     const ownerId = payload.ownerId as string;
+    const clinicId = payload.clinicId as string;
 
-    const owner = await prisma.owner.findUnique({
-      where: { id: ownerId },
+    if (!ownerId || !clinicId) {
+      return NextResponse.json({ error: "Sessão inválida" }, { status: 401 });
+    }
+
+    const owner = await prisma.owner.findFirst({
+      where: { id: ownerId, clinicId },
       include: {
         patients: {
           where: { status: "ACTIVE" },

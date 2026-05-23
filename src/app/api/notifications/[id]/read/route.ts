@@ -1,32 +1,21 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { withAuthParams } from "@/lib/api-wrapper";
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const PATCH = withAuthParams(async ({ clinicId }, { id }) => {
   try {
-    const { id } = await params;
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
-
-    await prisma.notification.update({
-      where: {
-        id,
-        clinicId: (session.user as any).clinicId,
-      },
-      data: {
-        isRead: true,
-      },
+    const result = await prisma.notification.updateMany({
+      where: { id, clinicId },
+      data: { isRead: true },
     });
+
+    if (result.count === 0) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[NOTIFICATION_READ_PATCH]", error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
-}
+});

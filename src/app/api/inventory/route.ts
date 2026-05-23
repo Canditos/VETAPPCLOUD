@@ -1,21 +1,11 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import prisma from "@/lib/prisma";
+import { withAuth } from "@/lib/api-wrapper";
 
 // GET /api/inventory - List products
-export async function GET() {
+export const GET = withAuth(async ({ tenantPrisma }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    
-    const clinicId = (session.user as any).clinicId;
-
-    const products = await prisma.product.findMany({
-      where: { clinicId },
+    const products = await tenantPrisma.product.findMany({
       orderBy: { name: "asc" },
     });
 
@@ -24,14 +14,10 @@ export async function GET() {
     console.error("[INVENTORY_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
-}
+});
 
 // POST /api/inventory - Add or Update product stock
-export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const clinicId = (session.user as any).clinicId;
+export const POST = withAuth(async ({ req, tenantPrisma, clinicId }) => {
   const body = await req.json();
 
   const { id, name, price, stockQuantity, barcode, type } = body;
@@ -39,7 +25,7 @@ export async function POST(req: Request) {
   try {
     if (id) {
       // Update stock movement manually
-      const updated = await prisma.product.update({
+      const updated = await tenantPrisma.product.update({
         where: { id },
         data: {
           stockQuantity: {
@@ -48,7 +34,7 @@ export async function POST(req: Request) {
         },
       });
 
-      await prisma.stockMovement.create({
+      await tenantPrisma.stockMovement.create({
         data: {
           productId: id,
           type: type || "IN",
@@ -60,7 +46,7 @@ export async function POST(req: Request) {
       return NextResponse.json(updated);
     } else {
       // Create new product
-      const product = await prisma.product.create({
+      const product = await tenantPrisma.product.create({
         data: {
           clinicId,
           name,
@@ -74,4 +60,4 @@ export async function POST(req: Request) {
   } catch (error) {
     return NextResponse.json({ error: "Inventory update failed" }, { status: 500 });
   }
-}
+});

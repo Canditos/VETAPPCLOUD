@@ -1,17 +1,11 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { withAuth } from "@/lib/api-wrapper";
 
 // GET /api/notifications — list + unread count
-export async function GET(req: Request) {
+export const GET = withAuth(async ({ req, clinicId }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const clinicId = (session.user as any).clinicId;
     const { searchParams } = new URL(req.url);
     const onlyUnread = searchParams.get("unread") === "true";
 
@@ -34,16 +28,11 @@ export async function GET(req: Request) {
     console.error("[NOTIFICATIONS_GET]", error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
-}
+});
 
 // PATCH /api/notifications — mark one or all as read
-export async function PATCH(req: Request) {
+export const PATCH = withAuth(async ({ req, clinicId }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const clinicId = (session.user as any).clinicId;
     const { id, markAllRead } = await req.json();
 
     if (markAllRead) {
@@ -55,10 +44,15 @@ export async function PATCH(req: Request) {
     }
 
     if (id) {
-      await prisma.notification.update({
-        where: { id },
+      const result = await prisma.notification.updateMany({
+        where: { id, clinicId },
         data: { isRead: true },
       });
+
+      if (result.count === 0) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+      }
+
       return NextResponse.json({ success: true });
     }
 
@@ -67,4 +61,4 @@ export async function PATCH(req: Request) {
     console.error("[NOTIFICATIONS_PATCH]", error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
-}
+});
