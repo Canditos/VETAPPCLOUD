@@ -2,29 +2,22 @@
  * weoPet → VetConnect Appointment Importer
  * Zero external HTTP dependencies — uses only Node.js built-ins + Prisma
  *
- * Usage on Pi host:
- *   cd ~/VETAPPCLOUD
- *   npm ci  # install deps once
- *   WEOPET_EMAIL=... WEOPET_PASSWORD=... node scripts/import-weopet.cjs
- *
- * Usage inside container:
- *   docker cp scripts/import-weopet.cjs vet-app:/app/
- *   docker exec -e NODE_PATH=/app/.next/standalone/node_modules \
- *     -e WEOPET_EMAIL=... -e WEOPET_PASSWORD=... \
- *     -e DATABASE_URL="..." \
- *     vet-app node /app/import-weopet.cjs
+ * Usage:
+ *   DATABASE_URL="postgres://..." \
+ *   WEOPET_EMAIL="marco.candido@gmail.com" \
+ *   WEOPET_PASSWORD="canditos" \
+ *   node scripts/import-weopet.cjs
  */
 
 const path = require("path");
 const fs = require("fs");
 
-// Resolve modules from standalone output when running in container
-for (const base of [__dirname, path.join(__dirname, "..")]) {
-  const dir = path.join(base, ".next", "standalone", "node_modules");
-  if (fs.existsSync(dir)) {
-    module.paths.push(dir);
-    break;
+for (const base of [__dirname, path.join(__dirname, ".."), "/app"]) {
+  for (const sub of [".next/standalone/node_modules", "node_modules"]) {
+    const dir = path.join(base, sub);
+    if (fs.existsSync(dir)) { module.paths.push(dir); break; }
   }
+  if (module.paths.length > 1) break;
 }
 
 const https = require("https");
@@ -37,7 +30,6 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
-const CLINIC_ID = "c1-demo-clinic";
 const WEOPET_HOST = "weopet.com";
 
 const EMAIL = process.env.WEOPET_EMAIL;
@@ -48,49 +40,36 @@ if (!EMAIL || !PASSWORD) {
   process.exit(1);
 }
 
-// ─── Minimal HTTP client (no axios) ────────────────────────────────
+// ─── HTTP helpers ────────────────────────────────────────────────
 
-function httpGet(path, cookie) {
+function httpGet(urlPath, cookie) {
   return new Promise((resolve, reject) => {
-    const opts = {
-      hostname: WEOPET_HOST,
-      path,
-      method: "GET",
-      headers: {
-        "User-Agent": "Mozilla/5.0",
-        ...(cookie ? { Cookie: cookie } : {}),
-      },
-    };
-    const req = https.get(opts, (res) => {
+    https.get({
+      hostname: WEOPET_HOST, path: urlPath,
+      headers: { "User-Agent": "Mozilla/5.0", ...(cookie ? { Cookie: cookie } : {}) },
+    }, (res) => {
       let data = "";
-      res.on("data", (chunk) => (data += chunk));
+      res.on("data", (c) => data += c);
       res.on("end", () => resolve({ data, headers: res.headers, status: res.statusCode }));
-    });
-    req.on("error", reject);
-    req.end();
+    }).on("error", reject);
   });
 }
 
-function httpPost(path, body, cookie) {
+function httpPost(urlPath, body, cookie) {
   return new Promise((resolve, reject) => {
     const postData = querystring.stringify(body);
-    const opts = {
-      hostname: WEOPET_HOST,
-      path,
-      method: "POST",
+    const req = https.request({
+      hostname: WEOPET_HOST, path: urlPath, method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
         "Content-Length": Buffer.byteLength(postData),
         "User-Agent": "Mozilla/5.0",
         ...(cookie ? { Cookie: cookie } : {}),
       },
-    };
-    const req = https.request(opts, (res) => {
+    }, (res) => {
       let data = "";
-      res.on("data", (chunk) => (data += chunk));
-      res.on("end", () =>
-        resolve({ data, headers: res.headers, status: res.statusCode })
-      );
+      res.on("data", (c) => data += c);
+      res.on("end", () => resolve({ data, headers: res.headers, status: res.statusCode }));
     });
     req.on("error", reject);
     req.write(postData);
@@ -98,13 +77,13 @@ function httpPost(path, body, cookie) {
   });
 }
 
-// ─── Auth ───────────────────────────────────────────────────────────
+// ─── Auth ────────────────────────────────────────────────────────
 
 let cookieStr = "";
 
 async function login() {
   console.log("Logging in to weoPet...");
-  const res = await httpPost("/admin.php", { email: EMAIL, password: PASSWORD });
+  const res = await httpPost("/admin.php?type=adminform&module=user&func=submitlogin", { email: EMAIL, password: PASSWORD });
   const setCookie = res.headers["set-cookie"];
   if (setCookie) {
     const jar = {};
@@ -116,14 +95,11 @@ async function login() {
     cookieStr = Object.entries(jar).map(([k, v]) => `${k}=${v}`).join("; ");
   }
 
-  const verify = await httpGet("/admin.php?module=animal&func=list", cookieStr);
-  if (/Entrada|Email.*Palavra/i.test(verify.data.substring(0, 5000))) {
-    throw new Error("Login failed - still seeing login form");
-  }
-  console.log("Login OK");
+  if (res.status !== 302) throw new Error("Login failed — status " + res.status);
+  console.log("Login OK (redirect to " + res.headers.location + ")");
 }
 
-// ─── Animal list ────────────────────────────────────────────────────
+// ─── Animal list ─────────────────────────────────────────────────
 
 function extractAnimalLinks(html) {
   const animals = [];
@@ -132,7 +108,7 @@ function extractAnimalLinks(html) {
   while ((m = regex.exec(html)) !== null) {
     const hash = m[1].match(/id=([a-f0-9]+)/);
     const name = m[2].trim();
-    if (hash && name && !animals.find((a) => a.hash === hash[1])) {
+    if (hash && name && !animals.find(a => a.hash === hash[1])) {
       animals.push({ hash: hash[1], name });
     }
   }
@@ -147,7 +123,7 @@ async function fetchAnimalList() {
     const res = await httpGet(`/admin.php?module=animal&func=list&offset=${offset}`, cookieStr);
     const batch = extractAnimalLinks(res.data);
     if (batch.length === 0) break;
-    for (const a of batch) if (!all.find((x) => x.hash === a.hash)) all.push(a);
+    for (const a of batch) if (!all.find(x => x.hash === a.hash)) all.push(a);
     console.log(`   ${all.length} animals...`);
     if (batch.length < 40) break;
     offset += 40;
@@ -156,7 +132,7 @@ async function fetchAnimalList() {
   return all;
 }
 
-// ─── Animal detail → appointments ──────────────────────────────────
+// ─── Animal detail → appointments ───────────────────────────────
 
 function cleanText(str) {
   return str.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
@@ -201,12 +177,24 @@ async function fetchAnimalPage(hash) {
   return parseAnimalPage(res.data);
 }
 
-// ─── Main ───────────────────────────────────────────────────────────
+// ─── Main ────────────────────────────────────────────────────────
 
 async function main() {
   console.log("=".repeat(60));
   console.log("weoPet → VetConnect Appointment Import");
   console.log("=".repeat(60));
+
+  // 0. Resolve clinic and veterinarian from DB
+  console.log("\nLooking up clinic and veterinarian...");
+  const clinic = await prisma.clinic.findFirst();
+  if (!clinic) { console.error("No clinic found in database"); process.exit(1); }
+  const CLINIC_ID = clinic.id;
+  console.log(`   Clinic: ${clinic.name} (${CLINIC_ID})`);
+
+  const vet = await prisma.user.findFirst({ where: { clinicId: CLINIC_ID } });
+  if (!vet) { console.error("No veterinarian found in database"); process.exit(1); }
+  const VET_ID = vet.id;
+  console.log(`   Veterinarian: ${vet.name} (${VET_ID})`);
 
   // 1. Map patients imported via CSV
   console.log("\nMapping VetConnect patients...");
@@ -219,15 +207,15 @@ async function main() {
     const m = p.id.match(/^csv-animal-(\d+)$/);
     if (m) patientMap.set(m[1], p.id);
   }
-  console.log(`   ${patientMap.size} imported patients`);
+  console.log(`   ${patientMap.size} imported patients matched`);
 
   // 2. Login + animal list
   await login();
   const animals = await fetchAnimalList();
 
   if (animals.length === 0) {
-    console.log("No animals found. Open the page manually to check the list URL:");
-    console.log("   https://weopet.com/admin.php?module=animal&func=list");
+    console.log("\nNo animals found. The HTML structure may have changed.");
+    console.log("Open https://weopet.com/admin.php?module=animal&func=list manually to verify.");
     return;
   }
 
@@ -258,7 +246,7 @@ async function main() {
             id: `weopet-${apt.hash}`,
             clinicId: CLINIC_ID,
             patientId: pid,
-            veterinarianId: "",
+            veterinarianId: VET_ID,
             startTime: st,
             endTime: et,
             type: apt.type || null,
@@ -267,7 +255,7 @@ async function main() {
           },
         });
         imported++;
-      } catch { errors++; }
+      } catch (e) { errors++; console.error(`\n   [ERROR] ${page.animalName}: ${e.message}`); }
     }
     total += page.appointments.length;
   }
