@@ -15,8 +15,9 @@ export const multiTenantExtension = (clinicId: string) => {
           // List of models that should be isolated by clinicId
           const tenantModels = [
             'User', 'Patient', 'Owner', 'Consultation', 'Appointment',
-            'Invoice', 'Product', 'StockMovement', 
-            'LabResult', 'ImagingStudy', 'Hospitalization'
+            'Invoice', 'Product', 'StockMovement',
+            'LabResult', 'ImagingStudy', 'Hospitalization',
+            'Prescription'
           ];
 
           if (tenantModels.includes(model)) {

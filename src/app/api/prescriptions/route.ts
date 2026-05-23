@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/api-wrapper";
 
-export const GET = withAuth(async ({ req, tenantPrisma }) => {
+export const GET = withAuth(async ({ req, tenantPrisma, clinicId }) => {
   try {
     const { searchParams } = new URL(req.url);
     const patientId = searchParams.get("patientId");
 
     const prescriptions = await tenantPrisma.prescription.findMany({
       where: { 
+        clinicId,
         ...(patientId ? { patientId } : {})
       },
       include: {
