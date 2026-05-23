@@ -145,6 +145,10 @@ function parseAnimalPage(html) {
   const titleMatch = html.match(/<div class="title"><a>Animal<\/a>\s*<span>([^<]*)<\/span>/);
   const animalName = titleMatch ? titleMatch[1].trim() : "Unknown";
 
+  // Extract owner name: <td class="col_field">Cliente </td> ... >Owner Name</a>
+  const ownerMatch = html.match(/Cliente\s*<\/td>\s*<td[^>]*>\s*<a[^>]*>([^<]*)<\/a>/);
+  const ownerName = ownerMatch ? ownerMatch[1].trim() : "";
+
   const appointments = [];
   const rowRegex = /<tr class="row">(.*?)<\/tr>/gs;
   let rowM;
@@ -169,7 +173,7 @@ function parseAnimalPage(html) {
     });
   }
 
-  return { animalNumber, animalName, appointments };
+  return { animalNumber, animalName, ownerName, appointments };
 }
 
 async function fetchAnimalPage(hash) {
@@ -196,18 +200,21 @@ async function main() {
   const VET_ID = vet.id;
   console.log(`   Veterinarian: ${vet.name} (${VET_ID})`);
 
-  // 1. Map patients imported via CSV
-  console.log("\nMapping VetConnect patients...");
+  // 1. Build patient map by (animalName, ownerName) pair
+  console.log("\nBuilding patient map by name + owner...");
   const patients = await prisma.patient.findMany({
     where: { clinicId: CLINIC_ID },
-    select: { id: true },
+    include: { owner: { select: { name: true } } },
   });
   const patientMap = new Map();
+  let matched = 0;
   for (const p of patients) {
-    const m = p.id.match(/^csv-animal-(\d+)$/);
-    if (m) patientMap.set(m[1], p.id);
+    const key = (p.name + "|" + (p.owner?.name || "")).toLowerCase().replace(/\s+/g, " ").trim();
+    if (!patientMap.has(key)) patientMap.set(key, p.id);
+    else matched--; // duplicate keys, track separately
+    matched++;
   }
-  console.log(`   ${patientMap.size} imported patients matched`);
+  console.log(`   ${patientMap.size} unique name|owner pairs (${patients.length} total patients)`);
 
   // 2. Login + animal list
   await login();
@@ -227,10 +234,14 @@ async function main() {
 
     const page = await fetchAnimalPage(animal.hash);
 
-    if (!page.animalNumber) { skipped++; continue; }
+    const key = (page.animalName + "|" + page.ownerName).toLowerCase().replace(/\s+/g, " ").trim();
+    const pid = patientMap.get(key);
 
-    const pid = patientMap.get(page.animalNumber);
-    if (!pid) { skipped += page.appointments.length || 1; continue; }
+    if (!pid) {
+      if (page.appointments.length === 0 && i < 3) console.log(`\n   [MISS] "${page.animalName}" (owner: "${page.ownerName}") → no match in VetConnect`);
+      skipped += page.appointments.length || 1;
+      continue;
+    }
 
     for (const apt of page.appointments) {
       const st = new Date(apt.dateStr);
