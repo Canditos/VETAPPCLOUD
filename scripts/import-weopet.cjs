@@ -118,15 +118,15 @@ function extractAnimalLinks(html) {
 async function fetchAnimalList() {
   console.log("Fetching animal list...");
   const all = [];
-  let offset = 0;
+  let page = 1;
   while (true) {
-    const res = await httpGet(`/admin.php?module=animal&func=list&offset=${offset}`, cookieStr);
+    const res = await httpGet(`/admin.php?module=animal&func=list&page=${page}`, cookieStr);
     const batch = extractAnimalLinks(res.data);
     if (batch.length === 0) break;
     for (const a of batch) if (!all.find(x => x.hash === a.hash)) all.push(a);
-    console.log(`   ${all.length} animals...`);
-    if (batch.length < 40) break;
-    offset += 40;
+    console.log(`   ${all.length} animals (page ${page})...`);
+    if (batch.length < 20) break;
+    page++;
   }
   console.log(`Total: ${all.length} animals`);
   return all;
