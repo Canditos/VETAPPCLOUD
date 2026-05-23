@@ -103,7 +103,7 @@ async function login() {
 
 function extractAnimalLinks(html) {
   const animals = [];
-  const regex = /<a\s[^>]*href="([^"]*module=animal&amp;func=view[^"]*)">([^<]*)<\/a>/gi;
+  const regex = /<a\s[^>]*href="([^"]*module=animal[&]func=view[^"]*)">([^<]*)<\/a>/gi;
   let m;
   while ((m = regex.exec(html)) !== null) {
     const hash = m[1].match(/id=([a-f0-9]+)/);
