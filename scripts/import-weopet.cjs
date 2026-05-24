@@ -145,9 +145,16 @@ function parseAnimalPage(html) {
   const titleMatch = html.match(/<div class="title"><a>Animal<\/a>\s*<span>([^<]*)<\/span>/);
   const animalName = titleMatch ? titleMatch[1].trim() : "Unknown";
 
-  // Extract owner name: <td class="col_field">Cliente </td> ... >Owner Name</a>
   const ownerMatch = html.match(/Cliente\s*<\/td>\s*<td[^>]*>\s*<a[^>]*>([^<]*)<\/a>/);
   const ownerName = ownerMatch ? ownerMatch[1].trim() : "";
+
+  // Extract total count from pagination: "1-20 / 100" or "Página 1 de 5"
+  let totalCount = 0;
+  const pagMatch = html.match(/(\d+)\s*consultas?\s*(registadas|encontradas)?/i)
+    || html.match(/total[:\s]*(\d+)/i)
+    || html.match(/(\d+)\s*registos/i)
+    || html.match(/de\s+(\d+)\s*(resultados|registos|consultas)/i);
+  if (pagMatch) totalCount = parseInt(pagMatch[1]);
 
   const appointments = [];
   const rowRegex = /<tr class="row">(.*?)<\/tr>/gs;
@@ -173,12 +180,37 @@ function parseAnimalPage(html) {
     });
   }
 
-  return { animalNumber, animalName, ownerName, appointments };
+  return { animalNumber, animalName, ownerName, appointments, totalCount };
 }
 
-async function fetchAnimalPage(hash) {
-  const res = await httpGet(`/admin.php?module=animal&func=view&id=${hash}`, cookieStr);
+async function fetchAnimalPage(hash, page = 1) {
+  const res = await httpGet(`/admin.php?module=animal&func=view&id=${hash}&page=${page}`, cookieStr);
   return parseAnimalPage(res.data);
+}
+
+async function fetchAllAnimalAppointments(hash) {
+  const firstPage = await fetchAnimalPage(hash, 1);
+  const allApts = [...firstPage.appointments];
+  const perPage = firstPage.appointments.length || 20;
+  const total = firstPage.totalCount || 0;
+
+  // If we know the total, fetch remaining pages
+  if (total > perPage) {
+    const pages = Math.ceil(total / perPage);
+    for (let p = 2; p <= pages; p++) {
+      const page = await fetchAnimalPage(hash, p);
+      allApts.push(...page.appointments);
+    }
+  } else {
+    // If no total known, paginate until empty page
+    for (let p = 2; ; p++) {
+      const page = await fetchAnimalPage(hash, p);
+      if (page.appointments.length === 0) break;
+      allApts.push(...page.appointments);
+    }
+  }
+
+  return { ...firstPage, appointments: allApts };
 }
 
 // ─── Main ────────────────────────────────────────────────────────
@@ -235,14 +267,14 @@ async function main() {
   }
   console.log(`   ${ownerPatients.size} unique owner names for fallback`);
 
-  // 4. Import appointments
-  let imported = 0, skipped = 0, errors = 0, total = 0;
+  // 4. Import all appointments (paginated)
+  let imported = 0, skipped = 0, errors = 0, total = 0, animalPages = 0;
   const errorDetails = [], skipSamples = [];
 
   for (const [i, animal] of animals.entries()) {
-    process.stdout.write(`\r   [${i + 1}/${animals.length}] ${animal.name.slice(0, 35).padEnd(36)}`);
-
-    const page = await fetchAnimalPage(animal.hash);
+    const page = await fetchAllAnimalAppointments(animal.hash);
+    const aptCount = page.appointments.length;
+    process.stdout.write(`\r   [${i + 1}/${animals.length}] ${animal.name.slice(0, 25).padEnd(26)} ${String(aptCount).padStart(4)} consultas`);
 
     // Strategy 1: exact name|owner match
     const key = (page.animalName + "|" + page.ownerName).toLowerCase().replace(/\s+/g, " ").trim();
@@ -302,11 +334,12 @@ async function main() {
 
   console.log("\n\n" + "=".repeat(60));
   console.log("Done!");
-  console.log(`   Animals:  ${animals.length}`);
-  console.log(`   Found:    ${total} appointments`);
-  console.log(`   Imported: ${imported}`);
-  console.log(`   Skipped:  ${skipped}`);
-  console.log(`   Errors:   ${errors}`);
+  console.log(`   Animals:     ${animals.length}`);
+  console.log(`   Found:       ${total} appointments`);
+  console.log(`   Imported:    ${imported}`);
+  console.log(`   Skipped:     ${skipped}`);
+  console.log(`   Errors:      ${errors}`);
+  console.log(`   Target (weoPet max ID): 61480`);
 
   if (errorDetails.length > 0) {
     console.log("\n--- Error details (first " + errorDetails.length + ") ---");
