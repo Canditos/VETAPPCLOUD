@@ -13,19 +13,25 @@ import {
   WifiOff,
   Settings2,
   Lock,
-  Database,
   History,
   CheckCircle2,
   AlertTriangle,
-  Loader2
+  Loader2,
+  Plus,
+  Pencil,
+  Trash2,
+  MessageSquare,
+  BarChart3
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -175,10 +181,15 @@ export default function NotificationSettings() {
           <h1 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tighter">Notificações & Gateway</h1>
           <p className="text-slate-500 dark:text-slate-400 font-bold mt-2">Configure o motor de comunicação e integração SMS.</p>
         </div>
-        <Button className="rounded-2xl gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase text-[10px] tracking-widest px-6 shadow-xl shadow-blue-500/20"
-          onClick={handleSave} disabled={saveMutation.isPending}>
-           {saveMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} strokeWidth={3} />} Guardar Configurações
-        </Button>
+        <div className="flex items-center gap-3">
+          <a href="/dashboard/sms" className="text-[10px] font-bold uppercase tracking-widest text-blue-600 hover:text-blue-700 dark:text-blue-400 flex items-center gap-1.5">
+            <BarChart3 size={14} /> Dashboard SMS
+          </a>
+          <Button className="rounded-2xl gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase text-[10px] tracking-widest px-6 shadow-xl shadow-blue-500/20"
+            onClick={handleSave} disabled={saveMutation.isPending}>
+             {saveMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} strokeWidth={3} />} Guardar Configurações
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -327,18 +338,143 @@ export default function NotificationSettings() {
             </div>
          </TabsContent>
         
-        <TabsContent value="templates">
-           <div className="text-center py-20 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-200 dark:border-white/5">
-              <Database size={48} className="mx-auto mb-4 text-slate-300" />
-              <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-widest">Gestão de Templates</h4>
-              <p className="text-sm text-slate-500 font-medium mt-2">Crie e edite as mensagens que os seus clientes recebem.</p>
-           </div>
-        </TabsContent>
+         <TabsContent value="templates">
+            <TemplateManager />
+         </TabsContent>
 
         <TabsContent value="logs">
           <SmsLogView />
         </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+function TemplateManager() {
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<any>(null);
+  const [name, setName] = useState("");
+  const [key, setKey] = useState("");
+  const [message, setMessage] = useState("");
+
+  const fetchTemplates = async () => {
+    setLoading(true);
+    try {
+      const r = await fetch("/api/settings/templates");
+      if (r.ok) setTemplates(await r.json());
+    } catch {}
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchTemplates(); }, []);
+
+  const openNew = () => {
+    setEditing(null); setName(""); setKey(""); setMessage("");
+    setDialogOpen(true);
+  };
+
+  const openEdit = (t: any) => {
+    setEditing(t); setName(t.name); setKey(t.key); setMessage(t.message);
+    setDialogOpen(true);
+  };
+
+  const save = async () => {
+    if (!name || !message) { toast.error("Nome e mensagem são obrigatórios"); return; }
+    try {
+      const r = await fetch("/api/settings/templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: editing?.id, key, name, message }),
+      });
+      if (!r.ok) throw new Error();
+      toast.success(editing ? "Template atualizado!" : "Template criado!");
+      setDialogOpen(false);
+      fetchTemplates();
+    } catch { toast.error("Erro ao guardar template"); }
+  };
+
+  const remove = async (id: string) => {
+    try {
+      const r = await fetch(`/api/settings/templates?id=${id}`, { method: "DELETE" });
+      if (!r.ok) throw new Error();
+      toast.success("Template removido");
+      fetchTemplates();
+    } catch { toast.error("Erro ao remover"); }
+  };
+
+  if (loading) return <div className="text-center py-20 text-slate-400 text-sm"><Loader2 size={24} className="mx-auto animate-spin mb-2" />A carregar...</div>;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">{templates.length} templates</p>
+        <Button onClick={openNew} className="rounded-xl gap-2 h-9 text-xs font-bold bg-blue-600 hover:bg-blue-700">
+          <Plus size={14} /> Novo Template
+        </Button>
+      </div>
+
+      {templates.length === 0 ? (
+        <div className="text-center py-20 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-200 dark:border-white/5">
+          <MessageSquare size={48} className="mx-auto mb-4 text-slate-300" />
+          <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-widest">Nenhum template</h4>
+          <p className="text-sm text-slate-500 font-medium mt-2">Crie templates para usar nos envios automáticos.</p>
+          <Button onClick={openNew} variant="outline" className="mt-4 rounded-xl gap-2">
+            <Plus size={14} /> Criar primeiro template
+          </Button>
+        </div>
+      ) : (
+        <div className="grid gap-3">
+          {templates.map((t: any) => (
+            <div key={t.id} className="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <Badge className="bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 text-[9px] font-bold uppercase border-none">{t.key || "geral"}</Badge>
+                  <p className="font-bold text-slate-900 dark:text-white text-sm truncate">{t.name}</p>
+                </div>
+                <p className="text-xs text-slate-500 leading-relaxed line-clamp-2 whitespace-pre-wrap">{t.message}</p>
+              </div>
+              <div className="flex gap-1 shrink-0">
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-xl" onClick={() => openEdit(t)}><Pencil size={14} /></Button>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-xl text-rose-500 hover:text-rose-600 hover:bg-rose-50" onClick={() => remove(t.id)}><Trash2 size={14} /></Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-[500px] rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold">{editing ? "Editar" : "Novo"} Template</DialogTitle>
+            <DialogDescription>Define a mensagem padrão para envios automáticos.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Identificador técnico (key)</Label>
+              <Input value={key} onChange={e => setKey(e.target.value)} placeholder="ex: reminder-24h, vaccine-alert, marketing" className="h-10 rounded-xl bg-slate-50 border-none font-mono text-xs" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Nome do Template</Label>
+              <Input value={name} onChange={e => setName(e.target.value)} placeholder="ex: Lembrete 24h" className="h-10 rounded-xl bg-slate-50 border-none font-bold" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Mensagem</Label>
+              <textarea
+                value={message} onChange={e => setMessage(e.target.value)}
+                placeholder="Olá {{nome}}, lembre-se da sua consulta em {{data}}."
+                className="w-full min-h-[120px] rounded-xl bg-slate-50 border-0 p-4 text-sm font-medium resize-y focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+              />
+              <p className="text-[9px] text-slate-400 font-medium">Use {"{{nome}}"}, {"{{data}}"}, {"{{hora}}"}, {"{{animal}}"} como variáveis</p>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <DialogClose asChild><Button variant="outline" className="rounded-xl">Cancelar</Button></DialogClose>
+            <Button onClick={save} className="rounded-xl bg-blue-600 hover:bg-blue-700">{editing ? "Atualizar" : "Criar"} Template</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
