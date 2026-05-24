@@ -40,18 +40,24 @@ if (!EMAIL || !PASSWORD) {
   process.exit(1);
 }
 
-// ─── HTTP helpers ────────────────────────────────────────────────
+const HTTP_TIMEOUT = 15000; // 15s per request
+const CONCURRENCY = 3;      // 3 animals at a time
+const CHECKPOINT_FILE = "weopet-checkpoint.json";
+
+// ─── HTTP helpers with timeout ────────────────────────────────────
 
 function httpGet(urlPath, cookie) {
   return new Promise((resolve, reject) => {
-    https.get({
+    const req = https.get({
       hostname: WEOPET_HOST, path: urlPath,
       headers: { "User-Agent": "Mozilla/5.0", ...(cookie ? { Cookie: cookie } : {}) },
     }, (res) => {
       let data = "";
       res.on("data", (c) => data += c);
       res.on("end", () => resolve({ data, headers: res.headers, status: res.statusCode }));
-    }).on("error", reject);
+    });
+    req.on("error", reject);
+    req.setTimeout(HTTP_TIMEOUT, () => { req.destroy(); reject(new Error("Timeout: " + urlPath)); });
   });
 }
 
@@ -72,6 +78,7 @@ function httpPost(urlPath, body, cookie) {
       res.on("end", () => resolve({ data, headers: res.headers, status: res.statusCode }));
     });
     req.on("error", reject);
+    req.setTimeout(HTTP_TIMEOUT, () => { req.destroy(); reject(new Error("Timeout: " + urlPath)); });
     req.write(postData);
     req.end();
   });
@@ -96,7 +103,7 @@ async function login() {
   }
 
   if (res.status !== 302) throw new Error("Login failed — status " + res.status);
-  console.log("Login OK (redirect to " + res.headers.location + ")");
+  console.log("Login OK");
 }
 
 // ─── Animal list ─────────────────────────────────────────────────
@@ -148,7 +155,6 @@ function parseAnimalPage(html) {
   const ownerMatch = html.match(/Cliente\s*<\/td>\s*<td[^>]*>\s*<a[^>]*>([^<]*)<\/a>/);
   const ownerName = ownerMatch ? ownerMatch[1].trim() : "";
 
-  // Extract total count from pagination: "1-20 / 100" or "Página 1 de 5"
   let totalCount = 0;
   const pagMatch = html.match(/(\d+)\s*consultas?\s*(registadas|encontradas)?/i)
     || html.match(/total[:\s]*(\d+)/i)
@@ -194,16 +200,15 @@ async function fetchAllAnimalAppointments(hash) {
   const perPage = firstPage.appointments.length || 20;
   const total = firstPage.totalCount || 0;
 
-  // If we know the total, fetch remaining pages
   if (total > perPage) {
     const pages = Math.ceil(total / perPage);
     for (let p = 2; p <= pages; p++) {
       const page = await fetchAnimalPage(hash, p);
       allApts.push(...page.appointments);
     }
-  } else {
-    // If no total known, paginate until empty page
-    for (let p = 2; ; p++) {
+  } else if (total === 0 && allApts.length > 0) {
+    // Unknown total — paginate with safety limit
+    for (let p = 2; p <= 50; p++) {
       const page = await fetchAnimalPage(hash, p);
       if (page.appointments.length === 0) break;
       allApts.push(...page.appointments);
@@ -213,6 +218,23 @@ async function fetchAllAnimalAppointments(hash) {
   return { ...firstPage, appointments: allApts };
 }
 
+// ─── Checkpoint helpers ──────────────────────────────────────────
+
+function loadCheckpoint() {
+  try {
+    if (fs.existsSync(CHECKPOINT_FILE)) {
+      const data = JSON.parse(fs.readFileSync(CHECKPOINT_FILE, "utf8"));
+      console.log(`   Checkpoint found: ${data.done} / ${data.total} animals processed`);
+      return data;
+    }
+  } catch {}
+  return { done: 0, imported: 0, skipped: 0, errors: 0, total: 0, processed: [] };
+}
+
+function saveCheckpoint(state) {
+  try { fs.writeFileSync(CHECKPOINT_FILE, JSON.stringify(state)); } catch {}
+}
+
 // ─── Main ────────────────────────────────────────────────────────
 
 async function main() {
@@ -220,31 +242,28 @@ async function main() {
   console.log("weoPet → VetConnect Appointment Import");
   console.log("=".repeat(60));
 
-  // 0. Resolve clinic and veterinarian from DB
+  // 0. Resolve clinic and veterinarian
   console.log("\nLooking up clinic and veterinarian...");
   const clinic = await prisma.clinic.findFirst();
-  if (!clinic) { console.error("No clinic found in database"); process.exit(1); }
+  if (!clinic) { console.error("No clinic found"); process.exit(1); }
   const CLINIC_ID = clinic.id;
   console.log(`   Clinic: ${clinic.name} (${CLINIC_ID})`);
 
   const vet = await prisma.user.findFirst({ where: { clinicId: CLINIC_ID } });
-  if (!vet) { console.error("No veterinarian found in database"); process.exit(1); }
+  if (!vet) { console.error("No veterinarian found"); process.exit(1); }
   const VET_ID = vet.id;
   console.log(`   Veterinarian: ${vet.name} (${VET_ID})`);
 
-  // 1. Build patient map by (animalName, ownerName) pair
+  // 1. Build patient map
   console.log("\nBuilding patient map by name + owner...");
   const patients = await prisma.patient.findMany({
     where: { clinicId: CLINIC_ID },
     include: { owner: { select: { name: true } } },
   });
   const patientMap = new Map();
-  let matched = 0;
   for (const p of patients) {
     const key = (p.name + "|" + (p.owner?.name || "")).toLowerCase().replace(/\s+/g, " ").trim();
     if (!patientMap.has(key)) patientMap.set(key, p.id);
-    else matched--; // duplicate keys, track separately
-    matched++;
   }
   console.log(`   ${patientMap.size} unique name|owner pairs (${patients.length} total patients)`);
 
@@ -253,12 +272,11 @@ async function main() {
   const animals = await fetchAnimalList();
 
   if (animals.length === 0) {
-    console.log("\nNo animals found. The HTML structure may have changed.");
-    console.log("Open https://weopet.com/admin.php?module=animal&func=list manually to verify.");
+    console.log("\nNo animals found.");
     return;
   }
 
-  // 3. Build owner→patients map for fallback matching
+  // 3. Owner fallback map
   const ownerPatients = new Map();
   for (const p of patients) {
     const okey = (p.owner?.name || "").toLowerCase().replace(/\s+/g, " ").trim();
@@ -267,14 +285,29 @@ async function main() {
   }
   console.log(`   ${ownerPatients.size} unique owner names for fallback`);
 
-  // 4. Import all appointments (paginated)
-  let imported = 0, skipped = 0, errors = 0, total = 0, animalPages = 0;
-  const errorDetails = [], skipSamples = [];
+  // 4. Load checkpoint
+  const cp = loadCheckpoint();
+  const processed = new Set(cp.processed || []);
+  const remaining = animals.filter(a => !processed.has(a.hash));
+  console.log(`   ${remaining.length} animals remaining (${animals.length - remaining.length} already done)\n`);
 
-  for (const [i, animal] of animals.entries()) {
-    const page = await fetchAllAnimalAppointments(animal.hash);
+  // 5. Process animals with concurrency
+  let imported = cp.imported || 0;
+  let skipped = cp.skipped || 0;
+  let errors = cp.errors || 0;
+  let total = cp.total || 0;
+  let done = cp.done || 0;
+  const errorDetails = [], skipSamples = [];
+  const startTime = Date.now();
+
+  async function processAnimal(animal) {
+    let page;
+    try {
+      page = await fetchAllAnimalAppointments(animal.hash);
+    } catch (e) {
+      return { error: e.message, animal: animal.name };
+    }
     const aptCount = page.appointments.length;
-    process.stdout.write(`\r   [${i + 1}/${animals.length}] ${animal.name.slice(0, 25).padEnd(26)} ${String(aptCount).padStart(4)} consultas`);
 
     // Strategy 1: exact name|owner match
     const key = (page.animalName + "|" + page.ownerName).toLowerCase().replace(/\s+/g, " ").trim();
@@ -292,15 +325,14 @@ async function main() {
     }
 
     if (!pid) {
-      skipped += page.appointments.length || 1;
-      if (skipSamples.length < 10) skipSamples.push({ animal: page.animalName, owner: page.ownerName });
-      continue;
+      return { skipped: aptCount || 1, animal: page.animalName, owner: page.ownerName };
     }
 
+    let localImported = 0, localErrors = 0, localTotal = 0;
     for (const apt of page.appointments) {
       const st = new Date(apt.dateStr);
       if (isNaN(st.getTime())) {
-        errors++;
+        localErrors++;
         if (errorDetails.length < 10) errorDetails.push({ animal: page.animalName, dateStr: apt.dateStr });
         continue;
       }
@@ -323,15 +355,57 @@ async function main() {
             status: "COMPLETED",
           },
         });
-        imported++;
+        localImported++;
       } catch (e) {
-        errors++;
+        localErrors++;
         if (errorDetails.length < 10) errorDetails.push({ animal: page.animalName, error: e.message });
       }
+      localTotal++;
     }
-    total += page.appointments.length;
+
+    return { imported: localImported, skipped: 0, errors: localErrors, total: localTotal, animal: page.animalName };
   }
 
+  // Process in batches
+  for (let i = 0; i < remaining.length; i += CONCURRENCY) {
+    const batch = remaining.slice(i, i + CONCURRENCY);
+    const results = await Promise.all(batch.map(animal => processAnimal(animal)));
+
+    for (const r of results) {
+      done++;
+      if (r.error) {
+        console.log(`\n  [${done}/${animals.length}] ${r.animal.slice(0, 25).padEnd(26)} ERRO: ${r.error}`);
+        errors++;
+        if (errorDetails.length < 10) errorDetails.push({ animal: r.animal, error: r.error });
+        // Don't mark as processed on error so it retries
+        continue;
+      }
+      if (r.skipped) {
+        skipped += r.skipped;
+        if (skipSamples.length < 10) skipSamples.push({ animal: r.animal, owner: r.owner });
+      } else {
+        imported += r.imported || 0;
+        errors += r.errors || 0;
+        total += r.total || 0;
+      }
+      processed.add(batch[results.indexOf(r)].hash);
+    }
+
+    // Progress line
+    const elapsed = Math.round((Date.now() - startTime) / 1000);
+    const rate = done > 0 ? Math.round(done / elapsed) : 0;
+    process.stdout.write(`\r   [${done}/${animals.length}] ${imported} imported / ${skipped} skipped / ${errors} errors | ${elapsed}s @ ${rate}/s`);
+
+    // Save checkpoint every 10 animals
+    if (done % 10 === 0) {
+      saveCheckpoint({ done, imported, skipped, errors, total, processed: [...processed] });
+    }
+  }
+
+  // Final checkpoint
+  saveCheckpoint({ done, imported, skipped, errors, total, processed: [...processed] });
+
+  const totalElapsed = Math.round((Date.now() - startTime) / 1000);
   console.log("\n\n" + "=".repeat(60));
   console.log("Done!");
   console.log(`   Animals:     ${animals.length}`);
@@ -339,19 +413,20 @@ async function main() {
   console.log(`   Imported:    ${imported}`);
   console.log(`   Skipped:     ${skipped}`);
   console.log(`   Errors:      ${errors}`);
-  console.log(`   Target (weoPet max ID): 61480`);
+  console.log(`   Time:        ${Math.floor(totalElapsed / 60)}m ${totalElapsed % 60}s`);
+  console.log(`   Target:      61480`);
 
   if (errorDetails.length > 0) {
-    console.log("\n--- Error details (first " + errorDetails.length + ") ---");
+    console.log("\n--- Errors (first " + errorDetails.length + ") ---");
     errorDetails.forEach(e => console.log("   " + JSON.stringify(e)));
   }
 
   if (skipSamples.length > 0) {
-    console.log("\n--- Skipped samples (first " + skipSamples.length + ") ---");
+    console.log("\n--- Skipped (first " + skipSamples.length + ") ---");
     skipSamples.forEach(s => console.log('   "' + s.animal + '" | owner: "' + s.owner + '"'));
   }
 
-  try { fs.writeFileSync("weopet-import-log.json", JSON.stringify({ total, imported, skipped, errors, errorDetails, skipSamples })); } catch {}
+  try { fs.writeFileSync("weopet-import-log.json", JSON.stringify({ total, imported, skipped, errors, errorDetails, skipSamples, elapsed: totalElapsed })); } catch {}
 }
 
 main()
