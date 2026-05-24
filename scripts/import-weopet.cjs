@@ -226,26 +226,52 @@ async function main() {
     return;
   }
 
-  // 3. Import appointments
+  // 3. Build owner→patients map for fallback matching
+  const ownerPatients = new Map();
+  for (const p of patients) {
+    const okey = (p.owner?.name || "").toLowerCase().replace(/\s+/g, " ").trim();
+    if (!ownerPatients.has(okey)) ownerPatients.set(okey, []);
+    ownerPatients.get(okey).push(p);
+  }
+  console.log(`   ${ownerPatients.size} unique owner names for fallback`);
+
+  // 4. Import appointments
   let imported = 0, skipped = 0, errors = 0, total = 0;
+  const errorDetails = [], skipSamples = [];
 
   for (const [i, animal] of animals.entries()) {
     process.stdout.write(`\r   [${i + 1}/${animals.length}] ${animal.name.slice(0, 35).padEnd(36)}`);
 
     const page = await fetchAnimalPage(animal.hash);
 
+    // Strategy 1: exact name|owner match
     const key = (page.animalName + "|" + page.ownerName).toLowerCase().replace(/\s+/g, " ").trim();
-    const pid = patientMap.get(key);
+    let pid = patientMap.get(key);
+
+    // Strategy 2: owner match → filter by name
+    if (!pid && page.ownerName) {
+      const okey = page.ownerName.toLowerCase().replace(/\s+/g, " ").trim();
+      const ownerPets = ownerPatients.get(okey);
+      if (ownerPets) {
+        const pname = page.animalName.toLowerCase().replace(/\s+/g, " ").trim();
+        const match = ownerPets.find(p => p.name.toLowerCase().replace(/\s+/g, " ").trim() === pname);
+        if (match) pid = match.id;
+      }
+    }
 
     if (!pid) {
-      if (page.appointments.length === 0 && i < 3) console.log(`\n   [MISS] "${page.animalName}" (owner: "${page.ownerName}") → no match in VetConnect`);
       skipped += page.appointments.length || 1;
+      if (skipSamples.length < 10) skipSamples.push({ animal: page.animalName, owner: page.ownerName });
       continue;
     }
 
     for (const apt of page.appointments) {
       const st = new Date(apt.dateStr);
-      if (isNaN(st.getTime())) { errors++; continue; }
+      if (isNaN(st.getTime())) {
+        errors++;
+        if (errorDetails.length < 10) errorDetails.push({ animal: page.animalName, dateStr: apt.dateStr });
+        continue;
+      }
       const et = new Date(st);
       et.setMinutes(et.getMinutes() + 30);
 
@@ -266,7 +292,10 @@ async function main() {
           },
         });
         imported++;
-      } catch (e) { errors++; console.error(`\n   [ERROR] ${page.animalName}: ${e.message}`); }
+      } catch (e) {
+        errors++;
+        if (errorDetails.length < 10) errorDetails.push({ animal: page.animalName, error: e.message });
+      }
     }
     total += page.appointments.length;
   }
@@ -279,7 +308,17 @@ async function main() {
   console.log(`   Skipped:  ${skipped}`);
   console.log(`   Errors:   ${errors}`);
 
-  try { fs.writeFileSync("weopet-import-log.json", JSON.stringify({ total, imported, skipped, errors })); } catch {}
+  if (errorDetails.length > 0) {
+    console.log("\n--- Error details (first " + errorDetails.length + ") ---");
+    errorDetails.forEach(e => console.log("   " + JSON.stringify(e)));
+  }
+
+  if (skipSamples.length > 0) {
+    console.log("\n--- Skipped samples (first " + skipSamples.length + ") ---");
+    skipSamples.forEach(s => console.log('   "' + s.animal + '" | owner: "' + s.owner + '"'));
+  }
+
+  try { fs.writeFileSync("weopet-import-log.json", JSON.stringify({ total, imported, skipped, errors, errorDetails, skipSamples })); } catch {}
 }
 
 main()
