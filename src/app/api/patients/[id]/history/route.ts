@@ -9,7 +9,7 @@ export const GET = withAuthParams(async ({ clinicId, tenantPrisma }, { id }) => 
       select: { ownerId: true }
     });
 
-    const [consultations, labResults, imagingStudies, vaccinations, dewormings, prescriptions, vitals, messages, payments, appointments] = await Promise.all([
+    const [consultations, labResults, imagingStudies, vaccinations, dewormings, prescriptions, vitals, payments, appointments] = await Promise.all([
       tenantPrisma.consultation.findMany({
         where: { patientId: id },
         include: {
@@ -43,11 +43,6 @@ export const GET = withAuthParams(async ({ clinicId, tenantPrisma }, { id }) => 
       tenantPrisma.vitalSign.findMany({
         where: { patientId: id },
         orderBy: { recordedAt: "desc" },
-      }),
-      // Puxar mensagens relacionadas ao tutor deste animal
-      tenantPrisma.portalMessage.findMany({
-        where: { ownerId: patient?.ownerId, clinicId },
-        orderBy: { createdAt: "desc" },
       }),
       // Puxar pagamentos (pelo dono, não pelo paciente — Payment não tem patientId)
       patient?.ownerId ? tenantPrisma.payment.findMany({
@@ -123,15 +118,6 @@ export const GET = withAuthParams(async ({ clinicId, tenantPrisma }, { id }) => 
         subtitle: `${v.weight ? v.weight + "kg" : ""} ${v.temperature ? v.temperature + "ºC" : ""}`,
         status: "COMPLETED",
         data: v
-      })),
-      ...messages.map((m: any) => ({
-        type: "MESSAGE",
-        id: m.id,
-        date: m.createdAt,
-        title: m.senderType === "TUTOR" ? "Mensagem do Tutor" : "Mensagem da Clínica",
-        subtitle: m.content.substring(0, 50) + (m.content.length > 50 ? "..." : ""),
-        status: "READ",
-        data: m
       })),
       ...payments.map((p: any) => ({
         type: "PAYMENT",
