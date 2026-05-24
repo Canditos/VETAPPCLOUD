@@ -20,11 +20,10 @@ export const GET = withAuth(async ({ tenantPrisma }) => {
 export const POST = withAuth(async ({ req, tenantPrisma, clinicId }) => {
   const body = await req.json();
 
-  const { id, name, price, stockQuantity, barcode, type } = body;
+  const { id, name, price, vatRate, stockQuantity, barcode, batchNumber, expiryDate, category, type } = body;
 
   try {
     if (id) {
-      // Update stock movement manually
       const updated = await tenantPrisma.product.update({
         where: { id },
         data: {
@@ -33,26 +32,20 @@ export const POST = withAuth(async ({ req, tenantPrisma, clinicId }) => {
           },
         },
       });
-
       await tenantPrisma.stockMovement.create({
-        data: {
-          productId: id,
-          type: type || "IN",
-          quantity: stockQuantity,
-          source: "manual",
-        },
+        data: { productId: id, type: type || "IN", quantity: stockQuantity, source: "manual" },
       });
-
       return NextResponse.json(updated);
     } else {
-      // Create new product
       const product = await tenantPrisma.product.create({
         data: {
-          clinicId,
-          name,
-          price,
-          stockQuantity,
-          barcode,
+          clinicId, name, price: parseFloat(price) || 0,
+          vatRate: vatRate ?? 23,
+          stockQuantity: parseInt(stockQuantity) || 0,
+          barcode: barcode || null,
+          batchNumber: batchNumber || null,
+          expiryDate: expiryDate ? new Date(expiryDate) : null,
+          category: category || null,
         },
       });
       return NextResponse.json(product);
