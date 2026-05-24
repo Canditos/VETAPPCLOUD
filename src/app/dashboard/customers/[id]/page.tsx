@@ -23,6 +23,7 @@ import {
   Sparkles,
   Smartphone,
   ShieldCheck,
+  Shield,
   ArrowRight,
   Calendar,
   Edit3,
@@ -32,7 +33,8 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Layers
+  Layers,
+  Send
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -63,6 +65,28 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
   const [manualPassword, setManualPassword] = useState("");
   const [generatedPassword, setGeneratedPassword] = useState("");
   const [isGeneratingPass, setIsGeneratingPass] = useState(false);
+  const [consentLink, setConsentLink] = useState<string | null>(null);
+
+  const sendConsentInvite = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/privacy/send-invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ownerId: id }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Erro ao enviar convite");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      if (data.link) setConsentLink(data.link);
+      toast.success(data.message || "Convite enviado com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ["customer-hub", id] });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
 
   const { data: customer, isLoading } = useQuery({
     queryKey: ["customer-hub", id],
@@ -188,6 +212,15 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
             <div className="flex items-center gap-3">
               <h1 className="text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">{customer.name}</h1>
               <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-none font-black text-[10px] uppercase">Cliente Ativo</Badge>
+              {customer.privacyConsents?.length > 0 ? (
+                <Badge variant="outline" className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border-none font-black text-[10px] uppercase flex items-center gap-1">
+                  <ShieldCheck size={10} /> RGPD ✓
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 border-none font-black text-[10px] uppercase flex items-center gap-1">
+                  <ShieldCheck size={10} /> RGPD Pendente
+                </Badge>
+              )}
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-400 hover:text-blue-600" onClick={handleEdit}>
                   <Edit3 size={16} />
@@ -200,6 +233,17 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                 >
                   <Clock size={12} strokeWidth={3} /> Chat com Tutor
                 </Button>
+                {(!customer.privacyConsents || customer.privacyConsents.length === 0) && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => sendConsentInvite.mutate()}
+                    disabled={sendConsentInvite.isPending}
+                    className="h-8 rounded-lg border-emerald-100 dark:border-emerald-900/50 bg-emerald-50 dark:bg-emerald-900/10 text-emerald-600 dark:text-emerald-400 font-black text-[10px] uppercase tracking-widest gap-2"
+                  >
+                    <Send size={12} strokeWidth={3} /> {sendConsentInvite.isPending ? "A enviar..." : "Solicitar Consentimento"}
+                  </Button>
+                )}
               </div>
             </div>
             <div className="flex flex-wrap gap-6 mt-3 text-slate-500 dark:text-slate-400 font-bold">
@@ -209,6 +253,22 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
             </div>
           </div>
         </div>
+
+        {consentLink && (
+          <div className="col-span-full flex items-center gap-3 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+            <ShieldCheck size={20} className="text-emerald-500 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-emerald-700 dark:text-emerald-300">Link de consentimento gerado</p>
+              <p className="text-xs text-emerald-600 dark:text-emerald-400 truncate font-mono">{consentLink}</p>
+            </div>
+            <button
+              onClick={() => { navigator.clipboard.writeText(consentLink); toast.success("Link copiado!"); }}
+              className="shrink-0 px-4 py-2 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 transition-all"
+            >
+              Copiar
+            </button>
+          </div>
+        )}
 
         <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
           <Card className={`border-none shadow-xl ${balance > 0 ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 ring-1 ring-red-100 dark:ring-red-900/50' : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-100 dark:ring-emerald-900/50'} p-6 rounded-[2rem] flex-1 lg:min-w-[240px]`}>

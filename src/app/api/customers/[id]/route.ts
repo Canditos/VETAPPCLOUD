@@ -28,6 +28,11 @@ export const GET = withAuthParams(async ({ tenantPrisma }, { id }) => {
         budgets: {
           orderBy: { createdAt: 'desc' },
           take: 5
+        },
+        privacyConsents: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          where: { accepted: true },
         }
       }
     });

@@ -41,7 +41,9 @@ export function PortalLoginForm({ onSuccess, className }: PortalLoginFormProps) 
       if (onSuccess) {
         onSuccess();
       } else {
-        router.push("/portal/dashboard");
+        fetch("/api/portal/privacy").then(r => r.json()).then(d => {
+          router.push(d.accepted ? "/portal/dashboard" : "/portal/privacy");
+        }).catch(() => router.push("/portal/dashboard"));
       }
     } catch (error: any) {
       toast.error(error.message);
