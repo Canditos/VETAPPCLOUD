@@ -5,15 +5,15 @@ import { cn } from "@/lib/utils";
 import {
   Package, Plus, Search, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown,
   MoreHorizontal, PlusCircle, MinusCircle, Calendar, Layers, History,
-  TrendingDown, TrendingUp, Filter, PackageCheck, Tag, Euro, Box,
-  ChevronRight, Download, ChevronLeft, AlertCircle
+  TrendingUp, Filter, PackageCheck, Tag, Euro, Box,
+  ChevronRight, Download, ChevronLeft, AlertCircle, Edit, Trash2, X,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog, DialogContent, DialogTitle, DialogTrigger
+  Dialog, DialogContent, DialogTitle, DialogTrigger, DialogClose,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import {
@@ -25,9 +25,18 @@ import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 
 const PAGE_SIZE = 50;
-
 type SortKey = "name" | "category" | "stockQuantity" | "price" | "expiryDate";
 type SortDir = "asc" | "desc";
+
+interface ProductForm {
+  name: string; price: string; vatRate: number; stockQuantity: string;
+  barcode: string; batchNumber: string; expiryDate: string; category: string;
+}
+
+const emptyForm = (): ProductForm => ({
+  name: "", price: "", vatRate: 23, stockQuantity: "0",
+  barcode: "", batchNumber: "", expiryDate: "", category: "",
+});
 
 export default function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,32 +44,55 @@ export default function InventoryPage() {
   const [page, setPage] = useState(1);
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState<ProductForm>(emptyForm());
+  const [editTarget, setEditTarget] = useState<any>(null);
+  const [movementTarget, setMovementTarget] = useState<any>(null);
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const queryClient = useQueryClient();
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["inventory"],
-    queryFn: async () => {
-      const res = await fetch("/api/inventory");
-      if (!res.ok) throw new Error("Erro ao carregar inventário");
-      return res.json();
-    }
+    queryFn: async () => { const r = await fetch("/api/inventory"); if (!r.ok) throw new Error(); return r.json(); }
   });
 
-  const adjustStockMutation = useMutation({
+  const adjustMutation = useMutation({
     mutationFn: async ({ productId, type, quantity }: { productId: string; type: "IN" | "OUT"; quantity: number }) => {
-      const res = await fetch("/api/inventory/adjust", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId, type, quantity })
-      });
-      if (!res.ok) throw new Error("Erro ao ajustar stock");
-      return res.json();
+      const r = await fetch("/api/inventory/adjust", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productId, type, quantity }) });
+      if (!r.ok) throw new Error(); return r.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["inventory"] });
-      toast.success("Stock atualizado!");
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["inventory"] }); toast.success("Stock actualizado!"); },
+    onError: () => toast.error("Erro ao actualizar stock"),
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (form: ProductForm) => {
+      const r = await fetch("/api/inventory", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, price: parseFloat(form.price) || 0, stockQuantity: parseInt(form.stockQuantity) || 0 }) });
+      if (!r.ok) throw new Error(); return r.json();
     },
-    onError: (err: any) => toast.error(err.message || "Erro ao atualizar stock.")
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["inventory"] }); setCreateOpen(false); setCreateForm(emptyForm()); toast.success("Artigo criado!"); },
+    onError: () => toast.error("Erro ao criar artigo"),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, ...data }: any) => {
+      const r = await fetch(`/api/inventory/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+      if (!r.ok) throw new Error(); return r.json();
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["inventory"] }); setEditTarget(null); toast.success("Artigo actualizado!"); },
+    onError: () => toast.error("Erro ao actualizar artigo"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => { const r = await fetch(`/api/inventory/${id}`, { method: "DELETE" }); if (!r.ok) throw new Error(); return r.json(); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["inventory"] }); setDeleteTarget(null); toast.success("Artigo eliminado!"); },
+    onError: () => toast.error("Erro ao eliminar artigo"),
+  });
+
+  const { data: movements } = useQuery({
+    queryKey: ["movements", movementTarget?.id],
+    queryFn: async () => { const r = await fetch(`/api/inventory/${movementTarget.id}/movements`); if (!r.ok) throw new Error(); return r.json(); },
+    enabled: !!movementTarget,
   });
 
   const categories = useMemo(() => {
@@ -68,7 +100,6 @@ export default function InventoryPage() {
     return Array.from(new Set(products.map((p: any) => p.category))).filter(Boolean) as string[];
   }, [products]);
 
-  // critério inteligente: usa minStock do produto, ou fallback para 5
   const isLowStock = (p: any) => p.stockQuantity <= (p.minStock ?? 5);
   const isExpired = (p: any) => p.expiryDate && new Date(p.expiryDate) < new Date();
 
@@ -92,21 +123,15 @@ export default function InventoryPage() {
     if (!products) return [];
     let rows = products.filter((p: any) => {
       const q = searchTerm.toLowerCase();
-      const matchSearch = p.name.toLowerCase().includes(q) || (p.barcode ?? "").includes(q) || (p.category ?? "").toLowerCase().includes(q);
-      const matchCat = filterCategory === "all" || p.category === filterCategory;
-      return matchSearch && matchCat;
+      return (p.name.toLowerCase().includes(q) || (p.barcode ?? "").includes(q) || (p.category ?? "").toLowerCase().includes(q))
+        && (filterCategory === "all" || p.category === filterCategory);
     });
-
     rows = [...rows].sort((a: any, b: any) => {
-      let av: any = a[sortKey] ?? "";
-      let bv: any = b[sortKey] ?? "";
+      let av = a[sortKey] ?? "", bv = b[sortKey] ?? "";
       if (sortKey === "price" || sortKey === "stockQuantity") { av = Number(av); bv = Number(bv); }
       if (sortKey === "expiryDate") { av = av ? new Date(av).getTime() : 0; bv = bv ? new Date(bv).getTime() : 0; }
-      if (av < bv) return sortDir === "asc" ? -1 : 1;
-      if (av > bv) return sortDir === "asc" ? 1 : -1;
-      return 0;
+      return av < bv ? (sortDir === "asc" ? -1 : 1) : av > bv ? (sortDir === "asc" ? 1 : -1) : 0;
     });
-
     return rows;
   }, [products, searchTerm, filterCategory, sortKey, sortDir]);
 
@@ -119,22 +144,128 @@ export default function InventoryPage() {
   };
 
   const ColHeader = ({ label, k, className }: { label: string; k: SortKey; className?: string }) => (
-    <th
-      className={cn("px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors whitespace-nowrap", className)}
-      onClick={() => handleSort(k)}
-    >
-      <div className="flex items-center gap-1.5">
-        {label} <SortIcon k={k} />
-      </div>
+    <th className={cn("px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors whitespace-nowrap", className)} onClick={() => handleSort(k)}>
+      <div className="flex items-center gap-1.5">{label} <SortIcon k={k} /></div>
     </th>
+  );
+
+  const ProductDialog = ({ form, setForm, onSubmit, title, loading }: { form: ProductForm; setForm: (f: ProductForm) => void; onSubmit: () => void; title: string; loading?: boolean }) => (
+    <div className="p-8 space-y-5">
+      <div className="space-y-2">
+        <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Designação *</Label>
+        <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Ex: Clavaseptin 500mg" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Preço (€) *</Label>
+          <Input type="number" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} placeholder="0.00" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">IVA</Label>
+          <select value={form.vatRate} onChange={e => setForm({ ...form, vatRate: Number(e.target.value) })} className="h-11 w-full rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-3 text-xs font-bold">
+            <option value={23}>23% (Normal)</option>
+            <option value={13}>13% (Intermédia)</option>
+            <option value={6}>6% (Reduzida)</option>
+          </select>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Stock Inicial</Label>
+          <Input type="number" value={form.stockQuantity} onChange={e => setForm({ ...form, stockQuantity: e.target.value })} placeholder="0" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Categoria</Label>
+          <Input value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} placeholder="Ex: Medicamentos" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Código de Barras</Label>
+          <Input value={form.barcode} onChange={e => setForm({ ...form, barcode: e.target.value })} placeholder="Ex: 5601234567890" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nº Lote</Label>
+          <Input value={form.batchNumber} onChange={e => setForm({ ...form, batchNumber: e.target.value })} placeholder="Ex: LOTE-2024-001" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Validade</Label>
+        <Input type="date" value={form.expiryDate} onChange={e => setForm({ ...form, expiryDate: e.target.value })} className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
+      </div>
+      <Button disabled={loading || !form.name || !form.price} onClick={onSubmit} className="w-full h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-widest">
+        {loading ? "A guardar..." : title}
+      </Button>
+    </div>
+  );
+
+  const DeleteConfirm = () => (
+    <Dialog open={!!deleteTarget} onOpenChange={o => { if (!o) setDeleteTarget(null); }}>
+      <DialogContent className="sm:max-w-[400px] rounded-2xl border-none p-8 bg-white dark:bg-slate-900">
+        <div className="text-center space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-rose-50 dark:bg-rose-900/20 flex items-center justify-center mx-auto">
+            <Trash2 size={24} className="text-rose-500" />
+          </div>
+          <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white">Eliminar Artigo</DialogTitle>
+          <p className="text-sm text-slate-500">Tem a certeza que pretende eliminar <strong>{deleteTarget?.name}</strong>? Esta acção é irreversível.</p>
+          <div className="flex gap-3 pt-2">
+            <Button variant="outline" onClick={() => setDeleteTarget(null)} className="flex-1 h-10 rounded-xl border-slate-200 font-bold">Cancelar</Button>
+            <Button onClick={() => deleteMutation.mutate(deleteTarget.id)} disabled={deleteMutation.isPending} className="flex-1 h-10 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold">Eliminar</Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
+  const MovementsModal = () => (
+    <Dialog open={!!movementTarget} onOpenChange={o => { if (!o) setMovementTarget(null); }}>
+      <DialogContent className="sm:max-w-[600px] rounded-2xl border-none p-0 overflow-hidden bg-white dark:bg-slate-900">
+        <div className="bg-blue-600 p-6 text-white flex justify-between items-center">
+          <div>
+            <DialogTitle className="text-xl font-bold tracking-tight">Movimentos</DialogTitle>
+            <p className="text-blue-100 text-xs font-bold uppercase tracking-widest mt-0.5">{movementTarget?.name}</p>
+          </div>
+          <DialogClose className="text-white/70 hover:text-white transition-colors"><X size={20} /></DialogClose>
+        </div>
+        <div className="p-6 max-h-[400px] overflow-y-auto">
+          {!movements ? (
+            <p className="text-center text-slate-400 py-8">A carregar...</p>
+          ) : movements.length === 0 ? (
+            <p className="text-center text-slate-400 py-8 font-medium">Nenhum movimento registado.</p>
+          ) : (
+            <div className="space-y-2">
+              {movements.map((m: any) => (
+                <div key={m.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                  <div className="flex items-center gap-3">
+                    <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", m.type === "IN" ? "bg-emerald-50 text-emerald-600" : m.type === "OUT" ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600")}>
+                      {m.type === "IN" ? <PlusCircle size={14} /> : m.type === "OUT" ? <MinusCircle size={14} /> : <AlertCircle size={14} />}
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm text-slate-800 dark:text-slate-100">
+                        {m.type === "IN" ? "Entrada" : m.type === "OUT" ? "Saída" : "Ajuste"}
+                      </p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">{m.source || "Manual"}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className={cn("font-bold text-sm", m.type === "IN" ? "text-emerald-600" : "text-rose-600")}>
+                      {m.type === "IN" ? "+" : "-"}{m.quantity} un.
+                    </p>
+                    <p className="text-[10px] text-slate-400">{format(new Date(m.createdAt), "dd MMM yyyy HH:mm", { locale: pt })}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 
   return (
     <div className="max-w-[1600px] mx-auto space-y-5 p-4 md:p-6">
-
-      {/* ── Cabeçalho + Stats ─────────────────────────────────────── */}
+      {/* Header */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm ring-1 ring-slate-200/60 dark:ring-white/5 space-y-5">
-        {/* Título + Ações */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tighter">Inventário & Stock</h1>
@@ -144,13 +275,10 @@ export default function InventoryPage() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" onClick={() => toast.info("Histórico em desenvolvimento...")} className="h-9 rounded-xl px-4 gap-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:bg-white transition-all active:scale-95">
-              <History size={15} strokeWidth={2.5} /> Movimentos
-            </Button>
             <Button variant="outline" onClick={() => toast.success("Exportação iniciada...")} className="h-9 rounded-xl px-4 gap-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:bg-white transition-all active:scale-95">
               <Download size={15} strokeWidth={2.5} /> Exportar
             </Button>
-            <Dialog>
+            <Dialog open={createOpen} onOpenChange={setCreateOpen}>
               <DialogTrigger asChild>
                 <Button className="h-9 rounded-xl gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 shadow-sm transition-all active:scale-95">
                   <Plus size={15} strokeWidth={3} />
@@ -162,29 +290,7 @@ export default function InventoryPage() {
                   <DialogTitle className="text-2xl font-bold tracking-tight">Adicionar ao Catálogo</DialogTitle>
                   <p className="text-blue-100 text-xs font-bold uppercase tracking-widest mt-1 opacity-80">Registe novos artigos com IVA e Lote.</p>
                 </div>
-                <div className="p-8 space-y-5">
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Designação</Label>
-                    <Input placeholder="Ex: Clavaseptin 500mg" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Preço (€)</Label>
-                      <Input type="number" placeholder="0.00" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Taxa IVA</Label>
-                      <select className="h-11 w-full rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-3 text-xs font-bold">
-                        <option value="23">23% (Normal)</option>
-                        <option value="13">13% (Intermédia)</option>
-                        <option value="6">6% (Reduzida)</option>
-                      </select>
-                    </div>
-                  </div>
-                  <Button className="w-full h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-widest" onClick={() => toast.success("Artigo registado!")}>
-                    Registar Artigo
-                  </Button>
-                </div>
+                <ProductDialog form={createForm} setForm={setCreateForm} onSubmit={() => createMutation.mutate(createForm)} title="Registar Artigo" loading={createMutation.isPending} />
               </DialogContent>
             </Dialog>
           </div>
@@ -214,12 +320,7 @@ export default function InventoryPage() {
         <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-100 dark:border-slate-800/50">
           <div className="relative flex-1 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={15} />
-            <Input
-              placeholder="Pesquisar por nome, categoria ou código de barras..."
-              className="h-10 pl-11 pr-4 rounded-xl border-none bg-slate-50 dark:bg-slate-800/50 ring-1 ring-slate-100 dark:ring-slate-800 focus-visible:ring-2 focus-visible:ring-blue-500/50 font-medium text-sm"
-              value={searchTerm}
-              onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-            />
+            <Input placeholder="Pesquisar por nome, categoria ou código de barras..." className="h-10 pl-11 pr-4 rounded-xl border-none bg-slate-50 dark:bg-slate-800/50 ring-1 ring-slate-100 dark:ring-slate-800 focus-visible:ring-2 focus-visible:ring-blue-500/50 font-medium text-sm" value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }} />
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -229,31 +330,58 @@ export default function InventoryPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="rounded-xl border-none shadow-2xl p-2 w-60 bg-white dark:bg-slate-900">
-              <DropdownMenuItem onClick={() => { setFilterCategory("all"); setPage(1); }} className="font-bold rounded-lg p-3 text-xs uppercase tracking-widest">
-                Todas as Categorias
-              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setFilterCategory("all"); setPage(1); }} className="font-bold rounded-lg p-3 text-xs uppercase tracking-widest">Todas as Categorias</DropdownMenuItem>
               <DropdownMenuSeparator className="opacity-50" />
               {categories.map((cat) => (
-                <DropdownMenuItem key={cat} onClick={() => { setFilterCategory(cat); setPage(1); }} className="font-bold rounded-lg p-3 text-xs uppercase tracking-widest">
-                  {cat}
-                </DropdownMenuItem>
+                <DropdownMenuItem key={cat} onClick={() => { setFilterCategory(cat); setPage(1); }} className="font-bold rounded-lg p-3 text-xs uppercase tracking-widest">{cat}</DropdownMenuItem>
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
 
-      {/* ── Tabela ─────────────────────────────────────────────────── */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm ring-1 ring-slate-200/60 dark:ring-white/5 overflow-hidden">
+      {/* Edit Dialog */}
+      <Dialog open={!!editTarget} onOpenChange={o => { if (!o) setEditTarget(null); }}>
+        <DialogContent className="sm:max-w-[500px] rounded-2xl border-none shadow-3xl p-0 overflow-hidden bg-white dark:bg-slate-900">
+          <div className="bg-blue-600 p-8 text-white">
+            <DialogTitle className="text-2xl font-bold tracking-tight">Editar Artigo</DialogTitle>
+            <p className="text-blue-100 text-xs font-bold uppercase tracking-widest mt-1 opacity-80">{editTarget?.name}</p>
+          </div>
+          {editTarget && (
+            <ProductDialog
+              form={{
+                name: editTarget.name || "",
+                price: String(editTarget.price || ""),
+                vatRate: editTarget.vatRate ?? 23,
+                stockQuantity: String(editTarget.stockQuantity ?? 0),
+                barcode: editTarget.barcode || "",
+                batchNumber: editTarget.batchNumber || "",
+                expiryDate: editTarget.expiryDate ? editTarget.expiryDate.split("T")[0] : "",
+                category: editTarget.category || "",
+              }}
+              setForm={(f) => setEditTarget({ ...editTarget, ...f } as any)}
+              onSubmit={() => {
+                const { id, name, price, vatRate, stockQuantity, barcode, batchNumber, expiryDate, category } = editTarget;
+                updateMutation.mutate({ id, name: name || "", price: parseFloat(price) || 0, vatRate, stockQuantity: parseInt(stockQuantity) || 0, barcode, batchNumber, expiryDate, category });
+              }}
+              title="Guardar Alterações"
+              loading={updateMutation.isPending}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
-        {/* Resultado count */}
+      {/* Delete Confirm */}
+      <DeleteConfirm />
+
+      {/* Movements Modal */}
+      <MovementsModal />
+
+      {/* Table */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm ring-1 ring-slate-200/60 dark:ring-white/5 overflow-hidden">
         <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-            {filtered.length.toLocaleString("pt-PT")} artigo{filtered.length !== 1 ? "s" : ""} encontrado{filtered.length !== 1 ? "s" : ""}
-          </p>
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-            Página {page} / {totalPages}
-          </p>
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{filtered.length.toLocaleString("pt-PT")} artigo{filtered.length !== 1 ? "s" : ""} encontrado{filtered.length !== 1 ? "s" : ""}</p>
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Página {page} / {totalPages}</p>
         </div>
 
         <div className="overflow-x-auto">
@@ -274,9 +402,7 @@ export default function InventoryPage() {
                 Array.from({ length: 12 }).map((_, i) => (
                   <tr key={i}>
                     {Array.from({ length: 7 }).map((_, j) => (
-                      <td key={j} className="px-4 py-4">
-                        <div className="h-4 rounded-md bg-slate-100 dark:bg-slate-800 animate-pulse" style={{ width: j === 0 ? "70%" : "50%" }} />
-                      </td>
+                      <td key={j} className="px-4 py-4"><div className="h-4 rounded-md bg-slate-100 dark:bg-slate-800 animate-pulse" style={{ width: j === 0 ? "70%" : "50%" }} /></td>
                     ))}
                   </tr>
                 ))
@@ -293,111 +419,59 @@ export default function InventoryPage() {
                   const low = isLowStock(p);
                   const expired = isExpired(p);
                   const expiry = p.expiryDate ? new Date(p.expiryDate) : null;
-
                   return (
-                    <tr key={p.id} className={cn(
-                      "group hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors",
-                      low && "bg-amber-50/30 dark:bg-amber-900/5",
-                      expired && "bg-rose-50/30 dark:bg-rose-900/5"
-                    )}>
-                      {/* Designação */}
+                    <tr key={p.id} className={cn("group hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors", low && "bg-amber-50/30 dark:bg-amber-900/5", expired && "bg-rose-50/30 dark:bg-rose-900/5")}>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 shrink-0">
-                            <Box size={15} strokeWidth={1.8} />
-                          </div>
+                          <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 shrink-0"><Box size={15} strokeWidth={1.8} /></div>
                           <div className="min-w-0">
                             <p className="font-semibold text-slate-900 dark:text-white leading-tight text-sm truncate max-w-[280px]">{p.name}</p>
-                            {p.batchNumber && (
-                              <p className="text-[10px] font-mono text-slate-400 mt-0.5">Lote: {p.batchNumber}</p>
-                            )}
+                            {p.batchNumber && <p className="text-[10px] font-mono text-slate-400 mt-0.5">Lote: {p.batchNumber}</p>}
                           </div>
                         </div>
                       </td>
-
-                      {/* Categoria */}
                       <td className="px-4 py-3.5">
-                        <Badge variant="secondary" className="text-[9px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 uppercase tracking-widest border-none px-2 py-0.5">
-                          {p.category || "Geral"}
-                        </Badge>
+                        <Badge variant="secondary" className="text-[9px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 uppercase tracking-widest border-none px-2 py-0.5">{p.category || "Geral"}</Badge>
                       </td>
-
-                      {/* Stock */}
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-2">
-                          <span className={cn(
-                            "text-base font-bold tabular-nums",
-                            low ? "text-amber-600" : "text-slate-900 dark:text-white"
-                          )}>
-                            {p.stockQuantity}
-                          </span>
+                          <span className={cn("text-base font-bold tabular-nums", low ? "text-amber-600" : "text-slate-900 dark:text-white")}>{p.stockQuantity}</span>
                           <span className="text-[9px] font-bold text-slate-400 uppercase">un.</span>
                         </div>
                       </td>
-
-                      {/* Estado */}
                       <td className="px-4 py-3.5">
                         {expired ? (
-                          <span className="inline-flex items-center gap-1 text-[9px] font-bold text-rose-600 uppercase tracking-widest bg-rose-50 dark:bg-rose-900/20 px-2 py-1 rounded-lg">
-                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" /> Expirado
-                          </span>
+                          <span className="inline-flex items-center gap-1 text-[9px] font-bold text-rose-600 uppercase tracking-widest bg-rose-50 dark:bg-rose-900/20 px-2 py-1 rounded-lg"><span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" /> Expirado</span>
                         ) : low ? (
-                          <span className="inline-flex items-center gap-1 text-[9px] font-bold text-amber-600 uppercase tracking-widest bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-lg">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" /> Crítico
-                          </span>
+                          <span className="inline-flex items-center gap-1 text-[9px] font-bold text-amber-600 uppercase tracking-widest bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-lg"><span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" /> Crítico</span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-600 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-lg">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> OK
-                          </span>
+                          <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-600 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-lg"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> OK</span>
                         )}
                       </td>
-
-                      {/* Preço */}
                       <td className="px-4 py-3.5">
-                        <p className="font-bold text-slate-900 dark:text-white tabular-nums">
-                          {Number(p.price).toFixed(2)} €
-                        </p>
+                        <p className="font-bold text-slate-900 dark:text-white tabular-nums">{Number(p.price).toFixed(2)} €</p>
                         <p className="text-[9px] font-bold text-slate-400 uppercase">IVA {p.vatRate ?? 23}%</p>
                       </td>
-
-                      {/* Validade */}
                       <td className="px-4 py-3.5">
                         {expiry ? (
-                          <span className={cn("text-xs font-semibold", expired ? "text-rose-500" : "text-slate-600 dark:text-slate-400")}>
-                            {format(expiry, "dd MMM yyyy", { locale: pt })}
-                          </span>
-                        ) : (
-                          <span className="text-xs font-medium text-slate-400">—</span>
-                        )}
+                          <span className={cn("text-xs font-semibold", expired ? "text-rose-500" : "text-slate-600 dark:text-slate-400")}>{format(expiry, "dd MMM yyyy", { locale: pt })}</span>
+                        ) : <span className="text-xs font-medium text-slate-400">—</span>}
                       </td>
-
-                      {/* Ações */}
                       <td className="px-4 py-3.5 pr-5">
-                        <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button
-                            variant="ghost" size="icon"
-                            className="h-8 w-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all active:scale-90"
-                            onClick={() => adjustStockMutation.mutate({ productId: p.id, type: "IN", quantity: 1 })}
-                            title="Entrada de stock"
-                          >
-                            <PlusCircle size={15} strokeWidth={2.5} />
-                          </Button>
-                          <Button
-                            variant="ghost" size="icon"
-                            className="h-8 w-8 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-500 hover:bg-slate-900 hover:text-white dark:hover:bg-white dark:hover:text-slate-900 transition-all active:scale-90"
-                            onClick={() => adjustStockMutation.mutate({ productId: p.id, type: "OUT", quantity: 1 })}
-                            disabled={p.stockQuantity === 0}
-                            title="Saída de stock"
-                          >
-                            <MinusCircle size={15} strokeWidth={2.5} />
-                          </Button>
-                          <Button
-                            variant="ghost" size="icon"
-                            className="h-8 w-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 hover:bg-blue-600 hover:text-white transition-all active:scale-90"
-                            title="Ver detalhe"
-                          >
-                            <ChevronRight size={15} strokeWidth={2.5} />
-                          </Button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all active:scale-90" onClick={() => adjustMutation.mutate({ productId: p.id, type: "IN", quantity: 1 })} title="Entrada"><PlusCircle size={15} strokeWidth={2.5} /></Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-500 hover:bg-slate-900 hover:text-white dark:hover:bg-white dark:hover:text-slate-900 transition-all active:scale-90" onClick={() => adjustMutation.mutate({ productId: p.id, type: "OUT", quantity: 1 })} disabled={p.stockQuantity === 0} title="Saída"><MinusCircle size={15} strokeWidth={2.5} /></Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-500 hover:bg-slate-900 hover:text-white dark:hover:bg-white dark:hover:text-slate-900 transition-all active:scale-90"><MoreHorizontal size={14} strokeWidth={2.5} /></Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="rounded-xl border-none shadow-2xl p-2 w-44 bg-white dark:bg-slate-900">
+                              <DropdownMenuItem onClick={() => setMovementTarget(p)} className="font-medium rounded-lg p-2.5 text-xs gap-2"><History size={14} /> Movimentos</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setEditTarget(p)} className="font-medium rounded-lg p-2.5 text-xs gap-2"><Edit size={14} /> Editar</DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => setDeleteTarget(p)} className="font-medium rounded-lg p-2.5 text-xs gap-2 text-rose-600 focus:text-rose-600"><Trash2 size={14} /> Eliminar</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </td>
                     </tr>
@@ -408,46 +482,18 @@ export default function InventoryPage() {
           </table>
         </div>
 
-        {/* ── Paginação ── */}
+        {/* Pagination */}
         {totalPages > 1 && (
           <div className="px-5 py-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4">
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-              A mostrar {Math.min((page - 1) * PAGE_SIZE + 1, filtered.length)}–{Math.min(page * PAGE_SIZE, filtered.length)} de {filtered.length.toLocaleString("pt-PT")}
-            </p>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">A mostrar {Math.min((page - 1) * PAGE_SIZE + 1, filtered.length)}–{Math.min(page * PAGE_SIZE, filtered.length)} de {filtered.length.toLocaleString("pt-PT")}</p>
             <div className="flex items-center gap-2">
-              <Button
-                variant="ghost" size="icon"
-                className="h-8 w-8 rounded-lg"
-                disabled={page === 1}
-                onClick={() => setPage(p => p - 1)}
-              >
-                <ChevronLeft size={15} />
-              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" disabled={page === 1} onClick={() => setPage(p => p - 1)}><ChevronLeft size={15} /></Button>
               {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
                 const pg = page <= 3 ? i + 1 : page - 2 + i;
                 if (pg > totalPages) return null;
-                return (
-                  <Button
-                    key={pg}
-                    variant="ghost" size="icon"
-                    className={cn(
-                      "h-8 w-8 rounded-lg text-xs font-bold",
-                      pg === page ? "bg-blue-600 text-white hover:bg-blue-600" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
-                    )}
-                    onClick={() => setPage(pg)}
-                  >
-                    {pg}
-                  </Button>
-                );
+                return <Button key={pg} variant="ghost" size="icon" className={cn("h-8 w-8 rounded-lg text-xs font-bold", pg === page ? "bg-blue-600 text-white hover:bg-blue-600" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800")} onClick={() => setPage(pg)}>{pg}</Button>;
               })}
-              <Button
-                variant="ghost" size="icon"
-                className="h-8 w-8 rounded-lg"
-                disabled={page === totalPages}
-                onClick={() => setPage(p => p + 1)}
-              >
-                <ChevronRight size={15} />
-              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}><ChevronRight size={15} /></Button>
             </div>
           </div>
         )}
