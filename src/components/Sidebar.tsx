@@ -48,6 +48,7 @@ const menuGroups = [
       { name: "Inventário", href: "/dashboard/inventory", icon: Package },
       { name: "Faturação", href: "/dashboard/billing", icon: Receipt },
       { name: "Marketing SMS", href: "/dashboard/marketing", icon: Send },
+      { name: "SMS Stats", href: "/dashboard/sms", icon: BarChart3 },
       { name: "Relatórios", href: "/dashboard/management", icon: BarChart3 },
     ]
   },

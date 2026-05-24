@@ -6,7 +6,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   PawPrint, Syringe, Calendar, FileText, Phone, MapPin,
   AlertTriangle, ChevronRight, Heart, Weight, Thermometer,
-  Activity, Shield, Clock, CheckCircle2, Dog, Cat, X,
+  Activity, Shield, ShieldCheck, Clock, CheckCircle2, Dog, Cat, X,
   Stethoscope, Pill, Bell, Home, User, Star, LogOut,
   Sun, Cloud, CloudRain, CloudLightning, ThermometerSun,
   MessageSquare, Send, CreditCard, Download
@@ -338,6 +338,15 @@ export default function PortalPage() {
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 
+  // Redirect to privacy page if not consented
+  useEffect(() => {
+    if (data?.owner?.id) {
+      fetch("/api/portal/privacy").then(r => r.json()).then(d => {
+        if (!d.accepted) router.replace("/portal/privacy");
+      }).catch(() => {});
+    }
+  }, [data, router]);
+
   if (isLoading) return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center">
       <div className="text-center space-y-4">
@@ -415,6 +424,12 @@ export default function PortalPage() {
               <p className="text-[10px] text-slate-500 font-bold uppercase">{clinic.name}</p>
             </div>
           </div>
+          <a href="/portal/privacy"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 text-slate-400 hover:text-slate-300 hover:bg-white/10 transition-all font-black text-[10px] uppercase tracking-widest mb-2"
+          >
+            <ShieldCheck size={16} />
+            Privacidade
+          </a>
           <button 
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all font-black text-[10px] uppercase tracking-widest"

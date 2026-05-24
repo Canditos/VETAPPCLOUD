@@ -38,9 +38,18 @@ export async function GET(req: Request) {
       .setExpirationTime("30d")
       .sign(secret);
 
-    // Redireciona para o dashboard com o cookie setado
-    const redirectUrl = new URL("/portal/dashboard", req.url);
-    const response = NextResponse.redirect(redirectUrl);
+    // Redireciona (usa redirect param ou privacy check)
+    const requestedRedirect = searchParams.get("redirect") || "/portal/dashboard";
+    const redirectTo = new URL(requestedRedirect, req.url);
+
+    const consent = await prisma.privacyConsent.findFirst({
+      where: { ownerId: owner.id, clinicId: owner.clinicId, accepted: true },
+    });
+
+    const finalUrl = !consent && !requestedRedirect.startsWith("/portal/privacy")
+      ? new URL("/portal/privacy", req.url) : redirectTo;
+
+    const response = NextResponse.redirect(finalUrl);
 
     // Define o cookie (HTTPOnly)
     response.cookies.set("vet_portal_session", jwt, {

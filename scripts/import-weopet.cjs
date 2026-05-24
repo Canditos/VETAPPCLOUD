@@ -103,7 +103,7 @@ async function login() {
 
 function extractAnimalLinks(html) {
   const animals = [];
-  const regex = /<a\s[^>]*href="([^"]*module=animal&amp;func=view[^"]*)">([^<]*)<\/a>/gi;
+  const regex = /<a\s[^>]*href="([^"]*module=animal[&]func=view[^"]*)">([^<]*)<\/a>/gi;
   let m;
   while ((m = regex.exec(html)) !== null) {
     const hash = m[1].match(/id=([a-f0-9]+)/);
@@ -118,15 +118,15 @@ function extractAnimalLinks(html) {
 async function fetchAnimalList() {
   console.log("Fetching animal list...");
   const all = [];
-  let offset = 0;
+  let page = 1;
   while (true) {
-    const res = await httpGet(`/admin.php?module=animal&func=list&offset=${offset}`, cookieStr);
+    const res = await httpGet(`/admin.php?module=animal&func=list&page=${page}`, cookieStr);
     const batch = extractAnimalLinks(res.data);
     if (batch.length === 0) break;
     for (const a of batch) if (!all.find(x => x.hash === a.hash)) all.push(a);
-    console.log(`   ${all.length} animals...`);
-    if (batch.length < 40) break;
-    offset += 40;
+    console.log(`   ${all.length} animals (page ${page})...`);
+    if (batch.length < 20) break;
+    page++;
   }
   console.log(`Total: ${all.length} animals`);
   return all;
@@ -144,6 +144,17 @@ function parseAnimalPage(html) {
 
   const titleMatch = html.match(/<div class="title"><a>Animal<\/a>\s*<span>([^<]*)<\/span>/);
   const animalName = titleMatch ? titleMatch[1].trim() : "Unknown";
+
+  const ownerMatch = html.match(/Cliente\s*<\/td>\s*<td[^>]*>\s*<a[^>]*>([^<]*)<\/a>/);
+  const ownerName = ownerMatch ? ownerMatch[1].trim() : "";
+
+  // Extract total count from pagination: "1-20 / 100" or "Página 1 de 5"
+  let totalCount = 0;
+  const pagMatch = html.match(/(\d+)\s*consultas?\s*(registadas|encontradas)?/i)
+    || html.match(/total[:\s]*(\d+)/i)
+    || html.match(/(\d+)\s*registos/i)
+    || html.match(/de\s+(\d+)\s*(resultados|registos|consultas)/i);
+  if (pagMatch) totalCount = parseInt(pagMatch[1]);
 
   const appointments = [];
   const rowRegex = /<tr class="row">(.*?)<\/tr>/gs;
@@ -169,12 +180,37 @@ function parseAnimalPage(html) {
     });
   }
 
-  return { animalNumber, animalName, appointments };
+  return { animalNumber, animalName, ownerName, appointments, totalCount };
 }
 
-async function fetchAnimalPage(hash) {
-  const res = await httpGet(`/admin.php?module=animal&func=view&id=${hash}`, cookieStr);
+async function fetchAnimalPage(hash, page = 1) {
+  const res = await httpGet(`/admin.php?module=animal&func=view&id=${hash}&page=${page}`, cookieStr);
   return parseAnimalPage(res.data);
+}
+
+async function fetchAllAnimalAppointments(hash) {
+  const firstPage = await fetchAnimalPage(hash, 1);
+  const allApts = [...firstPage.appointments];
+  const perPage = firstPage.appointments.length || 20;
+  const total = firstPage.totalCount || 0;
+
+  // If we know the total, fetch remaining pages
+  if (total > perPage) {
+    const pages = Math.ceil(total / perPage);
+    for (let p = 2; p <= pages; p++) {
+      const page = await fetchAnimalPage(hash, p);
+      allApts.push(...page.appointments);
+    }
+  } else {
+    // If no total known, paginate until empty page
+    for (let p = 2; ; p++) {
+      const page = await fetchAnimalPage(hash, p);
+      if (page.appointments.length === 0) break;
+      allApts.push(...page.appointments);
+    }
+  }
+
+  return { ...firstPage, appointments: allApts };
 }
 
 // ─── Main ────────────────────────────────────────────────────────
@@ -196,18 +232,21 @@ async function main() {
   const VET_ID = vet.id;
   console.log(`   Veterinarian: ${vet.name} (${VET_ID})`);
 
-  // 1. Map patients imported via CSV
-  console.log("\nMapping VetConnect patients...");
+  // 1. Build patient map by (animalName, ownerName) pair
+  console.log("\nBuilding patient map by name + owner...");
   const patients = await prisma.patient.findMany({
     where: { clinicId: CLINIC_ID },
-    select: { id: true },
+    include: { owner: { select: { name: true } } },
   });
   const patientMap = new Map();
+  let matched = 0;
   for (const p of patients) {
-    const m = p.id.match(/^csv-animal-(\d+)$/);
-    if (m) patientMap.set(m[1], p.id);
+    const key = (p.name + "|" + (p.owner?.name || "")).toLowerCase().replace(/\s+/g, " ").trim();
+    if (!patientMap.has(key)) patientMap.set(key, p.id);
+    else matched--; // duplicate keys, track separately
+    matched++;
   }
-  console.log(`   ${patientMap.size} imported patients matched`);
+  console.log(`   ${patientMap.size} unique name|owner pairs (${patients.length} total patients)`);
 
   // 2. Login + animal list
   await login();
@@ -219,22 +258,52 @@ async function main() {
     return;
   }
 
-  // 3. Import appointments
-  let imported = 0, skipped = 0, errors = 0, total = 0;
+  // 3. Build owner→patients map for fallback matching
+  const ownerPatients = new Map();
+  for (const p of patients) {
+    const okey = (p.owner?.name || "").toLowerCase().replace(/\s+/g, " ").trim();
+    if (!ownerPatients.has(okey)) ownerPatients.set(okey, []);
+    ownerPatients.get(okey).push(p);
+  }
+  console.log(`   ${ownerPatients.size} unique owner names for fallback`);
+
+  // 4. Import all appointments (paginated)
+  let imported = 0, skipped = 0, errors = 0, total = 0, animalPages = 0;
+  const errorDetails = [], skipSamples = [];
 
   for (const [i, animal] of animals.entries()) {
-    process.stdout.write(`\r   [${i + 1}/${animals.length}] ${animal.name.slice(0, 35).padEnd(36)}`);
+    const page = await fetchAllAnimalAppointments(animal.hash);
+    const aptCount = page.appointments.length;
+    process.stdout.write(`\r   [${i + 1}/${animals.length}] ${animal.name.slice(0, 25).padEnd(26)} ${String(aptCount).padStart(4)} consultas`);
 
-    const page = await fetchAnimalPage(animal.hash);
+    // Strategy 1: exact name|owner match
+    const key = (page.animalName + "|" + page.ownerName).toLowerCase().replace(/\s+/g, " ").trim();
+    let pid = patientMap.get(key);
 
-    if (!page.animalNumber) { skipped++; continue; }
+    // Strategy 2: owner match → filter by name
+    if (!pid && page.ownerName) {
+      const okey = page.ownerName.toLowerCase().replace(/\s+/g, " ").trim();
+      const ownerPets = ownerPatients.get(okey);
+      if (ownerPets) {
+        const pname = page.animalName.toLowerCase().replace(/\s+/g, " ").trim();
+        const match = ownerPets.find(p => p.name.toLowerCase().replace(/\s+/g, " ").trim() === pname);
+        if (match) pid = match.id;
+      }
+    }
 
-    const pid = patientMap.get(page.animalNumber);
-    if (!pid) { skipped += page.appointments.length || 1; continue; }
+    if (!pid) {
+      skipped += page.appointments.length || 1;
+      if (skipSamples.length < 10) skipSamples.push({ animal: page.animalName, owner: page.ownerName });
+      continue;
+    }
 
     for (const apt of page.appointments) {
       const st = new Date(apt.dateStr);
-      if (isNaN(st.getTime())) { errors++; continue; }
+      if (isNaN(st.getTime())) {
+        errors++;
+        if (errorDetails.length < 10) errorDetails.push({ animal: page.animalName, dateStr: apt.dateStr });
+        continue;
+      }
       const et = new Date(st);
       et.setMinutes(et.getMinutes() + 30);
 
@@ -255,20 +324,34 @@ async function main() {
           },
         });
         imported++;
-      } catch (e) { errors++; console.error(`\n   [ERROR] ${page.animalName}: ${e.message}`); }
+      } catch (e) {
+        errors++;
+        if (errorDetails.length < 10) errorDetails.push({ animal: page.animalName, error: e.message });
+      }
     }
     total += page.appointments.length;
   }
 
   console.log("\n\n" + "=".repeat(60));
   console.log("Done!");
-  console.log(`   Animals:  ${animals.length}`);
-  console.log(`   Found:    ${total} appointments`);
-  console.log(`   Imported: ${imported}`);
-  console.log(`   Skipped:  ${skipped}`);
-  console.log(`   Errors:   ${errors}`);
+  console.log(`   Animals:     ${animals.length}`);
+  console.log(`   Found:       ${total} appointments`);
+  console.log(`   Imported:    ${imported}`);
+  console.log(`   Skipped:     ${skipped}`);
+  console.log(`   Errors:      ${errors}`);
+  console.log(`   Target (weoPet max ID): 61480`);
 
-  try { fs.writeFileSync("weopet-import-log.json", JSON.stringify({ total, imported, skipped, errors })); } catch {}
+  if (errorDetails.length > 0) {
+    console.log("\n--- Error details (first " + errorDetails.length + ") ---");
+    errorDetails.forEach(e => console.log("   " + JSON.stringify(e)));
+  }
+
+  if (skipSamples.length > 0) {
+    console.log("\n--- Skipped samples (first " + skipSamples.length + ") ---");
+    skipSamples.forEach(s => console.log('   "' + s.animal + '" | owner: "' + s.owner + '"'));
+  }
+
+  try { fs.writeFileSync("weopet-import-log.json", JSON.stringify({ total, imported, skipped, errors, errorDetails, skipSamples })); } catch {}
 }
 
 main()

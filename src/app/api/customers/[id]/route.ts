@@ -10,7 +10,7 @@ export const GET = withAuthParams(async ({ tenantPrisma }, { id }) => {
       include: {
         patients: {
           include: {
-            _count: { select: { consultations: true } }
+            _count: { select: { appointments: true, consultations: true } }
           }
         },
         invoices: {
@@ -28,6 +28,11 @@ export const GET = withAuthParams(async ({ tenantPrisma }, { id }) => {
         budgets: {
           orderBy: { createdAt: 'desc' },
           take: 5
+        },
+        privacyConsents: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          where: { accepted: true },
         }
       }
     });
@@ -42,6 +47,13 @@ export const GET = withAuthParams(async ({ tenantPrisma }, { id }) => {
 
     const enriched = {
       ...customer,
+      patients: customer.patients.map((p: any) => ({
+        ...p,
+        _count: {
+          ...p._count,
+          visitCount: (p._count?.appointments || 0) + (p._count?.consultations || 0),
+        }
+      })),
       stats: {
         totalInvoiced,
         totalPaid,

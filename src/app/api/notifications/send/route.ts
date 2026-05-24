@@ -19,18 +19,31 @@ async function logSms(clinicId: string, phone: string, message: string, status: 
 
 export const POST = withAuth(async ({ req, clinicId }) => {
   try {
-    const { appointmentId, type, patientName, ownerPhone, message, patientId, ownerId, logType } = await req.json();
+    const { appointmentId, type, patientName, ownerPhone, message, patientId, ownerId, logType, isTest } = await req.json();
 
     const smsMessage = message || `Olá! Lembramos a sua consulta para ${patientName}. VetConnect.`;
 
     if (type === 'SMS' && ownerPhone) {
-      try {
-        await sendSMSViaRUT240(ownerPhone, smsMessage, clinicId);
-        await logSms(clinicId, ownerPhone, smsMessage, "SENT", logType || "MANUAL", undefined, patientId, ownerId);
-        return NextResponse.json({ success: true, message: "SMS enviado via Router RUT240." });
-      } catch (rutError: any) {
-        if (process.env.NODE_ENV !== "production") {
+      const settings = await prisma.automationSettings.findUnique({
+        where: { clinicId }
+      });
+      const isRutEnabled = !!settings?.rut240Enabled;
+
+      if (isRutEnabled || isTest) {
+        try {
+          await sendSMSViaRUT240(ownerPhone, smsMessage, clinicId, isTest);
+          await logSms(clinicId, ownerPhone, smsMessage, "SENT", logType || "MANUAL", undefined, patientId, ownerId);
+          return NextResponse.json({ success: true, message: "SMS enviado via Router RUT240." });
+        } catch (rutError: any) {
           console.error("[RUT240 ERROR]", rutError.message);
+          await logSms(clinicId, ownerPhone, smsMessage, "FAILED", logType || "MANUAL", rutError.message, patientId, ownerId);
+          
+          if (isTest || !(client && twilioNumber)) {
+            return NextResponse.json({ 
+              success: false, 
+              error: `Erro ao enviar via RUT240: ${rutError.message || "Erro desconhecido"}` 
+            }, { status: 502 });
+          }
         }
       }
 

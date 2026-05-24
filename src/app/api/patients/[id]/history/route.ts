@@ -9,7 +9,7 @@ export const GET = withAuthParams(async ({ clinicId, tenantPrisma }, { id }) => 
       select: { ownerId: true }
     });
 
-    const [consultations, labResults, imagingStudies, vaccinations, dewormings, prescriptions, vitals, messages, payments] = await Promise.all([
+    const [consultations, labResults, imagingStudies, vaccinations, dewormings, prescriptions, vitals, payments, appointments] = await Promise.all([
       tenantPrisma.consultation.findMany({
         where: { patientId: id },
         include: {
@@ -44,16 +44,15 @@ export const GET = withAuthParams(async ({ clinicId, tenantPrisma }, { id }) => 
         where: { patientId: id },
         orderBy: { recordedAt: "desc" },
       }),
-      // Puxar mensagens relacionadas ao tutor deste animal
-      tenantPrisma.portalMessage.findMany({
-        where: { ownerId: patient?.ownerId, clinicId },
-        orderBy: { createdAt: "desc" },
-      }),
       // Puxar pagamentos (pelo dono, não pelo paciente — Payment não tem patientId)
       patient?.ownerId ? tenantPrisma.payment.findMany({
         where: { ownerId: patient.ownerId },
         orderBy: { createdAt: "desc" },
       }) : Promise.resolve([]),
+      tenantPrisma.appointment.findMany({
+        where: { patientId: id, status: "COMPLETED", consultationId: null },
+        orderBy: { startTime: "desc" },
+      }),
     ]);
 
     const history = [
@@ -120,15 +119,6 @@ export const GET = withAuthParams(async ({ clinicId, tenantPrisma }, { id }) => 
         status: "COMPLETED",
         data: v
       })),
-      ...messages.map((m: any) => ({
-        type: "MESSAGE",
-        id: m.id,
-        date: m.createdAt,
-        title: m.senderType === "TUTOR" ? "Mensagem do Tutor" : "Mensagem da Clínica",
-        subtitle: m.content.substring(0, 50) + (m.content.length > 50 ? "..." : ""),
-        status: "READ",
-        data: m
-      })),
       ...payments.map((p: any) => ({
         type: "PAYMENT",
         id: p.id,
@@ -137,6 +127,19 @@ export const GET = withAuthParams(async ({ clinicId, tenantPrisma }, { id }) => 
         subtitle: `Valor: €${Number(p.amount).toFixed(2)} (${p.method})`,
         status: "PAID",
         data: p
+      })),
+      ...appointments.map((a: any) => ({
+        type: "CONSULTATION",
+        id: a.id,
+        date: a.startTime,
+        title: a.type || "Consulta",
+        subtitle: a.reason || "",
+        status: "COMPLETED",
+        data: {
+          ...a,
+          source: a.id?.startsWith?.("weopet-") ? "weoPet" : "sistema",
+          veterinarian: { name: a.id?.startsWith?.("weopet-") ? "Histórico weoPet" : "VetConnect" }
+        }
       }))
     ].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
 

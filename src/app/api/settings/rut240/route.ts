@@ -28,10 +28,7 @@ export const GET = withAuth(async ({ clinicId }) => {
   }
 });
 
-export const PUT = withAuth(async ({ req, clinicId, session }) => {
-  if ((session.user as any).role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+export const PUT = withAuth(async ({ req, clinicId }) => {
 
   try {
     const body = await req.json();
