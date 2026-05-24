@@ -9,7 +9,7 @@ export const GET = withAuthParams(async ({ clinicId, tenantPrisma }, { id }) => 
       select: { ownerId: true }
     });
 
-    const [consultations, labResults, imagingStudies, vaccinations, dewormings, prescriptions, vitals, messages, payments] = await Promise.all([
+    const [consultations, labResults, imagingStudies, vaccinations, dewormings, prescriptions, vitals, messages, payments, appointments] = await Promise.all([
       tenantPrisma.consultation.findMany({
         where: { patientId: id },
         include: {
@@ -54,6 +54,10 @@ export const GET = withAuthParams(async ({ clinicId, tenantPrisma }, { id }) => 
         where: { ownerId: patient.ownerId },
         orderBy: { createdAt: "desc" },
       }) : Promise.resolve([]),
+      tenantPrisma.appointment.findMany({
+        where: { patientId: id, status: "COMPLETED", consultationId: null },
+        orderBy: { startTime: "desc" },
+      }),
     ]);
 
     const history = [
@@ -137,6 +141,19 @@ export const GET = withAuthParams(async ({ clinicId, tenantPrisma }, { id }) => 
         subtitle: `Valor: €${Number(p.amount).toFixed(2)} (${p.method})`,
         status: "PAID",
         data: p
+      })),
+      ...appointments.map((a: any) => ({
+        type: "CONSULTATION",
+        id: a.id,
+        date: a.startTime,
+        title: a.type || "Consulta",
+        subtitle: a.reason || "",
+        status: "COMPLETED",
+        data: {
+          ...a,
+          source: a.id?.startsWith?.("weopet-") ? "weoPet" : "sistema",
+          veterinarian: { name: a.id?.startsWith?.("weopet-") ? "Histórico weoPet" : "VetConnect" }
+        }
       }))
     ].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
 

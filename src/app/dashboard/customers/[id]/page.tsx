@@ -139,8 +139,8 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
     return [...patients].sort((a: any, b: any) => {
       let av: any, bv: any;
       if (sortKey === "_count") {
-        av = a._count?.consultations ?? 0;
-        bv = b._count?.consultations ?? 0;
+        av = a._count?.visitCount ?? 0;
+        bv = b._count?.visitCount ?? 0;
       } else if (sortKey === "weight") {
         av = Number(a.weight) || 0;
         bv = Number(b.weight) || 0;
@@ -377,7 +377,11 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                       </div>
                       <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
                         <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Consultas</p>
-                        <p className="text-lg font-black text-slate-900 dark:text-slate-100 mt-1">{animal._count?.consultations || 0}</p>
+                        <p className="text-lg font-black text-slate-900 dark:text-slate-100 mt-1">{animal._count?.visitCount || 0}</p>
+
+
+
+
                       </div>
                     </div>
                     <div className="pt-4 border-t border-slate-50 dark:border-slate-800 flex gap-2">
@@ -448,7 +452,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                         </td>
                         <td className="px-4 py-3.5">
                           <span className="text-sm font-bold text-slate-900 dark:text-white tabular-nums">
-                            {animal._count?.consultations || 0}
+                            {animal._count?.visitCount || 0}
                           </span>
                         </td>
                         <td className="px-4 py-3.5 pr-5">
@@ -578,10 +582,10 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                 <CardTitle className="text-xl font-black text-slate-900 dark:text-white">Histórico Clínico</CardTitle>
                 <CardDescription className="dark:text-slate-400">Consultas de todos os animais deste cliente.</CardDescription>
               </CardHeader>
-              {customer.patients?.some((p: any) => p._count?.consultations > 0) ? (
+              {customer.patients?.some((p: any) => p._count?.visitCount > 0) ? (
                 <div className="space-y-4 mt-4">
                   {customer.patients
-                    .filter((p: any) => p._count?.consultations > 0)
+                    .filter((p: any) => p._count?.visitCount > 0)
                     .map((patient: any) => (
                       <div key={patient.id} className="p-6 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10">
                         <div className="flex items-center gap-3 mb-4">
@@ -590,7 +594,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                           </div>
                           <div>
                             <p className="font-black text-slate-900 dark:text-white">{patient.name}</p>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase">{patient._count?.consultations || 0} consultas</p>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase">{patient._count?.visitCount || 0} consultas</p>
                           </div>
                         </div>
                         <Link href={`/dashboard/patients/${patient.id}`}>
