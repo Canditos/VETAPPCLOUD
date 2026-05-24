@@ -18,7 +18,7 @@ async function getRUT240Config(clinicId?: string) {
       const settings = await prisma.automationSettings.findUnique({
         where: { clinicId }
       });
-      if (settings?.rut240Enabled && settings?.rut240Ip) {
+      if (settings?.rut240Ip) {
         return {
           ip: settings.rut240Ip,
           username: settings.rut240User || 'admin',
@@ -35,10 +35,28 @@ async function getRUT240Config(clinicId?: string) {
   };
 }
 
-export async function sendSMSViaRUT240(numero: string, mensagem: string, clinicId?: string): Promise<{ success: boolean; message: string }> {
+export async function sendSMSViaRUT240(
+  numero: string,
+  mensagem: string,
+  clinicId?: string,
+  forceUseConfig?: boolean
+): Promise<{ success: boolean; message: string }> {
   return new Promise(async (resolve, reject) => {
     if (!numero || !mensagem) {
       return reject(new Error('Número e mensagem são obrigatórios'));
+    }
+
+    if (clinicId) {
+      try {
+        const settings = await prisma.automationSettings.findUnique({
+          where: { clinicId }
+        });
+        if (!forceUseConfig && (!settings || !settings.rut240Enabled || !settings.rut240Ip)) {
+          return reject(new Error('Gateway RUT240 não está ativado ou não tem o endereço IP configurado nas definições da clínica.'));
+        }
+      } catch (err) {
+        return reject(err);
+      }
     }
 
     let formattedNumber = numero.replace(/\s+/g, '');

@@ -135,14 +135,24 @@ export default function NotificationSettings() {
           type: "SMS",
           ownerPhone: testPhone.replace(/\s+/g, ''),
           message: "Teste de conectividade RUT240 - VetConnect",
-          patientName: "Teste"
+          patientName: "Teste",
+          isTest: true
         }),
       });
       const data = await res.json();
-      setTestResult({ success: data.success, message: data.message || "SMS enviado!" });
-      if (data.success) setGatewayStatus("online");
+      if (!res.ok || !data.success) {
+        setTestResult({ 
+          success: false, 
+          message: data.error || data.message || "Falha na comunicação com o Gateway RUT240." 
+        });
+        setGatewayStatus("offline");
+      } else {
+        setTestResult({ success: true, message: data.message || "SMS enviado!" });
+        setGatewayStatus("online");
+      }
     } catch (e) {
       setTestResult({ success: false, message: "Falha na comunicação com o Gateway RUT240." });
+      setGatewayStatus("offline");
     } finally {
       setIsTesting(false);
     }
