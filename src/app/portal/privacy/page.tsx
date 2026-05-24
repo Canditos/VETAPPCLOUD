@@ -94,8 +94,10 @@ export default function PortalPrivacyPage() {
                 const bold = line.match(/^\d+\.\s(.+)/);
                 if (bold) return <p key={i} className="text-white font-black text-base mt-5 first:mt-0">{bold[1]}</p>;
                 if (line.startsWith("Versão:")) return <p key={i} className="text-slate-500 text-[10px] uppercase tracking-widest pt-4 border-t border-slate-800 mt-6">{line}</p>;
-                const heading = line.match(/^(POLÍTICA DE PRIVACIDADE|A presente)/);
+                const heading = line.match(/^(POLÍTICA DE PRIVACIDADE —|A presente)/);
                 if (heading) return null;
+                if (line.trim().startsWith("• ")) return <p key={i} className="text-slate-300 ml-2 mt-3">• <span className="font-semibold">{line.trim().slice(2)}</span></p>;
+                if (line.trim().startsWith("↳")) return <p key={i} className="text-slate-400 text-sm ml-6 mb-3">{line.trim()}</p>;
                 if (line.trim().startsWith("- ")) return <p key={i} className="text-slate-300 ml-4">• {line.trim().slice(2)}</p>;
                 if (line.trim()) return <p key={i} className="text-slate-300">{line}</p>;
                 return <div key={i} className="h-2" />;
