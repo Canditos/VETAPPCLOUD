@@ -49,11 +49,11 @@ export const GET = withAuthParams(async ({ clinicId, tenantPrisma }, { id }) => 
         where: { ownerId: patient?.ownerId, clinicId },
         orderBy: { createdAt: "desc" },
       }),
-      // Puxar pagamentos
-      tenantPrisma.payment.findMany({
-        where: { patientId: id },
+      // Puxar pagamentos (pelo dono, não pelo paciente — Payment não tem patientId)
+      patient?.ownerId ? tenantPrisma.payment.findMany({
+        where: { ownerId: patient.ownerId },
         orderBy: { createdAt: "desc" },
-      })
+      }) : Promise.resolve([]),
     ]);
 
     const history = [
