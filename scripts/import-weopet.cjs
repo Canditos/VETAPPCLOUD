@@ -350,9 +350,45 @@ async function main() {
       et.setMinutes(et.getMinutes() + 30);
 
       try {
+        const consultationId = `weopet-consultation-${apt.hash}`;
+        await prisma.consultation.upsert({
+          where: { id: consultationId },
+          update: {
+            notes: {
+              upsert: {
+                update: {
+                  subjective: apt.reason || "Consulta importada do weoPet",
+                  objective: [apt.veterinarian ? `Médico: ${apt.veterinarian}` : null, apt.weight ? `Peso: ${apt.weight}` : null, apt.temp ? `Temp: ${apt.temp}` : null].filter(Boolean).join("\n") || null,
+                  assessment: apt.type || null,
+                },
+                create: {
+                  subjective: apt.reason || "Consulta importada do weoPet",
+                  objective: [apt.veterinarian ? `Médico: ${apt.veterinarian}` : null, apt.weight ? `Peso: ${apt.weight}` : null, apt.temp ? `Temp: ${apt.temp}` : null].filter(Boolean).join("\n") || null,
+                  assessment: apt.type || null,
+                },
+              },
+            },
+          },
+          create: {
+            id: consultationId,
+            clinicId: CLINIC_ID,
+            patientId: pid,
+            veterinarianId: VET_ID,
+            date: st,
+            status: "COMPLETED",
+            notes: {
+              create: {
+                 subjective: apt.reason || "Consulta importada do weoPet",
+                  objective: [apt.veterinarian ? `Médico: ${apt.veterinarian}` : null, apt.weight ? `Peso: ${apt.weight}` : null, apt.temp ? `Temp: ${apt.temp}` : null].filter(Boolean).join("\n") || null,
+                  assessment: apt.type || null,
+                },
+              },
+            },
+          },
+        });
         await prisma.appointment.upsert({
           where: { id: `weopet-${apt.hash}` },
-          update: { type: apt.type || undefined, reason: apt.reason || undefined },
+          update: { type: apt.type || undefined, reason: apt.reason || undefined, consultationId },
           create: {
             id: `weopet-${apt.hash}`,
             clinicId: CLINIC_ID,
@@ -363,6 +399,7 @@ async function main() {
             type: apt.type || null,
             reason: apt.reason || null,
             status: "COMPLETED",
+            consultationId,
           },
         });
         localImported++;
