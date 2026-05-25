@@ -38,6 +38,8 @@ const ConsultationSchema = z.object({
     temperature: z.number().optional().nullable(),
     heartRate: z.number().optional().nullable(),
     respiratoryRate: z.number().optional().nullable(),
+    painScale: z.number().int().min(0).max(10).optional().nullable(),
+    bodyConditionScore: z.number().int().min(1).max(9).optional().nullable(),
   }).optional(),
   items: z.array(z.object({
     id: z.string().optional(),
@@ -95,7 +97,7 @@ export const POST = withAuth(async ({ req, session, tenantPrisma, clinicId, user
     });
 
     // 1.1. Create Vital Signs if provided
-    if (vitals && (vitals.weight || vitals.temperature || vitals.heartRate || vitals.respiratoryRate)) {
+    if (vitals && (vitals.weight || vitals.temperature || vitals.heartRate || vitals.respiratoryRate || vitals.painScale != null || vitals.bodyConditionScore != null)) {
       await tenantPrisma.vitalSigns.create({
         data: {
           patientId,
@@ -104,6 +106,8 @@ export const POST = withAuth(async ({ req, session, tenantPrisma, clinicId, user
           temperature: vitals.temperature,
           heartRate: vitals.heartRate,
           respiratoryRate: vitals.respiratoryRate,
+          painScale: vitals.painScale,
+          bodyConditionScore: vitals.bodyConditionScore,
           date: new Date(),
           veterinarianId: userId,
         }

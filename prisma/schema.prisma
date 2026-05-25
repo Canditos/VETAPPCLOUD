@@ -44,6 +44,7 @@ model Clinic {
   notifications      Notification[]
   smsLogs            SmsLog[]
   privacyConsents    PrivacyConsent[]
+  vitalSigns         VitalSign[]
 
   @@index([name])
 }
@@ -62,6 +63,7 @@ model User {
   hospitalAdmission Hospitalization[]     @relation("AdmissionBy")
   completedTasks    HospitalizationTask[]
   prescriptions     Prescription[]
+  vitalSigns        VitalSign[]
   clinic            Clinic                @relation(fields: [clinicId], references: [id])
 
   @@index([clinicId])
@@ -461,18 +463,24 @@ model Subscription {
 }
 
 model VitalSign {
-  id              String   @id @default(uuid())
-  patientId       String
-  weight          Decimal? @db.Decimal(10, 2)
-  temperature     Decimal? @db.Decimal(4, 2)
-  heartRate       Int?
-  respiratoryRate Int?
-  notes           String?
-  recordedAt      DateTime @default(now())
-  patient         Patient  @relation(fields: [patientId], references: [id])
+  id                  String   @id @default(uuid())
+  patientId           String
+  clinicId            String
+  weight              Decimal? @db.Decimal(10, 2)
+  temperature         Decimal? @db.Decimal(4, 2)
+  heartRate           Int?
+  respiratoryRate     Int?
+  painScale           Int?     // 0-10 numeric pain scale (0=no pain, 10=maximum pain)
+  bodyConditionScore  Int?     // 1-9 BCS scale (1-3=underweight, 4-5=ideal, 6-9=overweight/obese)
+  notes               String?
+  date                DateTime @default(now())
+  veterinarianId      String?
+  patient             Patient  @relation(fields: [patientId], references: [id])
+  clinic              Clinic   @relation(fields: [clinicId], references: [id])
+  veterinarian        User?    @relation(fields: [veterinarianId], references: [id])
 
   @@index([patientId])
-  @@index([recordedAt])
+  @@index([clinicId])
 }
 
 model Vaccination {

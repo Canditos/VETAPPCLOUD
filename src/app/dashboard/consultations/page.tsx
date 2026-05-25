@@ -2,12 +2,13 @@
 
 import { useState, Suspense, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { 
+import {
   Save, FileText, Activity, ClipboardCheck, Receipt, FlaskConical,
   ChevronLeft, Stethoscope, Image as ImageIcon, Thermometer, Weight,
   Clock, Plus, ShieldAlert, Search, History, Syringe, AlertCircle,
   AlertTriangle, Sparkles, Eye, TrendingUp, CheckCircle2, Pill
 } from "lucide-react";
+import { PainAssessmentForm } from "@/components/forms/PainAssessmentForm";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,7 @@ function ConsultationContent() {
   const [activeTab, setActiveTab] = useState(urlTab);
   const [billingItems, setBillingItems] = useState<BillingItem[]>([]);
   const [notes, setNotes] = useState({ subjective: "", objective: "", assessment: "", plan: "" });
-  const [vitals, setVitals] = useState({ weight: "", temperature: "", heartRate: "", respiratoryRate: "" });
+  const [vitals, setVitals] = useState({ weight: "", temperature: "", heartRate: "", respiratoryRate: "", painScale: -1, bodyConditionScore: -1 });
 
   useEffect(() => { setActiveTab(urlTab); }, [urlTab]);
 
@@ -119,6 +120,8 @@ function ConsultationContent() {
             temperature: vitals.temperature ? parseFloat(vitals.temperature) : null,
             heartRate: vitals.heartRate ? parseFloat(vitals.heartRate) : null,
             respiratoryRate: vitals.respiratoryRate ? parseFloat(vitals.respiratoryRate) : null,
+            painScale: vitals.painScale >= 0 ? vitals.painScale : null,
+            bodyConditionScore: vitals.bodyConditionScore >= 1 ? vitals.bodyConditionScore : null,
           },
           items: billingItems,
           billNow: true
@@ -211,10 +214,17 @@ function ConsultationContent() {
             <div className="flex flex-wrap items-center gap-4 text-sm">
               <p className="text-slate-500 dark:text-slate-400 font-medium">{patient?.breed} <span className="mx-2 opacity-10">|</span> {patient?.owner?.name}</p>
                {allergies && (
-                 <span className="flex items-center gap-1.5 text-rose-600 dark:text-rose-400 font-semibold text-[10px] bg-rose-50 dark:bg-rose-900/20 px-3 py-1 rounded-lg">
-                   <ShieldAlert size={12} /> {allergies}
-                 </span>
-               )}
+                  <div className="flex items-center gap-4 p-4 bg-rose-600 text-white rounded-2xl ring-2 ring-rose-400 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 shadow-lg shadow-rose-500/30 animate-in fade-in slide-in-from-top-2 duration-500">
+                    <div className="flex-shrink-0 w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                      <AlertTriangle size={22} strokeWidth={3} className="animate-pulse" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-extrabold text-sm tracking-wide uppercase">⚠ ALERTA DE ALERGIAS</p>
+                      <p className="text-rose-100 text-sm font-semibold mt-0.5 truncate">{allergies}</p>
+                    </div>
+                    <Badge className="bg-white/20 text-white border-none font-bold text-[10px] px-3 py-1.5 shrink-0">ATENÇÃO MÉDICA</Badge>
+                  </div>
+                )}
                {lastVitals && (
                  <span className="flex items-center gap-1.5 text-slate-400 font-medium text-[10px]">
                    <Weight size={12} /> {lastVitals.weight}kg
@@ -269,56 +279,169 @@ function ConsultationContent() {
                 </div>
                 <div className="p-6 space-y-6">
                   
-                  {/* Vitals Input */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-slate-50 dark:bg-slate-800/40 rounded-3xl border border-slate-100 dark:border-white/5">
-                    {[
-                      { label: "Peso", icon: Weight, unit: "kg", color: "text-blue-500", placeholder: "12.45", key: "weight" },
-                      { label: "Temp.", icon: Thermometer, unit: "ºC", color: "text-blue-500", placeholder: "38.6", key: "temperature" },
-                      { label: "FC", icon: Clock, unit: "bpm", color: "text-purple-500", placeholder: "100", key: "heartRate" },
-                      { label: "FR", icon: Activity, unit: "mpm", color: "text-rose-500", placeholder: "24", key: "respiratoryRate" }
-                    ].map((vital, i) => (
-                      <div key={i} className="flex flex-col gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm ring-1 ring-slate-100 dark:ring-white/5 transition-all hover:ring-blue-500/30">
-                        <div className="flex items-center gap-2">
-                           <vital.icon size={14} className={vital.color} strokeWidth={3} />
-                           <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{vital.label}</span>
+                  {/* Vitals Input — 4 core measurements */}
+                  <div className="space-y-4 p-6 bg-slate-50 dark:bg-slate-800/40 rounded-3xl border border-slate-100 dark:border-white/5">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sinais Vitais</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {[
+                        { label: "Peso", icon: Weight, unit: "kg", color: "text-blue-500", placeholder: "12.45", key: "weight" },
+                        { label: "Temp.", icon: Thermometer, unit: "ºC", color: "text-orange-500", placeholder: "38.6", key: "temperature" },
+                        { label: "FC", icon: Clock, unit: "bpm", color: "text-purple-500", placeholder: "100", key: "heartRate" },
+                        { label: "FR", icon: Activity, unit: "mpm", color: "text-rose-500", placeholder: "24", key: "respiratoryRate" }
+                      ].map((vital, i) => (
+                        <div key={i} className="flex flex-col gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm ring-1 ring-slate-100 dark:ring-white/5 transition-all hover:ring-blue-500/30">
+                          <div className="flex items-center gap-2">
+                             <vital.icon size={14} className={vital.color} strokeWidth={3} />
+                             <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{vital.label}</span>
+                          </div>
+                          <div className="flex items-baseline gap-2 mt-1">
+                             <Input type="number" step="0.1" className="border-none bg-transparent p-0 h-auto text-2xl font-bold text-slate-900 dark:text-white placeholder:text-slate-200 dark:placeholder:text-slate-700 focus-visible:ring-0" placeholder={vital.placeholder} value={(vitals as any)[vital.key]} onChange={(e) => setVitals({ ...vitals, [vital.key]: e.target.value })} />
+                             <span className="text-xs font-medium text-slate-400">{vital.unit}</span>
+                          </div>
                         </div>
-                        <div className="flex items-baseline gap-2 mt-1">
-                           <Input type="number" step="0.1" className="border-none bg-transparent p-0 h-auto text-2xl font-bold text-slate-900 dark:text-white placeholder:text-slate-200 dark:placeholder:text-slate-700 focus-visible:ring-0" placeholder={vital.placeholder} value={(vitals as any)[vital.key]} onChange={(e) => setVitals({ ...vitals, [vital.key]: e.target.value })} />
-                           <span className="text-xs font-medium text-slate-400">{vital.unit}</span>
+                      ))}
+                    </div>
+
+                    {/* Pain Assessment — Glasgow CMPS-SF (cães) / Grimace Scale (gatos) */}
+                    <PainAssessmentForm
+                      species={patient?.species || ""}
+                      value={vitals.painScale}
+                      onChange={(normalized) => setVitals({ ...vitals, painScale: normalized })}
+                    />
+
+                    {/* Body Condition Score 1–9 */}
+                    <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-white/5">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">BCS — Condição Corporal (1–9)</p>
+                          <p className="text-[10px] text-slate-400 font-medium">Avaliação visual e palpação das costelas, coluna e gordura subcutânea</p>
                         </div>
+                        {vitals.bodyConditionScore >= 1 && (
+                          <span className={cn("text-xs font-bold px-2 py-1 rounded-lg",
+                            vitals.bodyConditionScore <= 3 ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+                            vitals.bodyConditionScore <= 5 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
+                            vitals.bodyConditionScore <= 7 ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
+                            "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
+                          )}>
+                            {vitals.bodyConditionScore <= 2 ? "Caquético" : vitals.bodyConditionScore === 3 ? "Magro" : vitals.bodyConditionScore <= 5 ? "Peso ideal" : vitals.bodyConditionScore <= 7 ? "Excesso de peso" : "Obesidade"}
+                          </span>
+                        )}
                       </div>
-                    ))}
+                      <div className="flex gap-1.5">
+                        {[
+                          { score: 1, label: "Caquético" },
+                          { score: 2, label: "Muito magro" },
+                          { score: 3, label: "Magro" },
+                          { score: 4, label: "Abaixo ideal" },
+                          { score: 5, label: "Ideal" },
+                          { score: 6, label: "Acima ideal" },
+                          { score: 7, label: "Excesso" },
+                          { score: 8, label: "Obeso" },
+                          { score: 9, label: "Obesidade grave" },
+                        ].map(({ score, label }) => (
+                          <button key={score} type="button" title={label}
+                            onClick={() => setVitals({ ...vitals, bodyConditionScore: vitals.bodyConditionScore === score ? -1 : score })}
+                            className={cn("flex-1 h-10 rounded-xl text-sm font-black transition-all active:scale-95 ring-2",
+                              vitals.bodyConditionScore === score ? (
+                                score <= 3 ? "bg-blue-500 text-white ring-blue-300" :
+                                score <= 5 ? "bg-emerald-500 text-white ring-emerald-300" :
+                                score <= 7 ? "bg-yellow-500 text-white ring-yellow-300" :
+                                "bg-rose-600 text-white ring-rose-400"
+                              ) : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 ring-slate-100 dark:ring-white/5 hover:ring-slate-300 dark:hover:border-white/10"
+                            )}>
+                            {score}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex justify-between text-[9px] font-semibold text-slate-400 px-0.5">
+                        <span className="text-blue-500">← Caquético</span>
+                        <span className="text-emerald-500">Ideal</span>
+                        <span className="text-rose-500">Obeso →</span>
+                      </div>
+                    </div>
                   </div>
 
+                  {/* SOAP — Veterinary Medicine Protocol */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-3">
-                      <Label className="text-xs font-semibold text-slate-500 dark:text-slate-400 ml-1">S: Subjective</Label>
-                      <Textarea className="min-h-[140px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-100 dark:border-white/5 focus-visible:ring-blue-500/20 resize-none text-sm" value={notes.subjective} onChange={(e) => setNotes({ ...notes, subjective: e.target.value })} placeholder="Relato do proprietário, motivo da consulta..." />
+                      <div className="flex items-center gap-2 ml-1">
+                        <span className="w-5 h-5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-md text-[10px] font-black flex items-center justify-center">S</span>
+                        <Label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Anamnese (Subjetivo)</Label>
+                      </div>
+                      <Textarea className="min-h-[140px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-100 dark:border-white/5 focus-visible:ring-blue-500/20 resize-none text-sm" value={notes.subjective} onChange={(e) => setNotes({ ...notes, subjective: e.target.value })} placeholder="Queixa principal, história clínica, evolução, alimentação, ambiente, medicação em curso, vacinações anteriores..." />
                     </div>
                     <div className="space-y-3">
-                      <Label className="text-xs font-semibold text-slate-500 dark:text-slate-400 ml-1">O: Objective</Label>
-                      <Textarea className="min-h-[140px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-100 dark:border-white/5 focus-visible:ring-blue-500/20 resize-none text-sm" value={notes.objective} onChange={(e) => setNotes({ ...notes, objective: e.target.value })} placeholder="Mucosas, TRC, auscultação, palpação..." />
+                      <div className="flex items-center gap-2 ml-1">
+                        <span className="w-5 h-5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-md text-[10px] font-black flex items-center justify-center">O</span>
+                        <Label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Exame Físico (Objetivo)</Label>
+                      </div>
+                      <Textarea className="min-h-[140px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-100 dark:border-white/5 focus-visible:ring-blue-500/20 resize-none text-sm" value={notes.objective} onChange={(e) => setNotes({ ...notes, objective: e.target.value })} placeholder="Alerta mental, mucosas (cor, TRC, hidratação), auscultação cardiopulmonar, palpação abdominal, linfonodos, olhos, ouvidos, pele/pelo..." />
                     </div>
                     <div className="space-y-3">
-                      <Label className="text-xs font-semibold text-slate-500 dark:text-slate-400 ml-1">A: Assessment</Label>
-                      <Textarea className="min-h-[140px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-100 dark:border-white/5 focus-visible:ring-blue-500/20 resize-none text-sm" value={notes.assessment} onChange={(e) => setNotes({ ...notes, assessment: e.target.value })} placeholder="Conclusões clínicas, diferenciais..." />
+                      <div className="flex items-center gap-2 ml-1">
+                        <span className="w-5 h-5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-md text-[10px] font-black flex items-center justify-center">A</span>
+                        <Label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Diagnóstico (Avaliação)</Label>
+                      </div>
+                      <Textarea className="min-h-[140px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-100 dark:border-white/5 focus-visible:ring-blue-500/20 resize-none text-sm" value={notes.assessment} onChange={(e) => setNotes({ ...notes, assessment: e.target.value })} placeholder="Lista de problemas, diagnóstico presuntivo, diagnósticos diferenciais, prognóstico..." />
                     </div>
                     <div className="space-y-3">
                       <div className="flex items-center justify-between ml-1">
-                        <Label className="text-xs font-semibold text-blue-600 dark:text-blue-400">P: Plan</Label>
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 bg-blue-600 text-white rounded-md text-[10px] font-black flex items-center justify-center">P</span>
+                          <Label className="text-xs font-semibold text-blue-600 dark:text-blue-400">Plano Terapêutico</Label>
+                        </div>
                         <Button variant="ghost" size="sm" className="h-7 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 gap-2" onClick={() => { if (!notes.plan) { toast.error("Escreva o plano primeiro!"); return; } updateTab("prescriptions"); toast.success("Plano transferido!"); }}>
                           <Sparkles size={12} strokeWidth={3} /> Gerar Prescrição
                         </Button>
                       </div>
-                      <Textarea className="min-h-[140px] rounded-2xl bg-blue-50/30 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/20 focus-visible:ring-blue-500/20 resize-none text-sm" value={notes.plan} onChange={(e) => setNotes({ ...notes, plan: e.target.value })} placeholder="Medicamentos, exames, recomendações..." />
+                      <Textarea className="min-h-[140px] rounded-2xl bg-blue-50/30 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/20 focus-visible:ring-blue-500/20 resize-none text-sm" value={notes.plan} onChange={(e) => setNotes({ ...notes, plan: e.target.value })} placeholder="Protocolo medicamentoso (fármacos, doses, frequência, duração), exames complementares solicitados, reavaliação em, instruções ao tutor..." />
                     </div>
                   </div>
                  </div>
-               </PremiumCard>
-             </div>
+                </PremiumCard>
+              </div>
 
-            <div className="lg:col-span-4 space-y-6">
-              <PremiumCard padding="none" className="h-full flex flex-col">
+             <div className="lg:col-span-4 space-y-6">
+               {/* Vaccination Booklet Mini-Card */}
+               {(() => {
+                const vaccEvents = history?.filter((h: { type: string }) => h.type === "VACCINATION") ?? [];
+                const now = new Date();
+                return (
+                  <PremiumCard padding="none">
+                    <div className="px-6 py-4 bg-emerald-50/50 dark:bg-emerald-900/10 border-b border-emerald-100 dark:border-emerald-900/20">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2"><Syringe size={14} className="text-emerald-600" /> Boletim Vacinal</h3>
+                        <Button variant="ghost" size="sm" className="h-7 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 gap-1.5" onClick={() => updateTab("vaccines")}>
+                          Ver completo <ChevronLeft className="rotate-180" size={10} />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="p-4 space-y-2">
+                      {vaccEvents.length === 0 ? (
+                        <p className="text-xs text-slate-400 font-medium text-center py-4">Sem vacinas registadas</p>
+                      ) : vaccEvents.slice(0, 4).map((v: { id: string; title: string; date: string; data?: { expiresAt?: string } }) => {
+                        const expiresAt = v.data?.expiresAt ? new Date(v.data.expiresAt) : null;
+                        const isExpired = expiresAt && expiresAt < now;
+                        const isDueSoon = expiresAt && !isExpired && (expiresAt.getTime() - now.getTime()) < 30 * 24 * 60 * 60 * 1000;
+                        return (
+                          <div key={v.id} className="flex items-center justify-between gap-2 p-2.5 bg-slate-50 dark:bg-white/5 rounded-xl">
+                            <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate flex-1">{v.title}</p>
+                            <Badge className={cn("border-none text-[9px] font-bold shrink-0",
+                              isExpired ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" :
+                              isDueSoon ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
+                              "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                            )}>
+                              {isExpired ? "Vencida" : isDueSoon ? "Próxima" : "Válida"}
+                            </Badge>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </PremiumCard>
+                );
+              })()}
+
+               <PremiumCard padding="none" className="h-full flex flex-col">
                 <div className="px-6 py-4 bg-slate-50/50 dark:bg-white/5 border-b border-slate-100 dark:border-white/5">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2"><History size={14} className="text-blue-600" /> Histórico</h3>
