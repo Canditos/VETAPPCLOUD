@@ -641,17 +641,19 @@ enum SenderType {
 }
 
 model PrivacyConsent {
-  id        String   @id @default(cuid())
+  id        String         @id @default(cuid())
   ownerId   String
-  owner     Owner    @relation(fields: [ownerId], references: [id])
+  owner     Owner          @relation(fields: [ownerId], references: [id])
   clinicId  String
-  clinic    Clinic   @relation(fields: [clinicId], references: [id])
-  version   String   @default("v1")
+  clinic    Clinic         @relation(fields: [clinicId], references: [id])
+  version   String         @default("v1")
+  policyUrl String?        // link to full policy at time of acceptance
   ip        String?
-  method    String   @default("portal")  // portal, email, presencial
-  accepted  Boolean  @default(false)
+  userAgent String?
+  method    String         @default("portal")  // portal, email, presencial
+  accepted  Boolean        @default(false)
   acceptedAt DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime        @default(now())
 
   @@index([clinicId])
   @@index([ownerId])
