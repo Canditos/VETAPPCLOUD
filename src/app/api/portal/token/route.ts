@@ -22,9 +22,10 @@ export const POST = withAuth(async ({ tenantPrisma, clinicId, req }) => {
     return NextResponse.json({ error: "Owner not found" }, { status: 404 });
   }
 
-  const secret = new TextEncoder().encode(
-    process.env.NEXTAUTH_SECRET || "temp-fallback-secret-do-not-use-in-prod"
-  );
+  if (!process.env.NEXTAUTH_SECRET) {
+    return NextResponse.json({ error: "Servidor mal configurado: NEXTAUTH_SECRET em falta" }, { status: 500 });
+  }
+  const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
 
   const token = await new SignJWT({
     ownerId: owner.id,
