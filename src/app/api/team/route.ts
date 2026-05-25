@@ -27,14 +27,15 @@ export const GET = withAuth(async ({ tenantPrisma }) => {
 
 export const POST = withAuth(async ({ req, tenantPrisma, clinicId, session }) => {
   try {
-    if ((session.user as any).role !== "ADMIN") {
+    const role = (session.user as any).role;
+    if (role !== "SUPER_ADMIN" && role !== "ADMIN") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await req.json();
-    const { name, email, role } = body;
+    const { name, email, role: newRole } = body;
 
-    if (!name || !email || !role) {
+    if (!name || !email || !newRole) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
@@ -45,7 +46,7 @@ export const POST = withAuth(async ({ req, tenantPrisma, clinicId, session }) =>
       data: {
         name,
         email,
-        role,
+        role: newRole,
         clinicId,
         passwordHash,
       }

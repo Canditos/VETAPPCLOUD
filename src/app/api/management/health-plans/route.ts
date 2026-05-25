@@ -24,7 +24,8 @@ export const GET = withAuth(async ({ clinicId }) => {
 
 export const POST = withAuth(async ({ req, clinicId, session }) => {
   try {
-    if ((session.user as any).role !== "ADMIN") {
+    const role = (session.user as any).role;
+    if (role !== "SUPER_ADMIN" && role !== "ADMIN") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

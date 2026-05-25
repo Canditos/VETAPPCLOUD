@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { SignJWT } from "jose";
+import { createRateLimiter, buildRateLimitKey, getClientIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
+const rateLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, maxAttempts: 10 });
+
 export async function GET(req: Request) {
   try {
+    const ip = getClientIp(req);
     const { searchParams } = new URL(req.url);
     const token = searchParams.get("token");
 
@@ -13,7 +17,18 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Token não fornecido" }, { status: 400 });
     }
 
-    // Encontra o token e o owner
+    const rlKey = buildRateLimitKey(ip, `magic:${token}`);
+    const { allowed, retryAfter } = rateLimiter.check(rlKey);
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Demasiados pedidos. Tente novamente mais tarde." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(retryAfter) },
+        }
+      );
+    }
+
     const portalToken = await prisma.ownerPortalToken.findUnique({
       where: { token },
       include: { owner: true },
@@ -23,24 +38,25 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Token inválido" }, { status: 401 });
     }
 
-    // Verifica se expirou
     if (portalToken.expiresAt && new Date() > portalToken.expiresAt) {
       return NextResponse.json({ error: "Token expirado" }, { status: 401 });
     }
 
     const owner = portalToken.owner;
 
-    // Gera o token JWT para o portal (MESMA LÓGICA DO LOGIN)
     const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
     const jwt = await new SignJWT({ ownerId: owner.id, clinicId: owner.clinicId })
       .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()
-      .setExpirationTime("30d")
+      .setExpirationTime("7d")
       .sign(secret);
 
-    // Redireciona (usa redirect param ou privacy check)
     const requestedRedirect = searchParams.get("redirect") || "/portal/dashboard";
-    const redirectTo = new URL(requestedRedirect, req.url);
+
+    const allowedRedirects = ["/portal/dashboard", "/portal/privacy", "/portal/appointments"];
+    const redirectTo = allowedRedirects.includes(requestedRedirect)
+      ? new URL(requestedRedirect, req.url)
+      : new URL("/portal/dashboard", req.url);
 
     const consent = await prisma.privacyConsent.findFirst({
       where: { ownerId: owner.id, clinicId: owner.clinicId, accepted: true },
@@ -51,12 +67,11 @@ export async function GET(req: Request) {
 
     const response = NextResponse.redirect(finalUrl);
 
-    // Define o cookie (HTTPOnly)
     response.cookies.set("vet_portal_session", jwt, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 30 * 24 * 60 * 60, // 30 days
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60,
       path: "/",
     });
 

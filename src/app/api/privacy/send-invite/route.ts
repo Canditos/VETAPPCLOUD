@@ -3,8 +3,8 @@ export const dynamic = "force-dynamic";
 import { withAuth } from "@/lib/api-wrapper";
 import prisma from "@/lib/prisma";
 import { sendSMSViaRUT240 } from "@/lib/sms-rut240";
-import { SignJWT } from "jose";
 import { sendEmail, buildRgpdEmail } from "@/lib/email";
+import crypto from "crypto";
 
 export const POST = withAuth(async ({ req, clinicId }: any) => {
   try {
@@ -24,15 +24,18 @@ export const POST = withAuth(async ({ req, clinicId }: any) => {
       return NextResponse.json({ error: "Cliente já aceitou a política de privacidade" }, { status: 409 });
     }
 
-    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
-    const portalJwt = await new SignJWT({ ownerId: owner.id, clinicId: owner.clinicId })
-      .setProtectedHeader({ alg: "HS256" })
-      .setIssuedAt()
-      .setExpirationTime("7d")
-      .sign(secret);
+    const tokenValue = crypto.randomUUID();
+    await prisma.ownerPortalToken.create({
+      data: {
+        token: tokenValue,
+        ownerId,
+        clinicId,
+        expiresAt: new Date(Date.now() + 7 * 86400000),
+      },
+    });
 
     const baseUrl = process.env.NEXTAUTH_URL || "https://vet.gatoescondido.com";
-    const consentLink = `${baseUrl}/api/portal/auth/magic?token=${portalJwt}&redirect=/portal/privacy`;
+    const consentLink = `${baseUrl}/api/portal/auth/magic?token=${tokenValue}&redirect=/portal/privacy`;
     const clinicName = owner.clinic?.name || "Clínica Veterinária";
 
     let sent: string[] = [];
@@ -56,7 +59,6 @@ export const POST = withAuth(async ({ req, clinicId }: any) => {
 
     return NextResponse.json({
       sent,
-      link: consentLink,
       message: sent.includes("email")
         ? `Email enviado para ${owner.email}`
         : sent.includes("sms")
