@@ -37,12 +37,16 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => ({}));
 
+  const baseUrl = process.env.NEXTAUTH_URL || `https://${req.headers.get("host") || "vet.gatoescondido.com"}`;
+
   const consent = await prisma.privacyConsent.create({
     data: {
       ownerId,
       clinicId,
       version: body.version || "v1",
+      policyUrl: body.policyUrl || `${baseUrl}/portal/privacy`,
       ip: body.ip || req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || null,
+      userAgent: body.userAgent || req.headers.get("user-agent") || null,
       method: "portal",
       accepted: true,
       acceptedAt: new Date(),

@@ -34,7 +34,11 @@ export default function PortalPrivacyPage() {
       const res = await fetch("/api/portal/privacy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ version: "v1" }),
+        body: JSON.stringify({
+          version: "v1",
+          userAgent: navigator.userAgent,
+          policyUrl: window.location.href,
+        }),
       });
       if (!res.ok) throw new Error("Erro ao registar consentimento");
       setDone(true);

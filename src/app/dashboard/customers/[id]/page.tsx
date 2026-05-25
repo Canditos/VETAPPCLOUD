@@ -388,6 +388,49 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
         </div>
       </div>
 
+      {/* RGPD Evidence Card */}
+      {customer.privacyConsents?.length > 0 && (() => {
+        const c = customer.privacyConsents[0];
+        return (
+          <div className="p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800 space-y-3">
+            <div className="flex items-center gap-2">
+              <ShieldCheck size={18} className="text-emerald-600" />
+              <p className="text-sm font-black text-emerald-700 dark:text-emerald-300 uppercase tracking-widest">Evidência RGPD</p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div>
+                <p className="text-emerald-600 dark:text-emerald-400 font-bold text-[10px] uppercase tracking-wider">Aceite em</p>
+                <p className="text-emerald-800 dark:text-emerald-200 font-semibold">{format(new Date(c.acceptedAt || c.createdAt), "dd/MM/yyyy HH:mm", { locale: pt })}</p>
+              </div>
+              <div>
+                <p className="text-emerald-600 dark:text-emerald-400 font-bold text-[10px] uppercase tracking-wider">Versão</p>
+                <p className="text-emerald-800 dark:text-emerald-200 font-semibold font-mono">{c.version}</p>
+              </div>
+              <div>
+                <p className="text-emerald-600 dark:text-emerald-400 font-bold text-[10px] uppercase tracking-wider">IP</p>
+                <p className="text-emerald-800 dark:text-emerald-200 font-semibold font-mono">{c.ip || "—"}</p>
+              </div>
+              <div>
+                <p className="text-emerald-600 dark:text-emerald-400 font-bold text-[10px] uppercase tracking-wider">Método</p>
+                <p className="text-emerald-800 dark:text-emerald-200 font-semibold capitalize">{c.method === "portal" ? "Portal (clique)" : c.method}</p>
+              </div>
+              {c.userAgent && (
+                <div className="col-span-full">
+                  <p className="text-emerald-600 dark:text-emerald-400 font-bold text-[10px] uppercase tracking-wider">Browser / Dispositivo</p>
+                  <p className="text-emerald-800 dark:text-emerald-200 font-mono text-[11px] break-all">{c.userAgent}</p>
+                </div>
+              )}
+              {c.policyUrl && (
+                <div className="col-span-full">
+                  <p className="text-emerald-600 dark:text-emerald-400 font-bold text-[10px] uppercase tracking-wider">Link da Política</p>
+                  <a href={c.policyUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 underline text-[11px] break-all">{c.policyUrl}</a>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
       <Tabs defaultValue="animals" className="w-full">
         <TabsList className="bg-slate-100/50 dark:bg-slate-800/50 p-1.5 rounded-[2rem] h-auto gap-2 mb-8 w-full flex">
           <TabsTrigger value="animals" className="flex-1 rounded-2xl py-3 font-black text-slate-500 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 data-[state=active]:shadow-lg transition-all gap-2 justify-center">
