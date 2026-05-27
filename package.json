@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "check:api-guards": "node scripts/check-api-guards.mjs",
+    "check:appt-encoding": "node scripts/fix-appointment-type-encoding.mjs",
+    "fix:appt-encoding": "node scripts/fix-appointment-type-encoding.mjs --fix",
     "test": "vitest",
     "test:ci": "vitest run",
     "test:e2e": "playwright test",

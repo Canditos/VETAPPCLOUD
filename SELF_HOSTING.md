@@ -65,3 +65,24 @@ cloudflared tunnel login
 cloudflared tunnel run vetconnect
 ```
 *Isto permite que o site esteja online via HTTPS sem expor o teu IP de casa.*
+
+---
+
+## 6. Manutenção de Encoding (Mojibake)
+Para detetar texto corrompido em tipos de consulta (ex: `Observa��o`), usa:
+
+```bash
+npm run check:appt-encoding
+```
+
+Para corrigir automaticamente:
+
+```bash
+npm run fix:appt-encoding
+```
+
+Sugestão de rotina diária via cron no host:
+
+```bash
+15 3 * * * cd /home/canditos/VETAPPCLOUD && /usr/bin/npm run fix:appt-encoding >> /home/canditos/encoding-fix.log 2>&1
+```
