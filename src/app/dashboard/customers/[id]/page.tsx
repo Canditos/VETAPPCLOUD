@@ -255,14 +255,11 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
         </div>
 
         {!customer.privacyConsents?.length && (
-          <div className="col-span-full flex items-start gap-4 p-5 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-            <ShieldCheck size={24} className="text-amber-500 shrink-0 mt-0.5" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-amber-700 dark:text-amber-300">Consentimento RGPD Pendente</p>
-              <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                Este cliente ainda não aceitou a Política de Privacidade. Clique em "Solicitar Consentimento" para enviar um email ou SMS com o link de aceitação.
-              </p>
-            </div>
+          <div className="col-span-full flex items-center gap-3 py-2.5 px-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+            <ShieldCheck size={16} className="text-amber-500 shrink-0" />
+            <p className="text-xs text-amber-700 dark:text-amber-300 truncate">
+              RGPD pendente — clique em <strong>"Solicitar Consentimento"</strong> acima
+            </p>
           </div>
         )}
 
