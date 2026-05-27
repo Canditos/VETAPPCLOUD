@@ -64,3 +64,28 @@ export const POST = withRole("team", "CRIAR_LER", async ({ req, tenantPrisma, cl
     return new NextResponse(JSON.stringify({ error: errorMessage }), { status: 500, headers: { "Content-Type": "application/json" } });
   }
 });
+
+export const PATCH = withRole("team", "CRIAR_LER", async ({ req, tenantPrisma }) => {
+  try {
+    const body = await req.json();
+    const userId = typeof body?.userId === "string" ? body.userId : "";
+    const newPassword = typeof body?.newPassword === "string" ? body.newPassword : "";
+
+    if (!userId || newPassword.length < 8) {
+      return NextResponse.json({ error: "Campos inválidos" }, { status: 400 });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    await tenantPrisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("[TEAM_PATCH]", error);
+    const errorMessage = error instanceof Error ? error.message : "Internal Error";
+    return new NextResponse(JSON.stringify({ error: errorMessage }), { status: 500, headers: { "Content-Type": "application/json" } });
+  }
+});

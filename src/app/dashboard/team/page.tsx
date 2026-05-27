@@ -58,6 +58,18 @@ export default function TeamPage() {
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [inviting, setInviting] = useState(false);
   const [formData, setFormData] = useState({ name: "", email: "", role: "VETERINARIAN" });
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [passwordTarget, setPasswordTarget] = useState<TeamMember | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [generatedPassword, setGeneratedPassword] = useState("");
+
+  const generatePassword = () => {
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%*+-_";
+    const bytes = new Uint8Array(14);
+    window.crypto.getRandomValues(bytes);
+    return Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join("");
+  };
 
   const fetchTeam = async () => {
     try {
@@ -98,6 +110,46 @@ export default function TeamPage() {
       toast.error("Erro na comunicação com o servidor");
     } finally {
       setInviting(false);
+    }
+  };
+
+  const openPasswordDialog = (member: TeamMember) => {
+    setPasswordTarget(member);
+    const password = generatePassword();
+    setGeneratedPassword(password);
+    setNewPassword(password);
+    setPasswordDialogOpen(true);
+  };
+
+  const handlePasswordChange = async () => {
+    if (!passwordTarget) return;
+    if (newPassword.length < 8) {
+      toast.error("A password deve ter pelo menos 8 caracteres");
+      return;
+    }
+
+    setSavingPassword(true);
+    try {
+      const response = await fetch("/api/team", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: passwordTarget.id, newPassword })
+      });
+
+      if (response.ok) {
+        toast.success(`Password atualizada para ${passwordTarget.name}`);
+        setPasswordDialogOpen(false);
+        setPasswordTarget(null);
+        setNewPassword("");
+        setGeneratedPassword("");
+      } else {
+        const err = await response.json().catch(() => ({}));
+        toast.error(err.error || "Erro ao atualizar password");
+      }
+    } catch {
+      toast.error("Erro na comunicação com o servidor");
+    } finally {
+      setSavingPassword(false);
     }
   };
 
@@ -246,7 +298,7 @@ export default function TeamPage() {
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      onClick={() => toast.info(`A abrir definições de ${m.name}...`)}
+                      onClick={() => openPasswordDialog(m)}
                       className="font-bold text-[10px] uppercase tracking-widest text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl px-4 h-9"
                     >
                       Configurar
@@ -258,6 +310,59 @@ export default function TeamPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+        <DialogContent className="sm:max-w-[425px] rounded-2xl border-none shadow-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-white/10">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-slate-900 dark:text-white">Alterar password</DialogTitle>
+            <DialogDescription className="text-slate-500 dark:text-slate-400">
+              {passwordTarget ? `Atualizar acesso de ${passwordTarget.name}` : "Seleciona um membro"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="rounded-xl border border-amber-200 bg-amber-50/70 dark:bg-amber-900/10 dark:border-amber-800/40 p-4">
+              <p className="text-[10px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-widest">Reset direto</p>
+              <p className="text-sm text-amber-900 dark:text-amber-100 mt-1">Clique em guardar para substituir a password atual por uma nova password forte gerada automaticamente.</p>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="newPassword" className="text-xs font-bold text-slate-500 uppercase">Nova password</Label>
+              <Input
+                id="newPassword"
+                type="text"
+                placeholder="Password gerada automaticamente"
+                className="rounded-xl bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/50 text-slate-900 dark:text-white"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+            </div>
+            {generatedPassword && (
+              <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 p-4">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Password gerada</p>
+                <p className="mt-2 font-mono text-sm text-slate-900 dark:text-white break-all">{generatedPassword}</p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="mt-3 rounded-xl font-bold"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(generatedPassword);
+                    toast.success("Password copiada para a área de transferência");
+                  }}
+                >
+                  Copiar password
+                </Button>
+              </div>
+            )}
+          </div>
+          <Button
+            onClick={handlePasswordChange}
+            disabled={savingPassword || !passwordTarget || newPassword.length < 8}
+            className="w-full rounded-xl bg-blue-600 py-6 text-lg font-bold gap-2"
+          >
+            {savingPassword ? <Loader2 className="animate-spin" size={20} /> : <Shield size={20} />}
+            Guardar nova password
+          </Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
