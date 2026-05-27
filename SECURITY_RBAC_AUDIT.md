@@ -11,9 +11,19 @@ This audit classifies API route protection by guard type:
 
 ## Current Coverage
 - Total API route files: 84
-- `withRole`: 12
+- `withRole`: 14
 - `withAuth`: 51
-- `none`: 21
+- `none`: 19
+
+## Middleware Gate (Cross-Cutting Control)
+`src/middleware.ts` now enforces API access by default:
+- `/api/:path*` requires authenticated NextAuth token, except explicit allowlist routes.
+- `/api/portal/:path*` requires either portal session cookie or authenticated NextAuth token, except portal auth public endpoints.
+
+This means `none` routes are no longer automatically public by default. They are either:
+- explicitly public by design,
+- protected by secret/feature flag checks inside the route,
+- or covered by middleware-level auth gate.
 
 ## Hardening Completed In This Package
 - Added schema validation (`zod`) and removed `any` in:
@@ -29,19 +39,34 @@ This audit classifies API route protection by guard type:
   - `src/app/api/hospitalization/[id]/route.ts`
   - `src/app/api/inventory/[id]/route.ts`
   - `src/app/api/owners/route.ts`
+- Upgraded additional sensitive endpoints to role checks:
+  - `src/app/api/marketing/campaigns/route.ts`
+  - `src/app/api/sms-logs/route.ts`
 
-## Highest Priority Gaps (No Guard Wrapper)
-These routes should be reviewed first for explicit auth/tenant/role guarantees:
-- `src/app/api/appointments/[id]/route.ts`
-- `src/app/api/customers/[id]/route.ts`
-- `src/app/api/hospitalization/[id]/route.ts`
-- `src/app/api/inventory/[id]/route.ts`
-- `src/app/api/patients/[id]/route.ts`
-- `src/app/api/owners/route.ts`
-- `src/app/api/portal/appointments/route.ts`
-- `src/app/api/portal/invoices/route.ts`
-- `src/app/api/portal/messages/route.ts`
-- `src/app/api/notifications/[id]/read/route.ts`
+## Remaining `none` Routes (Intentional / Special Flow)
+- Public auth/framework:
+  - `src/app/api/auth/[...nextauth]/route.ts`
+  - `src/app/api/auth/register/route.ts`
+- Public health/policy:
+  - `src/app/api/health/route.ts`
+  - `src/app/api/privacy/policy/route.ts`
+- Secret-gated jobs/webhooks/dev tools:
+  - `src/app/api/cron/reminder-24h/route.ts`
+  - `src/app/api/cron/vaccine-alert/route.ts`
+  - `src/app/api/debug/seed/route.ts`
+  - `src/app/api/dev/run-tests/route.ts`
+  - `src/app/api/integrations/examion/route.ts`
+  - `src/app/api/integrations/fuji/route.ts`
+- Portal session/token flows (middleware-gated):
+  - `src/app/api/portal/appointments/[id]/confirm/route.ts`
+  - `src/app/api/portal/appointments/route.ts`
+  - `src/app/api/portal/auth/login/route.ts`
+  - `src/app/api/portal/auth/logout/route.ts`
+  - `src/app/api/portal/auth/magic/route.ts`
+  - `src/app/api/portal/invoices/route.ts`
+  - `src/app/api/portal/me/route.ts`
+  - `src/app/api/portal/messages/route.ts`
+  - `src/app/api/portal/privacy/route.ts`
 
 ## Recommended Migration Plan
 1. Convert high-risk `none` routes to `withRole` where they are clinic-internal APIs.

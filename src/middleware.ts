@@ -33,16 +33,47 @@ Documentation is available at [/docs/api](/docs/api).
   }
 
   const isAuthPage = pathname.startsWith("/auth");
-  const isDashboard = pathname.startsWith("/dashboard");
   const isApiAuth = pathname.startsWith("/api/auth");
+  const isApi = pathname.startsWith("/api");
   const isPortalDashboard = pathname.startsWith("/portal/dashboard");
   const isPortalLogin = pathname === "/portal";
   const isPortalApi = pathname.startsWith("/api/portal");
   const isRoot = pathname === "/";
 
+  const publicApiPrefixes = [
+    "/api/auth",
+    "/api/health",
+    "/api/privacy/policy",
+    "/api/cron/reminder-24h",
+    "/api/cron/vaccine-alert",
+    "/api/debug/seed",
+    "/api/dev/run-tests",
+    "/api/integrations/examion",
+    "/api/integrations/fuji",
+    "/api/portal/auth/login",
+    "/api/portal/auth/magic",
+    "/api/portal/auth/logout",
+  ];
+
+  const isPublicApi = publicApiPrefixes.some((prefix) => pathname.startsWith(prefix));
+
   // Handle Portal routes first (no getToken needed)
   if (isPortalDashboard || isPortalLogin || isPortalApi) {
-    if (isPortalApi) return NextResponse.next();
+    if (isPortalApi) {
+      if (isPublicApi) return NextResponse.next();
+
+      const portalSession = request.cookies.get("vet_portal_session")?.value;
+      if (portalSession) return NextResponse.next();
+
+      const token = await getToken({
+        req: request,
+        secret: process.env.NEXTAUTH_SECRET,
+      });
+
+      if (token) return NextResponse.next();
+
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const portalSession = request.cookies.get("vet_portal_session")?.value;
     
@@ -52,6 +83,21 @@ Documentation is available at [/docs/api](/docs/api).
     
     if (isPortalLogin && portalSession) {
       return NextResponse.redirect(new URL("/portal/dashboard", request.url));
+    }
+
+    return NextResponse.next();
+  }
+
+  if (isApi) {
+    if (isPublicApi) return NextResponse.next();
+
+    const token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     return NextResponse.next();
@@ -97,5 +143,6 @@ export const config = {
     "/auth/:path*",
     "/portal/:path*",
     "/api/portal/:path*",
+    "/api/:path*",
   ],
 };

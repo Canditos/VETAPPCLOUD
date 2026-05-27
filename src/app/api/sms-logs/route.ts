@@ -1,18 +1,10 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { withRole } from "@/lib/api-wrapper";
 import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session || !(session.user as any).clinicId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const clinicId = (session.user as any).clinicId;
-
+export const GET = withRole("sms", "LER", async ({ clinicId }) => {
   try {
     const logs = await prisma.smsLog.findMany({
       where: { clinicId },
@@ -24,4 +16,4 @@ export async function GET() {
     console.error("[SMS_LOGS]", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
-}
+});

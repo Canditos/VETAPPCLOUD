@@ -1,24 +1,24 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { withRole } from "@/lib/api-wrapper";
 import prisma from "@/lib/prisma";
 import { sendSMSViaRUT240 } from "@/lib/sms-rut240";
+import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session || !(session.user as any).clinicId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+const bodySchema = z.object({
+  message: z.string().min(1),
+  ownerIds: z.array(z.string().min(1)).min(1),
+});
 
-  const clinicId = (session.user as any).clinicId;
-
+export const POST = withRole("marketing", "CRIAR_LER", async ({ req, clinicId }) => {
   try {
-    const { message, ownerIds } = await req.json();
-    if (!message || !ownerIds?.length) {
-      return NextResponse.json({ error: "Mensagem e destinatários são obrigatórios" }, { status: 400 });
+    const parsed = bodySchema.safeParse(await req.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid payload", details: parsed.error.flatten() }, { status: 400 });
     }
+
+    const { message, ownerIds } = parsed.data;
 
     const settings = await prisma.automationSettings.findUnique({ where: { clinicId } });
     if (!settings?.smsMarketing) {
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
       where: { id: { in: ownerIds }, clinicId, phone: { not: null } },
     });
 
-    const results: any[] = [];
+    const results: Array<{ ownerId: string; name: string; phone: string; status: "sent" | "failed"; error?: string }> = [];
 
     for (const owner of owners) {
       if (!owner.phone) continue;
@@ -47,7 +47,8 @@ export async function POST(req: Request) {
           },
         });
         results.push({ ownerId: owner.id, name: owner.name, phone: owner.phone, status: "sent" });
-      } catch (err: any) {
+      } catch (err) {
+        const errMessage = err instanceof Error ? err.message : "Unknown error";
         await prisma.smsLog.create({
           data: {
             clinicId,
@@ -56,16 +57,17 @@ export async function POST(req: Request) {
             status: "FAILED",
             type: "MARKETING",
             ownerId: owner.id,
-            error: err.message,
+            error: errMessage,
           },
         });
-        results.push({ ownerId: owner.id, name: owner.name, phone: owner.phone, status: "failed", error: err.message });
+        results.push({ ownerId: owner.id, name: owner.name, phone: owner.phone, status: "failed", error: errMessage });
       }
     }
 
     return NextResponse.json({ success: true, sent: results.filter((r) => r.status === "sent").length, failed: results.filter((r) => r.status === "failed").length, results });
-  } catch (error: any) {
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Internal error";
     console.error("[MARKETING]", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
