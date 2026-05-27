@@ -1,8 +1,7 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-
-export type Role = "ADMIN" | "VETERINARIAN" | "ASSISTANT" | "RECEPTIONIST";
+import type { Role } from "@/lib/roles";
 
 /**
  * Server-side guard to restrict access based on roles.
@@ -15,9 +14,9 @@ export async function roleGuard(allowedRoles: Role[]) {
     redirect("/auth/signin");
   }
 
-  const userRole = (session.user as any).role as Role;
+  const userRole = (session.user as { role?: Role }).role;
 
-  if (!allowedRoles.includes(userRole)) {
+  if (!userRole || !allowedRoles.includes(userRole)) {
     // If not allowed, redirect to dashboard or access denied
     redirect("/dashboard?error=access_denied");
   }

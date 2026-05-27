@@ -1,9 +1,9 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { withAuth } from "@/lib/api-wrapper";
+import { withRole } from "@/lib/api-wrapper";
 import { SignJWT } from "jose";
 
-export const POST = withAuth(async ({ tenantPrisma, clinicId, req }) => {
+export const POST = withRole("team", "CRIAR_LER", async ({ tenantPrisma, clinicId, req }) => {
   const body = await req.json();
   const { ownerId } = body as { ownerId: string };
 

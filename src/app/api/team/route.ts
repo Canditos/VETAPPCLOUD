@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { withAuth } from "@/lib/api-wrapper";
+import crypto from "node:crypto";
+import { withRole } from "@/lib/api-wrapper";
 import bcrypt from "bcryptjs";
 
 export const dynamic = "force-dynamic";
 
-export const GET = withAuth(async ({ tenantPrisma }) => {
+export const GET = withRole("team", "LER", async ({ tenantPrisma }) => {
   try {
     const users = await tenantPrisma.user.findMany({
       select: {
@@ -25,13 +26,8 @@ export const GET = withAuth(async ({ tenantPrisma }) => {
   }
 });
 
-export const POST = withAuth(async ({ req, tenantPrisma, clinicId, session }) => {
+export const POST = withRole("team", "CRIAR_LER", async ({ req, tenantPrisma, clinicId }) => {
   try {
-    const role = (session.user as any).role;
-    if (role !== "SUPER_ADMIN" && role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
     const body = await req.json();
     const { name, email, role: newRole } = body;
 
@@ -39,7 +35,7 @@ export const POST = withAuth(async ({ req, tenantPrisma, clinicId, session }) =>
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
-    const tempPassword = Math.random().toString(36).slice(-8);
+    const tempPassword = crypto.randomBytes(12).toString("base64url");
     const passwordHash = await bcrypt.hash(tempPassword, 10);
 
     const user = await tenantPrisma.user.create({
@@ -52,9 +48,15 @@ export const POST = withAuth(async ({ req, tenantPrisma, clinicId, session }) =>
       }
     });
 
-    return NextResponse.json(user);
-  } catch (error: any) {
-    if (error.code === 'P2002') {
+    return NextResponse.json({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      createdAt: user.createdAt,
+    });
+  } catch (error) {
+    if (typeof error === "object" && error !== null && "code" in error && (error as { code?: string }).code === "P2002") {
       return NextResponse.json({ error: "Email já registado" }, { status: 400 });
     }
     console.error("[TEAM_POST]", error);

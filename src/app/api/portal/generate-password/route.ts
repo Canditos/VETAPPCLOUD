@@ -1,17 +1,13 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { withAuth } from "@/lib/api-wrapper";
+import crypto from "node:crypto";
+import { withRole } from "@/lib/api-wrapper";
 
 export const dynamic = "force-dynamic";
 
-export const POST = withAuth(async ({ req, session, clinicId }) => {
+export const POST = withRole("team", "CRIAR_LER", async ({ req, clinicId }) => {
   try {
-    const role = (session.user as any).role;
-    if (role !== "SUPER_ADMIN" && role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
     const { ownerId, manualPassword } = await req.json();
 
     if (!ownerId) {
@@ -30,14 +26,10 @@ export const POST = withAuth(async ({ req, session, clinicId }) => {
       return NextResponse.json({ error: "Cliente não encontrado" }, { status: 404 });
     }
 
-    // Generate random 6-char password if none provided
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    // Generate secure random temporary password if none provided
     let password = manualPassword;
     if (!password) {
-      password = "";
-      for (let i = 0; i < 6; i++) {
-        password += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
+      password = crypto.randomBytes(12).toString("base64url");
     }
 
     const passwordHash = await bcrypt.hash(password, 10);

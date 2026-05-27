@@ -12,7 +12,13 @@ export function csrfProtection(req: Request): NextResponse | null {
   const referer = req.headers.get("referer");
   const source = origin || (referer ? new URL(referer).origin : null);
 
-  if (!source) return null;
+  if (!source) {
+    if (process.env.NODE_ENV === "production") {
+      console.warn(`[CSRF] Rejected ${req.method} ${req.url} due to missing origin/referer`);
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    return null;
+  }
 
   const expected = process.env.NEXTAUTH_URL || "https://vet.gatoescondido.com";
   const allowed = [expected.replace(/\/$/, ""), ...ALLOWED_ORIGINS];

@@ -42,6 +42,10 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Token expirado" }, { status: 401 });
     }
 
+    await prisma.ownerPortalToken.delete({
+      where: { token },
+    });
+
     const owner = portalToken.owner;
 
     const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
