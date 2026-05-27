@@ -6,7 +6,6 @@ import {
   Bell, 
   Shield, 
   Save,
-  Globe,
   Database,
   Link2,
   Loader2
@@ -32,10 +31,6 @@ export default function SettingsPage() {
     vendusApiKey: ""
   });
 
-  useEffect(() => {
-    fetchClinic();
-  }, []);
-
   const fetchClinic = async () => {
     try {
       const response = await fetch("/api/clinic");
@@ -50,12 +45,17 @@ export default function SettingsPage() {
           vendusApiKey: data.vendusApiKey || ""
         });
       }
-    } catch (error) {
+    } catch {
       toast.error("Erro ao carregar dados da clínica");
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchClinic();
+  }, []);
 
   const handleSave = async () => {
     setSaving(true);
@@ -70,7 +70,7 @@ export default function SettingsPage() {
       } else {
         throw new Error();
       }
-    } catch (error) {
+    } catch {
       toast.error("Erro ao guardar configurações");
     } finally {
       setSaving(false);

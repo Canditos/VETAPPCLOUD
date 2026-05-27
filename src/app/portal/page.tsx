@@ -1,24 +1,22 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
-import { PawPrint } from "lucide-react";
+import { Loader2, PawPrint } from "lucide-react";
 import { PortalLoginForm } from "@/components/portal/PortalLoginForm";
 
 function PortalContent() {
   const searchParams = useSearchParams();
-  const [isLoading, setIsLoading] = useState(false);
+  const token = searchParams.get("token");
 
   useEffect(() => {
-    const token = searchParams.get("token");
     if (token) {
-      setIsLoading(true);
       window.location.href = `/api/portal/auth/magic?token=${token}`;
     }
-  }, [searchParams]);
+  }, [token]);
 
-  if (isLoading) {
+  if (token) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -74,5 +72,3 @@ export default function PortalLoginPage() {
     </Suspense>
   );
 }
-
-import { Loader2 } from "lucide-react";

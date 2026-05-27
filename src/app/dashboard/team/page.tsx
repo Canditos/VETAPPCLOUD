@@ -2,10 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { 
-  Users, 
-  Plus, 
-  ShieldCheck, 
-  Mail, 
+  Mail,
   UserPlus,
   Shield,
   Stethoscope,
@@ -48,15 +45,19 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
+type TeamMember = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  createdAt: string;
+};
+
 export default function TeamPage() {
   const [loading, setLoading] = useState(true);
-  const [team, setTeam] = useState<any[]>([]);
+  const [team, setTeam] = useState<TeamMember[]>([]);
   const [inviting, setInviting] = useState(false);
   const [formData, setFormData] = useState({ name: "", email: "", role: "VETERINARIAN" });
-
-  useEffect(() => {
-    fetchTeam();
-  }, []);
 
   const fetchTeam = async () => {
     try {
@@ -65,12 +66,17 @@ export default function TeamPage() {
         const data = await response.json();
         setTeam(data);
       }
-    } catch (error) {
+    } catch {
       toast.error("Erro ao carregar equipa");
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchTeam();
+  }, []);
 
   const handleInvite = async () => {
     setInviting(true);
@@ -88,7 +94,7 @@ export default function TeamPage() {
         const err = await response.json();
         toast.error(err.error || "Erro ao enviar convite");
       }
-    } catch (error) {
+    } catch {
       toast.error("Erro na comunicação com o servidor");
     } finally {
       setInviting(false);
