@@ -105,5 +105,11 @@ npx prisma migrate reset
 npx prisma generate
 ```
 
+### Production Healthcheck
+```bash
+# Used by container health probes (Coolify/Docker)
+curl -fsS http://localhost:3000/api/health
+```
+
 ---
 Developed with ❤️ by the VetConnect Engineering Team.
