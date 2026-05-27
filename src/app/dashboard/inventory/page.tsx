@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   Package, Plus, Search, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown,
@@ -46,10 +46,26 @@ export default function InventoryPage() {
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState<ProductForm>(emptyForm());
+  const [quickBarcode, setQuickBarcode] = useState("");
+  const [quickBarcodeLoading, setQuickBarcodeLoading] = useState(false);
+  const [barcodeLookupLoading, setBarcodeLookupLoading] = useState(false);
   const [editTarget, setEditTarget] = useState<any>(null);
   const [movementTarget, setMovementTarget] = useState<any>(null);
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const queryClient = useQueryClient();
+  const barcodeInputRef = useRef<HTMLInputElement | null>(null);
+  const quickBarcodeInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (!createOpen) return;
+    const timer = window.setTimeout(() => barcodeInputRef.current?.focus(), 150);
+    return () => window.clearTimeout(timer);
+  }, [createOpen]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => quickBarcodeInputRef.current?.focus(), 100);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["inventory"],
@@ -73,6 +89,101 @@ export default function InventoryPage() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["inventory"] }); setCreateOpen(false); setCreateForm(emptyForm()); toast.success("Artigo criado!"); },
     onError: () => toast.error("Erro ao criar artigo"),
   });
+
+  const lookupBarcodeMutation = useMutation({
+    mutationFn: async (barcode: string) => {
+      const r = await fetch(`/api/products?q=${encodeURIComponent(barcode)}`);
+      if (!r.ok) throw new Error();
+      return r.json();
+    },
+  });
+
+  const handleQuickBarcodeScan = async () => {
+    const barcode = quickBarcode.trim();
+    if (!barcode) {
+      toast.error("Lê primeiro o código de barras.");
+      return;
+    }
+
+    setQuickBarcodeLoading(true);
+    try {
+      const products = await lookupBarcodeMutation.mutateAsync(barcode);
+      const match = Array.isArray(products)
+        ? products.find((product: any) => String(product.barcode ?? "").trim() === barcode)
+        : null;
+
+      if (match) {
+        createMutation.mutate({
+          name: match.name ?? "",
+          price: String(match.price ?? ""),
+          vatRate: match.vatRate ?? 23,
+          stockQuantity: "1",
+          barcode: match.barcode ?? barcode,
+          batchNumber: match.batchNumber ?? "",
+          expiryDate: match.expiryDate ? String(match.expiryDate).split("T")[0] : "",
+          category: match.category ?? "",
+        });
+        setQuickBarcode("");
+        toast.success("Stock incrementado: +1 unidade.");
+        return;
+      }
+
+      setCreateForm((current) => ({
+        ...current,
+        barcode,
+      }));
+      setCreateOpen(true);
+      setTimeout(() => barcodeInputRef.current?.focus(), 150);
+      toast.message("Código desconhecido", {
+        description: "O artigo não existe ainda. O modal abriu com o código preenchido para criar o novo produto.",
+      });
+    } catch {
+      toast.error("Não foi possível ler esse código.");
+    } finally {
+      setQuickBarcodeLoading(false);
+    }
+  };
+
+  const applyBarcodeLookup = async () => {
+    const barcode = createForm.barcode.trim();
+    if (!barcode) {
+      toast.error("Lê primeiro o código de barras.");
+      return;
+    }
+
+    setBarcodeLookupLoading(true);
+    try {
+      const products = await lookupBarcodeMutation.mutateAsync(barcode);
+      const match = Array.isArray(products)
+        ? products.find((product: any) => String(product.barcode ?? "").trim() === barcode)
+        : null;
+
+      if (!match) {
+        toast.message("Código lido", {
+          description: "Nenhum produto encontrado com esse código. Podes preencher os restantes campos e criar o artigo.",
+        });
+        barcodeInputRef.current?.focus();
+        return;
+      }
+
+      createMutation.mutate({
+        name: match.name ?? "",
+        price: String(match.price ?? ""),
+        vatRate: match.vatRate ?? 23,
+        stockQuantity: "1",
+        barcode: match.barcode ?? barcode,
+        batchNumber: match.batchNumber ?? "",
+        expiryDate: match.expiryDate ? String(match.expiryDate).split("T")[0] : "",
+        category: match.category ?? "",
+      });
+
+      toast.success("Produto encontrado. 1 unidade adicionada ao stock.");
+    } catch {
+      toast.error("Não foi possível ler esse código.");
+    } finally {
+      setBarcodeLookupLoading(false);
+    }
+  };
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, ...data }: any) => {
@@ -182,7 +293,21 @@ export default function InventoryPage() {
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Código de Barras</Label>
-          <Input value={form.barcode} onChange={e => setForm({ ...form, barcode: e.target.value })} placeholder="Ex: 5601234567890" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
+          <Input
+            ref={barcodeInputRef}
+            value={form.barcode}
+            onChange={e => setForm({ ...form, barcode: e.target.value })}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                void applyBarcodeLookup();
+              }
+            }}
+            placeholder="Ex: 5601234567890"
+            className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold"
+            autoComplete="off"
+            inputMode="numeric"
+          />
         </div>
         <div className="space-y-2">
           <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nº Lote</Label>
@@ -192,6 +317,15 @@ export default function InventoryPage() {
       <div className="space-y-2">
         <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Validade</Label>
         <Input type="date" value={form.expiryDate} onChange={e => setForm({ ...form, expiryDate: e.target.value })} className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
+      </div>
+      <div className="flex items-center gap-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 p-3">
+        <div className="flex-1">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Leitura por pistola</p>
+          <p className="text-xs text-slate-500 mt-1">Carrega no código e pressiona Enter para procurar um artigo existente.</p>
+        </div>
+        <Button type="button" variant="outline" onClick={() => void applyBarcodeLookup()} disabled={barcodeLookupLoading} className="h-10 rounded-xl border-slate-200 dark:border-slate-700 font-bold">
+          {barcodeLookupLoading ? "A procurar..." : "Ler código"}
+        </Button>
       </div>
       <Button disabled={loading || !form.name || !form.price} onClick={onSubmit} className="w-full h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-widest">
         {loading ? "A guardar..." : title}
@@ -275,6 +409,32 @@ export default function InventoryPage() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 px-3 py-2">
+              <Input
+                ref={quickBarcodeInputRef}
+                value={quickBarcode}
+                onChange={(e) => setQuickBarcode(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void handleQuickBarcodeScan();
+                  }
+                }}
+                placeholder="Scan rápido"
+                className="h-9 w-44 rounded-lg border-none bg-transparent px-2 text-sm font-bold shadow-none focus-visible:ring-0"
+                autoComplete="off"
+                inputMode="numeric"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void handleQuickBarcodeScan()}
+                disabled={quickBarcodeLoading}
+                className="h-8 rounded-lg border-slate-200 dark:border-slate-700 font-bold text-[10px] uppercase tracking-widest"
+              >
+                {quickBarcodeLoading ? "A ler..." : "Adicionar stock"}
+              </Button>
+            </div>
             <Button variant="outline" onClick={() => toast.success("Exportação iniciada...")} className="h-9 rounded-xl px-4 gap-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:bg-white transition-all active:scale-95">
               <Download size={15} strokeWidth={2.5} /> Exportar
             </Button>
