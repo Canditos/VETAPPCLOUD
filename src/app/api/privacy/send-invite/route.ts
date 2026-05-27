@@ -1,14 +1,24 @@
 import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
-import { withAuth } from "@/lib/api-wrapper";
+import { withRole } from "@/lib/api-wrapper";
 import prisma from "@/lib/prisma";
 import { sendSMSViaRUT240 } from "@/lib/sms-rut240";
 import { sendEmail, buildRgpdEmail } from "@/lib/email";
 import crypto from "crypto";
+import { z } from "zod";
 
-export const POST = withAuth(async ({ req, clinicId }: any) => {
+const inviteBodySchema = z.object({
+  ownerId: z.string().min(1),
+});
+
+export const POST = withRole("owners", "CRIAR_LER", async ({ req, clinicId }) => {
   try {
-    const { ownerId } = await req.json();
+    const parsed = inviteBodySchema.safeParse(await req.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid payload", details: parsed.error.flatten() }, { status: 400 });
+    }
+
+    const { ownerId } = parsed.data;
     if (!ownerId) return NextResponse.json({ error: "ownerId required" }, { status: 400 });
 
     const owner = await prisma.owner.findUnique({
@@ -38,7 +48,7 @@ export const POST = withAuth(async ({ req, clinicId }: any) => {
     const consentLink = `${baseUrl}/api/portal/auth/magic?token=${tokenValue}&redirect=/portal/privacy`;
     const clinicName = owner.clinic?.name || "Clínica Veterinária";
 
-    let sent: string[] = [];
+    const sent: string[] = [];
 
     if (owner.email) {
       const { sent: ok } = await sendEmail(

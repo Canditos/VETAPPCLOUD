@@ -1,13 +1,31 @@
 import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
-import { withAuth } from "@/lib/api-wrapper";
+import { withRole } from "@/lib/api-wrapper";
+import { z } from "zod";
 
-export const GET = withAuth(async (ctx: any) => {
-  const { clinicId, req } = ctx;
+type AggregateRow = {
+  date?: string;
+  week?: string;
+  month?: string;
+  total: string | number;
+  sent: string | number;
+  failed: string | number;
+};
+
+const querySchema = z.object({
+  days: z.coerce.number().int().min(0).max(365).default(30),
+});
+
+export const GET = withRole("sms", "LER", async ({ clinicId, req }) => {
   const prisma = (await import("@/lib/prisma")).default;
 
-  const daysParam = req.nextUrl?.searchParams?.get("days");
-  const days = Math.min(Math.max(0, parseInt(daysParam) || 30), 365);
+  const parsedQuery = querySchema.safeParse({
+    days: req.nextUrl?.searchParams?.get("days") ?? 30,
+  });
+  if (!parsedQuery.success) {
+    return NextResponse.json({ error: "Invalid query", details: parsedQuery.error.flatten() }, { status: 400 });
+  }
+  const { days } = parsedQuery.data;
 
   const where = days > 0
     ? { clinicId, createdAt: { gte: new Date(Date.now() - days * 86400000) } }
@@ -51,9 +69,21 @@ export const GET = withAuth(async (ctx: any) => {
     }),
   ]);
 
-  const parseDaily = (rows: any[]) => (rows || []).map((r: any) => ({ ...r, total: Number(r.total), sent: Number(r.sent), failed: Number(r.failed) }));
-  const totalSent = byStatus.find((s: any) => s.status === "SENT")?._count || 0;
-  const totalFailed = byStatus.find((s: any) => s.status === "FAILED")?._count || 0;
+  const parseAggregateRows = (rows: AggregateRow[]) =>
+    rows.map((r) => ({
+      ...r,
+      total: Number(r.total),
+      sent: Number(r.sent),
+      failed: Number(r.failed),
+    }));
+
+  const typedByStatus = byStatus as Array<{ status: string; _count: number }>;
+  const totalSent = typedByStatus.find((s) => s.status === "SENT")?._count || 0;
+  const totalFailed = typedByStatus.find((s) => s.status === "FAILED")?._count || 0;
+
+  const parsedDaily = parseAggregateRows(daily as AggregateRow[]);
+  const parsedWeekly = parseAggregateRows(weekly as AggregateRow[]);
+  const parsedMonthly = parseAggregateRows(monthly as AggregateRow[]);
 
   const CUSTO_MENSAL = 5;
   const CUSTO_POR_SMS = 0.20;
@@ -67,11 +97,11 @@ export const GET = withAuth(async (ctx: any) => {
     successRate: total > 0 ? Math.round((totalSent / total) * 100) : 0,
     byStatus,
     byType,
-    daily: parseDaily(daily),
-    weekly: parseDaily(weekly),
-    monthly: parseDaily(monthly),
+    daily: parsedDaily,
+    weekly: parsedWeekly,
+    monthly: parsedMonthly,
     recent,
-    last30Days: (parseDaily(daily)).reduce((acc: number, d: any) => acc + d.total, 0),
+    last30Days: parsedDaily.reduce((acc, d) => acc + d.total, 0),
     custos: {
       mensal: CUSTO_MENSAL,
       porSms: CUSTO_POR_SMS,
