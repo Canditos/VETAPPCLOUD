@@ -1,10 +1,45 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getPortalSession } from "@/lib/auth-portal";
+import { withPortalSession } from "@/lib/auth-portal";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
+
+type ClinicUserSession = {
+  clinicId?: string;
+};
+
+type ChatMessage = {
+  id: string;
+  createdAt: Date;
+  ownerId: string;
+  clinicId: string;
+  requestId: string | null;
+  content: string;
+  senderType: string;
+  owner: {
+    name: string;
+    email: string;
+  };
+};
+
+type AppointmentRequestMessage = {
+  id: string;
+  createdAt: Date;
+  ownerId: string;
+  clinicId: string;
+  reason: string;
+  status: string;
+  preferred: string | null;
+  owner: {
+    name: string;
+    email: string;
+  };
+  patient: {
+    name: string;
+  };
+};
 
 // GET: Listar mensagens combinadas (Chat + Pedidos)
 export async function GET(req: Request) {
@@ -14,9 +49,10 @@ export async function GET(req: Request) {
   
   // 1. Tentar Sessão Clínica
   const clinicSession = await getServerSession(authOptions);
+  const clinicUser = clinicSession?.user as ClinicUserSession | undefined;
   
-  if (clinicSession && (clinicSession.user as any).clinicId) {
-    const clinicId = (clinicSession.user as any).clinicId;
+  if (clinicSession && clinicUser?.clinicId) {
+    const clinicId = clinicUser.clinicId;
     
     // Buscar Mensagens de Chat
     const chatMessages = await prisma.portalMessage.findMany({
@@ -48,11 +84,11 @@ export async function GET(req: Request) {
     });
 
     const combined = [
-      ...chatMessages.map((m: any) => ({
+      ...chatMessages.map((m: ChatMessage) => ({
         ...m,
         type: "CHAT"
       })),
-      ...appointmentRequests.map((r: any) => ({
+      ...appointmentRequests.map((r: AppointmentRequestMessage) => ({
         id: r.id,
         content: `Pedido de Marcação para ${r.patient.name}: ${r.reason}`,
         createdAt: r.createdAt,
@@ -66,16 +102,15 @@ export async function GET(req: Request) {
         patientName: r.patient.name,
         preferred: r.preferred
       }))
-    ].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return NextResponse.json(combined);
   }
 
-  // 2. Tentar Sessão Portal (Tutor)
-  const portalSession = await getPortalSession();
-  if (portalSession) {
+  // 2. Sessão Portal (Tutor) com wrapper explícito
+  return withPortalSession(async ({ portalSession }) => {
     const messages = await prisma.portalMessage.findMany({
-      where: { 
+      where: {
         clinicId: portalSession.clinicId,
         ownerId: portalSession.ownerId,
         ...(requestIdParam ? { requestId: requestIdParam } : {})
@@ -84,17 +119,16 @@ export async function GET(req: Request) {
       take: 100
     });
     return NextResponse.json(messages);
-  }
-
-  return new NextResponse("Unauthorized", { status: 401 });
+  })(req);
 }
 
 // POST: Enviar mensagem
-export async function POST(req: Request) {
-  const portalSession = await getPortalSession();
-  if (!portalSession) return new NextResponse("Unauthorized", { status: 401 });
-
+export const POST = withPortalSession(async ({ req, portalSession }) => {
   const { content, requestId } = await req.json();
+
+  if (typeof content !== "string" || content.trim().length === 0) {
+    return NextResponse.json({ error: "Conteúdo inválido" }, { status: 400 });
+  }
 
   const message = await prisma.portalMessage.create({
     data: {
@@ -112,7 +146,7 @@ export async function POST(req: Request) {
     data: {
       clinicId: portalSession.clinicId,
       title: "💬 Nova Mensagem do Tutor",
-      message: content.substring(0, 50) + (content.length > 50 ? "..." : ""),
+      message: content.trim().substring(0, 50) + (content.trim().length > 50 ? "..." : ""),
       type: "MESSAGE",
       ownerId: portalSession.ownerId,
       requestId: requestId || null,
@@ -121,4 +155,4 @@ export async function POST(req: Request) {
   });
 
   return NextResponse.json(message);
-}
+});

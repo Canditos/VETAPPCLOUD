@@ -14,8 +14,8 @@ This audit classifies API route protection by guard type:
 - Total API route files: 84
 - `withRole`: 14
 - `withAuth`: 51
-- `withPortalSession`: 5
-- `none`: 14
+- `withPortalSession`: 6
+- `none`: 13
 
 ## Middleware Gate (Cross-Cutting Control)
 `src/middleware.ts` now enforces API access by default:
@@ -49,6 +49,7 @@ This means `none` routes are no longer automatically public by default. They are
   - `src/app/api/portal/appointments/route.ts`
   - `src/app/api/portal/invoices/route.ts`
   - `src/app/api/portal/me/route.ts`
+  - `src/app/api/portal/messages/route.ts`
   - `src/app/api/portal/privacy/route.ts`
 
 ## Remaining `none` Routes (Intentional / Special Flow)
@@ -69,7 +70,6 @@ This means `none` routes are no longer automatically public by default. They are
   - `src/app/api/portal/auth/login/route.ts`
   - `src/app/api/portal/auth/logout/route.ts`
   - `src/app/api/portal/auth/magic/route.ts`
-  - `src/app/api/portal/messages/route.ts`
 
 ## Recommended Migration Plan
 1. Convert high-risk `none` routes to `withRole` where they are clinic-internal APIs.
