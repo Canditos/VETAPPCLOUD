@@ -11,9 +11,9 @@ This audit classifies API route protection by guard type:
 
 ## Current Coverage
 - Total API route files: 84
-- `withRole`: 7
-- `withAuth`: 40
-- `none`: 37
+- `withRole`: 12
+- `withAuth`: 51
+- `none`: 21
 
 ## Hardening Completed In This Package
 - Added schema validation (`zod`) and removed `any` in:
@@ -22,6 +22,13 @@ This audit classifies API route protection by guard type:
   - `src/app/api/settings/sms-stats/route.ts`
   - `src/app/api/settings/templates/route.ts`
 - Upgraded those routes from `withAuth` to `withRole` where applicable.
+- Added role-aware guard support for parameterized routes via `withRoleParams`.
+- Upgraded high-priority ID routes to explicit role checks:
+  - `src/app/api/appointments/[id]/route.ts`
+  - `src/app/api/customers/[id]/route.ts`
+  - `src/app/api/hospitalization/[id]/route.ts`
+  - `src/app/api/inventory/[id]/route.ts`
+  - `src/app/api/owners/route.ts`
 
 ## Highest Priority Gaps (No Guard Wrapper)
 These routes should be reviewed first for explicit auth/tenant/role guarantees:

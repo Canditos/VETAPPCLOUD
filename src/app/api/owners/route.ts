@@ -1,24 +1,34 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import prisma from "@/lib/prisma";
+import { withRole } from "@/lib/api-wrapper";
+import { z } from "zod";
+import type { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session || !(session.user as any).clinicId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+const ownerQuerySchema = z.object({
+  hasPhone: z.enum(["true", "false"]).optional(),
+  limit: z.coerce.number().int().min(1).max(500).default(100),
+  search: z.string().default(""),
+});
+
+export const GET = withRole("owners", "LER", async ({ req, clinicId, tenantPrisma }) => {
+  const { searchParams } = req.nextUrl;
+  const parsed = ownerQuerySchema.safeParse({
+    hasPhone: searchParams.get("hasPhone") ?? undefined,
+    limit: searchParams.get("limit") ?? 100,
+    search: searchParams.get("search") ?? "",
+  });
+
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid query", details: parsed.error.flatten() }, { status: 400 });
   }
 
-  const clinicId = (session.user as any).clinicId;
-  const { searchParams } = new URL(req.url);
-  const hasPhone = searchParams.get("hasPhone") === "true";
-  const limit = parseInt(searchParams.get("limit") || "100");
-  const search = searchParams.get("search") || "";
+  const hasPhone = parsed.data.hasPhone === "true";
+  const limit = parsed.data.limit;
+  const search = parsed.data.search;
 
   try {
-    const where: any = { clinicId };
+    const where: Prisma.OwnerWhereInput = { clinicId };
     if (hasPhone) where.phone = { not: null };
     if (search) {
       where.OR = [
@@ -27,7 +37,7 @@ export async function GET(req: Request) {
       ];
     }
 
-    const owners = await prisma.owner.findMany({
+    const owners = await tenantPrisma.owner.findMany({
       where,
       include: { _count: { select: { patients: true } } },
       orderBy: { name: "asc" },
@@ -47,4 +57,4 @@ export async function GET(req: Request) {
     console.error("[OWNERS_GET]", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
-}
+});

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { withAuthParams } from "@/lib/api-wrapper";
+import { withRoleParams } from "@/lib/api-wrapper";
 
-export const PATCH = withAuthParams(async ({ req, clinicId }, { id }) => {
+export const PATCH = withRoleParams("appointments", "CRIAR_LER", async ({ req, clinicId }, { id }) => {
   try {
     // Verify the appointment belongs to this clinic
     const existing = await prisma.appointment.findFirst({
@@ -93,7 +93,7 @@ export const PATCH = withAuthParams(async ({ req, clinicId }, { id }) => {
   }
 });
 
-export const DELETE = withAuthParams(async ({ clinicId }, { id }) => {
+export const DELETE = withRoleParams("appointments", "CRIAR_LER", async ({ clinicId }, { id }) => {
   try {
     const existing = await prisma.appointment.findFirst({
       where: { id, clinicId },
@@ -104,7 +104,7 @@ export const DELETE = withAuthParams(async ({ clinicId }, { id }) => {
 
     await prisma.appointment.delete({ where: { id } });
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Erro ao eliminar marcação" }, { status: 500 });
   }
 });

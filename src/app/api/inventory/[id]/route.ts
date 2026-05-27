@@ -1,9 +1,9 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { withAuthParams } from "@/lib/api-wrapper";
+import { withRoleParams } from "@/lib/api-wrapper";
+import { canDelete } from "@/lib/roles";
 
-export const PUT = withAuthParams(async ({ req, clinicId, tenantPrisma }, { id }) => {
+export const PUT = withRoleParams("inventory", "CRIAR_LER", async ({ req, clinicId, tenantPrisma }, { id }) => {
   try {
     const existing = await tenantPrisma.product.findFirst({ where: { id, clinicId } });
     if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -32,8 +32,13 @@ export const PUT = withAuthParams(async ({ req, clinicId, tenantPrisma }, { id }
   }
 });
 
-export const DELETE = withAuthParams(async ({ clinicId, tenantPrisma }, { id }) => {
+export const DELETE = withRoleParams("inventory", "CRIAR_LER", async ({ clinicId, tenantPrisma, session }, { id }) => {
   try {
+    const userRole = (session.user as { role?: string }).role;
+    if (!userRole || !canDelete("inventory", userRole)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const existing = await tenantPrisma.product.findFirst({ where: { id, clinicId } });
     if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 

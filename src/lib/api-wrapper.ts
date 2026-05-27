@@ -116,6 +116,16 @@ export function withAuthParams<T = { id: string }>(handler: ApiHandlerWithParams
   };
 }
 
+export function withRoleParams<T = { id: string }>(resource: Resource, level: CrudLevel, handler: ApiHandlerWithParams<T>) {
+  return withAuthParams<T>(async (ctx, params) => {
+    const role = (ctx.session.user as { role?: string }).role;
+    if (!canAccess(resource, role, level)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    return handler(ctx, params);
+  });
+}
+
 export function withErrorHandler(handler: (req: NextRequest) => Promise<NextResponse> | NextResponse) {
   return async (req: NextRequest): Promise<NextResponse> => {
     try {

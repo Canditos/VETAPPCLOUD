@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
-import { withAuthParams } from "@/lib/api-wrapper";
+import { withRoleParams } from "@/lib/api-wrapper";
 
-export const GET = withAuthParams(async ({ tenantPrisma }, { id }) => {
+export const GET = withRoleParams("internamento", "LER", async ({ tenantPrisma }, { id }) => {
   try {
     const hospitalization = await tenantPrisma.hospitalization.findUnique({
       where: { id },
@@ -27,7 +27,7 @@ export const GET = withAuthParams(async ({ tenantPrisma }, { id }) => {
   }
 });
 
-export const PATCH = withAuthParams(async ({ req, tenantPrisma }, { id }) => {
+export const PATCH = withRoleParams("internamento", "CRIAR_LER", async ({ req, tenantPrisma }, { id }) => {
   try {
     const existing = await tenantPrisma.hospitalization.findUnique({
       where: { id },
@@ -40,7 +40,12 @@ export const PATCH = withAuthParams(async ({ req, tenantPrisma }, { id }) => {
     const body = await req.json();
     const { status, boxNumber, reason, dischargeDate } = body;
 
-    const data: any = {};
+    const data: {
+      status?: string;
+      boxNumber?: string | null;
+      reason?: string;
+      dischargeDate?: Date;
+    } = {};
     if (status !== undefined) data.status = status;
     if (boxNumber !== undefined) data.boxNumber = boxNumber;
     if (reason !== undefined) data.reason = reason;

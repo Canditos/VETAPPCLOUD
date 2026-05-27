@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { withAuthParams } from "@/lib/api-wrapper";
+import { withRoleParams } from "@/lib/api-wrapper";
 
 export const dynamic = "force-dynamic";
 
-export const GET = withAuthParams(async ({ tenantPrisma }, { id }) => {
+export const GET = withRoleParams("owners", "LER", async ({ tenantPrisma }, { id }) => {
   try {
     const customer = await tenantPrisma.owner.findUnique({
       where: { id },
@@ -41,13 +41,13 @@ export const GET = withAuthParams(async ({ tenantPrisma }, { id }) => {
       return NextResponse.json({ error: "Customer not found" }, { status: 404 });
     }
 
-    const totalInvoiced = customer.invoices.reduce((acc: any, inv: any) => acc + Number(inv.total), 0);
-    const totalPaid = customer.payments.reduce((acc: any, pay: any) => acc + Number(pay.amount), 0);
+    const totalInvoiced = customer.invoices.reduce((acc, inv) => acc + Number(inv.total), 0);
+    const totalPaid = customer.payments.reduce((acc, pay) => acc + Number(pay.amount), 0);
     const outstandingBalance = totalInvoiced - totalPaid;
 
     const enriched = {
       ...customer,
-      patients: customer.patients.map((p: any) => ({
+      patients: customer.patients.map((p) => ({
         ...p,
         _count: {
           ...p._count,
@@ -68,7 +68,7 @@ export const GET = withAuthParams(async ({ tenantPrisma }, { id }) => {
   }
 });
 
-export const PATCH = withAuthParams(async ({ req, tenantPrisma }, { id }) => {
+export const PATCH = withRoleParams("owners", "CRIAR_LER", async ({ req, tenantPrisma }, { id }) => {
   try {
     const existing = await tenantPrisma.owner.findUnique({
       where: { id },
