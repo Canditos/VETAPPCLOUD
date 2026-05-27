@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export const GET = withAuth(async ({ session }) => {
   const role = (session?.user as any)?.role;
 
-  if (role !== "ADMIN") {
+  if (role !== "SUPER_ADMIN" && role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

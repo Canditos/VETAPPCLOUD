@@ -2,11 +2,19 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-/**
- * Webhook for Examion RX Imaging Studies
- */
+function verifyWebhookSecret(req: Request): boolean {
+  const auth = req.headers.get("authorization");
+  const secret = process.env.WEBHOOK_SECRET;
+  if (!secret) return false;
+  return auth === `Bearer ${secret}`;
+}
+
 export async function POST(req: Request) {
   const body = await req.json();
+
+  if (!verifyWebhookSecret(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const { patientId, dicomUrl, metadata } = body;
 

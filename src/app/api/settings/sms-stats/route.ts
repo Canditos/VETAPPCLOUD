@@ -3,39 +3,49 @@ export const dynamic = "force-dynamic";
 import { withAuth } from "@/lib/api-wrapper";
 
 export const GET = withAuth(async (ctx: any) => {
-  const { clinicId } = ctx;
+  const { clinicId, req } = ctx;
   const prisma = (await import("@/lib/prisma")).default;
 
+  const daysParam = req.nextUrl?.searchParams?.get("days");
+  const days = Math.min(Math.max(0, parseInt(daysParam) || 30), 365);
+
+  const where = days > 0
+    ? { clinicId, createdAt: { gte: new Date(Date.now() - days * 86400000) } }
+    : { clinicId };
+
   const [total, byStatus, byType, daily, weekly, monthly, recent] = await Promise.all([
-    prisma.smsLog.count({ where: { clinicId } }),
-    prisma.smsLog.groupBy({ by: ["status"], where: { clinicId }, _count: true }),
-    prisma.smsLog.groupBy({ by: ["type"], where: { clinicId }, _count: true }),
+    prisma.smsLog.count({ where }),
+    prisma.smsLog.groupBy({ by: ["status"], where, _count: true }),
+    prisma.smsLog.groupBy({ by: ["type"], where, _count: true }),
     prisma.$queryRawUnsafe(`
       SELECT to_char("createdAt", 'YYYY-MM-DD') as date,
              COUNT(*) as total,
              COUNT(*) FILTER (WHERE status = 'SENT') as sent,
              COUNT(*) FILTER (WHERE status = 'FAILED') as failed
       FROM "SmsLog" WHERE "clinicId" = $1
-      GROUP BY date ORDER BY date DESC LIMIT 30
-    `, clinicId),
+        ${days > 0 ? `AND "createdAt" >= NOW() - make_interval(days => $2::int)` : ""}
+      GROUP BY date ORDER BY date DESC LIMIT 90
+    `, ...[clinicId, ...(days > 0 ? [days] : [])]),
     prisma.$queryRawUnsafe(`
       SELECT to_char("createdAt", 'YYYY-WW') as week,
              COUNT(*) as total,
              COUNT(*) FILTER (WHERE status = 'SENT') as sent,
              COUNT(*) FILTER (WHERE status = 'FAILED') as failed
       FROM "SmsLog" WHERE "clinicId" = $1
+        ${days > 0 ? `AND "createdAt" >= NOW() - make_interval(days => $2::int)` : ""}
       GROUP BY week ORDER BY week DESC LIMIT 12
-    `, clinicId),
+    `, ...[clinicId, ...(days > 0 ? [days] : [])]),
     prisma.$queryRawUnsafe(`
       SELECT to_char("createdAt", 'YYYY-MM') as month,
              COUNT(*) as total,
              COUNT(*) FILTER (WHERE status = 'SENT') as sent,
              COUNT(*) FILTER (WHERE status = 'FAILED') as failed
       FROM "SmsLog" WHERE "clinicId" = $1
+        ${days > 0 ? `AND "createdAt" >= NOW() - make_interval(days => $2::int)` : ""}
       GROUP BY month ORDER BY month DESC LIMIT 12
-    `, clinicId),
+    `, ...[clinicId, ...(days > 0 ? [days] : [])]),
     prisma.smsLog.findMany({
-      where: { clinicId },
+      where,
       orderBy: { createdAt: "desc" },
       take: 10,
     }),

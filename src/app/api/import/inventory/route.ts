@@ -9,7 +9,8 @@ export const maxDuration = 300;
 import { withAuth } from "@/lib/api-wrapper";
 
 export const GET = withAuth(async ({ clinicId, session }) => {
-  if ((session.user as any).role !== "ADMIN") {
+  const role = (session.user as any).role;
+  if (role !== "SUPER_ADMIN" && role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

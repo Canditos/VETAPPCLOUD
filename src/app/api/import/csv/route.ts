@@ -15,7 +15,8 @@ export const maxDuration = 300; // Allow up to 5 mins for large imports
  */
 export const GET = withAuth(async ({ clinicId, session }) => {
   try {
-    if ((session.user as any).role !== "ADMIN") {
+    const role = (session.user as any).role;
+    if (role !== "SUPER_ADMIN" && role !== "ADMIN") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

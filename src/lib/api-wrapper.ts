@@ -1,21 +1,8 @@
-/**
- * ============================================
- * API ROUTE WRAPPER
- * ============================================
- *
- * Padroniza o tratamento de:
- * - Autenticação (getServerSession)
- * - Multi-tenancy (getTenantClient)
- * - Erros (catch global)
- * - Logging
- *
- * TODAS as API routes devem usar este wrapper.
- */
-
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { getTenantClient } from "@/lib/prisma";
+import { csrfProtection } from "@/lib/csrf";
 import type { PrismaClient } from "@prisma/client";
 import type { Session } from "next-auth";
 
@@ -29,21 +16,18 @@ export interface ApiContext {
 
 export type ApiHandler = (ctx: ApiContext) => Promise<NextResponse> | NextResponse;
 
-/**
- * Wrapper para API routes GET/POST/PUT/PATCH/DELETE
- *
- * @example
- * // src/app/api/patients/route.ts
- * import { withAuth } from "@/lib/api-wrapper";
- *
- * export const GET = withAuth(async ({ tenantPrisma, clinicId }) => {
- *   const patients = await tenantPrisma.patient.findMany({ where: { clinicId } });
- *   return NextResponse.json(patients);
- * });
- */
+function withCsrf(handler: ApiHandler, req: NextRequest): Promise<NextResponse> | NextResponse {
+  const csrf = csrfProtection(req);
+  if (csrf) return csrf;
+  return handler;
+}
+
 export function withAuth(handler: ApiHandler) {
   return async (req: NextRequest): Promise<NextResponse> => {
     try {
+      const csrf = csrfProtection(req);
+      if (csrf) return csrf;
+
       const session = await getServerSession(authOptions);
       if (!session || !(session.user as any).clinicId) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -65,7 +49,7 @@ export function withAuth(handler: ApiHandler) {
     } catch (error) {
       console.error(`[API_ERROR] ${req.method} ${req.url}`, error);
       return NextResponse.json(
-        { error: "Internal Server Error", message: error instanceof Error ? error.message : "Unknown error" },
+        { error: "Internal Server Error" },
         { status: 500 }
       );
     }
@@ -77,19 +61,12 @@ export type ApiHandlerWithParams<T = { id: string }> = (
   params: T
 ) => Promise<NextResponse> | NextResponse;
 
-/**
- * Wrapper para API routes COM parâmetros dinâmicos (ex: [id]).
- *
- * @example
- * // src/app/api/patients/[id]/route.ts
- * export const GET = withAuthParams(async ({ tenantPrisma, clinicId }, { id }) => {
- *   const patient = await tenantPrisma.patient.findFirst({ where: { id, clinicId } });
- *   return NextResponse.json(patient);
- * });
- */
 export function withAuthParams<T = { id: string }>(handler: ApiHandlerWithParams<T>) {
   return async (req: NextRequest, { params }: { params: Promise<T> }): Promise<NextResponse> => {
     try {
+      const csrf = csrfProtection(req);
+      if (csrf) return csrf;
+
       const session = await getServerSession(authOptions);
       if (!session || !(session.user as any).clinicId) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -112,17 +89,13 @@ export function withAuthParams<T = { id: string }>(handler: ApiHandlerWithParams
     } catch (error) {
       console.error(`[API_ERROR] ${req.method} ${req.url}`, error);
       return NextResponse.json(
-        { error: "Internal Server Error", message: error instanceof Error ? error.message : "Unknown error" },
+        { error: "Internal Server Error" },
         { status: 500 }
       );
     }
   };
 }
 
-/**
- * Wrapper para rotas públicas (sem autenticação).
- * Usar com cuidado — apenas para webhooks e auth callbacks.
- */
 export function withErrorHandler(handler: (req: NextRequest) => Promise<NextResponse> | NextResponse) {
   return async (req: NextRequest): Promise<NextResponse> => {
     try {
@@ -130,7 +103,7 @@ export function withErrorHandler(handler: (req: NextRequest) => Promise<NextResp
     } catch (error) {
       console.error(`[API_ERROR] ${req.method} ${req.url}`, error);
       return NextResponse.json(
-        { error: "Internal Server Error", message: error instanceof Error ? error.message : "Unknown error" },
+        { error: "Internal Server Error" },
         { status: 500 }
       );
     }

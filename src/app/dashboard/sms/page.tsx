@@ -16,10 +16,10 @@ const TYPE_COLORS: Record<string, string> = { MANUAL: "#3b82f6", REMINDER_24H: "
 const TYPE_LABELS: Record<string, string> = { MANUAL: "Manual", REMINDER_24H: "Lembrete 24h", VACCINE_ALERT: "Vacinação", MARKETING: "Marketing" };
 
 const PERIODS = [
-  { key: "7d", label: "7 dias" },
-  { key: "30d", label: "30 dias" },
-  { key: "90d", label: "90 dias" },
-  { key: "all", label: "Todo" },
+  { key: "7d", label: "7 dias", days: 7 },
+  { key: "30d", label: "30 dias", days: 30 },
+  { key: "90d", label: "90 dias", days: 90 },
+  { key: "all", label: "Todo", days: 0 },
 ];
 
 export default function SmsDashboard() {
@@ -27,13 +27,15 @@ export default function SmsDashboard() {
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState("30d");
 
+  const periodDays = PERIODS.find(p => p.key === period)?.days ?? 30;
+
   useEffect(() => {
     setLoading(true);
-    fetch("/api/settings/sms-stats")
+    fetch(`/api/settings/sms-stats?days=${periodDays}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => { setData(d); setLoading(false); })
       .catch(() => setLoading(false));
-  }, []);
+  }, [period, periodDays]);
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
@@ -108,7 +110,7 @@ export default function SmsDashboard() {
       {/* KPI Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         <KpiCard icon={<Send size={16} />} label="Enviados" value={totalSent} sub={data.last30Days + " nos últimos 30d"} color="emerald" />
-        <KpiCard icon={<XCircle size={16} />} label="Falhas" value={totalFailed} sub={total > 0 ? Math.round(totalFailed / total * 100) + "% taxa" : "0%"} color="rose" />
+        <KpiCard icon={<XCircle size={16} />} label="Falhas" value={totalFailed} sub={data.total > 0 ? Math.round(totalFailed / data.total * 100) + "% taxa" : "0%"} color="rose" />
         <KpiCard icon={<Activity size={16} />} label="Sucesso" value={successRate + "%"} sub={avgPerDay + "/dia em média"} color="blue" />
         <KpiCard icon={<TrendingUp size={16} />} label="Variação semanal" value={(weekChange >= 0 ? "+" : "") + weekChange + "%"} sub={lastWeekTotal + " esta / " + prevWeekTotal + " anterior"} color={weekChange >= 0 ? "emerald" : "rose"} />
         <KpiCard icon={<Target size={16} />} label="Dia + movimentado" value={busiestDay ? busiestDay.sent : 0} sub={busiestDay ? busiestDay.date?.slice(5) || "" : "-"} color="violet" />

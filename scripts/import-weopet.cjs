@@ -41,8 +41,9 @@ if (!EMAIL || !PASSWORD) {
 }
 
 const HTTP_TIMEOUT = 15000; // 15s per request
-const CONCURRENCY = 3;      // 3 animals at a time
-const CHECKPOINT_FILE = "weopet-checkpoint.json";
+const CONCURRENCY = 5;      // 5 animals at a time
+const LIMIT = parseInt(process.env.WEOPET_LIMIT || "0"); // 0 = all animals
+const CHECKPOINT_FILE = path.join(__dirname, "weopet-checkpoint.json");
 
 // ─── HTTP helpers with timeout ────────────────────────────────────
 
@@ -134,6 +135,7 @@ async function fetchAnimalList() {
     console.log(`   ${all.length} animals (page ${page})...`);
     if (batch.length < 20) break;
     page++;
+    if (LIMIT > 0 && all.length >= LIMIT) break;
   }
   console.log(`Total: ${all.length} animals`);
   return all;
@@ -197,22 +199,26 @@ async function fetchAnimalPage(hash, page = 1) {
 async function fetchAllAnimalAppointments(hash) {
   const firstPage = await fetchAnimalPage(hash, 1);
   const allApts = [...firstPage.appointments];
-  const perPage = firstPage.appointments.length || 20;
-  const total = firstPage.totalCount || 0;
+  const seenHashes = new Set(allApts.map(a => a.hash));
 
-  if (total > perPage) {
-    const pages = Math.ceil(total / perPage);
-    for (let p = 2; p <= pages; p++) {
-      const page = await fetchAnimalPage(hash, p);
-      allApts.push(...page.appointments);
+  // Paginate: stop when a page returns 0 new rows OR reappears (pagination loop)
+  for (let p = 2; p <= 100; p++) {
+    const page = await fetchAnimalPage(hash, p);
+    if (page.appointments.length === 0) break;
+    let newCount = 0;
+    for (const apt of page.appointments) {
+      if (!seenHashes.has(apt.hash)) {
+        seenHashes.add(apt.hash);
+        allApts.push(apt);
+        newCount++;
+      }
     }
-  } else if (total === 0 && allApts.length > 0) {
-    // Unknown total — paginate with safety limit
-    for (let p = 2; p <= 50; p++) {
-      const page = await fetchAnimalPage(hash, p);
-      if (page.appointments.length === 0) break;
-      allApts.push(...page.appointments);
-    }
+    if (newCount === 0) break; // page had only duplicates
+  }
+
+  if (allApts.length > 50) {
+    const sampleDates = allApts.slice(0, 5).map(a => a.dateStr).join(", ");
+    console.log(`\n   [!] ${firstPage.animalName}: ${allApts.length} registos | dates: ${sampleDates} | tipos: ${[...new Set(allApts.map(a => a.type))].filter(Boolean).slice(0, 5).join(", ")}`);
   }
 
   return { ...firstPage, appointments: allApts };
@@ -288,7 +294,11 @@ async function main() {
   // 4. Load checkpoint
   const cp = loadCheckpoint();
   const processed = new Set(cp.processed || []);
-  const remaining = animals.filter(a => !processed.has(a.hash));
+  let remaining = animals.filter(a => !processed.has(a.hash));
+  if (LIMIT > 0 && remaining.length > LIMIT) {
+    console.log(`   Limiting to ${LIMIT} animals for test`);
+    remaining = remaining.slice(0, LIMIT);
+  }
   console.log(`   ${remaining.length} animals remaining (${animals.length - remaining.length} already done)\n`);
 
   // 5. Process animals with concurrency
@@ -297,7 +307,7 @@ async function main() {
   let errors = cp.errors || 0;
   let total = cp.total || 0;
   let done = cp.done || 0;
-  const errorDetails = [], skipSamples = [];
+  const errorDetails = [], skipSamples = [], aptCounts = [];
   const startTime = Date.now();
 
   async function processAnimal(animal) {
@@ -340,9 +350,45 @@ async function main() {
       et.setMinutes(et.getMinutes() + 30);
 
       try {
+        const consultationId = `weopet-consultation-${apt.hash}`;
+        await prisma.consultation.upsert({
+          where: { id: consultationId },
+          update: {
+            notes: {
+              upsert: {
+                update: {
+                  subjective: apt.reason || "Consulta importada do weoPet",
+                  objective: [apt.veterinarian ? `Médico: ${apt.veterinarian}` : null, apt.weight ? `Peso: ${apt.weight}` : null, apt.temp ? `Temp: ${apt.temp}` : null].filter(Boolean).join("\n") || null,
+                  assessment: apt.type || null,
+                },
+                create: {
+                  subjective: apt.reason || "Consulta importada do weoPet",
+                  objective: [apt.veterinarian ? `Médico: ${apt.veterinarian}` : null, apt.weight ? `Peso: ${apt.weight}` : null, apt.temp ? `Temp: ${apt.temp}` : null].filter(Boolean).join("\n") || null,
+                  assessment: apt.type || null,
+                },
+              },
+            },
+          },
+          create: {
+            id: consultationId,
+            clinicId: CLINIC_ID,
+            patientId: pid,
+            veterinarianId: VET_ID,
+            date: st,
+            status: "COMPLETED",
+            notes: {
+              create: {
+                 subjective: apt.reason || "Consulta importada do weoPet",
+                  objective: [apt.veterinarian ? `Médico: ${apt.veterinarian}` : null, apt.weight ? `Peso: ${apt.weight}` : null, apt.temp ? `Temp: ${apt.temp}` : null].filter(Boolean).join("\n") || null,
+                  assessment: apt.type || null,
+                },
+              },
+            },
+          },
+        });
         await prisma.appointment.upsert({
           where: { id: `weopet-${apt.hash}` },
-          update: { type: apt.type || undefined, reason: apt.reason || undefined },
+          update: { type: apt.type || undefined, reason: apt.reason || undefined, consultationId },
           create: {
             id: `weopet-${apt.hash}`,
             clinicId: CLINIC_ID,
@@ -353,6 +399,7 @@ async function main() {
             type: apt.type || null,
             reason: apt.reason || null,
             status: "COMPLETED",
+            consultationId,
           },
         });
         localImported++;
@@ -363,6 +410,7 @@ async function main() {
       localTotal++;
     }
 
+    if (aptCounts.length < 50) aptCounts.push({ animal: page.animalName, count: localTotal });
     return { imported: localImported, skipped: 0, errors: localErrors, total: localTotal, animal: page.animalName };
   }
 
@@ -393,8 +441,10 @@ async function main() {
 
     // Progress line
     const elapsed = Math.round((Date.now() - startTime) / 1000);
-    const rate = done > 0 ? Math.round(done / elapsed) : 0;
-    process.stdout.write(`\r   [${done}/${animals.length}] ${imported} imported / ${skipped} skipped / ${errors} errors | ${elapsed}s @ ${rate}/s`);
+    const rate = done > 0 && elapsed > 0 ? (done / elapsed).toFixed(1) : "0.0";
+    const eta = rate > 0 ? Math.round((animals.length - done) / parseFloat(rate)) : 0;
+    const etaStr = eta > 0 ? `ETA ${Math.floor(eta / 60)}m${eta % 60}s` : "";
+    process.stdout.write(`\r   [${done}/${animals.length}] ${imported} imported / ${skipped} skipped / ${errors} errors | ${elapsed}s @ ${rate}/s ${etaStr}`);
 
     // Save checkpoint every 10 animals
     if (done % 10 === 0) {
@@ -424,6 +474,21 @@ async function main() {
   if (skipSamples.length > 0) {
     console.log("\n--- Skipped (first " + skipSamples.length + ") ---");
     skipSamples.forEach(s => console.log('   "' + s.animal + '" | owner: "' + s.owner + '"'));
+  }
+
+  if (aptCounts.length > 0) {
+    const counts = aptCounts.map(a => a.count).sort((a, b) => a - b);
+    const sum = counts.reduce((a, b) => a + b, 0);
+    const min = counts[0], max = counts[counts.length-1], median = counts[Math.floor(counts.length/2)];
+    console.log(`\n--- Appointment distribution (sample: ${counts.length} animals) ---`);
+    console.log(`   Min: ${min} | Max: ${max} | Median: ${median} | Avg: ${Math.round(sum/counts.length)}`);
+    console.log(`   Sample details:`);
+    aptCounts.filter(a => a.count > 100).slice(0, 5).forEach(a =>
+      console.log(`     ${a.animal}: ${a.count} registos`)
+    );
+    aptCounts.filter(a => a.count <= 5).slice(0, 3).forEach(a =>
+      console.log(`     ${a.animal}: ${a.count} registos`)
+    );
   }
 
   try { fs.writeFileSync("weopet-import-log.json", JSON.stringify({ total, imported, skipped, errors, errorDetails, skipSamples, elapsed: totalElapsed })); } catch {}
