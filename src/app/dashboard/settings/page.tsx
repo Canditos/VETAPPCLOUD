@@ -22,6 +22,7 @@ import { useState, useEffect } from "react";
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [testingVendus, setTestingVendus] = useState(false);
   const [clinic, setClinic] = useState({
     name: "",
     vatNumber: "",
@@ -74,6 +75,33 @@ export default function SettingsPage() {
       toast.error("Erro ao guardar configurações");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleTestVendus = async () => {
+    setTestingVendus(true);
+    try {
+      const response = await fetch("/api/health/integrations");
+      if (!response.ok) throw new Error();
+
+      const data = await response.json();
+      const status = data?.vendus?.status;
+
+      if (status === "connected") {
+        toast.success("Ligação real ao Vendus confirmada.");
+        return;
+      }
+
+      if (status === "configured") {
+        toast.warning("A API key existe, mas o Vendus não respondeu como ligado.");
+        return;
+      }
+
+      toast.error("Vendus não configurado nesta clínica.");
+    } catch {
+      toast.error("Não foi possível validar a ligação ao Vendus.");
+    } finally {
+      setTestingVendus(false);
     }
   };
 
@@ -211,10 +239,11 @@ export default function SettingsPage() {
               <div className="pt-4 flex justify-end gap-3">
                 <Button 
                   variant="outline" 
-                  onClick={() => toast.info("A testar comunicação com Vendus...")}
+                  onClick={handleTestVendus}
+                  disabled={testingVendus}
                   className="h-10 rounded-xl border-slate-200 dark:border-white/10 dark:text-white font-bold px-6"
                 >
-                  Testar Ligação
+                  {testingVendus ? "A testar..." : "Testar Ligação"}
                 </Button>
                 <Button 
                   onClick={handleSave}

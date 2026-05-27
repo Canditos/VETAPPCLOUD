@@ -66,6 +66,14 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
   const [generatedPassword, setGeneratedPassword] = useState("");
   const [isGeneratingPass, setIsGeneratingPass] = useState(false);
   const [consentLink, setConsentLink] = useState<string | null>(null);
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  const [invoiceForm, setInvoiceForm] = useState({
+    description: "Consulta veterinária",
+    quantity: 1,
+    unitPrice: "45",
+    vatRate: "23",
+    paymentMethod: "CASH",
+  });
 
   const sendConsentInvite = useMutation({
     mutationFn: async () => {
@@ -123,6 +131,35 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
       setIsEditing(false);
     },
     onError: () => toast.error("Erro ao atualizar cliente"),
+  });
+
+  const createInvoice = useMutation({
+    mutationFn: async () => {
+      const payload = {
+        description: invoiceForm.description.trim(),
+        quantity: Number(invoiceForm.quantity),
+        unitPrice: Number(invoiceForm.unitPrice),
+        vatRate: Number(invoiceForm.vatRate),
+        paymentMethod: invoiceForm.paymentMethod,
+      };
+
+      const res = await fetch(`/api/customers/${id}/invoice`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Erro ao emitir fatura");
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customer-hub", id] });
+      queryClient.invalidateQueries({ queryKey: ["billing"] });
+      setIsInvoiceModalOpen(false);
+      toast.success("Fatura emitida no Vendus com sucesso.");
+    },
+    onError: (err: Error) => toast.error(err.message),
   });
 
   const handleEdit = () => {
@@ -307,13 +344,113 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
             </DialogContent>
           </Dialog>
 
-          <Button 
-            variant="outline" 
-            className="rounded-xl h-10 font-bold border-slate-200 dark:border-slate-805 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 gap-2 text-xs"
-            onClick={() => toast.info("Funcionalidade de faturação em desenvolvimento")}
-          >
-            <FilePlus size={16} /> Criar Fatura
-          </Button>
+          <Dialog open={isInvoiceModalOpen} onOpenChange={setIsInvoiceModalOpen}>
+            <Button 
+              variant="outline" 
+              className="rounded-xl h-10 font-bold border-slate-200 dark:border-slate-805 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 gap-2 text-xs"
+              onClick={() => setIsInvoiceModalOpen(true)}
+            >
+              <FilePlus size={16} /> Criar Fatura
+            </Button>
+            <DialogContent className="sm:max-w-[560px] rounded-3xl border-none shadow-2xl bg-white dark:bg-slate-900">
+              <DialogHeader>
+                <DialogTitle className="text-xl font-black text-slate-900 dark:text-slate-100">Emitir Fatura no Vendus</DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4 py-2">
+                {!customer.vatNumber && (
+                  <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
+                    Este cliente precisa de NIF antes de poder ser faturado.
+                  </div>
+                )}
+                {!clinic?.vendusApiKey && (
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300">
+                    A API key do Vendus ainda não está configurada nas definições da clínica.
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Descrição</Label>
+                  <Input
+                    value={invoiceForm.description}
+                    onChange={(e) => setInvoiceForm({ ...invoiceForm, description: e.target.value })}
+                    className="h-11 rounded-xl"
+                    placeholder="Ex: Consulta, cirurgia, vacinação"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Quantidade</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={invoiceForm.quantity}
+                      onChange={(e) => setInvoiceForm({ ...invoiceForm, quantity: Number(e.target.value || 1) })}
+                      className="h-11 rounded-xl"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Preço unitário</Label>
+                    <Input
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      value={invoiceForm.unitPrice}
+                      onChange={(e) => setInvoiceForm({ ...invoiceForm, unitPrice: e.target.value })}
+                      className="h-11 rounded-xl"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">IVA</Label>
+                    <select
+                      value={invoiceForm.vatRate}
+                      onChange={(e) => setInvoiceForm({ ...invoiceForm, vatRate: e.target.value })}
+                      className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+                    >
+                      <option value="23">23%</option>
+                      <option value="13">13%</option>
+                      <option value="6">6%</option>
+                      <option value="0">0%</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Pagamento</Label>
+                    <select
+                      value={invoiceForm.paymentMethod}
+                      onChange={(e) => setInvoiceForm({ ...invoiceForm, paymentMethod: e.target.value })}
+                      className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+                    >
+                      <option value="CASH">Dinheiro</option>
+                      <option value="CARD">Cartão</option>
+                      <option value="MBWAY">MB WAY</option>
+                      <option value="TRANSFER">Transferência</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">
+                  Total a emitir: €{((Number(invoiceForm.quantity) || 0) * (Number(invoiceForm.unitPrice) || 0)).toFixed(2)}
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" className="rounded-xl" onClick={() => setIsInvoiceModalOpen(false)} disabled={createInvoice.isPending}>
+                  Cancelar
+                </Button>
+                <Button
+                  className="rounded-xl bg-blue-600 hover:bg-blue-700"
+                  onClick={() => createInvoice.mutate()}
+                  disabled={createInvoice.isPending || !customer.vatNumber || !clinic?.vendusApiKey || !invoiceForm.description.trim()}
+                >
+                  {createInvoice.isPending ? "A emitir..." : "Emitir Fatura"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
           <Link href={`/dashboard/consultations?customerId=${id}`}>
             <Button className="rounded-xl h-10 font-bold bg-blue-600 hover:bg-blue-700 text-white gap-2 text-xs shadow-md shadow-blue-500/10">
@@ -691,7 +828,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                   <TableBody>
                     {customer.invoices?.map((inv: any) => (
                       <TableRow key={inv.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 border-slate-50 dark:border-slate-800 transition-colors">
-                        <TableCell className="px-8 py-6 font-black text-slate-900 dark:text-slate-200">{inv.jasminInvoiceId || "Provisória"}</TableCell>
+                        <TableCell className="px-8 py-6 font-black text-slate-900 dark:text-slate-200">{inv.externalId || inv.vendusId || inv.jasminInvoiceId || "Provisória"}</TableCell>
                         <TableCell className="px-8 py-6 font-bold text-slate-500 dark:text-slate-400">{inv.createdAt ? format(new Date(inv.createdAt), "dd/MM/yyyy") : "---"}</TableCell>
                         <TableCell className="px-8 py-6 font-black text-slate-900 dark:text-slate-100">€{(Number(inv.total) || 0).toFixed(2)}</TableCell>
                         <TableCell className="px-8 py-6">
