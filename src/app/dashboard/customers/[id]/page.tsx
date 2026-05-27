@@ -202,231 +202,313 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
-      {/* 360º Header */}
-      <div className="flex flex-col lg:flex-row justify-between items-start gap-8">
-        <div className="flex gap-6 items-center">
-          <div className="h-24 w-24 rounded-[2rem] bg-blue-600 flex items-center justify-center text-white text-4xl font-black shadow-2xl shadow-blue-200 dark:shadow-none">
+      {/* 360º Header - Clean & Professional */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl ring-1 ring-slate-200/60 dark:ring-white/5 shadow-sm">
+        <div className="flex gap-4 items-center">
+          <div className="h-16 w-16 rounded-2xl bg-blue-600 flex items-center justify-center text-white text-2xl font-black shadow-lg shadow-blue-500/20">
             {customer.name.charAt(0)}
           </div>
           <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">{customer.name}</h1>
-              <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-none font-black text-[10px] uppercase">Cliente Ativo</Badge>
-              {customer.privacyConsents?.length > 0 ? (
-                <Badge variant="outline" className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border-none font-black text-[10px] uppercase flex items-center gap-1">
-                  <ShieldCheck size={10} /> RGPD ✓
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 border-none font-black text-[10px] uppercase flex items-center gap-1">
-                  <ShieldCheck size={10} /> RGPD Pendente
-                </Badge>
-              )}
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-400 hover:text-blue-600" onClick={handleEdit}>
-                  <Edit3 size={16} />
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="h-8 rounded-lg border-sky-100 dark:border-sky-900/50 bg-sky-50 dark:bg-sky-900/10 text-sky-600 dark:text-sky-400 font-black text-[10px] uppercase tracking-widest gap-2"
-                  onClick={() => router.push(`/dashboard/messages?customerId=${id}`)}
-                >
-                  <Clock size={12} strokeWidth={3} /> Chat com Tutor
-                </Button>
-                {(!customer.privacyConsents || customer.privacyConsents.length === 0) && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => sendConsentInvite.mutate()}
-                    disabled={sendConsentInvite.isPending}
-                    className="h-8 rounded-lg border-emerald-100 dark:border-emerald-900/50 bg-emerald-50 dark:bg-emerald-900/10 text-emerald-600 dark:text-emerald-400 font-black text-[10px] uppercase tracking-widest gap-2"
-                  >
-                    <Send size={12} strokeWidth={3} /> {sendConsentInvite.isPending ? "A enviar..." : "Solicitar Consentimento"}
-                  </Button>
-                )}
-              </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">{customer.name}</h1>
+              <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-none font-bold text-[9px] uppercase tracking-wider px-2 py-0.5">
+                Cliente Ativo
+              </Badge>
+              <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800" onClick={handleEdit}>
+                <Edit3 size={14} />
+              </Button>
             </div>
-            <div className="flex flex-wrap gap-6 mt-3 text-slate-500 dark:text-slate-400 font-bold">
-              <span className="flex items-center gap-2"><Phone size={16} className="text-slate-300 dark:text-slate-600" /> {customer.phone || "Sem telefone"}</span>
-              <span className="flex items-center gap-2"><Mail size={16} className="text-slate-300 dark:text-slate-600" /> {customer.email || "Sem email"}</span>
-              <span className="flex items-center gap-2"><MapPin size={16} className="text-slate-300 dark:text-slate-600" /> {customer.address || "Sem morada"}</span>
-            </div>
+            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">ID: #{id.substring(0, 8).toUpperCase()}</p>
           </div>
         </div>
 
-        {!customer.privacyConsents?.length && (
-          <div className="col-span-full flex items-center gap-3 py-2.5 px-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-            <ShieldCheck size={16} className="text-amber-500 shrink-0" />
-            <p className="text-xs text-amber-700 dark:text-amber-300 truncate">
-              RGPD pendente — clique em <strong>"Solicitar Consentimento"</strong> acima
-            </p>
-          </div>
-        )}
-
-        {consentLink && (
-          <div className="col-span-full flex items-center gap-3 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
-            <ShieldCheck size={20} className="text-emerald-500 shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-emerald-700 dark:text-emerald-300">Link de consentimento gerado</p>
-              <p className="text-xs text-emerald-600 dark:text-emerald-400 truncate font-mono">{consentLink}</p>
-            </div>
-            <button
-              onClick={() => { navigator.clipboard.writeText(consentLink); toast.success("Link copiado!"); }}
-              className="shrink-0 px-4 py-2 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 transition-all"
-            >
-              Copiar
-            </button>
-          </div>
-        )}
-
-        <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
-          <Card className={`border-none shadow-xl ${balance > 0 ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 ring-1 ring-red-100 dark:ring-red-900/50' : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-100 dark:ring-emerald-900/50'} p-6 rounded-[2rem] flex-1 lg:min-w-[240px]`}>
-            <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Saldo em Dívida</p>
-            <div className="flex items-end justify-between mt-1">
-              <p className="text-4xl font-black">€{(balance || 0).toFixed(2)}</p>
-              {balance > 0 ? <AlertCircle size={32} /> : <CheckCircle2 size={32} />}
-            </div>
-          </Card>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 h-fit mt-4 lg:mt-0">
-              <Dialog open={isPortalModalOpen} onOpenChange={setIsPortalModalOpen}>
-                <DialogTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    className="rounded-2xl h-full py-6 font-black border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-900/10 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all gap-2 text-blue-600 dark:text-blue-400"
-                  >
-                    <Smartphone size={18} /> Portal do Tutor
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md rounded-[2rem]">
-                  <DialogHeader>
-                    <DialogTitle className="font-black text-2xl flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center">
-                        <Smartphone size={24} />
-                      </div>
-                      Acesso ao Portal
-                    </DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <p className="text-slate-500 font-medium">Gere uma password de acesso para o cliente entrar no portal. O email de acesso é: <strong className="text-slate-800 dark:text-white">{customer.email || "Necessita email na ficha!"}</strong></p>
-                    
-                    {!generatedPassword ? (
-                      <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-                        <div>
-                          <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Password Personalizada (Opcional)</Label>
-                          <Input 
-                            value={manualPassword}
-                            onChange={(e) => setManualPassword(e.target.value)}
-                            placeholder="Deixe em branco para gerar aleatória"
-                            className="mt-2 bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 h-12 font-bold"
-                          />
-                        </div>
-                        <Button 
-                          className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black"
-                          onClick={async () => {
-                            if (!customer.email) {
-                              toast.error("O cliente precisa de ter um email na ficha.");
-                              return;
-                            }
-                            setIsGeneratingPass(true);
-                            try {
-                              const res = await fetch("/api/portal/generate-password", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ ownerId: id, manualPassword }),
-                              });
-                              const data = await res.json();
-                              if (data.error) throw new Error(data.error);
-                              setGeneratedPassword(data.password);
-                              toast.success("Acesso gerado com sucesso!");
-                            } catch (e: any) {
-                              toast.error(e.message || "Erro ao gerar acesso");
-                            } finally {
-                              setIsGeneratingPass(false);
-                            }
-                          }}
-                          disabled={isGeneratingPass}
-                        >
-                          {isGeneratingPass ? "A gerar..." : "Gerar Acesso"}
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800 animate-in fade-in slide-in-from-bottom-2">
-                        <div className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-900/50 text-center">
-                          <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-1">Nova Password</p>
-                          <p className="text-3xl font-black tracking-widest">{generatedPassword}</p>
-                        </div>
-                        <Button
-                          variant="outline"
-                          className="w-full h-12 rounded-xl font-black border-slate-200 dark:border-slate-800"
-                          onClick={() => {
-                            const text = `O seu acesso ao Portal do Gato Escondido:\nLink: https://cloud.gatoescondido.com/portal\nEmail: ${customer.email}\nPassword: ${generatedPassword}`;
-                            navigator.clipboard.writeText(text);
-                            toast.success("Dados copiados para partilhar!");
-                          }}
-                        >
-                          <Copy size={18} className="mr-2" /> Copiar Dados de Acesso
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </DialogContent>
-              </Dialog>
-            <Link href={`/dashboard/consultations?customerId=${id}`} className="flex-1">
-              <Button className="w-full rounded-2xl h-full py-6 font-black bg-slate-900 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-700 transition-all gap-2 shadow-xl shadow-slate-200 dark:shadow-none">
-                <Plus size={18} /> Nova Consulta
+        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+          <Dialog open={isPortalModalOpen} onOpenChange={setIsPortalModalOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                variant="outline" 
+                className="rounded-xl h-10 font-bold border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 gap-2 text-xs"
+              >
+                <Smartphone size={16} /> Portal do Tutor
               </Button>
-            </Link>
-            <Button variant="outline" className="rounded-2xl h-full py-6 font-black border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all gap-2 dark:text-slate-200"
-              onClick={() => toast.info("Funcionalidade de faturação em desenvolvimento")}>
-              <FilePlus size={18} /> Criar Fatura
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md rounded-2xl">
+              <DialogHeader>
+                <DialogTitle className="font-bold text-xl flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center">
+                    <Smartphone size={20} />
+                  </div>
+                  Acesso ao Portal
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">Gere uma password de acesso para o cliente entrar no portal. O email de acesso é: <strong className="text-slate-800 dark:text-white">{customer.email || "Necessita email na ficha!"}</strong></p>
+                
+                {!generatedPassword ? (
+                  <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <div>
+                      <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Password Personalizada (Opcional)</Label>
+                      <Input 
+                        value={manualPassword}
+                        onChange={(e) => setManualPassword(e.target.value)}
+                        placeholder="Deixe em branco para gerar aleatória"
+                        className="mt-2 bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 h-11 font-medium text-sm"
+                      />
+                    </div>
+                    <Button 
+                      className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold"
+                      onClick={async () => {
+                        if (!customer.email) {
+                          toast.error("O cliente precisa de ter um email na ficha.");
+                          return;
+                        }
+                        setIsGeneratingPass(true);
+                        try {
+                          const res = await fetch("/api/portal/generate-password", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ ownerId: id, manualPassword }),
+                          });
+                          const data = await res.json();
+                          if (data.error) throw new Error(data.error);
+                          setGeneratedPassword(data.password);
+                          toast.success("Acesso gerado com sucesso!");
+                        } catch (e: any) {
+                          toast.error(e.message || "Erro ao gerar acesso");
+                        } finally {
+                          setIsGeneratingPass(false);
+                        }
+                      }}
+                      disabled={isGeneratingPass}
+                    >
+                      {isGeneratingPass ? "A gerar..." : "Gerar Acesso"}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800 animate-in fade-in slide-in-from-bottom-2">
+                    <div className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 p-4 rounded-xl border border-emerald-100 dark:border-emerald-900/50 text-center">
+                      <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">Nova Password</p>
+                      <p className="text-2xl font-black tracking-widest">{generatedPassword}</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="w-full h-11 rounded-xl font-bold border-slate-200 dark:border-slate-800"
+                      onClick={() => {
+                        const text = `O seu acesso ao Portal do Gato Escondido:\nLink: https://cloud.gatoescondido.com/portal\nEmail: ${customer.email}\nPassword: ${generatedPassword}`;
+                        navigator.clipboard.writeText(text);
+                        toast.success("Dados copiados para partilhar!");
+                      }}
+                    >
+                      <Copy size={16} className="mr-2" /> Copiar Dados de Acesso
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Button 
+            variant="outline" 
+            className="rounded-xl h-10 font-bold border-slate-200 dark:border-slate-805 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 gap-2 text-xs"
+            onClick={() => toast.info("Funcionalidade de faturação em desenvolvimento")}
+          >
+            <FilePlus size={16} /> Criar Fatura
+          </Button>
+
+          <Link href={`/dashboard/consultations?customerId=${id}`}>
+            <Button className="rounded-xl h-10 font-bold bg-blue-600 hover:bg-blue-700 text-white gap-2 text-xs shadow-md shadow-blue-500/10">
+              <Plus size={16} /> Nova Consulta
             </Button>
-          </div>
+          </Link>
         </div>
       </div>
 
-      {/* RGPD Evidence Card */}
-      {customer.privacyConsents?.length > 0 && (() => {
-        const c = customer.privacyConsents[0];
-        return (
-          <div className="p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800 space-y-3">
-            <div className="flex items-center gap-2">
-              <ShieldCheck size={18} className="text-emerald-600" />
-              <p className="text-sm font-black text-emerald-700 dark:text-emerald-300 uppercase tracking-widest">Evidência RGPD</p>
+      {/* Grid de Informações de Suporte (RGPD, Dados Pessoais, Saldo) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Card 1: Dados do Tutor */}
+        <Card className="border-none rounded-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-200/60 dark:ring-white/5 shadow-sm p-6 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4 border-b border-slate-50 dark:border-slate-800 pb-3">
+              <h3 className="font-bold text-slate-800 dark:text-slate-200 text-xs uppercase tracking-wider flex items-center gap-2">
+                <Users size={15} className="text-blue-500" /> Dados do Tutor
+              </h3>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-              <div>
-                <p className="text-emerald-600 dark:text-emerald-400 font-bold text-[10px] uppercase tracking-wider">Aceite em</p>
-                <p className="text-emerald-800 dark:text-emerald-200 font-semibold">{format(new Date(c.acceptedAt || c.createdAt), "dd/MM/yyyy HH:mm", { locale: pt })}</p>
-              </div>
-              <div>
-                <p className="text-emerald-600 dark:text-emerald-400 font-bold text-[10px] uppercase tracking-wider">Versão</p>
-                <p className="text-emerald-800 dark:text-emerald-200 font-semibold font-mono">{c.version}</p>
-              </div>
-              <div>
-                <p className="text-emerald-600 dark:text-emerald-400 font-bold text-[10px] uppercase tracking-wider">IP</p>
-                <p className="text-emerald-800 dark:text-emerald-200 font-semibold font-mono">{c.ip || "—"}</p>
-              </div>
-              <div>
-                <p className="text-emerald-600 dark:text-emerald-400 font-bold text-[10px] uppercase tracking-wider">Método</p>
-                <p className="text-emerald-800 dark:text-emerald-200 font-semibold capitalize">{c.method === "portal" ? "Portal (clique)" : c.method}</p>
-              </div>
-              {c.userAgent && (
-                <div className="col-span-full">
-                  <p className="text-emerald-600 dark:text-emerald-400 font-bold text-[10px] uppercase tracking-wider">Browser / Dispositivo</p>
-                  <p className="text-emerald-800 dark:text-emerald-200 font-mono text-[11px] break-all">{c.userAgent}</p>
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <Phone size={14} className="text-slate-400 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Telemóvel</p>
+                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 mt-0.5">{customer.phone || "Não configurado"}</p>
                 </div>
-              )}
-              {c.policyUrl && (
-                <div className="col-span-full">
-                  <p className="text-emerald-600 dark:text-emerald-400 font-bold text-[10px] uppercase tracking-wider">Link da Política</p>
-                  <a href={c.policyUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 underline text-[11px] break-all">{c.policyUrl}</a>
+              </div>
+              <div className="flex items-start gap-3">
+                <Mail size={14} className="text-slate-400 mt-0.5 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Email</p>
+                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 mt-0.5 truncate">{customer.email || "Não configurado"}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <MapPin size={14} className="text-slate-400 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Morada</p>
+                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 mt-0.5 leading-relaxed">{customer.address || "Não configurado"}</p>
+                </div>
+              </div>
+              {customer.vatNumber && (
+                <div className="flex items-start gap-3">
+                  <FileText size={14} className="text-slate-400 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">NIF</p>
+                    <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 mt-0.5">{customer.vatNumber}</p>
+                  </div>
                 </div>
               )}
             </div>
           </div>
-        );
-      })()}
+        </Card>
+
+        {/* Card 2: Privacidade e RGPD */}
+        <Card className="border-none rounded-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-200/60 dark:ring-white/5 shadow-sm p-6 flex flex-col justify-between">
+          <div className="h-full flex flex-col">
+            <div className="flex items-center justify-between mb-4 border-b border-slate-50 dark:border-slate-800 pb-3">
+              <h3 className="font-bold text-slate-800 dark:text-slate-200 text-xs uppercase tracking-wider flex items-center gap-2">
+                <Shield size={15} className="text-blue-500" /> Privacidade e RGPD
+              </h3>
+            </div>
+            
+            <div className="flex-1 flex flex-col justify-between">
+              {customer.privacyConsents?.length > 0 ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 py-1 px-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400 w-fit">
+                    <ShieldCheck size={14} />
+                    <span className="text-[10px] font-bold uppercase tracking-wider">Consentimento Ativo ✓</span>
+                  </div>
+                  
+                  {(() => {
+                    const c = customer.privacyConsents[0];
+                    return (
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[11px] pt-1">
+                        <div>
+                          <p className="text-slate-400 font-bold text-[9px] uppercase tracking-wider">Data</p>
+                          <p className="text-slate-700 dark:text-slate-300 font-semibold">{format(new Date(c.acceptedAt || c.createdAt), "dd/MM/yyyy HH:mm", { locale: pt })}</p>
+                        </div>
+                        <div>
+                          <p className="text-slate-400 font-bold text-[9px] uppercase tracking-wider">IP</p>
+                          <p className="text-slate-700 dark:text-slate-300 font-mono font-semibold">{c.ip || "—"}</p>
+                        </div>
+                        <div>
+                          <p className="text-slate-400 font-bold text-[9px] uppercase tracking-wider">Versão</p>
+                          <p className="text-slate-700 dark:text-slate-300 font-mono font-semibold">{c.version}</p>
+                        </div>
+                        <div>
+                          <p className="text-slate-400 font-bold text-[9px] uppercase tracking-wider">Método</p>
+                          <p className="text-slate-700 dark:text-slate-300 font-semibold capitalize">{c.method === "portal" ? "Portal" : c.method}</p>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              ) : (
+                <div className="space-y-4 h-full flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 py-1 px-3 rounded-lg bg-amber-50 dark:bg-amber-955/20 border border-amber-100 dark:border-amber-900/30 text-amber-700 dark:text-amber-400 w-fit">
+                      <AlertCircle size={14} />
+                      <span className="text-[10px] font-bold uppercase tracking-wider">Pendente</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
+                      O tutor ainda não assinou o consentimento RGPD. Solicite o consentimento enviando um convite.
+                    </p>
+                  </div>
+
+                  <div className="flex gap-2 mt-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1 rounded-xl h-9 border-slate-200 dark:border-slate-800 text-[10px] font-bold uppercase tracking-wider gap-1.5"
+                      onClick={() => router.push(`/dashboard/messages?customerId=${id}`)}
+                    >
+                      <Clock size={12} strokeWidth={2.5} /> Chat
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => sendConsentInvite.mutate()}
+                      disabled={sendConsentInvite.isPending}
+                      className="flex-1 rounded-xl h-9 border-emerald-200 dark:border-emerald-900/30 bg-emerald-50 dark:bg-emerald-950/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider gap-1.5"
+                    >
+                      <Send size={12} strokeWidth={2.5} /> {sendConsentInvite.isPending ? "A enviar..." : "Solicitar"}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {consentLink && (
+              <div className="mt-3 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Link</p>
+                  <p className="text-[10px] text-slate-600 dark:text-slate-300 truncate font-mono mt-0.5">{consentLink}</p>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => { navigator.clipboard.writeText(consentLink); toast.success("Link copiado!"); }}
+                  className="h-8 rounded-lg bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-[9px] font-bold uppercase tracking-wider px-2.5"
+                >
+                  Copiar
+                </Button>
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {/* Card 3: Balanço e Saldo */}
+        <Card className={cn(
+          "border-none rounded-2xl p-6 flex flex-col justify-between shadow-sm",
+          balance > 0 
+            ? "bg-red-50/50 dark:bg-red-950/10 ring-1 ring-red-100/70 dark:ring-red-900/20 text-red-700 dark:text-red-400" 
+            : "bg-emerald-50/50 dark:bg-emerald-950/10 ring-1 ring-emerald-100/70 dark:ring-emerald-900/20 text-emerald-700 dark:text-emerald-400"
+        )}>
+          <div className="flex flex-col justify-between h-full">
+            <div>
+              <div className="flex items-center justify-between mb-4 border-b border-black/5 dark:border-white/5 pb-3">
+                <h3 className="font-bold text-xs uppercase tracking-wider flex items-center gap-2">
+                  <CreditCard size={15} /> Saldo de Contas
+                </h3>
+              </div>
+              
+              <div className="flex justify-between items-center py-2">
+                <div>
+                  <p className="text-[9px] font-bold uppercase tracking-widest opacity-70">Saldo em Dívida</p>
+                  <p className="text-3xl font-black mt-1">€{(balance || 0).toFixed(2)}</p>
+                </div>
+                {balance > 0 ? (
+                  <div className="p-3 rounded-full bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400">
+                    <AlertCircle size={24} />
+                  </div>
+                ) : (
+                  <div className="p-3 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle2 size={24} />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mt-4 pt-3 border-t border-black/5 dark:border-white/5 text-xs">
+              <div>
+                <p className="opacity-70 font-bold text-[9px] uppercase tracking-wider">Total Faturado</p>
+                <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">€{(customer.stats?.totalInvoiced || 0).toFixed(2)}</p>
+              </div>
+              <div>
+                <p className="opacity-70 font-bold text-[9px] uppercase tracking-wider">Total Liquidado</p>
+                <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">€{(customer.stats?.totalPaid || 0).toFixed(2)}</p>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+      </div>
 
       <Tabs defaultValue="animals" className="w-full">
         <TabsList className="bg-slate-100/50 dark:bg-slate-800/50 p-1.5 rounded-[2rem] h-auto gap-2 mb-8 w-full flex">
