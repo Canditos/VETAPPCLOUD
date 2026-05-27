@@ -7,13 +7,15 @@ Branch: melhorias/coolify-hardening-2026-05-27
 This audit classifies API route protection by guard type:
 - `withRole`: auth + tenant + role-permission check
 - `withAuth`: auth + tenant only
-- `none`: no `withAuth` or `withRole` wrapper detected in route file
+- `withPortalSession`: portal cookie/JWT session validation for owner-facing portal APIs
+- `none`: no explicit wrapper detected in route file
 
 ## Current Coverage
 - Total API route files: 84
 - `withRole`: 14
 - `withAuth`: 51
-- `none`: 19
+- `withPortalSession`: 5
+- `none`: 14
 
 ## Middleware Gate (Cross-Cutting Control)
 `src/middleware.ts` now enforces API access by default:
@@ -42,6 +44,12 @@ This means `none` routes are no longer automatically public by default. They are
 - Upgraded additional sensitive endpoints to role checks:
   - `src/app/api/marketing/campaigns/route.ts`
   - `src/app/api/sms-logs/route.ts`
+- Migrated portal data routes to explicit portal-session wrappers:
+  - `src/app/api/portal/appointments/[id]/confirm/route.ts`
+  - `src/app/api/portal/appointments/route.ts`
+  - `src/app/api/portal/invoices/route.ts`
+  - `src/app/api/portal/me/route.ts`
+  - `src/app/api/portal/privacy/route.ts`
 
 ## Remaining `none` Routes (Intentional / Special Flow)
 - Public auth/framework:
@@ -58,15 +66,10 @@ This means `none` routes are no longer automatically public by default. They are
   - `src/app/api/integrations/examion/route.ts`
   - `src/app/api/integrations/fuji/route.ts`
 - Portal session/token flows (middleware-gated):
-  - `src/app/api/portal/appointments/[id]/confirm/route.ts`
-  - `src/app/api/portal/appointments/route.ts`
   - `src/app/api/portal/auth/login/route.ts`
   - `src/app/api/portal/auth/logout/route.ts`
   - `src/app/api/portal/auth/magic/route.ts`
-  - `src/app/api/portal/invoices/route.ts`
-  - `src/app/api/portal/me/route.ts`
   - `src/app/api/portal/messages/route.ts`
-  - `src/app/api/portal/privacy/route.ts`
 
 ## Recommended Migration Plan
 1. Convert high-risk `none` routes to `withRole` where they are clinic-internal APIs.

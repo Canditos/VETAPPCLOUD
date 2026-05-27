@@ -1,16 +1,10 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getPortalSession } from "@/lib/auth-portal";
+import { withPortalSession } from "@/lib/auth-portal";
 
-export async function GET(req: Request) {
-  const session = await getPortalSession();
-
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const ownerId = session.ownerId;
-  const clinicId = session.clinicId;
+export const GET = withPortalSession(async ({ portalSession }) => {
+  const ownerId = portalSession.ownerId;
+  const clinicId = portalSession.clinicId;
 
   if (!ownerId || !clinicId) {
     return NextResponse.json({ error: "Sessão inválida" }, { status: 401 });
@@ -25,11 +19,11 @@ export async function GET(req: Request) {
       orderBy: { createdAt: "desc" },
     });
 
-     const stats = {
-      totalInvoiced: invoices.reduce((acc: any, inv: any) => acc + Number(inv.total), 0),
+    const stats = {
+      totalInvoiced: invoices.reduce((acc, inv) => acc + Number(inv.total), 0),
       outstandingBalance: invoices
-        .filter((inv: any) => inv.status !== "PAID")
-        .reduce((acc: any, inv: any) => acc + Number(inv.total), 0),
+        .filter((inv) => inv.status !== "PAID")
+        .reduce((acc, inv) => acc + Number(inv.total), 0),
     };
 
     return NextResponse.json({ invoices, stats });
@@ -37,4 +31,4 @@ export async function GET(req: Request) {
     console.error("[PORTAL_INVOICES] Error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
-}
+});

@@ -1,23 +1,16 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getPortalSession } from "@/lib/auth-portal";
+import { withPortalSessionParams } from "@/lib/auth-portal";
 
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const session = await getPortalSession();
-  if (!session) return new NextResponse("Unauthorized", { status: 401 });
-
-  const { id } = await params;
+export const POST = withPortalSessionParams(async ({ portalSession }, { id }: { id: string }) => {
   const appointmentId = id;
 
   // 1. Verificar se a marcação pertence ao tutor e está pendente
   const appointment = await prisma.appointment.findFirst({
     where: { 
       id: appointmentId,
-      clinicId: session.clinicId,
-      patient: { ownerId: session.ownerId },
+      clinicId: portalSession.clinicId,
+      patient: { ownerId: portalSession.ownerId },
       status: "PENDING_CONFIRMATION"
     }
   });
@@ -44,4 +37,4 @@ export async function POST(
   });
 
   return NextResponse.json({ success: true });
-}
+});

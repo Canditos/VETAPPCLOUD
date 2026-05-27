@@ -1,30 +1,23 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { jwtVerify } from "jose";
 import prisma from "@/lib/prisma";
 import { addDays } from "date-fns";
+import { withPortalSession } from "@/lib/auth-portal";
 
-export async function GET() {
+type PortalVaccination = {
+  vaccineName: string;
+  expiresAt: Date | null;
+};
+
+type PortalPatient = {
+  name: string;
+  vaccinations: PortalVaccination[];
+};
+
+export const GET = withPortalSession(async ({ portalSession }) => {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("vet_portal_session")?.value;
-
-    if (!token) {
-      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
-    }
-
-    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
-    let payload;
-    try {
-      const { payload: jwtPayload } = await jwtVerify(token, secret);
-      payload = jwtPayload;
-    } catch (e) {
-      return NextResponse.json({ error: "Sessão inválida" }, { status: 401 });
-    }
-
-    const ownerId = payload.ownerId as string;
-    const clinicId = payload.clinicId as string;
+    const ownerId = portalSession.ownerId;
+    const clinicId = portalSession.clinicId;
 
     if (!ownerId || !clinicId) {
       return NextResponse.json({ error: "Sessão inválida" }, { status: 401 });
@@ -102,10 +95,10 @@ export async function GET() {
 
     // Build vaccine alerts (expiring in 30 days or already expired)
     const in30Days = addDays(new Date(), 30);
-    const vaccineAlerts = owner.patients.flatMap((patient: any) =>
+    const vaccineAlerts = (owner.patients as PortalPatient[]).flatMap((patient) =>
       patient.vaccinations
-        .filter((v: any) => v.expiresAt && v.expiresAt <= in30Days)
-        .map((v: any) => ({
+        .filter((v) => v.expiresAt && v.expiresAt <= in30Days)
+        .map((v) => ({
           patientName: patient.name,
           vaccineName: v.vaccineName,
           expiresAt: v.expiresAt,
@@ -128,4 +121,4 @@ export async function GET() {
     console.error("[PORTAL_ME_GET]", error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
-}
+});

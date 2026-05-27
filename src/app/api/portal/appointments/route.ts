@@ -1,13 +1,26 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getPortalSession } from "@/lib/auth-portal";
+import { withPortalSession } from "@/lib/auth-portal";
+import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
+const bodySchema = z.object({
+  token: z.string().min(1).optional(),
+  patientId: z.string().min(1),
+  reason: z.string().min(1),
+  preferred: z.string().optional().nullable(),
+});
+
 // POST /api/portal/appointments — tutor requests an appointment (suggested, not free)
-export async function POST(req: Request) {
+export const POST = withPortalSession(async ({ req, portalSession }) => {
   try {
-    const { token, patientId, reason, preferred } = await req.json();
+    const parsed = bodySchema.safeParse(await req.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid payload", details: parsed.error.flatten() }, { status: 400 });
+    }
+
+    const { token, patientId, reason, preferred } = parsed.data;
 
     let ownerId: string;
     let clinicId: string;
@@ -29,12 +42,8 @@ export async function POST(req: Request) {
       }
       ownerName = portalToken.owner.name;
     } else {
-      const session = await getPortalSession();
-      if (!session) {
-        return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
-      }
-      ownerId = session.ownerId;
-      clinicId = session.clinicId;
+      ownerId = portalSession.ownerId;
+      clinicId = portalSession.clinicId;
       
       const owner = await prisma.owner.findFirst({ where: { id: ownerId, clinicId } });
       if (!owner) return NextResponse.json({ error: "Cliente não encontrado" }, { status: 404 });
@@ -82,4 +91,4 @@ export async function POST(req: Request) {
     console.error("[PORTAL_APPOINTMENTS_POST]", error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
-}
+});

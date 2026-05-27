@@ -1,26 +1,18 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { jwtVerify } from "jose";
 import prisma from "@/lib/prisma";
+import { withPortalSession } from "@/lib/auth-portal";
+import { z } from "zod";
 
-async function getSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("vet_portal_session")?.value;
-  if (!token) return null;
-  try {
-    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
-    const { payload } = await jwtVerify(token, secret);
-    return { ownerId: payload.ownerId as string, clinicId: payload.clinicId as string };
-  } catch {
-    return null;
-  }
-}
+const bodySchema = z.object({
+  version: z.string().min(1).optional(),
+  policyUrl: z.string().min(1).optional(),
+  ip: z.string().min(1).optional(),
+  userAgent: z.string().min(1).optional(),
+});
 
-export async function GET() {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
-  const { ownerId, clinicId } = session;
+export const GET = withPortalSession(async ({ portalSession }) => {
+  const { ownerId, clinicId } = portalSession;
 
   const consent = await prisma.privacyConsent.findFirst({
     where: { ownerId, clinicId, accepted: true },
@@ -28,14 +20,16 @@ export async function GET() {
   });
 
   return NextResponse.json({ accepted: !!consent, consent });
-}
+});
 
-export async function POST(req: Request) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
-  const { ownerId, clinicId } = session;
+export const POST = withPortalSession(async ({ req, portalSession }) => {
+  const { ownerId, clinicId } = portalSession;
 
-  const body = await req.json().catch(() => ({}));
+  const parsedBody = bodySchema.safeParse(await req.json().catch(() => ({})));
+  if (!parsedBody.success) {
+    return NextResponse.json({ error: "Invalid payload", details: parsedBody.error.flatten() }, { status: 400 });
+  }
+  const body = parsedBody.data;
 
   const baseUrl = process.env.NEXTAUTH_URL || `https://${req.headers.get("host") || "vet.gatoescondido.com"}`;
 
@@ -54,4 +48,4 @@ export async function POST(req: Request) {
   });
 
   return NextResponse.json(consent);
-}
+});
