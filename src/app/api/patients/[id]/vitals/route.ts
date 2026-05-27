@@ -11,7 +11,7 @@ export const GET = withAuthParams(async ({ tenantPrisma }, { id: patientId }) =>
 
     const vitals = await prisma.vitalSign.findMany({
       where: { patientId },
-      orderBy: { recordedAt: "desc" },
+      orderBy: { date: "desc" },
     });
 
     return NextResponse.json(vitals);
@@ -39,7 +39,7 @@ export const POST = withAuthParams(async ({ req, tenantPrisma }, { id: patientId
         heartRate: heartRate ? parseInt(heartRate) : null,
         respiratoryRate: respiratoryRate ? parseInt(respiratoryRate) : null,
         notes,
-        recordedAt: recordedAt ? new Date(recordedAt) : new Date(),
+        date: recordedAt ? new Date(recordedAt) : new Date(),
       },
     });
 

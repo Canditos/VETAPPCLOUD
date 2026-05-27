@@ -606,7 +606,7 @@ export default function PatientDetailPage() {
                                 </div>
                               )}
                            </div>
-                           <Badge className="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full px-3 text-xs">{fmt(v.recordedAt || v.createdAt)}</Badge>
+                           <Badge className="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full px-3 text-xs">{fmt(v.date || v.createdAt)}</Badge>
                         </div>
                       ))
                     )}

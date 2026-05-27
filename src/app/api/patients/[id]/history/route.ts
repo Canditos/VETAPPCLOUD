@@ -42,7 +42,7 @@ export const GET = withAuthParams(async ({ clinicId, tenantPrisma }, { id }) => 
       }),
       tenantPrisma.vitalSign.findMany({
         where: { patientId: id },
-        orderBy: { recordedAt: "desc" },
+        orderBy: { date: "desc" },
       }),
       // Puxar pagamentos (pelo dono, não pelo paciente — Payment não tem patientId)
       patient?.ownerId ? tenantPrisma.payment.findMany({
@@ -113,7 +113,7 @@ export const GET = withAuthParams(async ({ clinicId, tenantPrisma }, { id }) => 
       ...vitals.map((v: any) => ({
         type: "VITALS",
         id: v.id,
-        date: v.recordedAt,
+        date: v.date,
         title: "Sinais Vitais",
         subtitle: `${v.weight ? v.weight + "kg" : ""} ${v.temperature ? v.temperature + "ºC" : ""}`,
         status: "COMPLETED",

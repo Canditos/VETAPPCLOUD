@@ -30,7 +30,7 @@ export const GET = withAuthParams(async ({ tenantPrisma, clinicId }, { id: patie
         take: 3,
         include: { notes: true, veterinarian: { select: { name: true } } },
       },
-      vitalSigns: { orderBy: { recordedAt: "desc" }, take: 2 },
+      vitalSigns: { orderBy: { date: "desc" }, take: 2 },
     },
   })) as any;
 

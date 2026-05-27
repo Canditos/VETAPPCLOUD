@@ -48,7 +48,7 @@ export const POST = withAuth(async ({ tenantPrisma, clinicId, req }) => {
         take: 3,
         include: { items: true },
       },
-      vitalSigns: { orderBy: { recordedAt: "desc" }, take: 2 },
+      vitalSigns: { orderBy: { date: "desc" }, take: 2 },
     },
   })) as any;
 
