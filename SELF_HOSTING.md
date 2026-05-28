@@ -86,3 +86,16 @@ Sugestão de rotina diária via cron no host:
 ```bash
 15 3 * * * cd /home/canditos/VETAPPCLOUD && /usr/bin/npm run fix:appt-encoding >> /home/canditos/encoding-fix.log 2>&1
 ```
+
+---
+
+## 7. Deploy com Menos 502
+
+Quando fizeres deploy manual em Docker, usa o script abaixo para reduzir a janela de indisponibilidade:
+
+```bash
+cd /home/canditos/VETAPPCLOUD
+bash scripts/deploy-vet-app-safe.sh
+```
+
+O script faz pré-validação num container canário em `:3001` e só depois troca o `vet-app` em `:3000`.

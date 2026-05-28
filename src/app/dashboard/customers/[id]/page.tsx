@@ -67,6 +67,9 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
   const [isGeneratingPass, setIsGeneratingPass] = useState(false);
   const [consentLink, setConsentLink] = useState<string | null>(null);
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  const [invoiceAttemptKey, setInvoiceAttemptKey] = useState(() =>
+    typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `inv-${Date.now()}`,
+  );
   const [invoiceForm, setInvoiceForm] = useState({
     description: "Consulta veterinária",
     quantity: 1,
@@ -145,7 +148,10 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
 
       const res = await fetch(`/api/customers/${id}/invoice`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Idempotency-Key": invoiceAttemptKey,
+        },
         body: JSON.stringify(payload),
       });
 
@@ -153,11 +159,12 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
       if (!res.ok) throw new Error(data.error || "Erro ao emitir fatura");
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["customer-hub", id] });
       queryClient.invalidateQueries({ queryKey: ["billing"] });
       setIsInvoiceModalOpen(false);
-      toast.success("Fatura emitida no Vendus com sucesso.");
+      setInvoiceAttemptKey(typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `inv-${Date.now()}`);
+      toast.success(data?.deduplicated ? "Pedido repetido detetado. Foi usada a fatura já existente." : "Fatura emitida no Vendus com sucesso.");
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -348,7 +355,10 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
             <Button 
               variant="outline" 
               className="rounded-xl h-10 font-bold border-slate-200 dark:border-slate-805 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 gap-2 text-xs"
-              onClick={() => setIsInvoiceModalOpen(true)}
+              onClick={() => {
+                setInvoiceAttemptKey(typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `inv-${Date.now()}`);
+                setIsInvoiceModalOpen(true);
+              }}
             >
               <FilePlus size={16} /> Criar Fatura
             </Button>

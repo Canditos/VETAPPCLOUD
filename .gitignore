@@ -43,3 +43,9 @@ next-env.d.ts
 /src/generated/prisma
 
 .vercel
+
+# local operational artifacts
+FETCH_HEAD
+weopet-checkpoint.json
+weopet-import-log.json
+scripts/weopet-checkpoint.json
