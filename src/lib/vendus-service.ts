@@ -57,6 +57,21 @@ export class VendusService {
   }
 
   /**
+   * Export SAF-T (Standard Audit File for Tax purposes)
+   */
+  async getSaft(year: number, month: number) {
+    try {
+      const response = await axios.get(`${this.baseUrl}taxauthority/saft/`, {
+        params: { api_key: this.apiKey, year, month }
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("Vendus SAF-T Error:", error.response?.data || error.message);
+      throw new Error(error.response?.data?.errors?.[0]?.message || "Erro ao exportar SAF-T");
+    }
+  }
+
+  /**
    * Send document via email
    */
   async sendDocument(documentId: string | number, email: string) {
