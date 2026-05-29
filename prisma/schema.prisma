@@ -45,6 +45,7 @@ model Clinic {
   smsLogs            SmsLog[]
   privacyConsents    PrivacyConsent[]
   vitalSigns         VitalSign[]
+  servicePacks       ServicePack[]
 
   @@index([name])
 }
@@ -667,4 +668,31 @@ model PrivacyConsent {
   @@index([clinicId])
   @@index([ownerId])
   @@index([ownerId, accepted])
+}
+
+model ServicePack {
+  id        String   @id @default(uuid())
+  clinicId  String
+  name      String
+  type      String   // SURGERY, VACCINE, CONSULTATION, CUSTOM
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  items     ServicePackItem[]
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+
+  @@index([clinicId])
+  @@index([type])
+}
+
+model ServicePackItem {
+  id          String      @id @default(uuid())
+  packId      String
+  description String
+  quantity    Int         @default(1)
+  unitPrice   Decimal     @db.Decimal(10, 2)
+  vatRate     Int         @default(23)
+  pack        ServicePack @relation(fields: [packId], references: [id], onDelete: Cascade)
+
+  @@index([packId])
 }

@@ -9,7 +9,8 @@ import {
   Globe,
   Database,
   Link2,
-  Loader2
+  Loader2,
+  Package
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -19,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
+import { ServicePacks } from "./service-packs";
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
@@ -118,6 +120,9 @@ export default function SettingsPage() {
           </TabsTrigger>
           <TabsTrigger value="notifications" onClick={() => window.location.href = "/dashboard/settings/notifications"} className="flex-1 rounded-xl gap-2 data-[state=active]:bg-slate-700 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-400 justify-center">
             <Bell size={16} /> Notificações
+          </TabsTrigger>
+          <TabsTrigger value="services" className="flex-1 rounded-xl gap-2 data-[state=active]:bg-slate-700 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-400 justify-center">
+            <Package size={16} /> Serviços
           </TabsTrigger>
         </TabsList>
 
@@ -225,6 +230,10 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="services">
+          <ServicePacks />
         </TabsContent>
       </Tabs>
     </div>
