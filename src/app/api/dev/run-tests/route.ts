@@ -6,6 +6,10 @@ const execPromise = util.promisify(exec);
 
 export async function POST(req: Request) {
   try {
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.json({ success: false, error: "Not found" }, { status: 404 });
+    }
+
     const enabled = process.env.ENABLE_DEV_RUN_TESTS === "true";
     const secret = process.env.DEV_TOOLS_SECRET;
 

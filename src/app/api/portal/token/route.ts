@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/api-wrapper";
-import { SignJWT } from "jose";
+import { issuePortalToken } from "@/lib/portal-token";
 
 export const POST = withAuth(async ({ tenantPrisma, clinicId, req }) => {
   const body = await req.json();
@@ -22,29 +22,7 @@ export const POST = withAuth(async ({ tenantPrisma, clinicId, req }) => {
     return NextResponse.json({ error: "Owner not found" }, { status: 404 });
   }
 
-  if (!process.env.NEXTAUTH_SECRET) {
-    return NextResponse.json({ error: "Servidor mal configurado: NEXTAUTH_SECRET em falta" }, { status: 500 });
-  }
-  const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
+  const portalToken = await issuePortalToken({ ownerId, clinicId });
 
-  const token = await new SignJWT({
-    ownerId: owner.id,
-    clinicId,
-    role: "OWNER",
-  })
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime("7d")
-    .sign(secret);
-
-  await tenantPrisma.ownerPortalToken.create({
-    data: {
-      ownerId,
-      clinicId,
-      token,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    },
-  });
-
-  return NextResponse.json({ token });
+  return NextResponse.json({ token: portalToken.token });
 });

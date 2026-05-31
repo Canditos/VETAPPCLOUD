@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getPortalSession } from "@/lib/auth-portal";
+import { getPortalToken } from "@/lib/portal-token";
 
 export const dynamic = "force-dynamic";
 
@@ -14,12 +15,9 @@ export async function POST(req: Request) {
     let ownerName: string;
 
     if (token) {
-      const portalToken = await prisma.ownerPortalToken.findUnique({
-        where: { token },
-        include: { owner: true },
-      });
+      const portalToken = await getPortalToken(token);
 
-      if (!portalToken) {
+      if (!portalToken || portalToken.lastUsed || (portalToken.expiresAt && new Date() > portalToken.expiresAt)) {
         return NextResponse.json({ error: "Token inválido" }, { status: 401 });
       }
       ownerId = portalToken.ownerId;

@@ -1,11 +1,14 @@
 import { test, expect } from '@playwright/test';
 
+const loginEmail = process.env.E2E_LOGIN_EMAIL || 'marco@clinicavet.pt';
+const loginPassword = process.env.E2E_LOGIN_PASSWORD || 'admin123';
+
 test.describe('Automations Settings Persistence', () => {
   test.beforeEach(async ({ page }) => {
     // Autenticação
     await page.goto('/auth/signin');
-    await page.fill('input[type="email"]', 'demo@vetconnect.com');
-    await page.fill('input[type="password"]', 'demo123');
+    await page.fill('input[type="email"]', loginEmail);
+    await page.fill('input[type="password"]', loginPassword);
     await Promise.all([
       page.waitForNavigation(),
       page.click('button[type="submit"]')

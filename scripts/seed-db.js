@@ -3,7 +3,11 @@ const { PrismaPg } = require('@prisma/adapter-pg');
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 
-const connectionString = 'postgresql://neondb_owner:npg_MX6YGrv5jJzP@ep-cool-hat-algk1xes-pooler.c-3.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  throw new Error('DATABASE_URL environment variable is required');
+}
+
 const pool = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
@@ -21,13 +25,14 @@ async function main() {
     console.log('Clinic created:', clinic.id);
 
     // 2. Create Admin User
-    const password = 'admin123';
+    const password = process.env.SEED_ADMIN_PASSWORD || 'admin123';
     const hash = await bcrypt.hash(password, 10);
+    const adminEmail = process.env.SEED_ADMIN_EMAIL || 'admin@vetapp.com';
     
     const user = await prisma.user.create({
       data: {
         name: 'Administrador',
-        email: 'admin@vetapp.com',
+        email: adminEmail,
         passwordHash: hash,
         role: 'ADMIN',
         clinicId: clinic.id
@@ -35,7 +40,7 @@ async function main() {
     });
     console.log('User created:', user.email, 'with clinicId:', user.clinicId);
     
-    console.log('SUCCESS: You can now login with admin@vetapp.com / admin123');
+    console.log(`SUCCESS: You can now login with ${user.email} / ${password}`);
   } catch (e) {
     console.error('Error:', e);
   } finally {

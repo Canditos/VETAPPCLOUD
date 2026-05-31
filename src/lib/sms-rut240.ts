@@ -2,6 +2,14 @@ import axios from 'axios';
 import prisma from '@/lib/prisma';
 
 const MIN_DELAY_MS = 5000;
+const DEFAULT_PORT = 80;
+
+type RUT240Config = {
+  ip: string;
+  port: number;
+  username: string;
+  password: string;
+};
 
 const queue: Array<{
   numero: string;
@@ -12,27 +20,62 @@ const queue: Array<{
 
 let processing = false;
 
-async function getRUT240Config(clinicId?: string) {
+function isConfigured(value: string | null | undefined): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function parsePort(value: string | number | null | undefined): number {
+  const parsed = Number(value ?? DEFAULT_PORT);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : DEFAULT_PORT;
+}
+
+function maskPhoneNumber(numero: string) {
+  if (numero.length <= 4) return numero;
+  return `${numero.slice(0, 4)}***${numero.slice(-2)}`;
+}
+
+function buildConfig(config: {
+  ip?: string | null;
+  port?: string | number | null;
+  username?: string | null;
+  password?: string | null;
+}): RUT240Config | null {
+  if (!isConfigured(config.ip) || !isConfigured(config.username) || !isConfigured(config.password)) {
+    return null;
+  }
+
+  return {
+    ip: config.ip.trim(),
+    port: parsePort(config.port),
+    username: config.username.trim(),
+    password: config.password,
+  };
+}
+
+async function getRUT240Config(clinicId?: string): Promise<RUT240Config | null> {
   if (clinicId) {
     try {
       const settings = await prisma.automationSettings.findUnique({
         where: { clinicId }
       });
-      if (settings?.rut240Ip) {
-        return {
-          ip: settings.rut240Ip,
-          username: settings.rut240User || 'admin',
-          password: settings.rut240Password || 'admin01',
-        };
+      const clinicConfig = buildConfig({
+        ip: settings?.rut240Ip,
+        port: settings?.rut240Port,
+        username: settings?.rut240User,
+        password: settings?.rut240Password,
+      });
+      if (clinicConfig) {
+        return clinicConfig;
       }
     } catch {}
   }
 
-  return {
-    ip: process.env.RUT240_IP || '192.168.1.1',
-    username: process.env.RUT240_USER || 'admin',
-    password: process.env.RUT240_PASSWORD || 'admin01',
-  };
+  return buildConfig({
+    ip: process.env.RUT240_IP || process.env.TELTONIKA_HOST,
+    port: process.env.RUT240_PORT || process.env.TELTONIKA_PORT,
+    username: process.env.RUT240_USER || process.env.TELTONIKA_USER,
+    password: process.env.RUT240_PASSWORD || process.env.TELTONIKA_PASS,
+  });
 }
 
 export async function sendSMSViaRUT240(
@@ -67,14 +110,19 @@ export async function sendSMSViaRUT240(
     }
 
     const config = await getRUT240Config(clinicId);
+    if (!config) {
+      return reject(
+        new Error('Gateway RUT240 não configurado. Defina IP, utilizador e password nas definições da clínica ou nas variáveis RUT240_*.')
+      );
+    }
 
     queue.push({ numero: formattedNumber, mensagem, resolve, reject });
-    console.log(`[RUT240] Adicionado à fila: ${formattedNumber} (fila: ${queue.length})`);
+    console.log(`[RUT240] Adicionado à fila: ${maskPhoneNumber(formattedNumber)} (fila: ${queue.length})`);
     processarFila(config);
   });
 }
 
-async function processarFila(config: { ip: string; username: string; password: string }) {
+async function processarFila(config: RUT240Config) {
   if (processing || queue.length === 0) return;
   processing = true;
 
@@ -87,7 +135,7 @@ async function processarFila(config: { ip: string; username: string; password: s
       const resultado = await _enviarParaRouter(numero, mensagem, config);
       resolve(resultado);
     } catch (err: any) {
-      console.error(`[RUT240] Erro ao enviar para ${numero}:`, err.message);
+      console.error(`[RUT240] Erro ao enviar para ${maskPhoneNumber(numero)}:`, err.message);
       reject(err);
     }
 
@@ -100,7 +148,7 @@ async function processarFila(config: { ip: string; username: string; password: s
 }
 
 async function _enviarParaRouter(numero: string, mensagem: string, config: { ip: string; username: string; password: string }) {
-  const url = `http://${config.ip}/cgi-bin/sms_send`;
+  const url = `http://${config.ip}:${config.port}/cgi-bin/sms_send`;
 
   const params = {
     username: config.username,
@@ -109,7 +157,7 @@ async function _enviarParaRouter(numero: string, mensagem: string, config: { ip:
     text: mensagem,
   };
 
-  console.log(`[RUT240] A tentar enviar SMS para ${numero}...`);
+  console.log(`[RUT240] A tentar enviar SMS para ${maskPhoneNumber(numero)}...`);
 
   try {
     const resposta = await axios.get(url, {
@@ -120,14 +168,14 @@ async function _enviarParaRouter(numero: string, mensagem: string, config: { ip:
     const data = resposta.data?.toString().trim();
 
     if (data && data.includes('OK')) {
-      console.log(`[RUT240] ✓ Sucesso: ${numero}`);
+      console.log(`[RUT240] ✓ Sucesso: ${maskPhoneNumber(numero)}`);
       return { success: true, message: `SMS enviado via RUT240 para ${numero}` };
     } else {
       throw new Error(`Router respondeu: ${data || 'Sem resposta'}`);
     }
   } catch (error: any) {
     if (error.code === 'ECONNREFUSED') {
-      throw new Error(`Não foi possível ligar ao RUT240 em ${config.ip}. Verifica se estás na mesma rede.`);
+      throw new Error(`Não foi possível ligar ao RUT240 em ${config.ip}:${config.port}. Verifica se estás na mesma rede.`);
     }
     throw error;
   }

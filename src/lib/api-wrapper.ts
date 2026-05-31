@@ -4,11 +4,10 @@ import { authOptions } from "@/lib/auth";
 import { getTenantClient } from "@/lib/prisma";
 import { csrfProtection } from "@/lib/csrf";
 import type { PrismaClient } from "@prisma/client";
-import type { Session } from "next-auth";
 
 export interface ApiContext {
   req: NextRequest;
-  session: Session & { user: { id: string; clinicId: string; email: string; name?: string; role?: string } };
+  session: NonNullable<Awaited<ReturnType<typeof getServerSession>>>;
   tenantPrisma: PrismaClient;
   clinicId: string;
   userId: string;
@@ -29,12 +28,12 @@ export function withAuth(handler: ApiHandler) {
       if (csrf) return csrf;
 
       const session = await getServerSession(authOptions);
-      if (!session || !(session.user as any).clinicId) {
+      if (!session?.user?.clinicId) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
 
-      const clinicId = (session.user as any).clinicId as string;
-      const userId = (session.user as any).id as string;
+      const clinicId = session.user.clinicId;
+      const userId = session.user.id;
       const tenantPrisma = getTenantClient(clinicId);
 
       const ctx: ApiContext = {
@@ -68,12 +67,12 @@ export function withAuthParams<T = { id: string }>(handler: ApiHandlerWithParams
       if (csrf) return csrf;
 
       const session = await getServerSession(authOptions);
-      if (!session || !(session.user as any).clinicId) {
+      if (!session?.user?.clinicId) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
 
-      const clinicId = (session.user as any).clinicId as string;
-      const userId = (session.user as any).id as string;
+      const clinicId = session.user.clinicId;
+      const userId = session.user.id;
       const tenantPrisma = getTenantClient(clinicId);
       const resolvedParams = await params;
 

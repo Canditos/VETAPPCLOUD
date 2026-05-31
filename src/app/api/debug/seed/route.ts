@@ -5,6 +5,10 @@ import bcrypt from "bcryptjs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const enabled = process.env.ENABLE_DEBUG_SEED === "true";
   const expectedSecret = process.env.SEED_SECRET;
   const providedSecret = request.nextUrl.searchParams.get("secret") || request.headers.get("x-seed-secret");

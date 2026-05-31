@@ -4,14 +4,14 @@ import { withAuth } from "@/lib/api-wrapper";
 import prisma from "@/lib/prisma";
 import { sendSMSViaRUT240 } from "@/lib/sms-rut240";
 import { sendEmail, buildRgpdEmail } from "@/lib/email";
-import crypto from "crypto";
+import { issuePortalToken } from "@/lib/portal-token";
 
 export const POST = withAuth(async ({ req, clinicId }: any) => {
   try {
     const { ownerId } = await req.json();
     if (!ownerId) return NextResponse.json({ error: "ownerId required" }, { status: 400 });
 
-    const owner = await prisma.owner.findUnique({
+    const owner = await prisma.owner.findFirst({
       where: { id: ownerId, clinicId },
       include: { clinic: { select: { name: true } } },
     });
@@ -24,21 +24,14 @@ export const POST = withAuth(async ({ req, clinicId }: any) => {
       return NextResponse.json({ error: "Cliente já aceitou a política de privacidade" }, { status: 409 });
     }
 
-    const tokenValue = crypto.randomUUID();
-    await prisma.ownerPortalToken.create({
-      data: {
-        token: tokenValue,
-        ownerId,
-        clinicId,
-        expiresAt: new Date(Date.now() + 7 * 86400000),
-      },
-    });
+    const portalToken = await issuePortalToken({ ownerId, clinicId });
 
     const baseUrl = process.env.NEXTAUTH_URL || "https://vet.gatoescondido.com";
-    const consentLink = `${baseUrl}/api/portal/auth/magic?token=${tokenValue}&redirect=/portal/privacy`;
+    const consentLink = `${baseUrl}/api/portal/auth/magic?token=${portalToken.token}&redirect=/portal/privacy`;
     const clinicName = owner.clinic?.name || "Clínica Veterinária";
 
-    let sent: string[] = [];
+    const sent: string[] = [];
+    let warning: string | null = null;
 
     if (owner.email) {
       const { sent: ok } = await sendEmail(
@@ -54,11 +47,14 @@ export const POST = withAuth(async ({ req, clinicId }: any) => {
         const msg = `RGPD - Confirme a sua Politica de Privacidade: ${consentLink}`;
         await sendSMSViaRUT240(owner.phone, msg, clinicId);
         sent.push("sms");
-      } catch {}
+      } catch (error) {
+        warning = error instanceof Error ? error.message : "Falha ao enviar SMS";
+      }
     }
 
     return NextResponse.json({
       sent,
+      warning,
       message: sent.includes("email")
         ? `Email enviado para ${owner.email}`
         : sent.includes("sms")

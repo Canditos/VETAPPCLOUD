@@ -69,7 +69,7 @@ Documentation is available at [/docs/api](/docs/api).
   // If user is NOT logged in
   if (!token) {
     // Allow access to auth pages (login)
-    if (isAuthPage) {
+    if (isAuthPage || isRoot) {
       return NextResponse.next();
     }
 

@@ -1,6 +1,8 @@
-import { NextAuthOptions } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
+import type { Role } from "@prisma/client";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import CredentialsProvider from "next-auth/providers/credentials";
+import type { Adapter } from "next-auth/adapters";
+import type { NextAuthOptions } from "next-auth";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
@@ -13,7 +15,7 @@ if (!process.env.NEXTAUTH_SECRET) {
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
-  adapter: PrismaAdapter(prisma) as any,
+  adapter: PrismaAdapter(prisma) as Adapter,
   session: {
     strategy: "jwt",
   },
@@ -61,7 +63,7 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           name: user.name,
           email: user.email,
-          role: user.role,
+          role: user.role as Role,
           clinicId: user.clinicId,
         };
       },
@@ -71,8 +73,8 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = (user as any).role;
-        token.clinicId = (user as any).clinicId;
+        token.role = user.role;
+        token.clinicId = user.clinicId;
         if (process.env.NODE_ENV !== "production") {
           console.log(`[JWT] Updated token for ${user.email} with id: ${user.id}`);
         }
@@ -81,9 +83,9 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.id;
-        (session.user as any).role = token.role;
-        (session.user as any).clinicId = token.clinicId;
+        session.user.id = token.id;
+        session.user.role = token.role;
+        session.user.clinicId = token.clinicId;
       }
       return session;
     },

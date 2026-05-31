@@ -1,7 +1,6 @@
+import { sendSMSViaRUT240 } from "@/lib/sms-rut240";
 
-import axios from "axios";
-
-export type SmsProvider = "TELTONIKA" | "TWILIO" | "MOCK";
+export type SmsProvider = "RUT240" | "TELTONIKA" | "TWILIO" | "MOCK";
 
 interface SmsOptions {
   to: string;
@@ -16,10 +15,11 @@ export class SmsService {
       console.log(`[SMS_SERVICE] Sending via ${this.provider} to ${options.to}`);
     }
 
-    try {
+      try {
       switch (this.provider) {
+        case "RUT240":
         case "TELTONIKA":
-          return await this.sendViaTeltonika(options);
+          return await this.sendViaRUT240(options);
         case "TWILIO":
           return await this.sendViaTwilio(options);
         default:
@@ -34,32 +34,9 @@ export class SmsService {
     }
   }
 
-  private static async sendViaTeltonika({ to, message }: SmsOptions) {
-    const host = process.env.TELTONIKA_HOST || "192.168.1.1";
-    const user = process.env.TELTONIKA_USER || "admin";
-    const pass = process.env.TELTONIKA_PASS;
-
-    if (!pass) throw new Error("TELTONIKA_PASS not configured");
-
-    // Teltonika RUT240 HTTP API Format
-    // http://<IP>/cgi-bin/sms_send?username=<USER>&password=<PASS>&number=<NUMBER>&text=<TEXT>
-    const url = `http://${host}/cgi-bin/sms_send`;
-    
-    const response = await axios.get(url, {
-      params: {
-        username: user,
-        password: pass,
-        number: to.replace(/\s+/g, ""), // Remove spaces
-        text: message
-      },
-      timeout: 5000 // 5 seconds timeout for local network
-    });
-
-    if (response.status !== 200 || !response.data.includes("OK")) {
-      throw new Error(`Teltonika responded with: ${response.data}`);
-    }
-
-    return { success: true, messageId: "teltonika-ok" };
+  private static async sendViaRUT240({ to, message }: SmsOptions) {
+    const result = await sendSMSViaRUT240(to, message);
+    return { success: result.success, messageId: "rut240-ok" };
   }
 
   private static async sendViaTwilio({ to, message }: SmsOptions) {

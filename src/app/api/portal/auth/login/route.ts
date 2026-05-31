@@ -11,7 +11,9 @@ const rateLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, maxAttempts: 5
 export async function POST(req: Request) {
   try {
     const ip = getClientIp(req);
-    const { email, password } = await req.json();
+    const body = await req.json();
+    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    const password = typeof body.password === "string" ? body.password : "";
 
     if (!email || !password) {
       return NextResponse.json({ error: "Email e password obrigatórios" }, { status: 400 });
@@ -22,7 +24,7 @@ export async function POST(req: Request) {
     }
 
     const rlKey = buildRateLimitKey(ip, email);
-    const { allowed, retryAfter } = rateLimiter.check(rlKey);
+    const { allowed, retryAfter } = await rateLimiter.check(rlKey);
     if (!allowed) {
       return NextResponse.json(
         { error: "Demasiadas tentativas. Tente novamente mais tarde." },
@@ -33,13 +35,24 @@ export async function POST(req: Request) {
       );
     }
 
-    const owner = await prisma.owner.findFirst({
+    const owners = await prisma.owner.findMany({
       where: { email },
+      orderBy: { createdAt: "asc" },
+      take: 2,
     });
 
-    if (!owner) {
+    if (owners.length === 0) {
       return NextResponse.json({ error: "Credenciais inválidas" }, { status: 401 });
     }
+
+    if (owners.length > 1) {
+      return NextResponse.json(
+        { error: "Este email está associado a mais do que uma clínica. Contacte a clínica para concluir o acesso ao portal." },
+        { status: 409 }
+      );
+    }
+
+    const [owner] = owners;
 
     if (!owner.passwordHash) {
       return NextResponse.json({ error: "Acesso não configurado. Contacte a clínica." }, { status: 401 });
@@ -51,7 +64,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Credenciais inválidas" }, { status: 401 });
     }
 
-    rateLimiter.reset(rlKey);
+    await rateLimiter.reset(rlKey);
 
     const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
     const jwt = await new SignJWT({ ownerId: owner.id, clinicId: owner.clinicId })

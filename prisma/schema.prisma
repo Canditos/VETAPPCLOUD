@@ -411,6 +411,18 @@ model OwnerPortalToken {
 
   @@index([token])
   @@index([ownerId])
+  @@index([clinicId, ownerId])
+  @@index([expiresAt])
+}
+
+model RateLimitEntry {
+  key         String   @id
+  attempts    Int      @default(0)
+  windowStart DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([windowStart])
 }
 
 model PortalAppointmentRequest {

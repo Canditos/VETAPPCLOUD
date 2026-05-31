@@ -1,13 +1,16 @@
 import { test, expect } from '@playwright/test';
 
+const loginEmail = process.env.E2E_LOGIN_EMAIL || 'marco@clinicavet.pt';
+const loginPassword = process.env.E2E_LOGIN_PASSWORD || 'admin123';
+
 test.describe('Patients Flow', () => {
   // Configurar estado de autenticação antes de cada teste
   test.beforeEach(async ({ page }) => {
     // Para testes robustos, usar autenticação via state ou mock da API
     // Por simplicidade aqui vamos pela rota do UI
     await page.goto('/auth/signin');
-    await page.fill('input[type="email"]', 'demo@vetconnect.com');
-    await page.fill('input[type="password"]', 'demo123');
+    await page.fill('input[type="email"]', loginEmail);
+    await page.fill('input[type="password"]', loginPassword);
     await Promise.all([
       page.waitForNavigation(),
       page.click('button[type="submit"]')

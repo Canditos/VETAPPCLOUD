@@ -1,44 +1,59 @@
-type SlidingWindowEntry = {
-  attempts: number;
-  windowStart: number;
-};
-
-const stores = new Map<string, Map<string, SlidingWindowEntry>>();
+import prisma from "@/lib/prisma";
 
 export function createRateLimiter(options: { windowMs: number; maxAttempts: number }) {
   const { windowMs, maxAttempts } = options;
-  const store = new Map<string, SlidingWindowEntry>();
-  const storeKey = `rl_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-  stores.set(storeKey, store);
-
-  setInterval(() => {
-    const now = Date.now();
-    for (const [key, entry] of store) {
-      if (now - entry.windowStart > windowMs * 2) store.delete(key);
-    }
-  }, windowMs * 2).unref();
 
   return {
-    check(key: string): { allowed: boolean; retryAfter: number } {
-      const now = Date.now();
-      const entry = store.get(key);
+    async check(key: string): Promise<{ allowed: boolean; retryAfter: number }> {
+      const now = new Date();
+      const staleThreshold = new Date(now.getTime() - windowMs * 2);
+      const activeWindowStart = new Date(now.getTime() - windowMs);
 
-      if (!entry || now - entry.windowStart > windowMs) {
-        store.set(key, { attempts: 1, windowStart: now });
+      await prisma.rateLimitEntry.deleteMany({
+        where: {
+          windowStart: {
+            lt: staleThreshold,
+          },
+        },
+      });
+
+      const entry = await prisma.rateLimitEntry.findUnique({
+        where: { key },
+      });
+
+      if (!entry || entry.windowStart < activeWindowStart) {
+        await prisma.rateLimitEntry.upsert({
+          where: { key },
+          update: { attempts: 1, windowStart: now },
+          create: { key, attempts: 1, windowStart: now },
+        });
         return { allowed: true, retryAfter: 0 };
       }
 
       if (entry.attempts >= maxAttempts) {
-        const retryAfter = Math.ceil((entry.windowStart + windowMs - now) / 1000);
+        const retryAfter = Math.max(
+          0,
+          Math.ceil((entry.windowStart.getTime() + windowMs - now.getTime()) / 1000)
+        );
         return { allowed: false, retryAfter };
       }
 
-      entry.attempts++;
+      await prisma.rateLimitEntry.update({
+        where: { key },
+        data: {
+          attempts: {
+            increment: 1,
+          },
+        },
+      });
+
       return { allowed: true, retryAfter: 0 };
     },
 
-    reset(key: string) {
-      store.delete(key);
+    async reset(key: string) {
+      await prisma.rateLimitEntry.deleteMany({
+        where: { key },
+      });
     },
   };
 }

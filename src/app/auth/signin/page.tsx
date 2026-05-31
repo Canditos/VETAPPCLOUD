@@ -84,7 +84,7 @@ export default function SignInPage() {
             </Button>
           </form>
           <div className="mt-6 text-center text-xs text-slate-600 space-y-2">
-            <p>Demo: admin@vetapp.com / admin123</p>
+            <p>Solicite as suas credenciais ao administrador da clínica.</p>
             <p>
               Não tem conta?{" "}
               <a href="/auth/register" className="text-blue-500 hover:underline font-bold">

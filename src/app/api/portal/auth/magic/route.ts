@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { SignJWT } from "jose";
 import { createRateLimiter, buildRateLimitKey, getClientIp } from "@/lib/rate-limit";
+import { consumePortalToken } from "@/lib/portal-token";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,7 @@ export async function GET(req: Request) {
     }
 
     const rlKey = buildRateLimitKey(ip, `magic:${token}`);
-    const { allowed, retryAfter } = rateLimiter.check(rlKey);
+    const { allowed, retryAfter } = await rateLimiter.check(rlKey);
     if (!allowed) {
       return NextResponse.json(
         { error: "Demasiados pedidos. Tente novamente mais tarde." },
@@ -29,20 +30,22 @@ export async function GET(req: Request) {
       );
     }
 
-    const portalToken = await prisma.ownerPortalToken.findUnique({
-      where: { token },
-      include: { owner: true },
-    });
-
-    if (!portalToken) {
+    const consumedToken = await consumePortalToken(token);
+    if (consumedToken.status === "expired") {
+      return NextResponse.json({ error: "Token expirado" }, { status: 401 });
+    }
+    if (consumedToken.status === "used") {
+      return NextResponse.json({ error: "Este link já foi utilizado. Peça um novo convite à clínica." }, { status: 401 });
+    }
+    if (consumedToken.status !== "ok") {
       return NextResponse.json({ error: "Token inválido" }, { status: 401 });
     }
 
-    if (portalToken.expiresAt && new Date() > portalToken.expiresAt) {
-      return NextResponse.json({ error: "Token expirado" }, { status: 401 });
+    if (!process.env.NEXTAUTH_SECRET) {
+      return NextResponse.json({ error: "Configuração inválida" }, { status: 500 });
     }
 
-    const owner = portalToken.owner;
+    const owner = consumedToken.owner;
 
     const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
     const jwt = await new SignJWT({ ownerId: owner.id, clinicId: owner.clinicId })

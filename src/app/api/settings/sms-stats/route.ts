@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
+import { Prisma } from "@prisma/client";
 import { withAuth } from "@/lib/api-wrapper";
 
 export const GET = withAuth(async (ctx: any) => {
@@ -12,38 +13,41 @@ export const GET = withAuth(async (ctx: any) => {
   const where = days > 0
     ? { clinicId, createdAt: { gte: new Date(Date.now() - days * 86400000) } }
     : { clinicId };
+  const dateFilter = days > 0
+    ? Prisma.sql`AND "createdAt" >= ${new Date(Date.now() - days * 86400000)}`
+    : Prisma.empty;
 
   const [total, byStatus, byType, daily, weekly, monthly, recent] = await Promise.all([
     prisma.smsLog.count({ where }),
     prisma.smsLog.groupBy({ by: ["status"], where, _count: true }),
     prisma.smsLog.groupBy({ by: ["type"], where, _count: true }),
-    prisma.$queryRawUnsafe(`
+    prisma.$queryRaw<Array<{ date: string; total: bigint; sent: bigint; failed: bigint }>>(Prisma.sql`
       SELECT to_char("createdAt", 'YYYY-MM-DD') as date,
              COUNT(*) as total,
              COUNT(*) FILTER (WHERE status = 'SENT') as sent,
              COUNT(*) FILTER (WHERE status = 'FAILED') as failed
-      FROM "SmsLog" WHERE "clinicId" = $1
-        ${days > 0 ? `AND "createdAt" >= NOW() - make_interval(days => $2::int)` : ""}
+      FROM "SmsLog" WHERE "clinicId" = ${clinicId}
+        ${dateFilter}
       GROUP BY date ORDER BY date DESC LIMIT 90
-    `, ...[clinicId, ...(days > 0 ? [days] : [])]),
-    prisma.$queryRawUnsafe(`
+    `),
+    prisma.$queryRaw<Array<{ week: string; total: bigint; sent: bigint; failed: bigint }>>(Prisma.sql`
       SELECT to_char("createdAt", 'YYYY-WW') as week,
              COUNT(*) as total,
              COUNT(*) FILTER (WHERE status = 'SENT') as sent,
              COUNT(*) FILTER (WHERE status = 'FAILED') as failed
-      FROM "SmsLog" WHERE "clinicId" = $1
-        ${days > 0 ? `AND "createdAt" >= NOW() - make_interval(days => $2::int)` : ""}
+      FROM "SmsLog" WHERE "clinicId" = ${clinicId}
+        ${dateFilter}
       GROUP BY week ORDER BY week DESC LIMIT 12
-    `, ...[clinicId, ...(days > 0 ? [days] : [])]),
-    prisma.$queryRawUnsafe(`
+    `),
+    prisma.$queryRaw<Array<{ month: string; total: bigint; sent: bigint; failed: bigint }>>(Prisma.sql`
       SELECT to_char("createdAt", 'YYYY-MM') as month,
              COUNT(*) as total,
              COUNT(*) FILTER (WHERE status = 'SENT') as sent,
              COUNT(*) FILTER (WHERE status = 'FAILED') as failed
-      FROM "SmsLog" WHERE "clinicId" = $1
-        ${days > 0 ? `AND "createdAt" >= NOW() - make_interval(days => $2::int)` : ""}
+      FROM "SmsLog" WHERE "clinicId" = ${clinicId}
+        ${dateFilter}
       GROUP BY month ORDER BY month DESC LIMIT 12
-    `, ...[clinicId, ...(days > 0 ? [days] : [])]),
+    `),
     prisma.smsLog.findMany({
       where,
       orderBy: { createdAt: "desc" },
@@ -51,7 +55,13 @@ export const GET = withAuth(async (ctx: any) => {
     }),
   ]);
 
-  const parseDaily = (rows: any[]) => (rows || []).map((r: any) => ({ ...r, total: Number(r.total), sent: Number(r.sent), failed: Number(r.failed) }));
+  const parseDaily = <T extends { total: bigint | number; sent: bigint | number; failed: bigint | number }>(rows: T[]) =>
+    (rows || []).map((row) => ({
+      ...row,
+      total: Number(row.total),
+      sent: Number(row.sent),
+      failed: Number(row.failed),
+    }));
   const totalSent = byStatus.find((s: any) => s.status === "SENT")?._count || 0;
   const totalFailed = byStatus.find((s: any) => s.status === "FAILED")?._count || 0;
 
