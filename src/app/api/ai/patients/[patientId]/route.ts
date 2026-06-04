@@ -1,5 +1,3 @@
-'use server';
-
 import { withAuth } from '@/lib/api-wrapper';
 import type { ApiContext } from '@/lib/api-wrapper';
 import { NextResponse } from 'next/server';
