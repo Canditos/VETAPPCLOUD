@@ -17,7 +17,11 @@ export const multiTenantExtension = (clinicId: string) => {
             'User', 'Patient', 'Owner', 'Consultation', 'Appointment',
             'Invoice', 'Product', 'StockMovement',
             'LabResult', 'ImagingStudy', 'Hospitalization',
-            'Prescription'
+            'Prescription', 'Vaccination', 'Deworming',
+            'Budget', 'Payment', 'HealthPlan', 'Subscription',
+            'VitalSign', 'Notification', 'SmsLog',
+            'PortalMessage', 'ServicePack', 'PrivacyConsent',
+            'PortalAppointmentRequest',
           ];
 
           if (tenantModels.includes(model)) {

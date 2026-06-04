@@ -1,6 +1,8 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/api-wrapper";
+import { CreateAppointmentSchema } from "@/lib/validation-schemas";
+import { z } from "zod";
 
 // GET /api/appointments - List appointments for the current clinic
 export const GET = withAuth(async ({ req, tenantPrisma }) => {
@@ -41,6 +43,9 @@ export const POST = withAuth(async ({ req, tenantPrisma }) => {
   }
 
   const body = await req.json();
+
+  // Zod validation
+  const parsed = CreateAppointmentSchema.parse(body);
 
   const { 
     patientId, 
@@ -110,6 +115,12 @@ export const POST = withAuth(async ({ req, tenantPrisma }) => {
 
     return NextResponse.json(appointment);
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Dados inválidos", details: error.errors },
+        { status: 400 }
+      );
+    }
     console.error("Error creating appointment:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

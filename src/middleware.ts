@@ -87,7 +87,7 @@ Documentation is available at [/docs/api](/docs/api).
       // This is a lightweight in-memory guard; moving to Redis for multi-instance environments.
       const now = Date.now();
       const windowMs = 60_000;
-      const limit = 10;
+      const limit = 30;
       const store: any = (global as any).__authRateStore || ((global as any).__authRateStore = new Map());
       const bucket = store.get(key);
       const count = bucket && now <= bucket.resetAt ? bucket.count + 1 : 1;

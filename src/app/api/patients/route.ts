@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/api-wrapper";
+import { CreatePatientSchema } from "@/lib/validation-schemas";
+import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +60,9 @@ export const POST = withAuth(async ({ req, tenantPrisma, clinicId }) => {
   try {
     const body = await req.json();
 
+    // Zod validation
+    const parsed = CreatePatientSchema.parse(body);
+
     let ownerId = body.ownerId;
 
     if (body.isNewOwner) {
@@ -96,6 +101,12 @@ export const POST = withAuth(async ({ req, tenantPrisma, clinicId }) => {
 
     return NextResponse.json(patient);
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Dados inválidos", details: error.errors },
+        { status: 400 }
+      );
+    }
     console.error("[PATIENTS_POST]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }

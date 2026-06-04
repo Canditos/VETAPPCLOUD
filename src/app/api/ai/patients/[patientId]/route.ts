@@ -28,7 +28,7 @@ export const GET = withAuthParams<PatientHistoryInput>(async ({ tenantPrisma, cl
       take: 20,
     }),
     tenantPrisma.vitalSign.findMany({
-      where: { patientId },
+      where: { patientId, clinicId },
       orderBy: { recordedAt: 'desc' },
       take: 50,
     }),

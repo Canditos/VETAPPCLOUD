@@ -180,9 +180,6 @@ model Appointment {
   upsellAccepted Boolean?           @default(false)
   expectedRevenue Decimal?          @db.Decimal(10, 2)
   reason         String?
-  upsellOffered  Boolean?           @default(false)
-  upsellAccepted Boolean?           @default(false)
-  expectedRevenue Decimal?          @db.Decimal(10, 2)
   status         ConsultationStatus @default(SCHEDULED)
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
