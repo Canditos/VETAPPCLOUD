@@ -1,20 +1,11 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { withAuth } from "@/lib/api-wrapper";
 
 export const dynamic = "force-dynamic";
 
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-
-export async function GET(request: Request) {
+export const GET = withAuth(async ({ clinicId }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    
-    const clinicId = (session.user as any).clinicId;
-
     const plans = await prisma.healthPlan.findMany({
       where: { clinicId },
       include: {
@@ -29,17 +20,16 @@ export async function GET(request: Request) {
     console.error("[HEALTH_PLANS_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withAuth(async ({ req, clinicId, session }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const role = (session.user as any).role;
+    if (role !== "SUPER_ADMIN" && role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const clinicId = (session.user as any).clinicId;
-    const body = await request.json();
+    const body = await req.json();
     const { name, description, price, billingCycle } = body;
 
     const plan = await prisma.healthPlan.create({
@@ -57,4 +47,4 @@ export async function POST(request: Request) {
     console.error("[HEALTH_PLANS_POST]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
-}
+});

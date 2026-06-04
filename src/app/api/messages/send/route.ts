@@ -1,17 +1,10 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { withAuth } from "@/lib/api-wrapper";
 
-export async function POST(req: Request) {
+export const POST = withAuth(async ({ req, clinicId }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
     const { content, ownerId, requestId } = await req.json();
-    const clinicId = (session.user as any).clinicId;
 
     if (!content || !ownerId) {
       return new NextResponse("Conteúdo e OwnerId são obrigatórios", { status: 400 });
@@ -33,4 +26,4 @@ export async function POST(req: Request) {
     console.error("[MESSAGES_SEND]", error);
     return new NextResponse("Erro interno", { status: 500 });
   }
-}
+});

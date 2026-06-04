@@ -1,22 +1,12 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import prisma, { getTenantClient } from "@/lib/prisma";
+import { withAuth } from "@/lib/api-wrapper";
 
-export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session || !(session.user as any).clinicId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { searchParams } = new URL(req.url);
-  const query = searchParams.get("q") || "";
-
-  const clinicId = (session.user as any).clinicId;
-  const tenantPrisma = getTenantClient(clinicId);
-
+export const GET = withAuth(async ({ req, tenantPrisma }) => {
   try {
+    const { searchParams } = new URL(req.url);
+    const query = searchParams.get("q") || "";
+
     const products = await tenantPrisma.product.findMany({
       where: {
         OR: [
@@ -32,4 +22,4 @@ export async function GET(req: Request) {
     console.error("Error fetching products:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
-}
+});

@@ -19,10 +19,8 @@
 
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
 import { z } from "zod";
-import prisma, { getTenantClient } from "@/lib/prisma";
+import { withAuth } from "@/lib/api-wrapper";
 import { JasminService } from "@/lib/jasmin-service";
 import { VendusService } from "@/lib/vendus-service";
 
@@ -40,6 +38,8 @@ const ConsultationSchema = z.object({
     temperature: z.number().optional().nullable(),
     heartRate: z.number().optional().nullable(),
     respiratoryRate: z.number().optional().nullable(),
+    painScale: z.number().int().min(0).max(10).optional().nullable(),
+    bodyConditionScore: z.number().int().min(1).max(9).optional().nullable(),
   }).optional(),
   items: z.array(z.object({
     id: z.string().optional(),
@@ -52,18 +52,11 @@ const ConsultationSchema = z.object({
   paymentMethod: z.string().optional(),
 });
 
-export async function POST(req: Request) {
+export const POST = withAuth(async ({ req, session, tenantPrisma, clinicId, userId }) => {
   if (process.env.NEXT_PHASE === 'phase-production-build') {
     return NextResponse.json({});
   }
-  
-  const session = await getServerSession(authOptions);
-  if (!session || !(session.user as any).clinicId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
 
-  const clinicId = (session.user as any).clinicId;
-  const tenantPrisma = getTenantClient(clinicId);
   const body = await req.json();
 
   // Validate request body
@@ -89,7 +82,7 @@ export async function POST(req: Request) {
     const consultation = await tenantPrisma.consultation.create({
       data: {
         patientId,
-        veterinarianId: (session.user as any).id,
+        veterinarianId: userId,
         date: new Date(),
         status: "COMPLETED",
         notes: {
@@ -104,7 +97,7 @@ export async function POST(req: Request) {
     });
 
     // 1.1. Create Vital Signs if provided
-    if (vitals && (vitals.weight || vitals.temperature || vitals.heartRate || vitals.respiratoryRate)) {
+    if (vitals && (vitals.weight || vitals.temperature || vitals.heartRate || vitals.respiratoryRate || vitals.painScale != null || vitals.bodyConditionScore != null)) {
       await tenantPrisma.vitalSigns.create({
         data: {
           patientId,
@@ -113,8 +106,10 @@ export async function POST(req: Request) {
           temperature: vitals.temperature,
           heartRate: vitals.heartRate,
           respiratoryRate: vitals.respiratoryRate,
+          painScale: vitals.painScale,
+          bodyConditionScore: vitals.bodyConditionScore,
           date: new Date(),
-          veterinarianId: (session.user as any).id,
+          veterinarianId: userId,
         }
       });
     }
@@ -144,7 +139,7 @@ export async function POST(req: Request) {
           // Construct client object with real data
           const clientData: any = {
             name: patient.owner.name,
-            vat: patient.owner.vatNumber,
+            fiscal_id: patient.owner.vatNumber,
           };
           
           // Add email for automatic sending
@@ -157,12 +152,21 @@ export async function POST(req: Request) {
             clientData.address = patient.owner.address;
           }
 
+          const vendusRegisters = await fetch(
+            `https://www.vendus.pt/ws/v1.1/registers/?api_key=${vendusKey}&type=api&isActive=yes`,
+            { signal: AbortSignal.timeout(5000) }
+          );
+          const registers = await vendusRegisters.json();
+          const registerId = Array.isArray(registers) && registers.length > 0 ? registers[0].id : undefined;
+
           const vendusDoc = await vendus.createDocument({
-            type: "FT", // Fatura
+            type: "FT",
+            register_id: registerId,
+            mode: "tests",
             date: new Date().toISOString().split('T')[0],
             client: clientData,
             items: items.map((it: any) => ({
-              description: it.name || it.description,
+              title: it.name || it.description,
               qty: it.quantity,
               gross_price: it.price,
               tax_id: it.vatRate === 23 ? "NOR" : it.vatRate === 13 ? "INT" : "RED"
@@ -248,4 +252,4 @@ export async function POST(req: Request) {
     console.error("Error creating consultation:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
-}
+});

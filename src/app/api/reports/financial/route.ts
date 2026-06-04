@@ -1,19 +1,11 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { withAuth } from "@/lib/api-wrapper";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export const GET = withAuth(async ({ clinicId }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    
-    const clinicId = (session.user as any).clinicId;
-
     // Fetch payments for revenue
     const payments = await prisma.payment.findMany({
       where: { clinicId },
@@ -75,4 +67,4 @@ export async function GET() {
     console.error("[FINANCIAL_REPORT_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
-}
+});

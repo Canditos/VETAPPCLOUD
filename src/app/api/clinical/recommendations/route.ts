@@ -1,20 +1,21 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { differenceInYears } from "date-fns";
+import { withAuth } from "@/lib/api-wrapper";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: Request) {
+export const GET = withAuth(async ({ req, clinicId }) => {
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = new URL(req.url);
     const patientId = searchParams.get("patientId");
 
     if (!patientId) {
       return NextResponse.json({ error: "Patient ID is required" }, { status: 400 });
     }
 
-    const patient = await prisma.patient.findUnique({
-      where: { id: patientId },
+    const patient = await prisma.patient.findFirst({
+      where: { id: patientId, clinicId },
       include: {
         consultations: {
           orderBy: { date: 'desc' },
@@ -80,4 +81,4 @@ export async function GET(request: Request) {
     console.error("Error generating recommendations:", error);
     return NextResponse.json({ error: "Erro ao gerar recomendações" }, { status: 500 });
   }
-}
+});

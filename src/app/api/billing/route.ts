@@ -1,18 +1,9 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import { getTenantClient } from "@/lib/prisma";
+import { withAuth } from "@/lib/api-wrapper";
 
 // GET /api/billing - List invoices for the current clinic
-export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session || !(session.user as any).clinicId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const clinicId = (session.user as any).clinicId;
-  const tenantPrisma = getTenantClient(clinicId);
+export const GET = withAuth(async ({ req, tenantPrisma }) => {
   const { searchParams } = new URL(req.url);
   const search = searchParams.get("q") || "";
 
@@ -71,4 +62,4 @@ export async function GET(req: Request) {
     console.error("Error fetching billing:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
-}
+});

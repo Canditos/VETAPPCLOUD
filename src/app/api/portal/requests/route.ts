@@ -1,18 +1,11 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { withAuth } from "@/lib/api-wrapper";
 
 // GET — list pending appointment requests for this clinic
-export async function GET() {
+export const GET = withAuth(async ({ clinicId }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const clinicId = (session.user as any).clinicId;
-
     const requests = await prisma.portalAppointmentRequest.findMany({
       where: { clinicId, status: "PENDING" },
       include: {
@@ -26,16 +19,11 @@ export async function GET() {
   } catch (error) {
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
-}
+});
 
 // PATCH — confirm or reject a request
-export async function PATCH(req: Request) {
+export const PATCH = withAuth(async ({ req, clinicId }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const clinicId = (session.user as any).clinicId;
     const { id, status, notes } = await req.json();
 
     const existing = await prisma.portalAppointmentRequest.findFirst({
@@ -52,4 +40,4 @@ export async function PATCH(req: Request) {
   } catch (error) {
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
-}
+});

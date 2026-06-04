@@ -12,7 +12,9 @@ export class SmsService {
   private static provider: SmsProvider = (process.env.SMS_PROVIDER as SmsProvider) || "MOCK";
 
   static async send(options: SmsOptions) {
-    console.log(`[SMS_SERVICE] Sending via ${this.provider} to ${options.to}`);
+    if (process.env.NODE_ENV !== "production") {
+      console.log(`[SMS_SERVICE] Sending via ${this.provider} to ${options.to}`);
+    }
 
     try {
       switch (this.provider) {
@@ -24,7 +26,9 @@ export class SmsService {
           return this.sendMock(options);
       }
     } catch (error) {
-      console.error(`[SMS_SERVICE] Error sending SMS via ${this.provider}:`, error);
+      if (process.env.NODE_ENV !== "production") {
+        console.error(`[SMS_SERVICE] Error sending SMS via ${this.provider}:`, error);
+      }
       // Fallback logic could be added here if needed
       throw error;
     }
@@ -60,16 +64,20 @@ export class SmsService {
 
   private static async sendViaTwilio({ to, message }: SmsOptions) {
     // Basic Twilio implementation placeholder
-    console.log("Twilio integration active - sending...");
+    if (process.env.NODE_ENV !== "production") {
+      console.log("Twilio integration active - sending...");
+    }
     // ... twilio client logic ...
     return { success: true, messageId: "twilio-mock-id" };
   }
 
   private static sendMock({ to, message }: SmsOptions) {
-    console.log("-----------------------------------------");
-    console.log(`MOCK SMS TO: ${to}`);
-    console.log(`MESSAGE: ${message}`);
-    console.log("-----------------------------------------");
+    if (process.env.NODE_ENV !== "production") {
+      console.log("-----------------------------------------");
+      console.log(`MOCK SMS TO: ${to}`);
+      console.log(`MESSAGE: ${message}`);
+      console.log("-----------------------------------------");
+    }
     return { success: true, messageId: "mock-id" };
   }
 }

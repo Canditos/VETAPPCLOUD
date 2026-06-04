@@ -4,8 +4,16 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
+  productionBrowserSourceMaps: false,
   // Keep Node.js-only packages out of the client bundle
   serverExternalPackages: ['twilio', 'bcryptjs', 'pg', '@prisma/client', '@prisma/adapter-pg'],
+  // Severe memory optimizations for builds on limited hardware (RPi 4)
+  experimental: {
+    webpackMemoryOptimizations: true,
+    workerThreads: false,
+    cpus: 1,
+    serverSourceMaps: false,
+  },
   async headers() {
     return [
       {
@@ -15,6 +23,11 @@ const nextConfig: NextConfig = {
             key: 'Link',
             value: '</.well-known/api-catalog>; rel="api-catalog", </docs/api>; rel="service-doc"',
           },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
         ],
       },
     ];

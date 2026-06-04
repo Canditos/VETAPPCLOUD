@@ -1,18 +1,9 @@
 import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import prisma, { getTenantClient } from "@/lib/prisma";
+import { withAuth } from "@/lib/api-wrapper";
 
-export async function POST(req: Request) {
+export const POST = withAuth(async ({ req, tenantPrisma }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    
-    const clinicId = (session.user as any).clinicId;
-    const tenantPrisma = getTenantClient(clinicId);
     const body = await req.json();
 
     const { productId, type, quantity, source } = body;
@@ -50,4 +41,4 @@ export async function POST(req: Request) {
     console.error("[INVENTORY_ADJUST_POST]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
-}
+});

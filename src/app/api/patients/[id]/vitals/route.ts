@@ -1,17 +1,12 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { withAuthParams } from "@/lib/api-wrapper";
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const GET = withAuthParams(async ({ tenantPrisma }, { id: patientId }) => {
   try {
-    const { id: patientId } = await params;
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const patient = await tenantPrisma.patient.findUnique({ where: { id: patientId } });
+    if (!patient) {
+      return NextResponse.json({ error: "Patient not found" }, { status: 404 });
     }
 
     const vitals = await prisma.vitalSign.findMany({
@@ -24,20 +19,16 @@ export async function GET(
     console.error("[VITALS_GET]", error);
     return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
-}
+});
 
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const POST = withAuthParams(async ({ req, tenantPrisma }, { id: patientId }) => {
   try {
-    const { id: patientId } = await params;
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const patient = await tenantPrisma.patient.findUnique({ where: { id: patientId } });
+    if (!patient) {
+      return NextResponse.json({ error: "Patient not found" }, { status: 404 });
     }
 
-    const body = await request.json();
+    const body = await req.json();
     const { weight, temperature, heartRate, respiratoryRate, notes, recordedAt } = body;
 
     const vital = await prisma.vitalSign.create({
@@ -65,4 +56,4 @@ export async function POST(
     console.error("[VITALS_POST]", error);
     return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
-}
+});

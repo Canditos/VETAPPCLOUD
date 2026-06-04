@@ -69,7 +69,7 @@ export function VitalSignsForm({ patientId, onSuccess }: VitalSignsFormProps) {
 
         <div className="space-y-2">
           <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-            <Thermometer size={12} className="text-orange-500" /> Temp (ºC)
+            <Thermometer size={12} className="text-blue-500" /> Temp (ºC)
           </Label>
           <Input 
             type="number" 

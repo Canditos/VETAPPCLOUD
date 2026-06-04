@@ -14,7 +14,7 @@ export async function GET() {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || "temp-fallback-secret-do-not-use-in-prod");
+    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
     let payload;
     try {
       const { payload: jwtPayload } = await jwtVerify(token, secret);
@@ -24,9 +24,14 @@ export async function GET() {
     }
 
     const ownerId = payload.ownerId as string;
+    const clinicId = payload.clinicId as string;
 
-    const owner = await prisma.owner.findUnique({
-      where: { id: ownerId },
+    if (!ownerId || !clinicId) {
+      return NextResponse.json({ error: "Sessão inválida" }, { status: 401 });
+    }
+
+    const owner = await prisma.owner.findFirst({
+      where: { id: ownerId, clinicId },
       include: {
         patients: {
           where: { status: "ACTIVE" },

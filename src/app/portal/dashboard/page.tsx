@@ -6,7 +6,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   PawPrint, Syringe, Calendar, FileText, Phone, MapPin,
   AlertTriangle, ChevronRight, Heart, Weight, Thermometer,
-  Activity, Shield, Clock, CheckCircle2, Dog, Cat, X,
+  Activity, Shield, ShieldCheck, Clock, CheckCircle2, Dog, Cat, X,
   Stethoscope, Pill, Bell, Home, User, Star, LogOut,
   Sun, Cloud, CloudRain, CloudLightning, ThermometerSun,
   MessageSquare, Send, CreditCard, Download
@@ -133,8 +133,8 @@ function PatientCard({ patient }: { patient: any }) {
             <div className="grid grid-cols-2 gap-2">
               {[
                 { icon: Weight,      color: "text-blue-400",    label: "Peso",  val: lastVital.weight ? `${lastVital.weight}kg` : null },
-                { icon: Thermometer, color: "text-orange-400",  label: "Temp",  val: lastVital.temperature ? `${lastVital.temperature}°C` : null },
-                { icon: Heart,       color: "text-rose-400",    label: "FC",    val: lastVital.heartRate ? `${lastVital.heartRate}bpm` : null },
+                { icon: Thermometer, color: "text-blue-400",  label: "Temp",  val: lastVital.temperature ? `${lastVital.temperature}°C` : null },
+                { icon: Heart,       color: "text-blue-300",    label: "FC",    val: lastVital.heartRate ? `${lastVital.heartRate}bpm` : null },
                 { icon: Activity,    color: "text-emerald-400", label: "FR",    val: lastVital.respiratoryRate ? `${lastVital.respiratoryRate}rpm` : null },
               ].filter(x => x.val).map(({ icon: Ic, color, label, val }) => (
                 <div key={label} className="bg-white/5 rounded-2xl p-3 flex items-center gap-2">
@@ -262,7 +262,7 @@ function WeatherWidget() {
         else if (code >= 95) { icon = CloudLightning; text = "Trovoada"; }
 
         setWeather({ temp: Math.round(data.current_weather.temperature), icon, text });
-      } catch (e) { console.error(e); }
+      } catch (e) { if (process.env.NODE_ENV !== "production") { console.error(e); } }
     };
 
     if ("geolocation" in navigator) {
@@ -325,7 +325,9 @@ export default function PortalPage() {
       await fetch("/api/portal/auth/logout", { method: "POST" });
       router.push("/portal");
     } catch (error) {
-      console.error("Erro ao sair", error);
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Erro ao sair", error);
+      }
     }
   };
 
@@ -335,6 +337,15 @@ export default function PortalPage() {
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
+
+  // Redirect to privacy page if not consented
+  useEffect(() => {
+    if (data?.owner?.id) {
+      fetch("/api/portal/privacy").then(r => r.json()).then(d => {
+        if (!d.accepted) router.replace("/portal/privacy");
+      }).catch(() => {});
+    }
+  }, [data, router]);
 
   if (isLoading) return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center">
@@ -413,6 +424,12 @@ export default function PortalPage() {
               <p className="text-[10px] text-slate-500 font-bold uppercase">{clinic.name}</p>
             </div>
           </div>
+          <a href="/portal/privacy"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 text-slate-400 hover:text-slate-300 hover:bg-white/10 transition-all font-black text-[10px] uppercase tracking-widest mb-2"
+          >
+            <ShieldCheck size={16} />
+            Privacidade
+          </a>
           <button 
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all font-black text-[10px] uppercase tracking-widest"
@@ -594,8 +611,8 @@ export default function PortalPage() {
                         <div className="pt-6 border-t border-white/5">
                            <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-4">Horário de Hoje</p>
                            <div className="flex justify-between items-center text-sm font-bold">
-                              <span className="text-white">Segunda a Sexta</span>
-                              <span className="text-blue-400">09:00 - 20:00</span>
+                              <span className="text-white">{clinic.hours?.days || "Segunda a Sexta"}</span>
+                              <span className="text-blue-400">{clinic.hours?.schedule || "09:00 - 20:00"}</span>
                            </div>
                         </div>
                       </div>

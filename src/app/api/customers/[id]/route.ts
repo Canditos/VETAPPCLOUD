@@ -1,31 +1,16 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { getTenantClient } from "@/lib/prisma";
+import { withAuthParams } from "@/lib/api-wrapper";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const GET = withAuthParams(async ({ tenantPrisma }, { id }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const clinicId = (session.user as any).clinicId;
-    const tenantPrisma = getTenantClient(clinicId);
-
-    const { id } = await params;
-
     const customer = await tenantPrisma.owner.findUnique({
       where: { id },
       include: {
         patients: {
           include: {
-            _count: { select: { consultations: true } }
+            _count: { select: { appointments: true, consultations: true } }
           }
         },
         invoices: {
@@ -43,6 +28,11 @@ export async function GET(
         budgets: {
           orderBy: { createdAt: 'desc' },
           take: 5
+        },
+        privacyConsents: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          where: { accepted: true },
         }
       }
     });
@@ -51,16 +41,19 @@ export async function GET(
       return NextResponse.json({ error: "Customer not found" }, { status: 404 });
     }
 
-    if (customer.clinicId !== clinicId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
     const totalInvoiced = customer.invoices.reduce((acc: any, inv: any) => acc + Number(inv.total), 0);
     const totalPaid = customer.payments.reduce((acc: any, pay: any) => acc + Number(pay.amount), 0);
     const outstandingBalance = totalInvoiced - totalPaid;
 
     const enriched = {
       ...customer,
+      patients: customer.patients.map((p: any) => ({
+        ...p,
+        _count: {
+          ...p._count,
+          visitCount: (p._count?.appointments || 0) + (p._count?.consultations || 0),
+        }
+      })),
       stats: {
         totalInvoiced,
         totalPaid,
@@ -73,33 +66,16 @@ export async function GET(
     console.error("[CUSTOMER_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
-}
+});
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const PATCH = withAuthParams(async ({ req, tenantPrisma }, { id }) => {
   try {
-    const { id } = await params;
-    const session = await getServerSession(authOptions);
-    
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const clinicId = (session.user as any).clinicId;
-    const tenantPrisma = getTenantClient(clinicId);
-
     const existing = await tenantPrisma.owner.findUnique({
       where: { id },
     });
 
     if (!existing) {
       return NextResponse.json({ error: "Customer not found" }, { status: 404 });
-    }
-
-    if (existing.clinicId !== clinicId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await req.json();
@@ -122,4 +98,4 @@ export async function PATCH(
     console.error("[CUSTOMER_PATCH]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
-}
+});

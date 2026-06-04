@@ -1,8 +1,17 @@
 const { PrismaClient } = require("@prisma/client");
-require("dotenv").config();
+const { Pool } = require("pg");
+const { PrismaPg } = require("@prisma/adapter-pg");
+try {
+  require("dotenv").config();
+} catch (e) {
+  // Ignorar erro em produção
+}
 const bcrypt = require("bcryptjs");
 
-const prisma = new PrismaClient({});
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
+
 
 async function main() {
   console.log("Starting production-grade seed...");

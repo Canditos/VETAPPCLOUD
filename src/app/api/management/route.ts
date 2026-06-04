@@ -1,19 +1,12 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { withAuth } from "@/lib/api-wrapper";
 import { startOfMonth, endOfMonth, subMonths, startOfDay, endOfDay } from "date-fns";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: Request) {
+export const GET = withAuth(async ({ req, clinicId }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const clinicId = (session.user as any).clinicId;
     const { searchParams } = new URL(req.url);
     const month = parseInt(searchParams.get("month") || String(new Date().getMonth() + 1));
     const year = parseInt(searchParams.get("year") || String(new Date().getFullYear()));
@@ -114,4 +107,4 @@ export async function GET(req: Request) {
     console.error("[MANAGEMENT_GET]", error);
     return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
-}
+});

@@ -24,6 +24,9 @@ export async function POST(req: Request) {
       }
       ownerId = portalToken.ownerId;
       clinicId = portalToken.clinicId;
+      if (portalToken.owner.clinicId !== clinicId) {
+        return NextResponse.json({ error: "Token inválido" }, { status: 401 });
+      }
       ownerName = portalToken.owner.name;
     } else {
       const session = await getPortalSession();
@@ -33,7 +36,7 @@ export async function POST(req: Request) {
       ownerId = session.ownerId;
       clinicId = session.clinicId;
       
-      const owner = await prisma.owner.findUnique({ where: { id: ownerId } });
+      const owner = await prisma.owner.findFirst({ where: { id: ownerId, clinicId } });
       if (!owner) return NextResponse.json({ error: "Cliente não encontrado" }, { status: 404 });
       ownerName = owner.name;
     }
@@ -44,7 +47,7 @@ export async function POST(req: Request) {
 
     // Verify patient belongs to this owner
     const patient = await prisma.patient.findFirst({
-      where: { id: patientId, ownerId },
+      where: { id: patientId, ownerId, clinicId },
     });
     if (!patient) {
       return NextResponse.json({ error: "Paciente não encontrado" }, { status: 404 });

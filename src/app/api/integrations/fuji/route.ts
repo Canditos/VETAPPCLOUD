@@ -2,13 +2,19 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-/**
- * Webhook for Fuji Lab Results
- * Expected payload: { patientId, clinicId, testResults: [...], abnormalFlags: boolean }
- */
+function verifyWebhookSecret(req: Request): boolean {
+  const auth = req.headers.get("authorization");
+  const secret = process.env.WEBHOOK_SECRET;
+  if (!secret) return false;
+  return auth === `Bearer ${secret}`;
+}
+
 export async function POST(req: Request) {
-  // In a real scenario, we'd verify a shared secret or Fuji certificate here
   const body = await req.json();
+
+  if (!verifyWebhookSecret(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const { patientId, testResults, abnormalFlags } = body;
 
@@ -26,7 +32,6 @@ export async function POST(req: Request) {
       },
     });
 
-    // Optional: Trigger notification to veterinarian
     return NextResponse.json({ success: true, labResultId: labResult.id });
   } catch (error) {
     console.error("Lab Ingestion Error:", error);

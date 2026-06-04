@@ -1,30 +1,15 @@
 import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import { getTenantClient } from "@/lib/prisma";
+import { withAuthParams } from "@/lib/api-wrapper";
 
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const session = await getServerSession(authOptions);
-  if (!session || !(session.user as any).clinicId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const clinicId = (session.user as any).clinicId;
-  const tenantPrisma = getTenantClient(clinicId);
-
+export const GET = withAuthParams(async ({ clinicId, tenantPrisma }, { id }) => {
   try {
-    const { id } = await params;
-
     const patient = await tenantPrisma.patient.findUnique({
       where: { id },
       select: { ownerId: true }
     });
 
-    const [consultations, labResults, imagingStudies, vaccinations, dewormings, prescriptions, vitals, messages, payments] = await Promise.all([
+    const [consultations, labResults, imagingStudies, vaccinations, dewormings, prescriptions, vitals, payments, appointments] = await Promise.all([
       tenantPrisma.consultation.findMany({
         where: { patientId: id },
         include: {
@@ -59,16 +44,15 @@ export async function GET(
         where: { patientId: id },
         orderBy: { recordedAt: "desc" },
       }),
-      // Puxar mensagens relacionadas ao tutor deste animal
-      tenantPrisma.portalMessage.findMany({
-        where: { ownerId: patient?.ownerId, clinicId },
+      // Puxar pagamentos (pelo dono, não pelo paciente — Payment não tem patientId)
+      patient?.ownerId ? tenantPrisma.payment.findMany({
+        where: { ownerId: patient.ownerId },
         orderBy: { createdAt: "desc" },
+      }) : Promise.resolve([]),
+      tenantPrisma.appointment.findMany({
+        where: { patientId: id, status: "COMPLETED", consultationId: null },
+        orderBy: { startTime: "desc" },
       }),
-      // Puxar pagamentos
-      tenantPrisma.payment.findMany({
-        where: { patientId: id },
-        orderBy: { createdAt: "desc" },
-      })
     ]);
 
     const history = [
@@ -135,16 +119,7 @@ export async function GET(
         status: "COMPLETED",
         data: v
       })),
-      ...messages.map(m => ({
-        type: "MESSAGE",
-        id: m.id,
-        date: m.createdAt,
-        title: m.senderType === "TUTOR" ? "Mensagem do Tutor" : "Mensagem da Clínica",
-        subtitle: m.content.substring(0, 50) + (m.content.length > 50 ? "..." : ""),
-        status: "READ",
-        data: m
-      })),
-      ...payments.map(p => ({
+      ...payments.map((p: any) => ({
         type: "PAYMENT",
         id: p.id,
         date: p.createdAt,
@@ -152,12 +127,25 @@ export async function GET(
         subtitle: `Valor: €${Number(p.amount).toFixed(2)} (${p.method})`,
         status: "PAID",
         data: p
+      })),
+      ...appointments.map((a: any) => ({
+        type: "CONSULTATION",
+        id: a.id,
+        date: a.startTime,
+        title: a.type || "Consulta",
+        subtitle: a.reason || "",
+        status: "COMPLETED",
+        data: {
+          ...a,
+          source: a.id?.startsWith?.("weopet-") ? "weoPet" : "sistema",
+          veterinarian: { name: a.id?.startsWith?.("weopet-") ? "Histórico weoPet" : "VetConnect" }
+        }
       }))
-    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    ].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     return NextResponse.json(history);
   } catch (error) {
     console.error("Error fetching patient history:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
-}
+});

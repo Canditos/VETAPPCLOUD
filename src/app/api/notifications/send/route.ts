@@ -1,38 +1,53 @@
 import { NextResponse } from "next/server";
 import twilio from "twilio";
 import { sendSMSViaRUT240 } from "@/lib/sms-rut240";
+import prisma from "@/lib/prisma";
+import { withAuth } from "@/lib/api-wrapper";
 
-// Initialize Twilio client
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const twilioNumber = process.env.TWILIO_PHONE_NUMBER;
 const client = accountSid && authToken ? twilio(accountSid, authToken) : null;
 
-// RUT240 Config check
-const useRUT240 = !!process.env.RUT240_IP;
-
-export async function POST(req: Request) {
+async function logSms(clinicId: string, phone: string, message: string, status: string, type: string, error?: string, patientId?: string, ownerId?: string) {
   try {
-    const { appointmentId, type, patientName, ownerPhone, message } = await req.json();
+    await prisma.smsLog.create({
+      data: { clinicId, phone, message, status, type, error, patientId, ownerId, sentAt: status === "SENT" ? new Date() : null }
+    });
+  } catch { /* silent */ }
+}
+
+export const POST = withAuth(async ({ req, clinicId }) => {
+  try {
+    const { appointmentId, type, patientName, ownerPhone, message, patientId, ownerId, logType, isTest } = await req.json();
 
     const smsMessage = message || `Olá! Lembramos a sua consulta para ${patientName}. VetConnect.`;
 
     if (type === 'SMS' && ownerPhone) {
-      // 1. Try RUT240 Gateway (Local Router)
-      if (useRUT240) {
-        console.log(`[GATEWAY] Using RUT240 for ${ownerPhone}`);
+      const settings = await prisma.automationSettings.findUnique({
+        where: { clinicId }
+      });
+      const isRutEnabled = !!settings?.rut240Enabled;
+
+      if (isRutEnabled || isTest) {
         try {
-          await sendSMSViaRUT240(ownerPhone, smsMessage);
+          await sendSMSViaRUT240(ownerPhone, smsMessage, clinicId, isTest);
+          await logSms(clinicId, ownerPhone, smsMessage, "SENT", logType || "MANUAL", undefined, patientId, ownerId);
           return NextResponse.json({ success: true, message: "SMS enviado via Router RUT240." });
         } catch (rutError: any) {
           console.error("[RUT240 ERROR]", rutError.message);
-          // If RUT240 fails, we can fallback to Twilio if available
+          await logSms(clinicId, ownerPhone, smsMessage, "FAILED", logType || "MANUAL", rutError.message, patientId, ownerId);
+          
+          if (isTest || !(client && twilioNumber)) {
+            return NextResponse.json({ 
+              success: false, 
+              error: `Erro ao enviar via RUT240: ${rutError.message || "Erro desconhecido"}` 
+            }, { status: 502 });
+          }
         }
       }
 
-      // 2. Fallback to Twilio
       if (client && twilioNumber) {
-        console.log(`[TWILIO] Sending SMS to ${ownerPhone} via ${twilioNumber}`);
         try {
           let cleanPhone = ownerPhone.replace(/\s+/g, '');
           if (!cleanPhone.startsWith('+')) {
@@ -44,27 +59,35 @@ export async function POST(req: Request) {
             from: twilioNumber,
             to: cleanPhone,
           });
+          await logSms(clinicId, ownerPhone, smsMessage, "SENT", logType || "MANUAL", undefined, patientId, ownerId);
           return NextResponse.json({ success: true, message: "SMS enviado via Twilio." });
         } catch (twError: any) {
-          console.error("[TWILIO ERROR]", twError.message);
+          if (process.env.NODE_ENV !== "production") {
+            console.error("[TWILIO ERROR]", twError.message);
+          }
         }
       }
 
-      // 3. Mock Fallback
-      console.log(`[NOTIFICATION MOCK] ${smsMessage}`);
+      if (process.env.NODE_ENV !== "production") {
+        console.log(`[NOTIFICATION MOCK] ${smsMessage}`);
+      }
       await new Promise(resolve => setTimeout(resolve, 500));
+      await logSms(clinicId, ownerPhone, smsMessage, "SENT", logType || "MANUAL", undefined, patientId, ownerId);
     } else {
-      // Mock for Email or other types
-      console.log(`[NOTIFICATION MOCK] Sending ${type} to ${ownerPhone}`);
+      if (process.env.NODE_ENV !== "production") {
+        console.log(`[NOTIFICATION MOCK] Sending ${type} to ${ownerPhone}`);
+      }
       await new Promise(resolve => setTimeout(resolve, 800));
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      message: `${type === 'SMS' ? 'SMS (Demo)' : 'Notificação'} processada.` 
+    return NextResponse.json({
+      success: true,
+      message: `${type === 'SMS' ? 'SMS (Demo)' : 'Notificação'} processada.`
     });
   } catch (error) {
-    console.error("[NOTIFICATION ERROR]", error);
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[NOTIFICATION ERROR]", error);
+    }
     return NextResponse.json({ error: "Erro ao processar notificação" }, { status: 500 });
   }
-}
+});

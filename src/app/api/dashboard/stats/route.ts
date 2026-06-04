@@ -1,8 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { withAuth } from "@/lib/api-wrapper";
 import { startOfDay, endOfDay, subDays, addDays } from "date-fns";
 
 // Safe query wrapper — if a query fails, return fallback instead of crashing
@@ -15,23 +14,12 @@ async function safe<T>(label: string, fn: () => Promise<T>, fallback: T): Promis
   }
 }
 
-export async function GET() {
+export const GET = withAuth(async ({ clinicId, session }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      select: { clinicId: true, name: true, role: true },
-    });
-
-    if (!user?.clinicId) {
-      return new NextResponse("Clinic not found", { status: 404 });
-    }
-
-    const { clinicId } = user;
+    const user = {
+      name: (session.user as any)?.name || "",
+      role: (session.user as any)?.role,
+    };
     const today = new Date();
     const startToday = startOfDay(today);
     const endToday = endOfDay(today);
@@ -249,4 +237,4 @@ export async function GET() {
     console.error("[DASHBOARD_STATS_GET] Fatal error:", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
-}
+});

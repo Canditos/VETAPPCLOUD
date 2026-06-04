@@ -1,20 +1,10 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import prisma, { getTenantClient } from "@/lib/prisma";
+import { withAuth } from "@/lib/api-wrapper";
 
 // GET /api/appointments - List appointments for the current clinic
-export async function GET(req: Request) {
+export const GET = withAuth(async ({ req, tenantPrisma }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    
-    const clinicId = (session.user as any).clinicId;
-    const tenantPrisma = getTenantClient(clinicId);
-
     const { searchParams } = new URL(req.url);
     const start = searchParams.get("start");
     const end = searchParams.get("end");
@@ -42,21 +32,14 @@ export async function GET(req: Request) {
     console.error("[APPOINTMENTS_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
-}
+});
 
 // POST /api/appointments - Create a new appointment
-export async function POST(req: Request) {
+export const POST = withAuth(async ({ req, tenantPrisma }) => {
   if (process.env.NEXT_PHASE === 'phase-production-build') {
     return NextResponse.json({});
   }
-  
-  const session = await getServerSession(authOptions);
-  if (!session || !(session.user as any).clinicId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
 
-  const clinicId = (session.user as any).clinicId;
-  const tenantPrisma = getTenantClient(clinicId);
   const body = await req.json();
 
   const { 
@@ -64,7 +47,8 @@ export async function POST(req: Request) {
     veterinarianId, 
     startTime, 
     endTime, 
-    type 
+    type,
+    reason
   } = body;
 
   try {
@@ -119,6 +103,7 @@ export async function POST(req: Request) {
         startTime: start,
         endTime: end,
         type,
+        reason,
         status: "SCHEDULED",
       },
     });
@@ -128,4 +113,4 @@ export async function POST(req: Request) {
     console.error("Error creating appointment:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
-}
+});

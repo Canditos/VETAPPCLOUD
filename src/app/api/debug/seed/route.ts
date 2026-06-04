@@ -1,10 +1,22 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const enabled = process.env.ENABLE_DEBUG_SEED === "true";
+  const expectedSecret = process.env.SEED_SECRET;
+  const providedSecret = request.nextUrl.searchParams.get("secret") || request.headers.get("x-seed-secret");
+
+  if (!enabled || !expectedSecret) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  if (!providedSecret || providedSecret !== expectedSecret) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   try {
     console.log("Starting API-driven idempotent seed...");
 
@@ -130,7 +142,7 @@ export async function GET() {
         status: "ADMITTED",
         admissionDate: new Date(),
         clinicId: clinic.id,
-        admissionById: (await prisma.user.findFirst({ where: { role: 'ADMIN' } }))?.id || "admin-id"
+        admissionById: (await prisma.user.findFirst({ where: { role: 'ADMIN', clinicId: clinic.id } }))?.id || "admin-id"
       }
     });
 

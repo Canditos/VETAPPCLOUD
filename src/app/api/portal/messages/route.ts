@@ -25,6 +25,8 @@ export async function GET(req: Request) {
         ...(ownerIdParam ? { ownerId: ownerIdParam } : {}),
         ...(requestIdParam ? { requestId: requestIdParam } : {})
       },
+      orderBy: { createdAt: "desc" },
+      take: 100,
       include: {
         owner: { select: { name: true, email: true } }
       }
@@ -37,19 +39,20 @@ export async function GET(req: Request) {
         ...(ownerIdParam ? { ownerId: ownerIdParam } : {}),
         ...(requestIdParam ? { id: requestIdParam } : {})
       },
+      orderBy: { createdAt: "desc" },
+      take: 100,
       include: {
         owner: { select: { name: true, email: true } },
         patient: { select: { name: true } }
       }
     });
 
-    // Unificar e formatar para o Inbox
     const combined = [
-      ...chatMessages.map(m => ({
+      ...chatMessages.map((m: any) => ({
         ...m,
         type: "CHAT"
       })),
-      ...appointmentRequests.map(r => ({
+      ...appointmentRequests.map((r: any) => ({
         id: r.id,
         content: `Pedido de Marcação para ${r.patient.name}: ${r.reason}`,
         createdAt: r.createdAt,
@@ -58,9 +61,12 @@ export async function GET(req: Request) {
         clinicId: r.clinicId,
         requestId: r.id,
         owner: r.owner,
-        type: "APPOINTMENT_REQUEST"
+        type: "APPOINTMENT_REQUEST",
+        status: r.status,
+        patientName: r.patient.name,
+        preferred: r.preferred
       }))
-    ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    ].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return NextResponse.json(combined);
   }
@@ -74,7 +80,8 @@ export async function GET(req: Request) {
         ownerId: portalSession.ownerId,
         ...(requestIdParam ? { requestId: requestIdParam } : {})
       },
-      orderBy: { createdAt: "asc" }
+      orderBy: { createdAt: "asc" },
+      take: 100
     });
     return NextResponse.json(messages);
   }

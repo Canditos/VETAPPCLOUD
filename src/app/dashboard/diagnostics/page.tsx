@@ -70,7 +70,7 @@ export default function DiagnosticsPage() {
   ];
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700 p-4 md:p-8 max-w-[1600px] mx-auto">
+    <div className="space-y-6 animate-in fade-in duration-700 p-4 md:p-8 max-w-[1600px] mx-auto">
       {/* Header */}
       <PageHeader
         title="Centro de Diagnóstico"
@@ -115,7 +115,7 @@ export default function DiagnosticsPage() {
       />
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Main Feed */}
         <div className="lg:col-span-2 space-y-4">
           {isLoading && (
@@ -144,9 +144,9 @@ export default function DiagnosticsPage() {
                   className="border-none shadow-sm hover:shadow-md transition-all group overflow-hidden rounded-3xl bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/5"
                 >
                   <CardContent className="p-0">
-                    <div className="flex items-center p-6 gap-6">
+                    <div className="flex items-center p-6 gap-4">
                       <div
-                        className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${
+                        className={`w-14 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${
                           dx.type === "LAB"
                             ? "bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400"
                             : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400"

@@ -16,7 +16,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { 
   Search, 
   Plus, 
@@ -24,7 +24,8 @@ import {
   Package, 
   Stethoscope, 
   CreditCard,
-  ShoppingCart
+  ShoppingCart,
+  Barcode
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +40,8 @@ const VAT_RATES = [6, 13, 23];
 export function ConsultationBilling({ onItemsChange }: { onItemsChange: (items: BillingItem[]) => void }) {
   const [items, setItems] = useState<BillingItem[]>([]);
   const [search, setSearch] = useState("");
+  const [scanFeedback, setScanFeedback] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const { data: searchResults } = useQuery({
     queryKey: ["product-search", search],
@@ -49,6 +52,28 @@ export function ConsultationBilling({ onItemsChange }: { onItemsChange: (items: 
     },
     enabled: search.length > 2
   });
+
+  const handleSearchKeyDown = async (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && search.trim()) {
+      e.preventDefault();
+      const q = search.trim();
+      try {
+        const res = await fetch(`/api/products/${encodeURIComponent(q)}`);
+        if (res.ok) {
+          const product = await res.json();
+          if (product && product.id) {
+            addItem(product);
+            setScanFeedback(true);
+            setTimeout(() => setScanFeedback(false), 600);
+            return;
+          }
+        }
+      } catch {}
+      if (searchResults && searchResults.length > 0) {
+        addItem(searchResults[0]);
+      }
+    }
+  };
 
   const addItem = (product: Product) => {
     const existing = items.find(i => i.id === product.id);
@@ -120,11 +145,14 @@ export function ConsultationBilling({ onItemsChange }: { onItemsChange: (items: 
     <div className="space-y-6">
       <div className="relative">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600" size={18} />
+        <Barcode className={`absolute right-4 top-1/2 -translate-y-1/2 transition-all duration-300 ${scanFeedback ? "text-blue-500 scale-125" : "text-slate-300 dark:text-slate-700"}`} size={20} />
         <Input 
-          placeholder="Adicionar serviço ou produto (ex: Consulta, Vacina...)"
-          className="pl-12 py-6 rounded-2xl border-none bg-white dark:bg-slate-900 shadow-sm ring-1 ring-slate-100 dark:ring-white/5 focus-visible:ring-blue-500 transition-all font-medium"
+          ref={inputRef}
+          placeholder="Adicionar serviço ou produto (ex: Consulta, Vacina...) ou ler código de barras"
+          className="pl-12 pr-12 py-6 rounded-2xl border-none bg-white dark:bg-slate-900 shadow-sm ring-1 ring-slate-100 dark:ring-white/5 focus-visible:ring-blue-500 transition-all font-medium"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={handleSearchKeyDown}
         />
         
         {searchResults && searchResults.length > 0 && (

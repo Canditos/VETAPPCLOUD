@@ -1,21 +1,11 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { getTenantClient } from "@/lib/prisma";
+import { withAuth } from "@/lib/api-wrapper";
 import bcrypt from "bcryptjs";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export const GET = withAuth(async ({ tenantPrisma }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    
-    const clinicId = (session.user as any).clinicId;
-    const tenantPrisma = getTenantClient(clinicId);
-
     const users = await tenantPrisma.user.findMany({
       select: {
         id: true,
@@ -33,21 +23,19 @@ export async function GET() {
     const errorMessage = error instanceof Error ? error.message : "Internal Error";
     return new NextResponse(JSON.stringify({ error: errorMessage }), { status: 500, headers: { "Content-Type": "application/json" } });
   }
-}
+});
 
-export async function POST(req: Request) {
+export const POST = withAuth(async ({ req, tenantPrisma, clinicId, session }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const role = (session.user as any).role;
+    if (role !== "SUPER_ADMIN" && role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const clinicId = (session.user as any).clinicId;
-    const tenantPrisma = getTenantClient(clinicId);
     const body = await req.json();
-    const { name, email, role } = body;
+    const { name, email, role: newRole } = body;
 
-    if (!name || !email || !role) {
+    if (!name || !email || !newRole) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
@@ -58,7 +46,7 @@ export async function POST(req: Request) {
       data: {
         name,
         email,
-        role,
+        role: newRole,
         clinicId,
         passwordHash,
       }
@@ -73,4 +61,4 @@ export async function POST(req: Request) {
     const errorMessage = error instanceof Error ? error.message : "Internal Error";
     return new NextResponse(JSON.stringify({ error: errorMessage }), { status: 500, headers: { "Content-Type": "application/json" } });
   }
-}
+});

@@ -1,39 +1,35 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import { getTenantClient } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
+import { getPortalSession } from "@/lib/auth-portal";
 
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
-  
-  // Ensure the user is a TUTOR and is authenticated
-  if (!session || (session.user as any).role !== "TUTOR") {
+  const session = await getPortalSession();
+
+  if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const ownerId = (session.user as any).ownerId;
-  const clinicId = (session.user as any).clinicId;
+  const ownerId = session.ownerId;
+  const clinicId = session.clinicId;
 
   if (!ownerId || !clinicId) {
-    return NextResponse.json({ error: "User session missing profile links" }, { status: 400 });
+    return NextResponse.json({ error: "Sessão inválida" }, { status: 401 });
   }
 
-  const tenantPrisma = getTenantClient(clinicId);
-
   try {
-    const invoices = await tenantPrisma.invoice.findMany({
-      where: { ownerId },
+    const invoices = await prisma.invoice.findMany({
+      where: { ownerId, clinicId },
       include: {
         items: true,
       },
       orderBy: { createdAt: "desc" },
     });
 
-    const stats = {
-      totalInvoiced: invoices.reduce((acc, inv) => acc + Number(inv.total), 0),
+     const stats = {
+      totalInvoiced: invoices.reduce((acc: any, inv: any) => acc + Number(inv.total), 0),
       outstandingBalance: invoices
-        .filter(inv => inv.status !== "PAID")
-        .reduce((acc, inv) => acc + Number(inv.total), 0),
+        .filter((inv: any) => inv.status !== "PAID")
+        .reduce((acc: any, inv: any) => acc + Number(inv.total), 0),
     };
 
     return NextResponse.json({ invoices, stats });

@@ -1,20 +1,10 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { getTenantClient } from "@/lib/prisma";
+import { withAuth } from "@/lib/api-wrapper";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: Request) {
+export const GET = withAuth(async ({ req, tenantPrisma, clinicId }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const clinicId = (session.user as any).clinicId;
-    const tenantPrisma = getTenantClient(clinicId);
-
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search") || "";
     const species = searchParams.get("species") || "";
@@ -62,18 +52,10 @@ export async function GET(req: Request) {
     console.error("[PATIENTS_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
-}
+});
 
-export async function POST(req: Request) {
+export const POST = withAuth(async ({ req, tenantPrisma, clinicId }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const clinicId = (session.user as any).clinicId;
-    const tenantPrisma = getTenantClient(clinicId);
-
     const body = await req.json();
 
     let ownerId = body.ownerId;
@@ -117,4 +99,4 @@ export async function POST(req: Request) {
     console.error("[PATIENTS_POST]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
-}
+});

@@ -1,0 +1,41 @@
+name: Health Check
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/testdb
+      - run: npm run build
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/testdb
+      - run: node scripts/health-check.cjs
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/testdb

@@ -1,19 +1,11 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { withAuth } from "@/lib/api-wrapper";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export const GET = withAuth(async ({ clinicId }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    
-    const clinicId = (session.user as any).clinicId;
-
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
@@ -41,4 +33,4 @@ export async function GET() {
     console.error("[DAILY_REPORT_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
-}
+});

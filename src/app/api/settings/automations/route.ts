@@ -1,18 +1,9 @@
 import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { withAuth } from "@/lib/api-wrapper";
 
-export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
-  
-  if (!session || !(session.user as any).clinicId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const clinicId = (session.user as any).clinicId;
-
+export const GET = withAuth(async ({ clinicId }) => {
   try {
     let settings = await prisma.automationSettings.findUnique({
       where: { clinicId }
@@ -26,7 +17,8 @@ export async function GET(req: Request) {
           smsEnabled: false,
           reminder24h: true,
           vaccineAlert: true,
-          invoiceEmail: true
+          invoiceEmail: true,
+          smsMarketing: false
         }
       });
     }
@@ -36,20 +28,13 @@ export async function GET(req: Request) {
     console.error("Error fetching automation settings:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-}
+});
 
-export async function PUT(req: Request) {
-  const session = await getServerSession(authOptions);
-  
-  if (!session || !(session.user as any).clinicId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const clinicId = (session.user as any).clinicId;
+export const PUT = withAuth(async ({ req, clinicId }) => {
 
   try {
     const body = await req.json();
-    const { emailEnabled, smsEnabled, reminder24h, vaccineAlert, invoiceEmail } = body;
+    const { emailEnabled, smsEnabled, reminder24h, vaccineAlert, invoiceEmail, smsMarketing } = body;
 
     const settings = await prisma.automationSettings.upsert({
       where: { clinicId },
@@ -58,7 +43,8 @@ export async function PUT(req: Request) {
         smsEnabled,
         reminder24h,
         vaccineAlert,
-        invoiceEmail
+        invoiceEmail,
+        smsMarketing: smsMarketing ?? false
       },
       create: {
         clinicId,
@@ -66,7 +52,8 @@ export async function PUT(req: Request) {
         smsEnabled: smsEnabled ?? false,
         reminder24h: reminder24h ?? true,
         vaccineAlert: vaccineAlert ?? true,
-        invoiceEmail: invoiceEmail ?? true
+        invoiceEmail: invoiceEmail ?? true,
+        smsMarketing: smsMarketing ?? false
       }
     });
 
@@ -75,4 +62,4 @@ export async function PUT(req: Request) {
     console.error("Error updating automation settings:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-}
+});

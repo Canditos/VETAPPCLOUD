@@ -1,18 +1,9 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import { getTenantClient } from "@/lib/prisma";
+import { withAuth } from "@/lib/api-wrapper";
 
-export async function POST(req: Request) {
+export const POST = withAuth(async ({ req, tenantPrisma }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const clinicId = (session.user as any).clinicId;
-    const tenantPrisma = getTenantClient(clinicId);
     const body = await req.json();
     const { hospitalizationId, description, scheduledTime } = body;
 
@@ -43,18 +34,10 @@ export async function POST(req: Request) {
     console.error("[HOSPITALIZATION_TASK_POST]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
-}
+});
 
-export async function PATCH(req: Request) {
+export const PATCH = withAuth(async ({ req, userId, tenantPrisma }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const clinicId = (session.user as any).clinicId;
-    const userId = (session.user as any).id;
-    const tenantPrisma = getTenantClient(clinicId);
     const body = await req.json();
     const { taskId, status, notes } = body;
 
@@ -86,4 +69,4 @@ export async function PATCH(req: Request) {
     console.error("[HOSPITALIZATION_TASK_PATCH]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
-}
+});

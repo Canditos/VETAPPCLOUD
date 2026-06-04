@@ -2,12 +2,13 @@
 
 import { useState, Suspense, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { 
+import {
   Save, FileText, Activity, ClipboardCheck, Receipt, FlaskConical,
   ChevronLeft, Stethoscope, Image as ImageIcon, Thermometer, Weight,
   Clock, Plus, ShieldAlert, Search, History, Syringe, AlertCircle,
   AlertTriangle, Sparkles, Eye, TrendingUp, CheckCircle2, Pill
 } from "lucide-react";
+import { PainAssessmentForm } from "@/components/forms/PainAssessmentForm";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,7 @@ function ConsultationContent() {
   const [activeTab, setActiveTab] = useState(urlTab);
   const [billingItems, setBillingItems] = useState<BillingItem[]>([]);
   const [notes, setNotes] = useState({ subjective: "", objective: "", assessment: "", plan: "" });
-  const [vitals, setVitals] = useState({ weight: "", temperature: "", heartRate: "", respiratoryRate: "" });
+  const [vitals, setVitals] = useState({ weight: "", temperature: "", heartRate: "", respiratoryRate: "", painScale: -1, bodyConditionScore: -1 });
 
   useEffect(() => { setActiveTab(urlTab); }, [urlTab]);
 
@@ -119,6 +120,8 @@ function ConsultationContent() {
             temperature: vitals.temperature ? parseFloat(vitals.temperature) : null,
             heartRate: vitals.heartRate ? parseFloat(vitals.heartRate) : null,
             respiratoryRate: vitals.respiratoryRate ? parseFloat(vitals.respiratoryRate) : null,
+            painScale: vitals.painScale >= 0 ? vitals.painScale : null,
+            bodyConditionScore: vitals.bodyConditionScore >= 1 ? vitals.bodyConditionScore : null,
           },
           items: billingItems,
           billNow: true
@@ -145,10 +148,10 @@ function ConsultationContent() {
 
   if (!patientId || patientError) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh] gap-8 animate-in fade-in zoom-in-95 duration-1000">
+      <div className="flex flex-col items-center justify-center min-h-[70vh] gap-6 animate-in fade-in zoom-in-95 duration-1000">
         <div className="relative">
           <div className="absolute inset-0 bg-blue-500/10 blur-[80px] rounded-full animate-pulse" />
-          <div className="w-40 h-40 bg-white dark:bg-slate-900 rounded-[3.5rem] flex items-center justify-center text-blue-600 dark:text-blue-400 border border-slate-100 dark:border-white/5 shadow-2xl relative z-10">
+          <div className="w-40 h-40 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-400 border border-slate-100 dark:border-white/5 shadow-2xl relative z-10">
              <Stethoscope size={80} strokeWidth={1} />
           </div>
           <div className="absolute -right-4 -bottom-4 w-16 h-16 bg-slate-900 dark:bg-white rounded-3xl flex items-center justify-center text-white dark:text-slate-900 shadow-2xl z-20 animate-bounce delay-500">
@@ -156,16 +159,16 @@ function ConsultationContent() {
           </div>
         </div>
         <div className="text-center space-y-4 relative z-10">
-          <h2 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">Clinical Environment</h2>
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tighter">Clinical Environment</h2>
           <p className="text-slate-500 dark:text-slate-400 font-bold max-w-md mx-auto text-xl leading-relaxed">
             Selecione um paciente na <span className="text-blue-600">Agenda</span> ou <span className="text-blue-600">Base de Dados</span> para iniciar um atendimento clínico de alta performance.
           </p>
         </div>
         <div className="flex gap-4">
-          <Button onClick={() => router.push("/dashboard/appointments")} className="h-16 rounded-[2rem] bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:scale-105 px-10 font-black transition-all active:scale-95 shadow-2xl shadow-blue-500/20 uppercase tracking-widest text-xs">
+          <Button onClick={() => router.push("/dashboard/appointments")} className="h-16 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:scale-105 px-10 font-bold transition-all active:scale-95 shadow-2xl shadow-blue-500/20 tracking-widest text-xs">
             Abrir Agenda
           </Button>
-          <Button variant="outline" onClick={() => router.push("/dashboard/patients")} className="h-16 rounded-[2rem] bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white hover:scale-105 px-10 font-black transition-all active:scale-95 uppercase tracking-widest text-xs">
+          <Button variant="outline" onClick={() => router.push("/dashboard/patients")} className="h-16 rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white hover:scale-105 px-10 font-bold transition-all active:scale-95 tracking-widest text-xs">
             Procurar Paciente
           </Button>
         </div>
@@ -175,15 +178,15 @@ function ConsultationContent() {
 
   if (isPatientLoading) {
     return (
-      <div className="space-y-10 animate-pulse p-8 max-w-[1600px] mx-auto">
+      <div className="space-y-6 animate-pulse p-6 max-w-[1600px] mx-auto">
         <div className="flex justify-between items-end">
-          <div className="flex gap-8">
-            <Skeleton className="h-24 w-24 rounded-[2.5rem]" />
+          <div className="flex gap-6">
+            <Skeleton className="h-24 w-24 rounded-2xl" />
             <div className="space-y-4"><Skeleton className="h-10 w-80" /><Skeleton className="h-5 w-60" /></div>
           </div>
           <div className="flex gap-3"><Skeleton className="h-14 w-32 rounded-2xl" /><Skeleton className="h-14 w-48 rounded-2xl" /></div>
         </div>
-        <Skeleton className="h-[500px] w-full rounded-[3rem]" />
+        <Skeleton className="h-[500px] w-full rounded-2xl" />
       </div>
     );
   }
@@ -192,10 +195,10 @@ function ConsultationContent() {
   const lastVitals = history?.find((h: { type: string; data?: { weight?: number } }) => h.type === "VITALS")?.data;
 
   return (
-    <div className="space-y-8 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-[1600px] mx-auto px-4 sm:px-0">
+    <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-[1600px] mx-auto px-4 sm:px-0">
       
       {/* Header Context Bar */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-white dark:bg-slate-900 p-8 rounded-3xl ring-1 ring-slate-100 dark:ring-white/5 shadow-sm">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-white dark:bg-slate-900 p-6 rounded-3xl ring-1 ring-slate-100 dark:ring-white/5 shadow-sm">
         <div className="flex items-center gap-6">
           <div className="w-20 h-20 bg-slate-900 dark:bg-white rounded-2xl flex items-center justify-center text-white dark:text-slate-900 font-bold text-3xl shadow-lg transition-transform hover:rotate-3">
             {patient?.name?.[0] || "?"}
@@ -211,10 +214,17 @@ function ConsultationContent() {
             <div className="flex flex-wrap items-center gap-4 text-sm">
               <p className="text-slate-500 dark:text-slate-400 font-medium">{patient?.breed} <span className="mx-2 opacity-10">|</span> {patient?.owner?.name}</p>
                {allergies && (
-                 <span className="flex items-center gap-1.5 text-rose-600 dark:text-rose-400 font-semibold text-[10px] bg-rose-50 dark:bg-rose-900/20 px-3 py-1 rounded-lg">
-                   <ShieldAlert size={12} /> {allergies}
-                 </span>
-               )}
+                  <div className="flex items-center gap-4 p-4 bg-rose-600 text-white rounded-2xl ring-2 ring-rose-400 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 shadow-lg shadow-rose-500/30 animate-in fade-in slide-in-from-top-2 duration-500">
+                    <div className="flex-shrink-0 w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                      <AlertTriangle size={22} strokeWidth={3} className="animate-pulse" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-extrabold text-sm tracking-wide uppercase">⚠ ALERTA DE ALERGIAS</p>
+                      <p className="text-rose-100 text-sm font-semibold mt-0.5 truncate">{allergies}</p>
+                    </div>
+                    <Badge className="bg-white/20 text-white border-none font-bold text-[10px] px-3 py-1.5 shrink-0">ATENÇÃO MÉDICA</Badge>
+                  </div>
+                )}
                {lastVitals && (
                  <span className="flex items-center gap-1.5 text-slate-400 font-medium text-[10px]">
                    <Weight size={12} /> {lastVitals.weight}kg
@@ -239,8 +249,8 @@ function ConsultationContent() {
 
       {/* Main Clinical Navigation */}
       <Tabs value={activeTab} onValueChange={updateTab} className="w-full">
-        <div className="mb-10 overflow-x-auto -mx-4 px-4 md:-mx-8 md:px-8 no-scrollbar">
-          <TabsList className="inline-flex w-auto min-w-full bg-slate-100/50 dark:bg-slate-900/50 p-1.5 rounded-[2.5rem] ring-1 ring-slate-200/50 dark:ring-white/5 gap-1">
+        <div className="mb-10 overflow-x-auto -mx-4 px-4 md:-mx-8 md:px-8 no-scrollbar w-full">
+          <TabsList className="flex w-full bg-slate-100/50 dark:bg-slate-900/50 p-1.5 rounded-2xl ring-1 ring-slate-200/50 dark:ring-white/5 gap-1">
             {[
               { val: "clinical", label: "Histórico & SOAP", icon: ClipboardCheck },
               { val: "vaccines", label: "Vacinação & Prevenção", icon: Syringe },
@@ -249,7 +259,7 @@ function ConsultationContent() {
               { val: "billing", label: "Farmácia & Faturação", icon: Receipt }
             ].map(t => (
               <TabsTrigger key={t.val} value={t.val}
-                className="rounded-2xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-md font-semibold text-xs transition-all gap-2 py-3 px-4 dark:text-slate-400 dark:data-[state=active]:text-white whitespace-nowrap shrink-0">
+                className="flex-1 rounded-2xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-md font-semibold text-xs transition-all gap-2 py-3 px-4 dark:text-slate-400 dark:data-[state=active]:text-white whitespace-nowrap justify-center">
                 <t.icon className="w-4 h-4 shrink-0" strokeWidth={2.5} />{t.label}
               </TabsTrigger>
             ))}
@@ -258,67 +268,180 @@ function ConsultationContent() {
 
         {/* CLINICAL / SOAP TAB */}
         <TabsContent value="clinical" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div className="lg:col-span-8 space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-8 space-y-6">
               <PremiumCard padding="none">
-                <div className="px-8 py-6 pb-4 border-b border-slate-50 dark:border-white/5 bg-slate-50/30 dark:bg-white/5">
+                <div className="px-6 py-6 pb-4 border-b border-slate-50 dark:border-white/5 bg-slate-50/30 dark:bg-white/5">
                   <div className="flex justify-between items-center">
                     <h2 className="text-lg font-bold text-slate-900 dark:text-white">Protocolo Clínico SOAP</h2>
                     <Badge className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-medium px-3 py-1 rounded-lg">Standard Workflow</Badge>
                   </div>
                 </div>
-                <div className="p-8 space-y-8">
+                <div className="p-6 space-y-6">
                   
-                  {/* Vitals Input */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-slate-50 dark:bg-slate-800/40 rounded-3xl border border-slate-100 dark:border-white/5">
-                    {[
-                      { label: "Peso", icon: Weight, unit: "kg", color: "text-blue-500", placeholder: "12.45", key: "weight" },
-                      { label: "Temp.", icon: Thermometer, unit: "ºC", color: "text-orange-500", placeholder: "38.6", key: "temperature" },
-                      { label: "FC", icon: Clock, unit: "bpm", color: "text-purple-500", placeholder: "100", key: "heartRate" },
-                      { label: "FR", icon: Activity, unit: "mpm", color: "text-rose-500", placeholder: "24", key: "respiratoryRate" }
-                    ].map((vital, i) => (
-                      <div key={i} className="flex flex-col gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm ring-1 ring-slate-100 dark:ring-white/5 transition-all hover:ring-blue-500/30">
-                        <div className="flex items-center gap-2">
-                           <vital.icon size={14} className={vital.color} strokeWidth={3} />
-                           <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{vital.label}</span>
+                  {/* Vitals Input — 4 core measurements */}
+                  <div className="space-y-4 p-6 bg-slate-50 dark:bg-slate-800/40 rounded-3xl border border-slate-100 dark:border-white/5">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sinais Vitais</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {[
+                        { label: "Peso", icon: Weight, unit: "kg", color: "text-blue-500", placeholder: "12.45", key: "weight" },
+                        { label: "Temp.", icon: Thermometer, unit: "ºC", color: "text-orange-500", placeholder: "38.6", key: "temperature" },
+                        { label: "FC", icon: Clock, unit: "bpm", color: "text-purple-500", placeholder: "100", key: "heartRate" },
+                        { label: "FR", icon: Activity, unit: "mpm", color: "text-rose-500", placeholder: "24", key: "respiratoryRate" }
+                      ].map((vital, i) => (
+                        <div key={i} className="flex flex-col gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm ring-1 ring-slate-100 dark:ring-white/5 transition-all hover:ring-blue-500/30">
+                          <div className="flex items-center gap-2">
+                             <vital.icon size={14} className={vital.color} strokeWidth={3} />
+                             <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{vital.label}</span>
+                          </div>
+                          <div className="flex items-baseline gap-2 mt-1">
+                             <Input type="number" step="0.1" className="border-none bg-transparent p-0 h-auto text-2xl font-bold text-slate-900 dark:text-white placeholder:text-slate-200 dark:placeholder:text-slate-700 focus-visible:ring-0" placeholder={vital.placeholder} value={(vitals as any)[vital.key]} onChange={(e) => setVitals({ ...vitals, [vital.key]: e.target.value })} />
+                             <span className="text-xs font-medium text-slate-400">{vital.unit}</span>
+                          </div>
                         </div>
-                        <div className="flex items-baseline gap-2 mt-1">
-                           <Input type="number" step="0.1" className="border-none bg-transparent p-0 h-auto text-2xl font-bold text-slate-900 dark:text-white placeholder:text-slate-200 dark:placeholder:text-slate-700 focus-visible:ring-0" placeholder={vital.placeholder} value={(vitals as any)[vital.key]} onChange={(e) => setVitals({ ...vitals, [vital.key]: e.target.value })} />
-                           <span className="text-xs font-medium text-slate-400">{vital.unit}</span>
+                      ))}
+                    </div>
+
+                    {/* Pain Assessment — Glasgow CMPS-SF (cães) / Grimace Scale (gatos) */}
+                    <PainAssessmentForm
+                      species={patient?.species || ""}
+                      value={vitals.painScale}
+                      onChange={(normalized) => setVitals({ ...vitals, painScale: normalized })}
+                    />
+
+                    {/* Body Condition Score 1–9 */}
+                    <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-white/5">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">BCS — Condição Corporal (1–9)</p>
+                          <p className="text-[10px] text-slate-400 font-medium">Avaliação visual e palpação das costelas, coluna e gordura subcutânea</p>
                         </div>
+                        {vitals.bodyConditionScore >= 1 && (
+                          <span className={cn("text-xs font-bold px-2 py-1 rounded-lg",
+                            vitals.bodyConditionScore <= 3 ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+                            vitals.bodyConditionScore <= 5 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
+                            vitals.bodyConditionScore <= 7 ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
+                            "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
+                          )}>
+                            {vitals.bodyConditionScore <= 2 ? "Caquético" : vitals.bodyConditionScore === 3 ? "Magro" : vitals.bodyConditionScore <= 5 ? "Peso ideal" : vitals.bodyConditionScore <= 7 ? "Excesso de peso" : "Obesidade"}
+                          </span>
+                        )}
                       </div>
-                    ))}
+                      <div className="flex gap-1.5">
+                        {[
+                          { score: 1, label: "Caquético" },
+                          { score: 2, label: "Muito magro" },
+                          { score: 3, label: "Magro" },
+                          { score: 4, label: "Abaixo ideal" },
+                          { score: 5, label: "Ideal" },
+                          { score: 6, label: "Acima ideal" },
+                          { score: 7, label: "Excesso" },
+                          { score: 8, label: "Obeso" },
+                          { score: 9, label: "Obesidade grave" },
+                        ].map(({ score, label }) => (
+                          <button key={score} type="button" title={label}
+                            onClick={() => setVitals({ ...vitals, bodyConditionScore: vitals.bodyConditionScore === score ? -1 : score })}
+                            className={cn("flex-1 h-10 rounded-xl text-sm font-black transition-all active:scale-95 ring-2",
+                              vitals.bodyConditionScore === score ? (
+                                score <= 3 ? "bg-blue-500 text-white ring-blue-300" :
+                                score <= 5 ? "bg-emerald-500 text-white ring-emerald-300" :
+                                score <= 7 ? "bg-yellow-500 text-white ring-yellow-300" :
+                                "bg-rose-600 text-white ring-rose-400"
+                              ) : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 ring-slate-100 dark:ring-white/5 hover:ring-slate-300 dark:hover:border-white/10"
+                            )}>
+                            {score}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex justify-between text-[9px] font-semibold text-slate-400 px-0.5">
+                        <span className="text-blue-500">← Caquético</span>
+                        <span className="text-emerald-500">Ideal</span>
+                        <span className="text-rose-500">Obeso →</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* SOAP — Veterinary Medicine Protocol */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-3">
-                      <Label className="text-xs font-semibold text-slate-500 dark:text-slate-400 ml-1">S: Subjective</Label>
-                      <Textarea className="min-h-[140px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-100 dark:border-white/5 focus-visible:ring-blue-500/20 resize-none text-sm" value={notes.subjective} onChange={(e) => setNotes({ ...notes, subjective: e.target.value })} placeholder="Relato do proprietário, motivo da consulta..." />
+                      <div className="flex items-center gap-2 ml-1">
+                        <span className="w-5 h-5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-md text-[10px] font-black flex items-center justify-center">S</span>
+                        <Label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Anamnese (Subjetivo)</Label>
+                      </div>
+                      <Textarea className="min-h-[140px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-100 dark:border-white/5 focus-visible:ring-blue-500/20 resize-none text-sm" value={notes.subjective} onChange={(e) => setNotes({ ...notes, subjective: e.target.value })} placeholder="Queixa principal, história clínica, evolução, alimentação, ambiente, medicação em curso, vacinações anteriores..." />
                     </div>
                     <div className="space-y-3">
-                      <Label className="text-xs font-semibold text-slate-500 dark:text-slate-400 ml-1">O: Objective</Label>
-                      <Textarea className="min-h-[140px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-100 dark:border-white/5 focus-visible:ring-blue-500/20 resize-none text-sm" value={notes.objective} onChange={(e) => setNotes({ ...notes, objective: e.target.value })} placeholder="Mucosas, TRC, auscultação, palpação..." />
+                      <div className="flex items-center gap-2 ml-1">
+                        <span className="w-5 h-5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-md text-[10px] font-black flex items-center justify-center">O</span>
+                        <Label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Exame Físico (Objetivo)</Label>
+                      </div>
+                      <Textarea className="min-h-[140px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-100 dark:border-white/5 focus-visible:ring-blue-500/20 resize-none text-sm" value={notes.objective} onChange={(e) => setNotes({ ...notes, objective: e.target.value })} placeholder="Alerta mental, mucosas (cor, TRC, hidratação), auscultação cardiopulmonar, palpação abdominal, linfonodos, olhos, ouvidos, pele/pelo..." />
                     </div>
                     <div className="space-y-3">
-                      <Label className="text-xs font-semibold text-slate-500 dark:text-slate-400 ml-1">A: Assessment</Label>
-                      <Textarea className="min-h-[140px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-100 dark:border-white/5 focus-visible:ring-blue-500/20 resize-none text-sm" value={notes.assessment} onChange={(e) => setNotes({ ...notes, assessment: e.target.value })} placeholder="Conclusões clínicas, diferenciais..." />
+                      <div className="flex items-center gap-2 ml-1">
+                        <span className="w-5 h-5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-md text-[10px] font-black flex items-center justify-center">A</span>
+                        <Label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Diagnóstico (Avaliação)</Label>
+                      </div>
+                      <Textarea className="min-h-[140px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-100 dark:border-white/5 focus-visible:ring-blue-500/20 resize-none text-sm" value={notes.assessment} onChange={(e) => setNotes({ ...notes, assessment: e.target.value })} placeholder="Lista de problemas, diagnóstico presuntivo, diagnósticos diferenciais, prognóstico..." />
                     </div>
                     <div className="space-y-3">
                       <div className="flex items-center justify-between ml-1">
-                        <Label className="text-xs font-semibold text-blue-600 dark:text-blue-400">P: Plan</Label>
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 bg-blue-600 text-white rounded-md text-[10px] font-black flex items-center justify-center">P</span>
+                          <Label className="text-xs font-semibold text-blue-600 dark:text-blue-400">Plano Terapêutico</Label>
+                        </div>
                         <Button variant="ghost" size="sm" className="h-7 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 gap-2" onClick={() => { if (!notes.plan) { toast.error("Escreva o plano primeiro!"); return; } updateTab("prescriptions"); toast.success("Plano transferido!"); }}>
                           <Sparkles size={12} strokeWidth={3} /> Gerar Prescrição
                         </Button>
                       </div>
-                      <Textarea className="min-h-[140px] rounded-2xl bg-blue-50/30 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/20 focus-visible:ring-blue-500/20 resize-none text-sm" value={notes.plan} onChange={(e) => setNotes({ ...notes, plan: e.target.value })} placeholder="Medicamentos, exames, recomendações..." />
+                      <Textarea className="min-h-[140px] rounded-2xl bg-blue-50/30 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/20 focus-visible:ring-blue-500/20 resize-none text-sm" value={notes.plan} onChange={(e) => setNotes({ ...notes, plan: e.target.value })} placeholder="Protocolo medicamentoso (fármacos, doses, frequência, duração), exames complementares solicitados, reavaliação em, instruções ao tutor..." />
                     </div>
                   </div>
                  </div>
-               </PremiumCard>
-             </div>
+                </PremiumCard>
+              </div>
 
-            <div className="lg:col-span-4 space-y-8">
-              <PremiumCard padding="none" className="h-full flex flex-col">
+             <div className="lg:col-span-4 space-y-6">
+               {/* Vaccination Booklet Mini-Card */}
+               {(() => {
+                const vaccEvents = history?.filter((h: { type: string }) => h.type === "VACCINATION") ?? [];
+                const now = new Date();
+                return (
+                  <PremiumCard padding="none">
+                    <div className="px-6 py-4 bg-emerald-50/50 dark:bg-emerald-900/10 border-b border-emerald-100 dark:border-emerald-900/20">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2"><Syringe size={14} className="text-emerald-600" /> Boletim Vacinal</h3>
+                        <Button variant="ghost" size="sm" className="h-7 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 gap-1.5" onClick={() => updateTab("vaccines")}>
+                          Ver completo <ChevronLeft className="rotate-180" size={10} />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="p-4 space-y-2">
+                      {vaccEvents.length === 0 ? (
+                        <p className="text-xs text-slate-400 font-medium text-center py-4">Sem vacinas registadas</p>
+                      ) : vaccEvents.slice(0, 4).map((v: { id: string; title: string; date: string; data?: { expiresAt?: string } }) => {
+                        const expiresAt = v.data?.expiresAt ? new Date(v.data.expiresAt) : null;
+                        const isExpired = expiresAt && expiresAt < now;
+                        const isDueSoon = expiresAt && !isExpired && (expiresAt.getTime() - now.getTime()) < 30 * 24 * 60 * 60 * 1000;
+                        return (
+                          <div key={v.id} className="flex items-center justify-between gap-2 p-2.5 bg-slate-50 dark:bg-white/5 rounded-xl">
+                            <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate flex-1">{v.title}</p>
+                            <Badge className={cn("border-none text-[9px] font-bold shrink-0",
+                              isExpired ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" :
+                              isDueSoon ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
+                              "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                            )}>
+                              {isExpired ? "Vencida" : isDueSoon ? "Próxima" : "Válida"}
+                            </Badge>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </PremiumCard>
+                );
+              })()}
+
+               <PremiumCard padding="none" className="h-full flex flex-col">
                 <div className="px-6 py-4 bg-slate-50/50 dark:bg-white/5 border-b border-slate-100 dark:border-white/5">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2"><History size={14} className="text-blue-600" /> Histórico</h3>
@@ -329,9 +452,9 @@ function ConsultationContent() {
                    <ClinicalTimeline history={history} isLoading={isHistoryLoading} />
                  </div>
                </PremiumCard>
-            </div>
-          </div>
-        </TabsContent>
+             </div>
+           </div>
+         </TabsContent>
 
         {/* VACCINES TAB */}
         <TabsContent value="vaccines" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -340,19 +463,19 @@ function ConsultationContent() {
 
         {/* PRESCRIPTIONS TAB */}
         <TabsContent value="prescriptions" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 space-y-8">
+           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-6">
                   <PremiumCard padding="lg">
-                     <div className="mb-8">
+                     <div className="mb-6">
                         <h3 className="text-lg font-bold text-slate-900 dark:text-white">Emissão de Prescrição</h3>
                         <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-1">Registo de medicamentos e protocolos de tratamento.</p>
                      </div>
                      {patientId && <PrescriptionForm patientId={patientId} consultationId={appointmentId || undefined} />}
                   </PremiumCard>
                </div>
-               <div className="space-y-8">
+               <div className="space-y-6">
                   <PremiumCard variant="purple" className="!bg-slate-900 dark:!bg-slate-800 text-white overflow-hidden relative">
-                     <div className="absolute top-0 right-0 p-8 opacity-10"><Pill size={80} /></div>
+                     <div className="absolute top-0 right-0 p-6 opacity-10"><Pill size={80} /></div>
                      <div className="relative z-10">
                         <h3 className="text-base font-bold mb-4">Notas Legais</h3>
                         <p className="text-slate-400 text-sm leading-relaxed mb-6">Prescrições de antibióticos requerem todos os campos para conformidade legal.</p>
@@ -370,7 +493,7 @@ function ConsultationContent() {
         <TabsContent value="billing" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
            <div className="max-w-5xl mx-auto">
                <PremiumCard padding="lg">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 mb-8">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 mb-6">
                      <div>
                         <Badge className={
                           health?.inventorySync?.status === "active"
@@ -390,7 +513,7 @@ function ConsultationContent() {
 
         {/* EXAMS TAB - Unified with Diagnostics */}
         <TabsContent value="exams" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-           <div className="space-y-8">
+           <div className="space-y-6">
               {/* Request Exams */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <PremiumCard padding="lg">
@@ -433,7 +556,7 @@ function ConsultationContent() {
                   </div>
                   <div className="p-6">
                      {!diagnostics || diagnostics.length === 0 ? (
-                       <div className="py-12 text-center bg-slate-50 dark:bg-slate-800/50 rounded-[2rem] border-2 border-dashed border-slate-100 dark:border-white/5">
+                       <div className="py-12 text-center bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-100 dark:border-white/5">
                           <FlaskConical size={32} className="mx-auto text-slate-200 dark:text-slate-700 mb-3" />
                           <p className="text-slate-400 font-bold text-sm">Sem resultados para este paciente</p>
                           <p className="text-slate-400 text-xs mt-1">Os resultados aparecerão aqui quando recebidos dos integradores.</p>
@@ -447,13 +570,13 @@ function ConsultationContent() {
                                       {dx.type === 'LAB' ? <FlaskConical size={18} /> : <ImageIcon size={18} />}
                                    </div>
                                    <div>
-                                      <p className="font-black text-sm text-slate-900 dark:text-white">{dx.summary ?? dx.testName ?? "—"}</p>
+                                      <p className="font-bold text-sm text-slate-900 dark:text-white">{dx.summary ?? dx.testName ?? "—"}</p>
                                       <p className="text-[10px] text-slate-400 font-bold">{dx.source} • {dx.createdAt ? formatDistanceToNow(new Date(dx.createdAt), { addSuffix: true, locale: pt }) : "—"}</p>
                                    </div>
                                 </div>
                                 <div className="flex items-center gap-3">
                                    <Badge className={cn(
-                                      "border-none font-black text-[8px] uppercase",
+                                      "border-none font-bold text-[8px]",
                                       dx.status === "COMPLETED" ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" :
                                       dx.status === "ALERT" ? "bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400" :
                                       "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"

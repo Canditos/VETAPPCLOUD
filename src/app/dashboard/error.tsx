@@ -16,7 +16,9 @@ export default function DashboardError({
 
   useEffect(() => {
     // Log to monitoring service in production
-    console.error("[Dashboard Error]", error);
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[Dashboard Error]", error);
+    }
   }, [error]);
 
   return (

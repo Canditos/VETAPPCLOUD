@@ -43,7 +43,7 @@ async function main() {
   }
 
   console.log("📋 A importar clientes...");
-  const clientRaw = fs.readFileSync(clientPath, "utf-8");
+  const clientRaw = fs.readFileSync(clientPath, "latin1");
   const clientRecords = parseMultiLineCSV(clientRaw, 15);
   
   const clientIdMap = new Map<string, string>();
@@ -149,7 +149,7 @@ async function main() {
   }
 
   console.log("🐾 A importar animais...");
-  const animalRaw = fs.readFileSync(animalPath, "utf-8");
+  const animalRaw = fs.readFileSync(animalPath, "latin1");
   const animalRecords = parseMultiLineCSV(animalRaw, 12);
   
   let animalsImported = 0;

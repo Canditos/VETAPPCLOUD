@@ -1,20 +1,10 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { getTenantClient } from "@/lib/prisma";
+import { withAuth } from "@/lib/api-wrapper";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: Request) {
+export const GET = withAuth(async ({ req, tenantPrisma, clinicId }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const clinicId = (session.user as any).clinicId;
-    const tenantPrisma = getTenantClient(clinicId);
-
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search") || "";
     const page = parseInt(searchParams.get("page") || "1");
@@ -58,24 +48,10 @@ export async function GET(req: Request) {
     console.error("[CUSTOMERS_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
-}
+});
 
-export async function POST(req: Request) {
+export const POST = withAuth(async ({ req, tenantPrisma, clinicId }) => {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session) {
-      return NextResponse.json({ error: "Sessão expirada. Por favor faz login novamente." }, { status: 401 });
-    }
-    
-    const user = session.user as any;
-    if (!user.clinicId) {
-      return NextResponse.json({ error: "Utilizador sem clínica associada. Contacta o administrador." }, { status: 401 });
-    }
-
-    const clinicId = user.clinicId;
-    const tenantPrisma = getTenantClient(clinicId);
-
     const body = await req.json();
 
     if (!body.name) {
@@ -100,4 +76,4 @@ export async function POST(req: Request) {
     const errorMessage = error instanceof Error ? error.message : "Internal Error";
     return new NextResponse(JSON.stringify({ error: errorMessage }), { status: 500, headers: { "Content-Type": "application/json" } });
   }
-}
+});

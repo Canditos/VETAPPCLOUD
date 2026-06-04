@@ -1,22 +1,14 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import { getTenantClient } from "@/lib/prisma";
+import { withAuth } from "@/lib/api-wrapper";
 
-export async function GET(request: Request) {
+export const GET = withAuth(async ({ req, tenantPrisma, clinicId }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = new URL(req.url);
     const patientId = searchParams.get("patientId");
-    const clinicId = (session.user as any).clinicId;
-    const tenantPrisma = getTenantClient(clinicId);
 
     const prescriptions = await tenantPrisma.prescription.findMany({
       where: { 
+        clinicId,
         ...(patientId ? { patientId } : {})
       },
       include: {
@@ -32,18 +24,11 @@ export async function GET(request: Request) {
     console.error("[PRESCRIPTIONS_GET]", error);
     return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withAuth(async ({ req, tenantPrisma, clinicId, userId }) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !(session.user as any).clinicId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const clinicId = (session.user as any).clinicId;
-    const tenantPrisma = getTenantClient(clinicId);
-    const body = await request.json();
+    const body = await req.json();
     const { patientId, consultationId, validUntil, items } = body;
 
     if (!patientId || !items || !Array.isArray(items) || items.length === 0) {
@@ -54,7 +39,7 @@ export async function POST(request: Request) {
       data: {
         clinicId,
         patientId,
-        veterinarianId: (session.user as any).id,
+        veterinarianId: userId,
         consultationId,
         validUntil: validUntil ? new Date(validUntil) : null,
         items: {
@@ -77,4 +62,4 @@ export async function POST(request: Request) {
     console.error("[PRESCRIPTIONS_POST]", error);
     return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
-}
+});

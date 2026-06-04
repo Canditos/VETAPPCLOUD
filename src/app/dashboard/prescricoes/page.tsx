@@ -65,7 +65,7 @@ export default function PrescricoesPage() {
   const expired = filtered.filter((rx: Prescription) => !rx.validUntil || isPast(new Date(rx.validUntil)));
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 max-w-[1600px] mx-auto p-4 md:p-8">
+    <div className="space-y-6 animate-in fade-in duration-500 max-w-[1600px] mx-auto p-4 md:p-8">
       {/* Header */}
       <PageHeader
         title="Receituário"

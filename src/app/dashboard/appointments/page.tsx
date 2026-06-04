@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect, Suspense } from "react";
+import { useState, useMemo, useCallback, useEffect, Suspense, useRef } from "react";
 import {
   ChevronLeft, ChevronRight, Clock, Plus, Stethoscope,
   RefreshCw, Activity, Syringe, Scissors, Zap, CalendarDays,
@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import {
   DndContext, DragOverlay, PointerSensor, useSensor, useSensors,
-  closestCorners, useDraggable, useDroppable,
+  rectIntersection, pointerWithin, useDraggable, useDroppable, MeasuringStrategy,
 } from "@dnd-kit/core";
 import { restrictToFirstScrollableAncestor } from "@dnd-kit/modifiers";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -28,11 +28,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { isFeatureEnabled } from "@/lib/features";
 
-const hours = [
-  "08:00","09:00","10:00","11:00","12:00","13:00",
-  "14:00","15:00","16:00","17:00","18:00","19:00",
-  "20:00","21:00","22:00","23:00",
-];
+// 30-min slots 08:00 → 23:30
+const halfHours: string[] = [];
+for (let h = 8; h < 24; h++) {
+  halfHours.push(`${String(h).padStart(2,'0')}:00`);
+  halfHours.push(`${String(h).padStart(2,'0')}:30`);
+}
+const SLOT_H = 44; // px per 30-min slot
 
 const VET_COLORS = ["#3b82f6","#8b5cf6","#10b981","#f59e0b","#f43f5e","#6366f1"];
 
@@ -46,73 +48,150 @@ const getTypeConfig = (type: string) => {
   }
 };
 
-// ── Draggable appointment card ──────────────────────────────────────────────
-function DraggableAppointment({ app, hour, config, vetColor, onClick, isOverlay }: any) {
-  const { attributes, listeners, setNodeRef, transform: dndTransform, isDragging } = useDraggable({
-    id: app.id, data: { app },
+// ── Overlap layout algorithm for side-by-side appointments ──────────────────
+function layoutAppointments(appointments: any[]) {
+  if (!appointments || appointments.length === 0) return [];
+
+  // Deep clone to avoid mutating React state objects
+  const sorted = appointments.map(app => {
+    const start = new Date(app.startTime);
+    const end = app.endTime ? new Date(app.endTime) : new Date(start.getTime() + 30 * 60000);
+    const startMin = start.getHours() * 60 + start.getMinutes();
+    const endMin = end.getHours() * 60 + end.getMinutes();
+    return {
+      ...app,
+      startMin,
+      endMin,
+      colIndex: 0,
+      leftPct: 0,
+      widthPct: 100,
+    };
+  }).sort((a, b) => {
+    if (a.startMin !== b.startMin) return a.startMin - b.startMin;
+    return (b.endMin - b.startMin) - (a.endMin - a.startMin);
   });
 
-  if (isDragging && !isOverlay) {
-    return <div ref={setNodeRef} className="opacity-20 h-full w-full rounded-2xl border-2 border-dashed border-blue-500/50 bg-blue-50/50 dark:bg-blue-500/10" />;
+  const clusters: any[][] = [];
+  let currentCluster: any[] = [];
+  let maxEnd = 0;
+
+  for (const app of sorted) {
+    if (currentCluster.length === 0) {
+      currentCluster.push(app);
+      maxEnd = app.endMin;
+    } else if (app.startMin < maxEnd) {
+      currentCluster.push(app);
+      if (app.endMin > maxEnd) maxEnd = app.endMin;
+    } else {
+      clusters.push(currentCluster);
+      currentCluster = [app];
+      maxEnd = app.endMin;
+    }
+  }
+  if (currentCluster.length > 0) clusters.push(currentCluster);
+
+  const result: any[] = [];
+
+  for (const cluster of clusters) {
+    const columns: any[][] = [];
+
+    for (const app of cluster) {
+      let placed = false;
+      for (let i = 0; i < columns.length; i++) {
+        const lastApp = columns[i][columns[i].length - 1];
+        if (app.startMin >= lastApp.endMin) {
+          columns[i].push(app);
+          app.colIndex = i;
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) {
+        columns.push([app]);
+        app.colIndex = columns.length - 1;
+      }
+    }
+
+    const totalCols = columns.length;
+    for (const app of cluster) {
+      app.leftPct = (app.colIndex / totalCols) * 100;
+      app.widthPct = 100 / totalCols;
+      app.isRightmost = app.colIndex === totalCols - 1;
+      result.push(app);
+    }
   }
 
+  return result;
+}
+
+
+// ── Draggable appointment card (absolutely positioned, duration-aware) ────────
+function AppCard({ app, config, onClick, isOverlay, topPx, heightPx, leftPct = 0, widthPct = 100, vetColor }: any) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: app.id, data: { app } });
+  const compact = (heightPx ?? SLOT_H) < 40;
+  if (isDragging && !isOverlay) return <div ref={setNodeRef} style={{ position:'absolute', top: topPx, height: heightPx, left: `calc(${leftPct}% + 2px)`, width: app.isRightmost ? `calc(${widthPct}% - 28px)` : `calc(${widthPct}% - 4px)`, visibility:'hidden' }} />;
+  
+  // Opacity 10% for grid cards, 15% for overlay cards
+  const bgOpacity = isOverlay ? '26' : '1a';
+  const cardStyle: React.CSSProperties = isOverlay
+    ? { borderLeftColor: config.color, backgroundColor: config.color + bgOpacity }
+    : { 
+        position:'absolute', 
+        top: topPx, 
+        height: (heightPx??SLOT_H)-2, 
+        left: `calc(${leftPct}% + 2px)`, 
+        width: app.isRightmost ? `calc(${widthPct}% - 28px)` : `calc(${widthPct}% - 4px)`, 
+        borderLeftColor: config.color, 
+        backgroundColor: config.color + bgOpacity 
+      };
+
   return (
-    <div
-      ref={setNodeRef}
-      style={{
-        ...(dndTransform ? { transform: `translate3d(${dndTransform.x}px,${dndTransform.y}px,0)` } : {}),
-        borderLeftColor: config.color,
-        backgroundColor: `color-mix(in srgb, ${config.color}, transparent 92%)`,
-      }}
-      {...attributes} {...listeners}
-      onClick={(e) => { e.stopPropagation(); onClick(app); }}
-      className={cn(
-        "p-3 rounded-xl h-full border-l-4 transition-all cursor-grab active:cursor-grabbing group relative overflow-hidden mb-1.5 last:mb-0 shadow-sm",
-        isOverlay ? "scale-105 rotate-1 shadow-2xl cursor-grabbing ring-4 ring-blue-500/20 z-[1000]" : "hover:shadow-md hover:-translate-y-0.5 active:scale-95"
-      )}
-    >
-      <div className="flex justify-between items-start relative z-10">
-        <div className="flex items-center gap-1.5">
-          <div className="p-1 rounded-md bg-white/60 dark:bg-black/40 shadow-sm">
-            <config.icon size={11} strokeWidth={3} style={{ color: config.color }} />
-          </div>
-          <span className="text-[8px] font-black uppercase tracking-[0.15em]" style={{ color: config.color }}>{config.label}</span>
-        </div>
-        <span className="text-[8px] font-black opacity-40 tabular-nums dark:text-white/60">{hour}</span>
+    <div ref={setNodeRef} style={cardStyle} {...attributes} {...listeners}
+      onClick={e => { e.stopPropagation(); onClick(app); }}
+      className={cn('rounded-md border-l-[3px] cursor-grab select-none overflow-hidden px-2 flex flex-col justify-center gap-0.5 shadow-sm hover:shadow-md hover:z-20 z-10 transition-shadow',
+        isOverlay && 'scale-105 shadow-2xl cursor-grabbing ring-2 ring-blue-500/30 z-[1000] rounded-lg w-52')}>
+      <div className="flex items-center gap-1.5">
+        <config.icon size={9} strokeWidth={3} style={{color:config.color}} className="shrink-0" />
+        {vetColor && (
+          <div className="w-1.5 h-1.5 rounded-full shrink-0 shadow-[0_0_4px_rgba(0,0,0,0.15)]" style={{ backgroundColor: vetColor }} title="Veterinário" />
+        )}
+        <span className="font-bold text-[11px] truncate dark:text-white text-slate-800 leading-none flex-1">{app.patient?.name}</span>
+        <span className="text-[9px] text-slate-400 dark:text-slate-500 shrink-0 tabular-nums">{format(new Date(app.startTime),'HH:mm')}</span>
       </div>
-      <div className="mt-2 relative z-10">
-        <p className="font-black text-[12px] tracking-tight line-clamp-1 leading-tight text-slate-900 dark:text-white">{app.patient?.name}</p>
-        <p className="text-[9px] font-bold opacity-60 uppercase tracking-tighter line-clamp-1 mt-0.5 text-slate-500 dark:text-slate-400">{app.patient?.owner?.name}</p>
-      </div>
-      {/* Background Micro-Icon */}
-      <div className="absolute -bottom-1 -right-1 opacity-10 group-hover:opacity-20 transition-all duration-700 pointer-events-none -rotate-12 group-hover:rotate-0">
-        <config.icon size={45} strokeWidth={1.5} style={{ color: config.color }} />
-      </div>
+      {!compact && app.reason && <span className="text-[10px] text-slate-600 dark:text-slate-300 truncate font-medium">{app.reason}</span>}
+      {!compact && !app.reason && <span className="text-[9px] text-slate-500 dark:text-slate-400 truncate">{app.patient?.owner?.name}</span>}
     </div>
   );
 }
 
-// ── Droppable time slot ─────────────────────────────────────────────────────
-function DroppableSlot({ id, children, day, hour, isToday, onAddClick }: any) {
-  const { setNodeRef, isOver } = useDroppable({ id, data: { day, hour } });
+// ── Drop target slot (thin, fixed-height background element) ────────────────
+function DropSlot({ id, day, slotTime, isToday, isHighlighted, activeColor, isOccupied, onAddClick }: any) {
+  const { setNodeRef } = useDroppable({ id, data: { day, hour: slotTime } });
+  const isHalf = slotTime.endsWith(':30');
+
+  const highlightStyle = isHighlighted && activeColor
+    ? { backgroundColor: activeColor + '1a', borderBottomColor: activeColor + '40' }
+    : {};
+
   return (
     <div
       ref={setNodeRef}
+      onClick={() => onAddClick?.({ day, hour: slotTime })}
+      style={{ height: SLOT_H, ...highlightStyle }}
       className={cn(
-        "p-2 border-l border-slate-100 dark:border-white/[0.04] transition-all duration-300 min-h-[110px] flex flex-col gap-1.5 relative group/slot",
-        isToday && "bg-blue-600/[0.015] dark:bg-blue-400/[0.01]",
-        isOver && "bg-blue-600/10 ring-2 ring-inset ring-blue-600/30 z-40 scale-[1.01] rounded-lg shadow-lg shadow-blue-500/10 dark:shadow-none"
+        'border-b transition-all duration-150 relative group/slot hover:z-20',
+        isHalf ? 'border-slate-100/20 dark:border-white/[0.015]' : 'border-slate-200/40 dark:border-white/[0.04]',
+        isToday && !isHighlighted && 'bg-blue-600/[0.008]',
+        'cursor-pointer'
       )}
     >
-      {children}
-      {!children?.length && (
-        <button
-          onClick={() => onAddClick?.({ day, hour })}
-          className="flex-1 opacity-0 group-hover/slot:opacity-100 flex items-center justify-center text-blue-400/40 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all active:scale-90 rounded-xl border-2 border-dashed border-slate-100 dark:border-white/5"
-        >
-          <Plus size={24} strokeWidth={2.5} />
-        </button>
-      )}
+      {/* Subtle premium + button — visible in the right side lane of the slot on hover (even if occupied) */}
+      <div className="absolute inset-y-0 right-0 flex items-center pr-1.5 opacity-0 group-hover/slot:opacity-100 transition-all duration-150 pointer-events-none z-30">
+        <div className="flex items-center gap-1 bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-2 py-0.5 shadow-md scale-90 group-hover/slot:scale-100 transition-all duration-150 pointer-events-auto active:scale-95 cursor-pointer" title="Nova consulta neste horário">
+          <Plus size={9} strokeWidth={3} className="text-white shrink-0" />
+          <span className="text-[9px] font-extrabold uppercase tracking-wider tabular-nums leading-none text-white/90">{slotTime}</span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -125,26 +204,40 @@ function CalendarContent() {
   const queryClient = useQueryClient();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedVet, setSelectedVet] = useState<string>("all");
-  const [view, setView] = useState<"week" | "day">("week");
+  const [view, setView] = useState<"week" | "day">("day");
   const [selectedApp, setSelectedApp] = useState<any>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [hoverSlotKey, setHoverSlotKey] = useState<string | null>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isApprovalOpen, setIsApprovalOpen] = useState(false);
   const [pendingRequest, setPendingRequest] = useState<any>(null);
   const [newSlot, setNewSlot] = useState<{ day: string; hour: string } | null>(null);
+  const columnsRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const [patientSearch, setPatientSearch] = useState("");
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
   const [newVetId, setNewVetId] = useState("");
   const [newType, setNewType] = useState("CONSULTA");
   const [newDuration, setNewDuration] = useState("30");
+  const [newReason, setNewReason] = useState("");
   const [now, setNow] = useState<Date | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    setNow(new Date());
+    const d = new Date();
+    setNow(d);
     const timer = setInterval(() => setNow(new Date()), 60000);
+
+    // Scroll to current time on mount
+    requestAnimationFrame(() => {
+      if (scrollRef.current && d.getHours() >= 8 && d.getHours() < 24) {
+        const scrollTarget = ((d.getHours() - 8) * 60 + d.getMinutes()) / 30 * SLOT_H;
+        scrollRef.current.scrollTop = Math.max(0, scrollTarget - 200);
+      }
+    });
+
     return () => clearInterval(timer);
   }, []);
 
@@ -218,19 +311,18 @@ function CalendarContent() {
     staleTime: 30000,
   });
 
-  const groupedAppointments = useMemo(() => {
+  // Group appointments by day (for absolute positioning)
+  const groupedByDay = useMemo(() => {
     const map = new Map<string, any[]>();
     rawAppointments.forEach((app: any) => {
       if (selectedVet !== "all" && app.veterinarianId !== selectedVet) return;
       try {
-        const date = new Date(app.startTime);
-        if (isNaN(date.getTime())) return;
-        const key = `${format(date, "yyyy-MM-dd")}-${format(date, "HH:00")}`;
+        const d = new Date(app.startTime);
+        if (isNaN(d.getTime())) return;
+        const key = format(d, "yyyy-MM-dd");
         if (!map.has(key)) map.set(key, []);
         map.get(key)!.push(app);
-      } catch (e) {
-        console.error("Error formatting appointment date:", e);
-      }
+      } catch {}
     });
     return map;
   }, [rawAppointments, selectedVet]);
@@ -260,18 +352,21 @@ function CalendarContent() {
   const createAppointment = useMutation({
     mutationFn: async () => {
       if (!selectedPatient || !newVetId || !newSlot) throw new Error("Campos em falta");
-      const startTime = `${newSlot.day}T${newSlot.hour}:00`;
-      const endDate = new Date(startTime);
-      endDate.setMinutes(endDate.getMinutes() + parseInt(newDuration));
-      const endTime = endDate.toISOString();
+      const [y, m, d] = newSlot.day.split("-").map(Number);
+      const [h, min] = newSlot.hour.split(":").map(Number);
+      const localDate = new Date(y, m - 1, d, h, min, 0, 0);
+      const startTime = localDate.toISOString();
+      const localEndDate = new Date(localDate.getTime() + parseInt(newDuration) * 60000);
+      const endTime = localEndDate.toISOString();
 
       const res = await fetch("/api/appointments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ patientId: selectedPatient.id, veterinarianId: newVetId, startTime, endTime, type: newType }),
+        body: JSON.stringify({ patientId: selectedPatient.id, veterinarianId: newVetId, startTime, endTime, type: newType, reason: newReason }),
       });
-      if (!res.ok) throw new Error("Erro ao criar marcação");
-      return res.json();
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro ao criar marcação");
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
@@ -281,6 +376,7 @@ function CalendarContent() {
       setPatientSearch("");
       setNewVetId("");
       setNewType("CONSULTA");
+      setNewReason("");
     },
     onError: (e: any) => toast.error(e.message || "Erro ao criar marcação"),
   });
@@ -327,58 +423,90 @@ function CalendarContent() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const colCount = activeDays.length;
+
+  const handleDragMove = useCallback((event: any) => {
+    const { over } = event;
+    setHoverSlotKey(over ? (over.id as string) : null);
+  }, []);
+
   const handleDragEnd = async (event: any) => {
     const { active, over } = event;
     setActiveId(null);
-    if (!over || active.id === over.id) return;
+    setHoverSlotKey(null);
+    if (!over) return;
 
-    const [newDate, newHour] = over.id.split("T").length > 1
-      ? [over.id.split("T")[0], over.id.split("T")[1]]
-      : over.id.split(/-(?=\d{2}:\d{2}$)/);
+    const parts = (over.id as string).split("-");
+    const newDay = `${parts[0]}-${parts[1]}-${parts[2]}`;
+    const newHour = parts[3];
 
-    const slotKey = `${newDate}-${newHour}`;
-    const [date, hour] = [over.data.current?.day, over.data.current?.hour];
+    const app = active.data.current?.app;
+    if (!app?.startTime) return;
+    const origDate = new Date(app.startTime);
+    const origMin = origDate.getMinutes() < 30 ? '00' : '30';
+    const origSlot = `${String(origDate.getHours()).padStart(2,'0')}:${origMin}`;
+    if (newHour === origSlot && newDay === format(origDate, "yyyy-MM-dd")) return;
 
-    if (!date || !hour) return;
+    // Constrói objeto Date no fuso horário local do navegador de forma robusta
+    const [y, m, d] = newDay.split("-").map(Number);
+    const [h, min] = newHour.split(":").map(Number);
+    const localDate = new Date(y, m - 1, d, h, min, 0, 0);
+    const newStartTime = localDate.toISOString();
 
+    // Preservar a duração original convertida para UTC
+    const origStart = new Date(app.startTime);
+    const origEnd = app.endTime ? new Date(app.endTime) : new Date(origStart.getTime() + 30 * 60000);
+    const durationMs = origEnd.getTime() - origStart.getTime();
+    const newEndTime = new Date(localDate.getTime() + durationMs).toISOString();
+
+    queryClient.setQueryData(
+      ["appointments", weekDays[0]?.fullDate, selectedVet],
+      (old: any[]) => old?.map(a => a.id === active.id ? { ...a, startTime: newStartTime, endTime: newEndTime } : a) ?? []
+    );
     try {
-      const startTime = `${date}T${hour}:00`;
       const res = await fetch(`/api/appointments/${active.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ startTime }),
+        body: JSON.stringify({ startTime: newStartTime, endTime: newEndTime }),
       });
       if (!res.ok) throw new Error();
-      toast.success("Marcação reagendada");
-      refetch();
+      const updatedApp = await res.json();
+      
+      // Atualiza com a resposta exata do servidor para manter sincronia perfeita
+      queryClient.setQueryData(
+        ["appointments", weekDays[0]?.fullDate, selectedVet],
+        (old: any[]) => old?.map(a => a.id === active.id ? updatedApp : a) ?? []
+      );
+      
+      toast.success(`Movido para ${newHour} — ${format(localDate, "EEE d MMM", { locale: pt })}`);
     } catch {
+      refetch();
       toast.error("Erro ao reagendar marcação");
     }
   };
 
   const activeApp = activeId ? rawAppointments.find((a: any) => a.id === activeId) : null;
 
-  const colCount = activeDays.length;
-
   return (
     <DndContext
       sensors={sensors}
-      onDragStart={(e) => setActiveId(e.active.id as string)}
+      collisionDetection={pointerWithin}
+      onDragStart={(e) => { setActiveId(e.active.id as string); setHoverSlotKey(null); }}
+      onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
-      modifiers={[restrictToFirstScrollableAncestor]}
-      collisionDetection={closestCorners}
+      onDragCancel={() => { setActiveId(null); setHoverSlotKey(null); }}
     >
-      <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-slate-50/30 dark:bg-slate-950">
+      <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-slate-50/30 dark:bg-slate-950 max-w-[1600px] mx-auto">
         {/* ── Top Bar ─────────────────────────────────────────────────── */}
-        <div className="bg-white/80 dark:bg-slate-900/50 backdrop-blur-xl border-b border-slate-200/60 dark:border-white/5 p-5 flex flex-wrap items-center justify-between gap-6 sticky top-0 z-50 shadow-sm">
-          <div className="flex items-center gap-8">
+        <div className="bg-white/80 dark:bg-slate-900/50 backdrop-blur-xl border-b border-slate-200/60 dark:border-white/5 p-5 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50 shadow-sm">
+          <div className="flex items-center gap-4">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 ring-4 ring-blue-500/10">
                 <Stethoscope size={24} strokeWidth={2.5} />
               </div>
               <div>
-                <h1 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none">Agenda Clínica</h1>
-                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mt-1.5">Gestão de Marcações e Fluxo</p>
+                <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none">Agenda Clínica</h1>
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider mt-1.5">Gestão de Marcações e Fluxo</p>
               </div>
             </div>
 
@@ -391,7 +519,7 @@ function CalendarContent() {
                 }} className="h-9 w-9 rounded-xl hover:bg-white dark:hover:bg-white/10 transition-all text-slate-600 dark:text-slate-400">
                   <ChevronLeft size={18} strokeWidth={3} />
                 </Button>
-                <Button variant="ghost" onClick={() => setCurrentDate(new Date())} className="h-9 px-4 font-black text-[10px] uppercase tracking-widest hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all text-slate-900 dark:text-white">
+                <Button variant="ghost" onClick={() => setCurrentDate(new Date())} className="h-9 px-4 font-bold text-[10px] tracking-widest hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all text-slate-900 dark:text-white">
                   Hoje
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => {
@@ -409,7 +537,7 @@ function CalendarContent() {
                   <Input 
                     key={format(currentDate, "yyyy-MM-dd")}
                     defaultValue={format(currentDate, "dd/MM/yyyy")}
-                    className="h-9 w-[110px] bg-transparent border-none font-black text-[11px] uppercase tracking-widest text-slate-900 dark:text-white p-0 text-center focus:ring-0 focus:bg-slate-200/50 dark:focus:bg-white/5 rounded-lg transition-all"
+                    className="h-9 w-[110px] bg-transparent border-none font-bold text-[11px] tracking-widest text-slate-900 dark:text-white p-0 text-center focus:ring-0 focus:bg-slate-200/50 dark:focus:bg-white/5 rounded-lg transition-all"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         const val = (e.target as HTMLInputElement).value;
@@ -433,7 +561,7 @@ function CalendarContent() {
                       <CalendarDays size={18} strokeWidth={2.5} />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-4 rounded-[1.5rem] bg-white dark:bg-slate-900 border-none shadow-2xl ring-1 ring-black/5 dark:ring-white/10 z-[110]" align="end">
+                  <PopoverContent className="w-auto p-4 rounded-2xl bg-white dark:bg-slate-900 border-none shadow-2xl ring-1 ring-black/5 dark:ring-white/10 z-[110]" align="end">
                     <Calendar
                       mode="single"
                       selected={currentDate}
@@ -453,12 +581,12 @@ function CalendarContent() {
             <div className="flex gap-2 border-r border-slate-200/60 dark:border-white/10 pr-6 overflow-x-auto max-w-[500px] no-scrollbar">
               <button
                 onClick={() => setSelectedVet("all")}
-                className={cn("px-5 h-10 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-sm",
+                className={cn("px-5 h-10 rounded-2xl font-bold text-[10px] tracking-widest transition-all shadow-sm",
                   selectedVet === "all" ? "bg-blue-600 text-white" : "bg-white dark:bg-white/5 text-slate-400 hover:bg-slate-50 dark:hover:bg-white/10")}
               >Todos</button>
               {vets.map((vet: any) => (
                 <button key={vet.id} onClick={() => setSelectedVet(vet.id)}
-                  className={cn("px-5 h-10 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap shadow-sm border border-transparent",
+                  className={cn("px-5 h-10 rounded-2xl font-bold text-[10px] tracking-widest transition-all flex items-center gap-2 whitespace-nowrap shadow-sm border border-transparent",
                     selectedVet === vet.id ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white" : "bg-white dark:bg-white/5 text-slate-400 hover:bg-slate-50 dark:hover:bg-white/10")}
                 >
                   <div className="w-2 h-2 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.1)]" style={{ backgroundColor: vet.color }} />
@@ -468,11 +596,11 @@ function CalendarContent() {
             </div>
 
             <div className="flex bg-slate-100/50 dark:bg-white/5 p-1.5 rounded-2xl border border-slate-200/50 dark:border-white/5">
-              <button onClick={() => setView("day")} className={cn("px-5 h-9 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all", view === "day" ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300")}>Dia</button>
-              <button onClick={() => setView("week")} className={cn("px-5 h-9 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all", view === "week" ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300")}>Semana</button>
+              <button onClick={() => setView("day")} className={cn("px-5 h-9 rounded-xl font-bold text-[10px] tracking-widest transition-all", view === "day" ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300")}>Dia</button>
+              <button onClick={() => setView("week")} className={cn("px-5 h-9 rounded-xl font-bold text-[10px] tracking-widest transition-all", view === "week" ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300")}>Semana</button>
             </div>
 
-            <Button onClick={() => { setNewSlot(null); setIsAddOpen(true); }} className="h-12 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-blue-500/25 active:scale-95 transition-all flex items-center gap-2">
+            <Button onClick={() => { setNewSlot(null); setIsAddOpen(true); }} className="h-10 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold text-[10px] tracking-wider shadow-lg shadow-blue-500/25 active:scale-95 transition-all flex items-center gap-2">
               <Plus size={18} strokeWidth={3} />
               Agendar
             </Button>
@@ -480,168 +608,195 @@ function CalendarContent() {
         </div>
 
         {/* ── Calendar grid ─────────────────────────────────────────────── */}
-        <div className="flex-1 overflow-auto bg-white/50 dark:bg-slate-950/50">
+        <div ref={scrollRef} className="flex-1 overflow-auto bg-white/50 dark:bg-slate-950/50">
           {/* Day headers */}
-          <div 
-            className="grid sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border-b border-slate-200/60 dark:border-white/10 shadow-sm"
-            style={{ gridTemplateColumns: `80px repeat(${colCount}, 1fr)` }}
-          >
-            <div className="h-24 flex items-center justify-center border-r border-slate-200/60 dark:border-white/10 bg-slate-50/50 dark:bg-slate-900/50">
-              <RefreshCw className={cn("w-4 h-4 text-slate-400 dark:text-slate-600", isLoading && "animate-spin")} />
+          <div className="flex sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border-b border-slate-200/60 dark:border-white/10 shadow-sm">
+            {/* Corner cell */}
+            <div className="w-16 shrink-0 h-20 flex items-center justify-center border-r border-slate-200/60 dark:border-white/10 bg-slate-50/50 dark:bg-slate-900/50">
+              <RefreshCw className={cn("w-3.5 h-3.5 text-slate-400 dark:text-slate-600", isLoading && "animate-spin")} />
             </div>
+            <div className="flex flex-1">
             {activeDays.map(day => (
               <div key={day.fullDate}
-                className={cn("h-24 flex flex-col items-center justify-center border-l border-slate-200/40 dark:border-white/5 transition-all relative overflow-hidden",
+                className={cn("h-20 flex-1 flex flex-col items-center justify-center border-l border-slate-200/40 dark:border-white/5 transition-all relative overflow-hidden",
                   day.isToday && "bg-blue-600/[0.04] dark:bg-blue-400/[0.02]",
                   day.isSunday && "bg-slate-50/50 dark:bg-white/[0.02]")}
               >
                 {day.isToday && (
                   <div className="absolute top-0 left-0 right-0 h-1 bg-blue-600 shadow-[0_2px_8px_rgba(37,99,235,0.4)]" />
                 )}
-                <span className={cn("text-[10px] font-black uppercase tracking-[0.25em] mb-2",
-                  day.isToday ? "text-blue-600" : "text-slate-400 dark:text-slate-500")}>
+                <span className={cn("text-[10px] font-bold tracking-wider mb-1 uppercase text-slate-400 dark:text-slate-500",
+                  day.isToday && "text-blue-600")}>
                   {day.name}
                 </span>
                 <div className="flex items-center gap-2">
                   <div className={cn(
                     "flex items-center justify-center rounded-2xl transition-all duration-500",
-                    day.isToday ? "bg-blue-600 text-white w-12 h-12 shadow-lg shadow-blue-500/30" : ""
+                    day.isToday ? "bg-blue-600 text-white w-10 h-10 shadow-lg shadow-blue-500/30" : ""
                   )}>
-                    <span className={cn("text-2xl font-black tracking-tighter leading-none",
+                    <span className={cn("text-2xl font-bold tracking-tighter leading-none",
                       day.isToday ? "text-white" : "text-slate-900 dark:text-white")}>
                       {day.date}
                     </span>
                   </div>
-                  <span className={cn("text-[10px] font-black uppercase tracking-widest",
+                  <span className={cn("text-[10px] font-bold tracking-widest",
                     day.isToday ? "text-blue-600" : "text-slate-400 dark:text-slate-600")}>
                     {day.month}
                   </span>
                 </div>
               </div>
             ))}
+            </div>
           </div>
 
-          <div className="relative">
-            {/* Now Indicator Line */}
-            {mounted && now && activeDays.some(d => d.isToday) && (
-              <div 
-                className="absolute left-0 right-0 z-30 pointer-events-none transition-all duration-1000"
-                style={{ 
-                  top: `${((now.getHours() - 8) * 60 + now.getMinutes()) * (128 / 60) + 1}px`,
-                  display: now.getHours() >= 8 && now.getHours() < 24 ? "block" : "none"
-                }}
-              >
-                <div className="flex items-center">
-                  <div className="w-20 pr-3 flex justify-end">
-                    <span className="bg-rose-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full shadow-lg shadow-rose-500/30 animate-pulse uppercase tracking-widest">Agora</span>
+          <div className="relative flex" style={{ minHeight: halfHours.length * SLOT_H }}>
+            {/* Time column */}
+            <div className="sticky left-0 z-20 w-16 shrink-0 bg-slate-50/95 dark:bg-slate-900/95 border-r border-slate-200/40 dark:border-white/[0.06]">
+              {halfHours.map((slot) => {
+                const isHalf = slot.endsWith(':30');
+                return (
+                  <div key={slot} style={{ height: SLOT_H }}
+                    className={cn("flex items-start justify-end pr-2 border-b",
+                      isHalf ? "border-slate-100/20 dark:border-white/[0.015]" : "border-slate-200/40 dark:border-white/[0.04]")}>
+                    {!isHalf && (
+                      <span className="text-[9px] font-bold text-slate-400 dark:text-slate-600 -translate-y-[6px] tabular-nums">{slot}</span>
+                    )}
                   </div>
-                  <div className="flex-1 h-0.5 bg-rose-500/40 relative">
-                    <div className="absolute -left-1 -top-1.5 w-3.5 h-3.5 rounded-full bg-rose-500 ring-4 ring-rose-500/20 shadow-lg shadow-rose-500/40" />
+                );
+              })}
+            </div>
+
+            {/* Day columns */}
+            <div className="flex flex-1 min-w-0" ref={columnsRef}>
+              {activeDays.map(day => {
+                const dayApps = groupedByDay.get(day.fullDate) ?? [];
+                return (
+                  <div key={day.fullDate} className="relative flex-1 border-l border-slate-100 dark:border-white/[0.04]"
+                    style={{ minHeight: halfHours.length * SLOT_H }}>
+                    {/* Drop targets */}
+                    {halfHours.map((slotTime) => {
+                      const [sh, sm] = slotTime.split(":").map(Number);
+                      const slotMins = sh * 60 + sm;
+                      const isOccupied = dayApps.some((app: any) => {
+                        const start = new Date(app.startTime);
+                        const end = app.endTime ? new Date(app.endTime) : new Date(start.getTime() + 30 * 60000);
+                        const startM = start.getHours() * 60 + start.getMinutes();
+                        const endM = end.getHours() * 60 + end.getMinutes();
+                        return slotMins >= startM && slotMins < endM;
+                      });
+
+                      return (
+                        <DropSlot key={slotTime} id={`${day.fullDate}-${slotTime}`}
+                          day={day.fullDate} slotTime={slotTime} isToday={day.isToday}
+                          isHighlighted={hoverSlotKey === `${day.fullDate}-${slotTime}`}
+                          activeColor={activeApp ? getTypeConfig(activeApp.type)?.color : null}
+                          isOccupied={isOccupied}
+                          onAddClick={(s: any) => { setNewSlot(s); setIsAddOpen(true); }} />
+                      );
+                    })}
+                    {/* Appointment cards — absolutely positioned with side-by-side overlap support */}
+                    {layoutAppointments(dayApps).map((app: any) => {
+                      const start = new Date(app.startTime);
+                      const end = app.endTime ? new Date(app.endTime) : new Date(start.getTime() + 30 * 60000);
+                      const startMins = (start.getHours() - 8) * 60 + start.getMinutes();
+                      const durMins = Math.max(30, (end.getTime() - start.getTime()) / 60000);
+                      const topPx = (startMins / 30) * SLOT_H;
+                      const heightPx = (durMins / 30) * SLOT_H;
+                      return (
+                        <AppCard key={app.id} app={app} config={getTypeConfig(app.type)}
+                          vetColor={getVetColor(app.veterinarianId)}
+                          onClick={setSelectedApp} topPx={topPx} heightPx={heightPx}
+                          leftPct={app.leftPct} widthPct={app.widthPct} />
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Now indicator */}
+            {mounted && now && activeDays.some(d => d.isToday) && now.getHours() >= 8 && now.getHours() < 24 && (
+              <div className="absolute left-0 right-0 z-30 pointer-events-none"
+                style={{ top: ((now.getHours() - 8) * 60 + now.getMinutes()) / 30 * SLOT_H }}>
+                <div className="flex items-center">
+                  <div className="w-16 flex justify-end pr-2 shrink-0">
+                    <span className="bg-rose-500 text-white text-[7px] font-bold px-1 py-0.5 rounded-full animate-pulse tracking-widest">Agora</span>
+                  </div>
+                  <div className="flex-1 h-px bg-rose-500/60 relative">
+                    <div className="absolute -left-1 -top-1 w-2 h-2 rounded-full bg-rose-500 shadow-sm shadow-rose-500/40" />
                   </div>
                 </div>
               </div>
             )}
-
-            {hours.map(hour => (
-              <div 
-                key={hour} 
-                className="grid border-b border-slate-200/40 dark:border-white/[0.03] group/row"
-                style={{ gridTemplateColumns: `80px repeat(${colCount}, 1fr)` }}
-              >
-                <div className="py-12 px-2 text-[10px] font-black text-slate-400 dark:text-slate-600 text-right pr-6 flex items-start justify-end sticky left-0 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md z-10 border-r border-slate-200/60 dark:border-white/10 group-hover/row:bg-slate-100 dark:group-hover/row:bg-slate-800/80 transition-colors shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] dark:shadow-none">
-                  {hour}
-                </div>
-                {activeDays.map(day => {
-                  const apps = groupedAppointments.get(`${day.fullDate}-${hour}`);
-                  return (
-                    <DroppableSlot
-                      key={`${day.fullDate}-${hour}`}
-                      id={`${day.fullDate}-${hour}`}
-                      day={day.fullDate}
-                      hour={hour}
-                      isToday={day.isToday}
-                      onAddClick={(slot: any) => { setNewSlot(slot); setIsAddOpen(true); }}
-                    >
-                      {apps?.map((app: any) => (
-                        <DraggableAppointment
-                          key={app.id}
-                          app={app}
-                          hour={hour}
-                          config={getTypeConfig(app.type)}
-                          vetColor={getVetColor(app.veterinarianId)}
-                          onClick={setSelectedApp}
-                        />
-                      ))}
-                    </DroppableSlot>
-                  );
-                })}
-              </div>
-            ))}
           </div>
         </div>
 
         {/* Drag overlay */}
         <DragOverlay>
-          {activeApp && (
-            <div className="w-[180px] pointer-events-none">
-              <DraggableAppointment
-                app={activeApp}
-                hour={activeApp?.startTime ? format(new Date(activeApp.startTime), "HH:mm") : "--:--"}
-                config={getTypeConfig(activeApp?.type)}
+          {activeApp && (() => {
+            const start = new Date(activeApp.startTime);
+            const end = activeApp.endTime ? new Date(activeApp.endTime) : new Date(start.getTime() + 30 * 60000);
+            const durMins = Math.max(30, (end.getTime() - start.getTime()) / 60000);
+            const heightPx = (durMins / 30) * SLOT_H;
+            return (
+              <AppCard app={activeApp} config={getTypeConfig(activeApp?.type)}
                 vetColor={getVetColor(activeApp?.veterinarianId)}
-                onClick={() => {}}
-                isOverlay
-              />
-            </div>
-          )}
+                onClick={() => {}} isOverlay topPx={0} heightPx={heightPx} />
+            );
+          })()}
         </DragOverlay>
+
 
         {/* ── New appointment modal ─────────────────────────────────────── */}
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <DialogContent className="sm:max-w-[560px] rounded-[2.5rem] p-0 overflow-hidden bg-white dark:bg-slate-950 border-none shadow-[0_0_50px_rgba(0,0,0,0.3)] ring-1 ring-white/10">
-            <div className="bg-slate-50 dark:bg-slate-900/50 p-8 border-b border-slate-200 dark:border-white/5 relative overflow-hidden">
+          <DialogContent className="sm:max-w-[560px] rounded-2xl p-0 overflow-hidden bg-white dark:bg-slate-950 border-none shadow-[0_0_50px_rgba(0,0,0,0.3)] ring-1 ring-white/10">
+            <div className="bg-slate-50 dark:bg-slate-900/50 p-6 border-b border-slate-200 dark:border-white/5 relative overflow-hidden">
               <div className="absolute -right-8 -top-8 w-32 h-32 bg-blue-600/10 rounded-full blur-3xl" />
               <div className="flex items-center gap-5 relative z-10">
-                <div className="w-14 h-14 bg-blue-600 rounded-[1.25rem] flex items-center justify-center text-white shadow-xl shadow-blue-500/20 ring-4 ring-blue-500/10">
+                <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-xl shadow-blue-500/20 ring-4 ring-blue-500/10">
                   <CalendarDays size={26} strokeWidth={2.5} />
                 </div>
                 <div>
-                  <DialogTitle className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Nova Marcação</DialogTitle>
-                  <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mt-1.5 flex items-center gap-2">
+                  <DialogTitle className="text-xl font-bold text-slate-900 dark:text-white tracking-tighter">Nova Marcação</DialogTitle>
+                  <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider mt-1.5 flex items-center gap-2">
                     <Clock size={12} strokeWidth={3} />
                     {newSlot
-                      ? `${format(new Date(newSlot.day), "d 'de' MMMM", { locale: pt })} às ${newSlot.hour}`
+                      ? (() => {
+                          const [y, m, d] = newSlot.day.split('-').map(Number);
+                          const localDate = new Date(y, m - 1, d);
+                          return `${format(localDate, "d 'de' MMMM", { locale: pt })} às ${newSlot.hour}`;
+                        })()
                       : "Selecione o horário disponível"}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="p-8 space-y-8">
+            <div className="p-6 space-y-6">
               <div className="space-y-3">
-                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1">Paciente</label>
+                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider ml-1">Paciente</label>
                 <div className="relative group">
                   <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600 group-focus-within:text-blue-500 transition-colors" size={18} />
                   <input
-                    className="w-full h-14 pl-14 pr-6 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-black text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
+                    className="w-full h-14 pl-14 pr-6 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-bold text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
                     placeholder="Procurar animal ou tutor..."
                     value={patientSearch}
                     onChange={(e) => { setPatientSearch(e.target.value); setSelectedPatient(null); }}
                   />
                   
                   {filteredPatients.length > 0 && !selectedPatient && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden z-[60] animate-in fade-in slide-in-from-top-2 duration-300 ring-1 ring-black/5">
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden z-[60] animate-in fade-in slide-in-from-top-2 duration-300 ring-1 ring-black/5">
                       {filteredPatients.map((p: any) => (
                         <button key={p.id}
                           className="w-full text-left px-6 py-4 hover:bg-blue-600 group/item transition-all flex justify-between items-center border-b border-slate-100 dark:border-white/5 last:border-0"
                           onClick={() => { setSelectedPatient(p); setPatientSearch(p.name); }}
                         >
                           <div className="flex flex-col">
-                            <span className="font-black text-slate-900 dark:text-white group-hover/item:text-white">{p.name}</span>
-                            <span className="text-[10px] font-bold text-slate-400 group-hover/item:text-blue-100 uppercase tracking-widest">{p.species}</span>
+                            <span className="font-bold text-slate-900 dark:text-white group-hover/item:text-white">{p.name}</span>
+                            <span className="text-[10px] font-bold text-slate-400 group-hover/item:text-blue-100 tracking-widest">{p.species}</span>
                           </div>
                           <div className="text-right">
-                            <span className="text-[10px] font-black text-slate-400 group-hover/item:text-white uppercase tracking-tighter block">{p.owner?.name}</span>
+                            <span className="text-[10px] font-bold text-slate-400 group-hover/item:text-white tracking-tighter block">{p.owner?.name}</span>
                           </div>
                         </button>
                       ))}
@@ -656,8 +811,8 @@ function CalendarContent() {
                         <PawPrint size={18} />
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-black text-blue-600 dark:text-blue-400 text-sm leading-none">{selectedPatient.name}</span>
-                        <span className="text-[10px] font-bold text-blue-600/60 dark:text-blue-400/40 uppercase tracking-widest mt-1">{selectedPatient.owner?.name}</span>
+                        <span className="font-bold text-blue-600 dark:text-blue-400 text-sm leading-none">{selectedPatient.name}</span>
+                        <span className="text-[10px] font-bold text-blue-600/60 dark:text-blue-400/40 tracking-widest mt-1">{selectedPatient.owner?.name}</span>
                       </div>
                     </div>
                     <button onClick={() => { setSelectedPatient(null); setPatientSearch(""); }} className="p-2 hover:bg-blue-600/10 rounded-lg transition-colors">
@@ -667,14 +822,14 @@ function CalendarContent() {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1">Médico Responsável</label>
+                  <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider ml-1">Médico Responsável</label>
                   <Select value={newVetId} onValueChange={setNewVetId}>
-                    <SelectTrigger className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-black text-sm px-6">
+                    <SelectTrigger className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-bold text-sm px-6">
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <SelectContent className="rounded-[1.5rem] bg-slate-900 border-white/10 text-white p-2">
+                    <SelectContent className="rounded-2xl bg-slate-900 border-white/10 text-white p-2">
                       {vets.map((v: any) => (
                         <SelectItem key={v.id} value={v.id} className="rounded-xl focus:bg-blue-600 p-3 font-bold">{v.name}</SelectItem>
                       ))}
@@ -683,12 +838,12 @@ function CalendarContent() {
                 </div>
 
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1">Tipo de Serviço</label>
+                  <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider ml-1">Tipo de Serviço</label>
                   <Select value={newType} onValueChange={setNewType}>
-                    <SelectTrigger className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-black text-sm px-6">
+                    <SelectTrigger className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-bold text-sm px-6">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="rounded-[1.5rem] bg-slate-900 border-white/10 text-white p-2">
+                    <SelectContent className="rounded-2xl bg-slate-900 border-white/10 text-white p-2">
                       <SelectItem value="CONSULTA" className="rounded-xl focus:bg-blue-600 p-3 font-bold">Consulta Geral</SelectItem>
                       <SelectItem value="VACINA" className="rounded-xl focus:bg-blue-600 p-3 font-bold">Vacinação</SelectItem>
                       <SelectItem value="CIRURGIA" className="rounded-xl focus:bg-blue-600 p-3 font-bold">Cirurgia</SelectItem>
@@ -698,14 +853,24 @@ function CalendarContent() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider ml-1">Motivo / Notas</label>
+                <Input 
+                  className="w-full h-14 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-medium text-sm text-slate-900 dark:text-white placeholder:text-slate-400 px-6 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
+                  placeholder="Ex: Vacina anual, check-up, claudicação..."
+                  value={newReason}
+                  onChange={(e) => setNewReason(e.target.value)}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1">Duração Prevista</label>
+                  <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider ml-1">Duração Prevista</label>
                   <Select value={newDuration} onValueChange={setNewDuration}>
-                    <SelectTrigger className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-black text-sm px-6">
+                    <SelectTrigger className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-bold text-sm px-6">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="rounded-[1.5rem] bg-slate-900 border-white/10 text-white p-2">
+                    <SelectContent className="rounded-2xl bg-slate-900 border-white/10 text-white p-2">
                       <SelectItem value="15" className="rounded-xl focus:bg-blue-600 p-3 font-bold">15 minutos</SelectItem>
                       <SelectItem value="30" className="rounded-xl focus:bg-blue-600 p-3 font-bold">30 minutos</SelectItem>
                       <SelectItem value="45" className="rounded-xl focus:bg-blue-600 p-3 font-bold">45 minutos</SelectItem>
@@ -716,13 +881,13 @@ function CalendarContent() {
                 </div>
                 {!newSlot && (
                   <div className="space-y-3">
-                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1">Hora de Início</label>
-                    <Select onValueChange={(v) => setNewSlot({ day: format(new Date(), "yyyy-MM-dd"), hour: v })}>
-                      <SelectTrigger className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-black text-sm px-6">
+                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider ml-1">Hora de Início</label>
+                    <Select onValueChange={(v) => setNewSlot({ day: format(currentDate, "yyyy-MM-dd"), hour: v })}>
+                      <SelectTrigger className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-bold text-sm px-6">
                         <SelectValue placeholder="Escolher..." />
                       </SelectTrigger>
-                      <SelectContent className="rounded-[1.5rem] bg-slate-900 border-white/10 text-white p-2">
-                        {hours.map(h => <SelectItem key={h} value={h} className="rounded-xl focus:bg-blue-600 p-3 font-bold">{h}</SelectItem>)}
+                      <SelectContent className="rounded-2xl bg-slate-900 border-white/10 text-white p-2">
+                        {halfHours.map(h => <SelectItem key={h} value={h} className="rounded-xl focus:bg-blue-600 p-3 font-bold">{h}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -730,7 +895,7 @@ function CalendarContent() {
               </div>
 
               <Button
-                className="w-full h-16 rounded-[2rem] bg-blue-600 hover:bg-blue-700 text-white font-black text-sm uppercase tracking-[0.2em] shadow-xl shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"
+                className="w-full h-16 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm tracking-wider shadow-xl shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"
                 disabled={!selectedPatient || !newVetId || !newSlot || createAppointment.isPending}
                 onClick={() => createAppointment.mutate()}
               >
@@ -742,20 +907,23 @@ function CalendarContent() {
 
         {/* ── Appointment detail modal ──────────────────────────────────── */}
         <Dialog open={!!selectedApp} onOpenChange={() => setSelectedApp(null)}>
-          <DialogContent className="sm:max-w-[480px] rounded-3xl border-none shadow-2xl p-0 overflow-hidden bg-white dark:bg-slate-900">
+          <DialogContent className="sm:max-w-[480px] rounded-2xl border-none shadow-2xl p-0 overflow-hidden bg-white dark:bg-slate-900">
             {selectedApp && (() => {
               const config = getTypeConfig(selectedApp.type);
               const vet = vets.find((v: any) => v.id === selectedApp.veterinarianId);
               return (
                 <div>
-                  <div className="bg-slate-50 dark:bg-slate-800/50 p-8 border-b border-slate-200 dark:border-white/10">
+                  <div className="bg-slate-50 dark:bg-slate-800/50 p-6 border-b border-slate-200 dark:border-white/10">
                     <div className="flex justify-between items-start">
                       <div className="space-y-3">
-                        <Badge className="font-black text-[9px] px-3 py-1 rounded-full uppercase tracking-widest shadow-sm" style={{ backgroundColor: config.color, color: "#fff" }}>
+                        <Badge className="font-bold text-[9px] px-3 py-1 rounded-full tracking-widest shadow-sm" style={{ backgroundColor: config.color, color: "#fff" }}>
                           {selectedApp.type ?? "Geral"}
                         </Badge>
-                        <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{selectedApp.patient?.name}</h2>
-                        <p className="text-slate-500 dark:text-slate-400 font-bold text-xs flex items-center gap-2 uppercase tracking-wide">
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tighter">{selectedApp.patient?.name}</h2>
+                        {selectedApp.reason && (
+                          <p className="text-slate-600 dark:text-slate-300 font-medium text-sm mt-1">{selectedApp.reason}</p>
+                        )}
+                        <p className="text-slate-500 dark:text-slate-400 font-bold text-xs flex items-center gap-2 tracking-wide mt-2">
                           <UserIcon size={14} strokeWidth={3} className="text-blue-600" /> {selectedApp.patient?.owner?.name}
                         </p>
                       </div>
@@ -765,30 +933,44 @@ function CalendarContent() {
                     </div>
                   </div>
 
-                  <div className="p-8 space-y-6">
+                  <div className="p-6 space-y-6">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 shadow-inner">
-                        <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-2">Horário</span>
-                        <p className="text-xl font-black text-slate-900 dark:text-white tabular-nums">{format(new Date(selectedApp.startTime), "HH:mm")}</p>
-                        <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-tighter">{format(new Date(selectedApp.startTime), "EEEE, dd MMM", { locale: pt })}</p>
+                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-widest block mb-2">Horário</span>
+                        <p className="text-xl font-bold text-slate-900 dark:text-white tabular-nums">{format(new Date(selectedApp.startTime), "HH:mm")}</p>
+                        <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1 tracking-tighter">{format(new Date(selectedApp.startTime), "EEEE, dd MMM", { locale: pt })}</p>
                       </div>
                       <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 shadow-inner">
-                        <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-2">Médico</span>
-                        <p className="text-sm font-black text-slate-900 dark:text-white line-clamp-2 uppercase tracking-tight">{vet?.name ?? "—"}</p>
+                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-widest block mb-2">Médico</span>
+                        <p className="text-sm font-bold text-slate-900 dark:text-white line-clamp-2 tracking-tight">{vet?.name ?? "—"}</p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
-                      {isFeatureEnabled("smsNotifications") ? (
-                        <Button variant="outline" className="h-9 rounded-lg font-medium text-xs gap-1.5 border-slate-200"
-                          onClick={() => toast.info("SMS enviado para " + selectedApp.patient?.owner?.name)}>
-                          <MessageSquare size={13} /> SMS
-                        </Button>
-                      ) : (
-                        <Button variant="outline" className="h-9 rounded-lg font-medium text-xs gap-1.5 border-slate-200 opacity-50 cursor-not-allowed" disabled>
-                          <MessageSquare size={13} /> SMS
-                        </Button>
-                      )}
+                      <Button variant="outline" className="h-9 rounded-lg font-medium text-xs gap-1.5 border-slate-200"
+                        onClick={async () => {
+                          const app = selectedApp as any;
+                          const phone = app.patient?.owner?.phone;
+                          const name = app.patient?.owner?.name || "Tutor";
+                          if (!phone) { toast.error("Tutor sem telefone registado"); return; }
+                          try {
+                            const res = await fetch("/api/notifications/send", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                type: "SMS",
+                                ownerPhone: phone,
+                                patientName: app.patient?.name || "",
+                                message: `Olá ${name}, lembramos a consulta do(a) ${app.patient?.name} hoje às ${format(new Date(app.startTime), "HH:mm")}. VetConnect`
+                              }),
+                            });
+                            const data = await res.json();
+                            if (data.success) toast.success("SMS enviado com sucesso!");
+                            else toast.error("Erro ao enviar SMS");
+                          } catch { toast.error("Erro ao enviar SMS"); }
+                        }}>
+                        <MessageSquare size={13} /> SMS
+                      </Button>
                       <Button variant="outline" className="h-9 rounded-lg font-medium text-xs gap-1.5 border-slate-200"
                         onClick={() => toast.info("Email enviado")}>
                         <Mail size={13} /> Email
@@ -798,24 +980,19 @@ function CalendarContent() {
                     <Button
                       className="w-full h-10 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm gap-2 shadow-md shadow-blue-500/10"
                       onClick={() => {
-                        const patientId = typeof selectedApp.patientId === "object" ? selectedApp.patientId.id : selectedApp.patientId;
-                        router.push(`/dashboard/consultations?patientId=${patientId}&appointmentId=${selectedApp.id}`);
+                        router.push(`/dashboard/consultations?patientId=${selectedApp.patientId}&appointmentId=${selectedApp.id}`);
+                        setSelectedApp(null);
                       }}
                     >
-                      <Activity size={15} /> Iniciar Consulta
+                      <Clock size={16} /> Iniciar Consulta
                     </Button>
 
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button variant="outline" className="h-9 rounded-lg border-slate-200 font-medium text-xs"
-                        onClick={() => { setSelectedApp(null); setNewSlot(null); setIsAddOpen(true); }}>
-                        Remarcar
+                    <div className="pt-4 border-t border-slate-100 dark:border-white/5 flex justify-between gap-3">
+                      <Button variant="ghost" className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-500/10 font-bold text-xs"
+                        onClick={() => { if (confirm("Cancelar esta marcação?")) cancelAppointment.mutate(selectedApp.id); }}>
+                        Cancelar Marcação
                       </Button>
-                      <Button variant="outline"
-                        className="h-9 rounded-lg border-rose-200 font-medium text-xs text-rose-600 hover:bg-rose-50"
-                        disabled={cancelAppointment.isPending}
-                        onClick={() => cancelAppointment.mutate(selectedApp.id)}>
-                        {cancelAppointment.isPending ? "..." : "Cancelar"}
-                      </Button>
+                      <Button variant="ghost" onClick={() => setSelectedApp(null)} className="font-bold text-xs">Fechar</Button>
                     </div>
                   </div>
                 </div>
@@ -823,107 +1000,86 @@ function CalendarContent() {
             })()}
           </DialogContent>
         </Dialog>
-      {/* ── Approval Modal ────────────────────────────────────────────── */}
-      <Dialog open={isApprovalOpen} onOpenChange={setIsApprovalOpen}>
-        <DialogContent className="sm:max-w-[560px] rounded-[2.5rem] p-0 overflow-hidden bg-white dark:bg-slate-950 border-none shadow-2xl">
-          <div className="bg-amber-500 p-8 text-white relative overflow-hidden">
-            <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
-            <div className="flex items-center gap-5 relative z-10">
-              <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-[1.25rem] flex items-center justify-center text-white ring-4 ring-white/10">
-                <Calendar size={26} strokeWidth={2.5} />
-              </div>
-              <div>
-                <DialogTitle className="text-xl font-black uppercase tracking-tighter">Pedido de Marcação</DialogTitle>
-                <p className="text-[10px] font-black text-white/80 uppercase tracking-[0.2em] mt-1.5">Recebido via Portal do Tutor</p>
-              </div>
-            </div>
-          </div>
 
-          <div className="p-8 space-y-8">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Paciente</span>
-                <p className="text-sm font-black text-slate-900 dark:text-white uppercase">{pendingRequest?.patient?.name}</p>
-              </div>
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Tutor</span>
-                <p className="text-sm font-black text-slate-900 dark:text-white uppercase">{pendingRequest?.owner?.name}</p>
+        {/* ── Approval Modal ───────────────────────────────────────────── */}
+        <Dialog open={isApprovalOpen} onOpenChange={setIsApprovalOpen}>
+          <DialogContent className="sm:max-w-[500px] rounded-2xl p-0 overflow-hidden bg-white dark:bg-slate-900 border-none shadow-2xl ring-1 ring-black/5 dark:ring-white/10">
+            <div className="bg-blue-600 p-8 text-white relative overflow-hidden">
+              <div className="absolute -right-8 -top-8 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
+              <div className="relative z-10">
+                <Badge className="bg-white/20 hover:bg-white/30 text-white border-none mb-4 font-bold tracking-widest px-3 py-1">SOLICITAÇÃO WEB</Badge>
+                <h2 className="text-2xl font-bold tracking-tighter">Novo Pedido de Agendamento</h2>
+                <p className="text-blue-100/80 text-xs font-bold mt-2 tracking-wide uppercase">Recebido via Portal do Tutor</p>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Data Sugerida</span>
-                <p className="text-sm font-black text-slate-900 dark:text-white uppercase">
-                  {pendingRequest?.requestedDate && format(new Date(pendingRequest.requestedDate), "d 'de' MMMM", { locale: pt })}
-                </p>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Período</span>
-                <Badge variant="secondary" className="font-black text-[9px] uppercase">{pendingRequest?.requestedPeriod}</Badge>
-              </div>
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Observações do Tutor</span>
-                <p className="text-xs font-medium text-slate-600 dark:text-slate-400 leading-relaxed italic">
-                  "{pendingRequest?.notes || "Nenhuma observação adicional."}"
-                </p>
-              </div>
-            </div>
+            {pendingRequest && (
+              <div className="p-8 space-y-8">
+                <div className="flex items-center gap-5 p-5 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200/50 dark:border-white/5 shadow-inner">
+                  <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                    <PawPrint size={28} />
+                  </div>
+                  <div>
+                    <p className="text-xl font-bold text-slate-900 dark:text-white tracking-tighter">{pendingRequest.patientName}</p>
+                    <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider mt-1 uppercase">Animal Registado</p>
+                  </div>
+                </div>
 
-            <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-white/5">
-              <div className="space-y-3">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Atribuir Veterinário</label>
-                <Select value={newVetId} onValueChange={setNewVetId}>
-                  <SelectTrigger className="h-12 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-black text-sm px-6">
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-2xl">
-                    {vets.map((v: any) => (
-                      <SelectItem key={v.id} value={v.id} className="font-bold">{v.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 tracking-widest uppercase ml-1">Data Pretendida</label>
+                    <div className="p-4 rounded-xl bg-slate-100/50 dark:bg-white/5 border border-slate-200/50 font-bold text-sm text-slate-900 dark:text-white">
+                      {format(new Date(pendingRequest.requestedDate), "dd 'de' MMMM", { locale: pt })}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 tracking-widest uppercase ml-1">Período</label>
+                    <div className="p-4 rounded-xl bg-slate-100/50 dark:bg-white/5 border border-slate-200/50 font-bold text-sm text-slate-900 dark:text-white">
+                      {pendingRequest.requestedPeriod === "MORNING" ? "Manhã" : "Tarde"}
+                    </div>
+                  </div>
+                </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <Button 
-                  className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-white font-black text-[10px] uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all"
-                  onClick={() => {
-                    // Logic to reject
-                    toast.info("Pedido rejeitado");
-                    setIsApprovalOpen(false);
-                    router.push("/dashboard/appointments");
-                  }}
-                >
-                  Rejeitar
-                </Button>
-                <Button 
-                  className="h-14 rounded-2xl bg-blue-600 text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
-                  disabled={!newVetId || approveMutation.isPending}
-                  onClick={() => approveMutation.mutate()}
-                >
-                  {approveMutation.isPending ? "A processar..." : "Confirmar e Propor Horário"}
-                </Button>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-bold text-blue-600 tracking-widest uppercase ml-1">Atribuir Médico e Propor Hora</label>
+                  <Select value={newVetId} onValueChange={setNewVetId}>
+                    <SelectTrigger className="h-14 rounded-2xl bg-white dark:bg-slate-800 border-2 border-blue-600/20 font-bold text-sm px-6 shadow-sm">
+                      <SelectValue placeholder="Escolha o veterinário..." />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl bg-slate-900 border-white/10 text-white p-2">
+                      {vets.map((v: any) => (
+                        <SelectItem key={v.id} value={v.id} className="rounded-xl focus:bg-blue-600 p-3 font-bold">{v.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex gap-4">
+                  <Button 
+                    variant="ghost" 
+                    className="flex-1 h-14 rounded-2xl font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10"
+                    onClick={() => setIsApprovalOpen(false)}
+                  >Rejeitar</Button>
+                  <Button 
+                    className="flex-2 h-14 px-10 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-xl shadow-blue-500/20 disabled:opacity-50"
+                    disabled={!newVetId || approveMutation.isPending}
+                    onClick={() => approveMutation.mutate()}
+                  >
+                    {approveMutation.isPending ? "A enviar..." : "Aprovar e Enviar Proposta"}
+                  </Button>
+                </div>
               </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
-  </DndContext>
-);
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
+    </DndContext>
+  );
 }
 
-export default function CalendarPage() {
+export default function AppointmentsPage() {
   return (
-    <Suspense fallback={
-      <div className="flex h-screen w-full items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Carregando Agenda...</p>
-        </div>
-      </div>
-    }>
+    <Suspense fallback={<Skeleton className="w-full h-full" />}>
       <CalendarContent />
     </Suspense>
   );

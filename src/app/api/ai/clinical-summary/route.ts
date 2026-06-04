@@ -33,15 +33,24 @@ export const POST = withAuth(async ({ tenantPrisma, clinicId, req }) => {
   }
 
   // Buscar dados reais (com tenant isolation)
-  const patient = await tenantPrisma.patient.findFirst({
+  const patient = (await tenantPrisma.patient.findFirst({
     where: { id: patientId, clinicId },
     include: {
       vaccinations: { orderBy: { appliedAt: "desc" } },
       dewormings: { orderBy: { appliedAt: "desc" } },
-      consultations: { orderBy: { date: "desc" }, take: 1 },
-      vitalSigns: { orderBy: { date: "desc" }, take: 2 },
+      consultations: {
+        orderBy: { date: "desc" },
+        take: 3,
+        include: { notes: true },
+      },
+      prescriptions: {
+        orderBy: { createdAt: "desc" },
+        take: 3,
+        include: { items: true },
+      },
+      vitalSigns: { orderBy: { recordedAt: "desc" }, take: 2 },
     },
-  });
+  })) as any;
 
   if (!patient) {
     return NextResponse.json({ error: "Paciente não encontrado" }, { status: 404 });
@@ -71,12 +80,12 @@ export const POST = withAuth(async ({ tenantPrisma, clinicId, req }) => {
     vaccines: {
       total: patient.vaccinations.length,
       expired: patient.vaccinations
-        .filter((v) => v.expiresAt && new Date(v.expiresAt) < now)
-        .map((v) => v.vaccineName),
+        .filter((v: any) => v.expiresAt && new Date(v.expiresAt) < now)
+        .map((v: any) => v.vaccineName),
       upcoming: patient.vaccinations
-        .filter((v) => v.expiresAt && new Date(v.expiresAt) >= now)
-        .map((v) => ({ name: v.vaccineName, daysLeft: Math.floor((new Date(v.expiresAt!).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) }))
-        .filter((v) => v.daysLeft <= 30),
+        .filter((v: any) => v.expiresAt && new Date(v.expiresAt) >= now)
+        .map((v: any) => ({ name: v.vaccineName, daysLeft: Math.floor((new Date(v.expiresAt!).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) }))
+        .filter((v: any) => v.daysLeft <= 30),
     },
     deworming: { overdue: patient.dewormings[0]?.expiresAt ? new Date(patient.dewormings[0].expiresAt) < now : false },
     allergies: patient.allergies,
@@ -84,6 +93,22 @@ export const POST = withAuth(async ({ tenantPrisma, clinicId, req }) => {
     microchip: patient.microchip,
     weightTrend: weightTrend !== null ? `${weightTrend > 0 ? "+" : ""}${weightTrend.toFixed(2)} kg` : null,
     recommendations: [],
+    recentConsultations: patient.consultations.map((c: any) => {
+      const soap = [
+        c.notes?.subjective ? `S: ${c.notes.subjective}` : "",
+        c.notes?.objective ? `O: ${c.notes.objective}` : "",
+        c.notes?.assessment ? `A: ${c.notes.assessment}` : "",
+        c.notes?.plan ? `P: ${c.notes.plan}` : "",
+      ].filter(Boolean).join("\n");
+      return {
+        date: c.date.toISOString(),
+        SOAP: soap || null,
+      };
+    }),
+    recentPrescriptions: patient.prescriptions.map((p: any) => ({
+      date: p.createdAt.toISOString(),
+      medicines: p.items.map((item: any) => `${item.medicineName} (${item.dosage} - ${item.frequency})`),
+    })),
   });
 
   // Chamar IA

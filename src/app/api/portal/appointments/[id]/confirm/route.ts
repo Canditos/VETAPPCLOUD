@@ -4,17 +4,19 @@ import { getPortalSession } from "@/lib/auth-portal";
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getPortalSession();
   if (!session) return new NextResponse("Unauthorized", { status: 401 });
 
-  const appointmentId = params.id;
+  const { id } = await params;
+  const appointmentId = id;
 
   // 1. Verificar se a marcação pertence ao tutor e está pendente
   const appointment = await prisma.appointment.findFirst({
     where: { 
       id: appointmentId,
+      clinicId: session.clinicId,
       patient: { ownerId: session.ownerId },
       status: "PENDING_CONFIRMATION"
     }

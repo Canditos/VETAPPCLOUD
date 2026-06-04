@@ -44,7 +44,7 @@ function PortalContent() {
           </div>
           <div>
             <h1 className="text-white text-3xl font-black tracking-tight mb-2">Portal do Tutor</h1>
-            <p className="text-slate-400 font-medium tracking-tight">Insira as suas credenciais Gato Escondido</p>
+            <p className="text-slate-400 font-medium tracking-tight">Insira as suas credenciais</p>
           </div>
         </div>
 
@@ -53,9 +53,9 @@ function PortalContent() {
         <div className="mt-12 pt-8 border-t border-slate-800/50 text-center space-y-4">
           <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Precisa de ajuda com o acesso?</p>
           <div className="flex justify-center gap-4">
-             <a href="tel:910000000" className="text-blue-400 text-sm font-black hover:text-blue-300 transition-colors">Telefone</a>
-             <span className="text-slate-700">|</span>
-             <a href="mailto:geral@gatoescondido.pt" className="text-blue-400 text-sm font-black hover:text-blue-300 transition-colors">Email</a>
+              <a href="tel:+351000000000" className="text-blue-400 text-sm font-black hover:text-blue-300 transition-colors">Telefone</a>
+              <span className="text-slate-700">|</span>
+              <a href="mailto:contacte@clinica.pt" className="text-blue-400 text-sm font-black hover:text-blue-300 transition-colors">Email</a>
           </div>
         </div>
       </Card>

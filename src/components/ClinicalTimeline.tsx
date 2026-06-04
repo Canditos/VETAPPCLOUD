@@ -15,14 +15,19 @@ import {
   Pill,
   Activity,
   Bug,
-  History
+  History,
+  TrendingUp,
 } from "lucide-react";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog, DialogContent, DialogTitle, DialogClose,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { LabResultDetail, LabResultsChart } from "@/components/LabResultDetail";
 
 interface HistoryEventProps {
   event: any;
@@ -30,6 +35,7 @@ interface HistoryEventProps {
 
 function HistoryEvent({ event }: HistoryEventProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showChart, setShowChart] = useState(false);
 
   const getIcon = () => {
     switch (event.type) {
@@ -129,6 +135,32 @@ function HistoryEvent({ event }: HistoryEventProps) {
                   </div>
                 )}
 
+                {event.type === "LAB_RESULT" && (
+                  <div className="space-y-3">
+                    <LabResultDetail event={event} />
+                    {(event.data?.dataJson?.results?.length ?? 0) > 0 && (
+                      <Button
+                        variant="outline" size="sm"
+                        onClick={(e) => { e.stopPropagation(); setShowChart(true); }}
+                        className="h-8 rounded-xl gap-2 text-[10px] font-bold border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                      >
+                        <TrendingUp size={14} /> Ver Evolução
+                      </Button>
+                    )}
+                    <Dialog open={showChart} onOpenChange={setShowChart}>
+                      <DialogContent className="sm:max-w-[700px] max-h-[80vh] rounded-2xl border-none p-0 overflow-hidden bg-white dark:bg-slate-900">
+                        <div className="bg-purple-600 p-6 text-white">
+                          <DialogTitle className="text-xl font-bold tracking-tight">Evolução de Análises</DialogTitle>
+                          <p className="text-purple-100 text-xs font-bold uppercase tracking-widest mt-0.5">Tendências ao longo do tempo</p>
+                        </div>
+                        <div className="p-6 max-h-[60vh] overflow-y-auto">
+                          <LabResultsChart patientId={event.data?.patientId} />
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                )}
+
                 {event.type === "VACCINATION" && (
                   <div className="bg-amber-50/30 dark:bg-amber-500/5 p-4 rounded-xl border border-amber-100 dark:border-amber-500/10">
                      <div className="flex justify-between items-start">
@@ -187,7 +219,7 @@ function HistoryEvent({ event }: HistoryEventProps) {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {[
                       { label: "Peso", value: event.data?.weight ? `${event.data.weight} kg` : "---", color: "text-blue-500" },
-                      { label: "Temp", value: event.data?.temperature ? `${event.data.temperature} ºC` : "---", color: "text-orange-500" },
+                      { label: "Temp", value: event.data?.temperature ? `${event.data.temperature} ºC` : "---", color: "text-blue-500" },
                       { label: "FC", value: event.data?.heartRate || "---", color: "text-rose-500" },
                       { label: "FR", value: event.data?.respiratoryRate || "---", color: "text-indigo-500" },
                     ].map((v, i) => (
