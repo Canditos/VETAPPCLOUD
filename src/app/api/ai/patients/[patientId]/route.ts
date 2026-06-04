@@ -1,6 +1,4 @@
-'use server';
-
-import { withAuth } from '@/lib/api-wrapper';
+import { withAuthParams } from '@/lib/api-wrapper';
 import type { ApiContext } from '@/lib/api-wrapper';
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
@@ -11,8 +9,8 @@ type PatientHistoryInput = {
   patientId: string;
 };
 
-export const GET = withAuth(async ({ tenantPrisma, clinicId }: ApiContext, _opts: { params: Promise<PatientHistoryInput> }) => {
-  const { patientId } = await _opts.params;
+export const GET = withAuthParams<PatientHistoryInput>(async ({ tenantPrisma, clinicId }: ApiContext, params: PatientHistoryInput) => {
+  const { patientId } = params;
 
   const [patient, lastConsultation, vaccinations, vitalSigns] = await Promise.all([
     tenantPrisma.patient.findFirst({
