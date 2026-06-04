@@ -139,7 +139,7 @@ export const POST = withAuth(async ({ req, session, tenantPrisma, clinicId, user
           // Construct client object with real data
           const clientData: any = {
             name: patient.owner.name,
-            vat: patient.owner.vatNumber,
+            fiscal_id: patient.owner.vatNumber,
           };
           
           // Add email for automatic sending
@@ -152,12 +152,21 @@ export const POST = withAuth(async ({ req, session, tenantPrisma, clinicId, user
             clientData.address = patient.owner.address;
           }
 
+          const vendusRegisters = await fetch(
+            `https://www.vendus.pt/ws/v1.1/registers/?api_key=${vendusKey}&type=api&isActive=yes`,
+            { signal: AbortSignal.timeout(5000) }
+          );
+          const registers = await vendusRegisters.json();
+          const registerId = Array.isArray(registers) && registers.length > 0 ? registers[0].id : undefined;
+
           const vendusDoc = await vendus.createDocument({
-            type: "FT", // Fatura
+            type: "FT",
+            register_id: registerId,
+            mode: "tests",
             date: new Date().toISOString().split('T')[0],
             client: clientData,
             items: items.map((it: any) => ({
-              description: it.name || it.description,
+              title: it.name || it.description,
               qty: it.quantity,
               gross_price: it.price,
               tax_id: it.vatRate === 23 ? "NOR" : it.vatRate === 13 ? "INT" : "RED"
