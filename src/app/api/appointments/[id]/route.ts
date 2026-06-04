@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import prisma from "@/lib/prisma";
+import { getTenantClient } from "@/lib/prisma";
 
 export async function PATCH(
   req: Request,
@@ -13,9 +13,10 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const clinicId = (session.user as any).clinicId;
+    const tenantPrisma = getTenantClient(clinicId);
 
     // Verify the appointment belongs to this clinic
-    const existing = await prisma.appointment.findFirst({
+    const existing = await tenantPrisma.appointment.findFirst({
       where: { id: params.id, clinicId },
     });
     if (!existing) {
@@ -38,7 +39,7 @@ export async function PATCH(
     // Verificação de sobreposição global e específica
     if (status !== "CANCELLED") {
       // Limite global: Máximo de 5 consultas na mesma clínica em simultâneo
-      const totalOverlapping = await prisma.appointment.count({
+      const totalOverlapping = await tenantPrisma.appointment.count({
         where: {
           id: { not: params.id },
           status: { not: "CANCELLED" },
@@ -59,7 +60,7 @@ export async function PATCH(
       }
 
       // Verificação específica: O membro não pode ter outra marcação na mesma hora
-      const overlapping = await prisma.appointment.findFirst({
+      const overlapping = await tenantPrisma.appointment.findFirst({
         where: {
           id: { not: params.id },
           veterinarianId: newVeterinarianId,
@@ -81,7 +82,7 @@ export async function PATCH(
       }
     }
 
-    const appointment = await prisma.appointment.update({
+    const appointment = await tenantPrisma.appointment.update({
       where: { id: params.id },
       data: {
         ...(startTime && { startTime: new Date(startTime) }),

@@ -40,6 +40,19 @@ Documentation is available at [/docs/api](/docs/api).
   const isPortalApi = pathname.startsWith("/api/portal");
   const isRoot = pathname === "/";
 
+  if (process.env.NODE_ENV === "production") {
+    const debugPrefixes = ["/api/debug", "/api/dev/run-tests", "/api/test-db"];
+
+    const isDebugApi = debugPrefixes.some((prefix) => pathname.startsWith(prefix));
+
+    if (isDebugApi) {
+      return new NextResponse(JSON.stringify({ error: "Not available in production" }), {
+        status: 404,
+        headers: { "content-type": "application/json" },
+      });
+    }
+  }
+
   // Handle Portal routes first (no getToken needed)
   if (isPortalDashboard || isPortalLogin || isPortalApi) {
     if (isPortalApi) return NextResponse.next();
@@ -63,8 +76,32 @@ Documentation is available at [/docs/api](/docs/api).
     secret: process.env.NEXTAUTH_SECRET,
   });
 
-  // Always allow NextAuth API routes
-  if (isApiAuth) return NextResponse.next();
+  // Always allow NextAuth API routes, but apply strict per-IP rate limiting in production
+  if (isApiAuth) {
+    if (process.env.NODE_ENV === "production") {
+      const key =
+        (request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+          request.headers.get("x-real-ip") ||
+          "unknown") + ":auth";
+      // Cache-bust the auth-rate-limit bucket to avoid stale limits on the Next.js warm instance.
+      // This is a lightweight in-memory guard; moving to Redis for multi-instance environments.
+      const now = Date.now();
+      const windowMs = 60_000;
+      const limit = 10;
+      const store: any = (global as any).__authRateStore || ((global as any).__authRateStore = new Map());
+      const bucket = store.get(key);
+      const count = bucket && now <= bucket.resetAt ? bucket.count + 1 : 1;
+      store.set(key, { count, resetAt: now + windowMs });
+      if (count > limit) {
+        return new NextResponse(JSON.stringify({ error: "Too many requests" }), {
+          status: 429,
+          headers: { "content-type": "application/json" },
+        });
+      }
+    }
+
+    return NextResponse.next();
+  }
 
   // If user is NOT logged in
   if (!token) {

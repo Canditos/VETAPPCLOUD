@@ -80,6 +80,8 @@ model Patient {
   aggressionLevel    String?
   coatColor          String?
   status             String            @default("ACTIVE")
+  valueScore         Int?              @default(0)
+  preferredVeterinarianId String?
   allergies          String?
   clinicId           String
   ownerId            String
@@ -113,6 +115,7 @@ model Owner {
   name          String
   email         String?
   phone         String?
+  lifetimeValue Decimal        @default(0) @db.Decimal(10, 2)
   vatNumber     String?
   address       String?
   notes         String?
@@ -167,6 +170,9 @@ model Appointment {
   startTime      DateTime
   endTime        DateTime
   type           String?
+  upsellOffered  Boolean?           @default(false)
+  upsellAccepted Boolean?           @default(false)
+  expectedRevenue Decimal?          @db.Decimal(10, 2)
   status         ConsultationStatus @default(SCHEDULED)
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
