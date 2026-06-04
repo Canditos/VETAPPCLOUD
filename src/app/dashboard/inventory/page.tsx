@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { cn } from "@/lib/utils";
 import {
   Package, Plus, Search, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown,
   MoreHorizontal, PlusCircle, MinusCircle, Calendar, Layers, History,
   TrendingUp, Filter, PackageCheck, Tag, Euro, Box,
-  ChevronRight, Download, ChevronLeft, AlertCircle, Edit, Trash2, X,
+  ChevronRight, Download, ChevronLeft, AlertCircle, Edit, Trash2, X, Barcode,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,8 @@ const emptyForm = (): ProductForm => ({
 
 export default function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [scanFeedback, setScanFeedback] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
   const [filterCategory, setFilterCategory] = useState("all");
   const [page, setPage] = useState(1);
   const [sortKey, setSortKey] = useState<SortKey>("name");
@@ -117,6 +119,24 @@ export default function InventoryPage() {
     if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc");
     else { setSortKey(key); setSortDir("asc"); }
     setPage(1);
+  };
+
+  const handleSearchKeyDown = async (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && searchTerm.trim()) {
+      e.preventDefault();
+      const q = searchTerm.trim();
+      try {
+        const res = await fetch(`/api/products/${encodeURIComponent(q)}`);
+        if (res.ok) {
+          const product = await res.json();
+          if (product && product.id) {
+            setScanFeedback(true);
+            setTimeout(() => setScanFeedback(false), 600);
+            setSearchTerm(product.name);
+          }
+        }
+      } catch {}
+    }
   };
 
   const filtered = useMemo(() => {
@@ -320,7 +340,8 @@ export default function InventoryPage() {
         <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-100 dark:border-slate-800/50">
           <div className="relative flex-1 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={15} />
-            <Input placeholder="Pesquisar por nome, categoria ou código de barras..." className="h-10 pl-11 pr-4 rounded-xl border-none bg-slate-50 dark:bg-slate-800/50 ring-1 ring-slate-100 dark:ring-slate-800 focus-visible:ring-2 focus-visible:ring-blue-500/50 font-medium text-sm" value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }} />
+            <Barcode className={`absolute right-4 top-1/2 -translate-y-1/2 transition-all duration-300 ${scanFeedback ? "text-blue-500 scale-125" : "text-slate-300 dark:text-slate-600"}`} size={18} />
+            <Input ref={searchRef} placeholder="Pesquisar por nome, categoria ou código de barras..." className="h-10 pl-11 pr-12 rounded-xl border-none bg-slate-50 dark:bg-slate-800/50 ring-1 ring-slate-100 dark:ring-slate-800 focus-visible:ring-2 focus-visible:ring-blue-500/50 font-medium text-sm" value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }} onKeyDown={handleSearchKeyDown} />
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

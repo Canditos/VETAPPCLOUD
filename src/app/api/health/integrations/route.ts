@@ -34,7 +34,7 @@ export const GET = withAuth(async ({ tenantPrisma, clinicId }) => {
   if (clinic?.vendusApiKey) {
     try {
       const vendusCheck = await fetch(
-        `https://www.vendus.pt/ws/v1.1/products/?api_key=${clinic.vendusApiKey}&limit=1`,
+        `https://www.vendus.pt/ws/v1.1/products/?api_key=${clinic.vendusApiKey}&per_page=1`,
         { method: "GET", signal: AbortSignal.timeout(5000) }
       );
       vendusStatus = vendusCheck.ok ? "connected" : "configured";

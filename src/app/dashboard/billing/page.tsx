@@ -69,6 +69,12 @@ export default function BillingPage() {
             <Button 
               variant="outline" 
               className="h-10 rounded-xl px-4 gap-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-bold text-[10px] tracking-wider hover:bg-white transition-all active:scale-95"
+              onClick={() => {
+                const now = new Date();
+                const month = now.getMonth() + 1;
+                const year = now.getFullYear();
+                window.open(`/api/integrations/vendus/saft?year=${year}&month=${month}`, "_blank");
+              }}
             >
               <Download size={16} />
               <span>Exportar SAF-T</span>
