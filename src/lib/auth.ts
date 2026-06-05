@@ -6,11 +6,11 @@ import type { NextAuthOptions } from "next-auth";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
-// Enforce secret in production
+// Enforce secret in production; fail fast at boot
 if (!process.env.NEXTAUTH_SECRET) {
-  if (process.env.NODE_ENV !== "production") {
-  console.warn("WARNING: NEXTAUTH_SECRET is missing. Please add it to your environment variables.");
-}
+  throw new Error(
+    "NEXTAUTH_SECRET is required. Set it in your environment variables."
+  );
 }
 
 export const authOptions: NextAuthOptions = {

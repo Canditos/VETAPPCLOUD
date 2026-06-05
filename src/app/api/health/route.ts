@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,10 +12,8 @@ export async function GET() {
   };
 
   try {
-    const prismaMod = await import('@/lib/prisma');
-    const prismaClient = prismaMod.default;
     const start = Date.now();
-    await prismaClient.$queryRaw`SELECT 1`;
+    await prisma.$queryRaw`SELECT 1`;
     (status as any).db = { reachable: true, latencyMs: Date.now() - start };
   } catch (error) {
     (status as any).db = { reachable: false, error: (error as Error).message };

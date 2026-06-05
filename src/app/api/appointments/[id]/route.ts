@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
 import { withAuthParams } from "@/lib/api-wrapper";
 
-export const PATCH = withAuthParams(async ({ req, clinicId }, { id }) => {
+export const PATCH = withAuthParams(async ({ req, tenantPrisma, clinicId }, { id }) => {
   try {
-    // Verify the appointment belongs to this clinic
-    const existing = await prisma.appointment.findFirst({
-      where: { id, clinicId },
+    // Verify the appointment belongs to this clinic (tenantPrisma injects clinicId)
+    const existing = await tenantPrisma.appointment.findFirst({
+      where: { id },
     });
     if (!existing) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -28,10 +27,9 @@ export const PATCH = withAuthParams(async ({ req, clinicId }, { id }) => {
     // Verificação de sobreposição global e específica
     if (status !== "CANCELLED") {
       // Limite global: Máximo de 5 consultas na mesma clínica em simultâneo
-      const totalOverlapping = await prisma.appointment.count({
+      const totalOverlapping = await tenantPrisma.appointment.count({
         where: {
           id: { not: id },
-          clinicId,
           status: { not: "CANCELLED" },
           OR: [
             {
@@ -50,10 +48,9 @@ export const PATCH = withAuthParams(async ({ req, clinicId }, { id }) => {
       }
 
       // Verificação específica: O membro não pode ter outra marcação na mesma hora
-      const overlapping = await prisma.appointment.findFirst({
+      const overlapping = await tenantPrisma.appointment.findFirst({
         where: {
           id: { not: id },
-          clinicId,
           veterinarianId: newVeterinarianId,
           status: { not: "CANCELLED" },
           OR: [
@@ -73,7 +70,7 @@ export const PATCH = withAuthParams(async ({ req, clinicId }, { id }) => {
       }
     }
 
-    const appointment = await prisma.appointment.update({
+    const appointment = await tenantPrisma.appointment.update({
       where: { id },
       data: {
         ...(startTime && { startTime: new Date(startTime) }),
@@ -93,16 +90,17 @@ export const PATCH = withAuthParams(async ({ req, clinicId }, { id }) => {
   }
 });
 
-export const DELETE = withAuthParams(async ({ clinicId }, { id }) => {
+export const DELETE = withAuthParams(async ({ tenantPrisma }, { id }) => {
   try {
-    const existing = await prisma.appointment.findFirst({
-      where: { id, clinicId },
+    // tenantPrisma injects clinicId automatically for findFirst
+    const existing = await tenantPrisma.appointment.findFirst({
+      where: { id },
     });
     if (!existing) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    await prisma.appointment.delete({ where: { id } });
+    await tenantPrisma.appointment.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: "Erro ao eliminar marcação" }, { status: 500 });
