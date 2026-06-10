@@ -1,28 +1,61 @@
-import { StatusBar } from "expo-status-bar";
-import { Stack } from "expo-router";
+import { Tabs } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { View, StyleSheet } from "react-native";
 
-export default function AppLayout() {
+const tabs = [
+  { name: "index", title: "Início", icon: "home" as const },
+  { name: "appointments", title: "Consultas", icon: "calendar" as const },
+  { name: "patients", title: "Pacientes", icon: "paw" as const },
+  { name: "invoices", title: "Faturas", icon: "receipt" as const },
+  { name: "messages", title: "Mensagens", icon: "chatbubble" as const },
+  { name: "profile", title: "Perfil", icon: "person" as const },
+];
+
+export default function TabLayout() {
   return (
-    <>
-      <StatusBar style="auto" />
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: "#fff" },
-          headerTintColor: "#1e293b",
-          headerTitleStyle: { fontWeight: "700" },
-        }}
-      >
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="appointments" options={{ title: "Consultas" }} />
-        <Stack.Screen name="patients" options={{ title: "Pacientes" }} />
-        <Stack.Screen name="invoices" options={{ title: "Faturas" }} />
-        <Stack.Screen name="messages" options={{ title: "Mensagens" }} />
-        <Stack.Screen name="profile" options={{ title: "Perfil" }} />
-        <Stack.Screen
-          name="patients/[id]"
-          options={{ title: "Paciente", headerShown: false }}
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: styles.tabBar,
+        tabBarActiveTintColor: "#3B82F6",
+        tabBarInactiveTintColor: "#475569",
+        tabBarLabelStyle: styles.tabLabel,
+        tabBarItemStyle: styles.tabItem,
+      }}
+    >
+      {tabs.map((tab) => (
+        <Tabs.Screen
+          key={tab.name}
+          name={tab.name}
+          options={{
+            title: tab.title,
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name={tab.icon as any} size={size} color={color} />
+            ),
+          }}
         />
-      </Stack>
-    </>
+      ))}
+    </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBar: {
+    backgroundColor: "#0F172A",
+    borderTopColor: "#1E293B",
+    borderTopWidth: 1,
+    height: 65,
+    paddingBottom: 8,
+    paddingTop: 6,
+    elevation: 0,
+    shadowOpacity: 0,
+  },
+  tabLabel: {
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+  tabItem: {
+    paddingVertical: 2,
+  },
+});
