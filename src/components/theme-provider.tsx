@@ -19,7 +19,7 @@ export function useAppTheme() {
   return ctx;
 }
 
-export default function ThemeProvider({ children }: { children: React.ReactNode }) {
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import Sidebar from "@/components/Sidebar";
 import MobileSidebar from "@/components/MobileSidebar";
 import Header from "@/components/Header";
@@ -9,23 +11,12 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex bg-slate-50 dark:bg-slate-950 min-h-screen">
-      {/* Desktop sidebar — hidden on mobile */}
-      <div className="hidden md:flex">
-        <Sidebar />
-      </div>
-
-      {/* Mobile sidebar */}
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      <Sidebar />
       <MobileSidebar />
-
-      <div className="flex-1 md:ml-64 flex flex-col">
-        <Header />
-        <main className="p-4 md:p-8">
-          {children}
-        </main>
-      </div>
-
-      <Toaster position="top-right" richColors />
+      <Header />
+      <main className="ml-64">{children}</main>
+      <Toaster />
     </div>
   );
 }

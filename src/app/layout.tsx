@@ -3,6 +3,11 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import QueryProvider from "@/components/QueryProvider";
 
+// Force lucide-react icons into the initial chunk so Next.js tree-shaking
+// doesn't remove them during server-side prerendering.
+import "lucide-react/dist/esm/icons/stethoscope";
+import "lucide-react/dist/esm/icons/syringe";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],

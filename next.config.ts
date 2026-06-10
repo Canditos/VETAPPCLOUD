@@ -5,14 +5,21 @@ const nextConfig: NextConfig = {
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
   productionBrowserSourceMaps: false,
-  // Keep Node.js-only packages out of the client bundle
   serverExternalPackages: ['twilio', 'bcryptjs', 'pg', '@prisma/client', '@prisma/adapter-pg'],
-  // Severe memory optimizations for builds on limited hardware (RPi 4)
   experimental: {
     webpackMemoryOptimizations: true,
     workerThreads: false,
     cpus: 1,
     serverSourceMaps: false,
+  },
+  webpack: (config) => {
+    // Force lucide-react to keep all icon imports (their sideEffects:false flag
+    // causes Webpack to tree-shake icons even when they're explicitly imported)
+    config.module.rules.push({
+      test: /node_modules[\\/]lucide-react/,
+      sideEffects: true,
+    });
+    return config;
   },
   async headers() {
     return [

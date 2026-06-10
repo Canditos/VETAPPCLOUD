@@ -6,15 +6,20 @@ import type { NextAuthOptions } from "next-auth";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
-// Enforce secret in production; fail fast at boot
-if (!process.env.NEXTAUTH_SECRET) {
-  throw new Error(
-    "NEXTAUTH_SECRET is required. Set it in your environment variables."
-  );
+// Lazy check — don't throw at module level (breaks Next.js build)
+export function ensureSecret() {
+  if (!process.env.NEXTAUTH_SECRET) {
+    throw new Error(
+      "NEXTAUTH_SECRET is required. Set it in your environment variables."
+    );
+  }
 }
 
 export const authOptions: NextAuthOptions = {
-  secret: process.env.NEXTAUTH_SECRET,
+  get secret() {
+    ensureSecret();
+    return process.env.NEXTAUTH_SECRET;
+  },
   adapter: PrismaAdapter(prisma) as Adapter,
   session: {
     strategy: "jwt",

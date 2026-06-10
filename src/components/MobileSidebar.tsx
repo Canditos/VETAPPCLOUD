@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { X, ChevronRight } from "lucide-react";
+import { X, ChevronRight, LayoutDashboard } from "lucide-react";
 import { getVisibleMenuItems } from "@/lib/roles";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
