@@ -5,10 +5,17 @@ import { jwtVerify } from "jose";
 import prisma from "@/lib/prisma";
 import { addDays } from "date-fns";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("vet_portal_session")?.value;
+    // Support both cookie (web) and Authorization header (mobile)
+    let token: string | undefined;
+    const auth = req.headers.get("authorization");
+    if (auth?.startsWith("Bearer ")) {
+      token = auth.slice(7);
+    } else {
+      const cookieStore = await cookies();
+      token = cookieStore.get("vet_portal_session")?.value;
+    }
 
     if (!token) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
