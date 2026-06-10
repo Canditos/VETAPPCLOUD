@@ -1,7 +1,8 @@
 import { useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity,
-  StyleSheet, KeyboardAvoidingView, Platform, Alert, Image,
+  StyleSheet, KeyboardAvoidingView, Platform, Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -9,25 +10,28 @@ import { useAuth } from "../../src/lib/auth";
 import { api } from "../../src/lib/api";
 
 export default function LoginScreen() {
-  const [token, setToken] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { setSession } = useAuth();
   const router = useRouter();
 
   const handleLogin = async () => {
-    const code = token.trim();
-    if (!code) {
-      Alert.alert("Erro", "Insira o código de acesso fornecido pela clínica.");
+    const e = email.trim();
+    const p = password.trim();
+    if (!e || !p) {
+      Alert.alert("Erro", "Preenche o email e a palavra-passe.");
       return;
     }
     setLoading(true);
     try {
-      const res = await api.post("/api/portal/auth/mobile-login", { token: code });
+      const res = await api.post("/api/portal/auth/mobile-login", { email: e, password: p });
       const { jwt, owner } = res.data;
       await setSession(jwt, owner);
       router.replace("/(tabs)");
-    } catch (e: any) {
-      const msg = e?.response?.data?.error || "Código inválido ou expirado.";
+    } catch (error: any) {
+      const msg = error?.response?.data?.error || "Erro ao fazer login. Verifica os dados.";
       Alert.alert("Erro", msg);
     } finally {
       setLoading(false);
@@ -45,7 +49,7 @@ export default function LoginScreen() {
       </View>
 
       <View style={styles.content}>
-        {/* Logo area */}
+        {/* Logo */}
         <View style={styles.logoArea}>
           <View style={styles.logoBox}>
             <Ionicons name="paw" size={40} color="#fff" />
@@ -56,24 +60,48 @@ export default function LoginScreen() {
 
         {/* Login card */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Acesso Seguro</Text>
+          <Text style={styles.cardTitle}>Entrar</Text>
           <Text style={styles.cardDesc}>
-            Insere o código que a clínica te forneceu para acederes à área reservada.
+            Usa o email e a palavra-passe fornecidos pela tua clínica.
           </Text>
 
+          {/* Email */}
           <View style={styles.inputWrapper}>
-            <Ionicons name="lock-closed" size={18} color="#64748B" style={styles.inputIcon} />
+            <Ionicons name="mail-outline" size={18} color="#64748B" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="Código de acesso"
+              placeholder="Email"
               placeholderTextColor="#475569"
-              value={token}
-              onChangeText={setToken}
-              autoCapitalize="characters"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
               autoCorrect={false}
+              keyboardType="email-address"
+              returnKeyType="next"
+            />
+          </View>
+
+          {/* Password */}
+          <View style={styles.inputWrapper}>
+            <Ionicons name="lock-closed-outline" size={18} color="#64748B" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Palavra-passe"
+              placeholderTextColor="#475569"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
               returnKeyType="go"
               onSubmitEditing={handleLogin}
             />
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+              <Ionicons
+                name={showPassword ? "eye-off-outline" : "eye-outline"}
+                size={18}
+                color="#64748B"
+              />
+            </TouchableOpacity>
           </View>
 
           <TouchableOpacity
@@ -81,15 +109,19 @@ export default function LoginScreen() {
             onPress={handleLogin}
             disabled={loading}
           >
-            <Text style={styles.buttonText}>
-              {loading ? "A entrar..." : "Entrar"}
-            </Text>
-            {!loading && <Ionicons name="arrow-forward" size={18} color="#fff" />}
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <>
+                <Text style={styles.buttonText}>Entrar</Text>
+                <Ionicons name="arrow-forward" size={18} color="#fff" />
+              </>
+            )}
           </TouchableOpacity>
         </View>
 
         <Text style={styles.footerText}>
-          Não tens código? Pede à tua clínica veterinária.
+          Ainda não tens acesso? Pede à tua clínica veterinária.
         </Text>
       </View>
     </KeyboardAvoidingView>
@@ -127,19 +159,20 @@ const styles = StyleSheet.create({
     shadowColor: "#000", shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3, shadowRadius: 12, elevation: 8,
   },
-  cardTitle: { fontSize: 18, fontWeight: "800", color: "#F8FAFC", marginBottom: 6 },
+  cardTitle: { fontSize: 20, fontWeight: "800", color: "#F8FAFC", marginBottom: 6 },
   cardDesc: { fontSize: 13, color: "#94A3B8", lineHeight: 20, marginBottom: 24 },
   inputWrapper: {
     flexDirection: "row", alignItems: "center",
     backgroundColor: "#334155", borderRadius: 14,
     borderWidth: 1, borderColor: "#475569",
-    paddingHorizontal: 14, height: 52, marginBottom: 16,
+    paddingHorizontal: 14, height: 52, marginBottom: 12,
   },
   inputIcon: { marginRight: 10 },
-  input: { flex: 1, fontSize: 18, color: "#F8FAFC", letterSpacing: 4, fontWeight: "700" },
+  input: { flex: 1, fontSize: 16, color: "#F8FAFC" },
   button: {
     flexDirection: "row", height: 52, borderRadius: 14,
     backgroundColor: "#3B82F6", justifyContent: "center", alignItems: "center", gap: 8,
+    marginTop: 8,
   },
   buttonDisabled: { opacity: 0.5 },
   buttonText: { color: "#fff", fontSize: 16, fontWeight: "800" },
