@@ -2,7 +2,8 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { withAuth } from "@/lib/api-wrapper";
-import { startOfDay, endOfDay, subDays, addDays } from "date-fns";
+import { startOfDay, endOfDay, subDays, addDays, eachDayOfInterval, format } from "date-fns";
+import { pt } from "date-fns/locale";
 
 // Safe query wrapper — if a query fails, return fallback instead of crashing
 async function safe<T>(label: string, fn: () => Promise<T>, fallback: T): Promise<T> {
@@ -138,6 +139,48 @@ export const GET = withAuth(async ({ clinicId, session }) => {
           orderBy: { createdAt: "desc" },
           take: 4,
         }), []),
+
+      // 11. Faturação últimos 14 dias (tendência)
+      safe("revenueTrend", () => {
+        const days = eachDayOfInterval({ start: subDays(today, 13), end: today });
+        return Promise.all(
+          days.map((day) => {
+            const start = startOfDay(day);
+            const end = endOfDay(day);
+            return prisma.payment.aggregate({
+              where: {
+                clinicId,
+                paidAt: { gte: start, lte: end },
+              },
+              _sum: { amount: true },
+            }).then((res) => ({
+              date: format(day, "dd MMM", { locale: pt }),
+              value: Number(res._sum.amount ?? 0),
+            }));
+          })
+        );
+      }, []),
+
+      // 12. Marcações últimos 14 dias (tendência)
+      safe("appointmentTrend", () => {
+        const days = eachDayOfInterval({ start: subDays(today, 13), end: today });
+        return Promise.all(
+          days.map((day) => {
+            const start = startOfDay(day);
+            const end = endOfDay(day);
+            return prisma.appointment.count({
+              where: {
+                clinicId,
+                startTime: { gte: start, lte: end },
+                status: { not: "CANCELLED" },
+              },
+            }).then((count) => ({
+              date: format(day, "dd MMM", { locale: pt }),
+              value: count,
+            }));
+          })
+        );
+      }, []),
     ]);
 
     // Build alerts
@@ -232,6 +275,8 @@ export const GET = withAuth(async ({ clinicId, session }) => {
       })),
       alerts,
       activity,
+      revenueTrend,
+      appointmentTrend,
     });
   } catch (error) {
     console.error("[DASHBOARD_STATS_GET] Fatal error:", error);

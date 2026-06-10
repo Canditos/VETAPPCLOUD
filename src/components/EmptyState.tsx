@@ -1,51 +1,91 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { LucideIcon } from "lucide-react";
+import { Inbox, FolderOpen, SearchX } from "lucide-react";
+import Link from "next/link";
+import { ComponentType, SVGProps } from "react";
 
-interface EmptyStateProps {
-  icon?: LucideIcon;
+type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
+
+export interface EmptyStateProps {
   title: string;
   description?: string;
-  action?: React.ReactNode;
+  icon?: IconComponent;
+  primaryAction?: {
+    label: string;
+    href?: string;
+    onClick?: () => void;
+  };
+  secondaryAction?: {
+    label: string;
+    href?: string;
+    onClick?: () => void;
+  };
   className?: string;
-  variant?: "default" | "dashed";
 }
 
-export function EmptyState({
-  icon: Icon,
+const defaultIcons: Record<string, IconComponent> = {
+  inbox: Inbox,
+  empty: FolderOpen,
+  search: SearchX,
+};
+
+export const EmptyState = ({
   title,
   description,
-  action,
+  icon,
+  primaryAction,
+  secondaryAction,
   className,
-  variant = "dashed",
-}: EmptyStateProps) {
+}: EmptyStateProps) => {
+  const Icon = icon || defaultIcons.empty;
   return (
-    <div
-      className={cn(
-        "text-center py-12 rounded-3xl",
-        variant === "dashed"
-          ? "border-2 border-dashed border-slate-100 dark:border-white/5"
-          : "bg-slate-50 dark:bg-white/5",
-        className
+    <div className={cn("flex flex-col items-center justify-center px-6 py-16 text-center", className)}>
+      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400">
+        <Icon size={28} strokeWidth={1.5} />
+      </div>
+      <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{title}</p>
+      {description ? <p className="mt-1 max-w-sm text-sm text-slate-500 dark:text-slate-400">{description}</p> : null}
+      {(primaryAction || secondaryAction) && (
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+          {primaryAction ? (
+            primaryAction.href ? (
+              <Link
+                href={primaryAction.href}
+                className="inline-flex h-10 items-center rounded-xl bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700"
+              >
+                {primaryAction.label}
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={primaryAction.onClick}
+                className="inline-flex h-10 items-center rounded-xl bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700"
+              >
+                {primaryAction.label}
+              </button>
+            )
+          ) : null}
+          {secondaryAction ? (
+            secondaryAction.href ? (
+              <Link
+                href={secondaryAction.href}
+                className="inline-flex h-10 items-center rounded-xl border border-slate-200 px-4 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                {secondaryAction.label}
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={secondaryAction.onClick}
+                className="inline-flex h-10 items-center rounded-xl border border-slate-200 px-4 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                {secondaryAction.label}
+              </button>
+            )
+          ) : null}
+        </div>
       )}
-    >
-      {Icon && (
-        <Icon
-          size={32}
-          className="mx-auto text-slate-200 dark:text-slate-700 mb-3"
-          strokeWidth={1.5}
-        />
-      )}
-      <p className="text-slate-500 dark:text-slate-400 font-semibold text-sm">
-        {title}
-      </p>
-      {description && (
-        <p className="text-slate-400 dark:text-slate-500 text-xs mt-1 max-w-xs mx-auto">
-          {description}
-        </p>
-      )}
-      {action && <div className="mt-4">{action}</div>}
     </div>
   );
-}
+};

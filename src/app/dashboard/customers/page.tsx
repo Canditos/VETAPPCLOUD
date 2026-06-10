@@ -1,52 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { 
-  Users, 
-  Plus, 
-  Search, 
-  Phone, 
-  Mail, 
-  CreditCard,
-  ChevronRight,
-  ChevronLeft,
-  UserPlus,
-  PawPrint,
-  MapPin,
-  RefreshCw,
-  MoreHorizontal
-} from "lucide-react";
+import { Plus, Search, Phone, Mail, CreditCard, ChevronRight, ChevronLeft, UserPlus, PawPrint, MapPin, RefreshCw, MoreHorizontal } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { FormField, SelectField, FormErrorSummary } from "@/components/forms/FormFields";
+import { PatientAvatar, VetStatusBadge } from "@/components/PatientAvatar";
+import { EmptyState } from "@/components/EmptyState";
 import Link from "next/link";
-import { 
-  Dialog, 
-  DialogTrigger 
-} from "@/components/ui/dialog";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { AddCustomerForm } from "@/components/forms/AddCustomerForm";
 
-// Custom Customer Avatar Component
-const CustomerAvatar = ({ name }: { name: string }) => {
-  const colors = [
-    "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400",
-    "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400",
-    "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400",
-    "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400",
-  ];
-  
-  // Pick a color based on the first letter
-  const colorIndex = (name?.[0]?.toLowerCase()?.charCodeAt(0) || 0) % colors.length;
-  const colorClass = colors[colorIndex];
-
-  return (
-    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg transition-all duration-300 group-hover:scale-110 shadow-sm ${colorClass}`}>
-      {name?.[0]?.toUpperCase()}
-    </div>
-  );
-};
+const CustomerAvatar = ({ name }: { name: string }) => (
+  <PatientAvatar name={name} className="h-12 w-12 text-lg" />
+);
 
 export default function CustomersPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -142,12 +112,12 @@ export default function CustomersPage() {
               <div key={i} className="h-24 w-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-3xl" />
             ))
           ) : customers.length === 0 ? (
-            <div className="py-20 text-center space-y-4">
-              <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto text-slate-300">
-                <Users size={40} />
-              </div>
-              <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Nenhum cliente encontrado</p>
-            </div>
+            <EmptyState
+              title="Nenhum cliente encontrado"
+              description="Tente ajustar a procura ou crie um novo cliente."
+              primaryAction={{ label: "Novo cliente", href: "#" }}
+              icon={SearchX}
+            />
           ) : (
             customers.map((customer: any) => (
               <Link 
