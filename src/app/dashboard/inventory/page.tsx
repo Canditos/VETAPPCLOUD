@@ -147,16 +147,23 @@ export default function InventoryPage() {
       e.preventDefault();
       const q = searchTerm.trim();
       try {
+        // Look up by barcode
         const res = await fetch(`/api/products/${encodeURIComponent(q)}`);
         if (res.ok) {
           const product = await res.json();
           if (product && product.id) {
             setScanFeedback(true);
             setTimeout(() => setScanFeedback(false), 600);
-            setSearchTerm(product.name);
+            // Auto-open adjust modal for scanned product
+            setAdjustTarget(product);
+            setAdjustQty("1");
+            setSearchTerm("");
           }
+        } else {
+          // Not a barcode lookup — search normally via API
+          setPage(1);
         }
-      } catch {}
+      } catch { setPage(1); }
     }
   };
 
@@ -275,6 +282,11 @@ export default function InventoryPage() {
                 className="w-full h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center font-bold text-lg" />
             </div>
           </div>
+          {adjustTarget?.barcode && (
+            <div className="text-center text-[10px] text-slate-500 font-mono">
+              Cód. Barras: {adjustTarget.barcode}
+            </div>
+          )}
           <div className="flex gap-3 pt-2">
             <Button variant="outline" onClick={() => adjustMutation.mutate({ productId: adjustTarget.id, type: "IN", quantity: parseInt(adjustQty) || 1 })}
               disabled={adjustMutation.isPending}
