@@ -39,6 +39,9 @@ export const GET = withAuth(async ({ clinicId, session }) => {
       pendingHospTasks,
       recentConsultations,
       recentPayments,
+      revenueTrend,
+      appointmentTrend,
+      expiringProducts,
     ] = await Promise.all([
 
       // 1. Consultas hoje
@@ -181,6 +184,20 @@ export const GET = withAuth(async ({ clinicId, session }) => {
           })
         );
       }, []),
+
+      // 13. Produtos a expirar nos próximos 30 dias
+      safe("expiringProducts", () =>
+        prisma.product.findMany({
+          where: {
+            clinicId,
+            expiryDate: {
+              gte: today,
+              lte: in30Days,
+            },
+          },
+          orderBy: { expiryDate: "asc" },
+          take: 5,
+        }), []),
     ]);
 
     // Build alerts
@@ -189,9 +206,21 @@ export const GET = withAuth(async ({ clinicId, session }) => {
     if (criticalStockProducts.length > 0) {
       alerts.push({
         type: "STOCK",
-        level: "warning",
+        level: "error",
         title: `${criticalStockProducts.length} produto${criticalStockProducts.length > 1 ? "s" : ""} com stock crítico`,
         desc: criticalStockProducts.slice(0, 2).map((p: any) => p?.name ?? "").join(", ") + (criticalStockProducts.length > 2 ? "..." : ""),
+        href: "/dashboard/inventory",
+      });
+    }
+
+    // Expiry alerts
+    const _expiring: any[] = Array.isArray(expiringProducts) ? expiringProducts : [];
+    if (_expiring.length > 0) {
+      alerts.push({
+        type: "EXPIRY",
+        level: "warning",
+        title: `${_expiring.length} produto${_expiring.length > 1 ? "s" : ""} a expirar em 30 dias`,
+        desc: _expiring.slice(0, 2).map((p: any) => `${p.name} (${p.expiryDate ? format(new Date(p.expiryDate), "dd MMM", { locale: pt }) : "—"})`).join(", ") + (_expiring.length > 2 ? "..." : ""),
         href: "/dashboard/inventory",
       });
     }

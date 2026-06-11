@@ -51,12 +51,33 @@ export default function InventoryPage() {
   const [editTarget, setEditTarget] = useState<any>(null);
   const [movementTarget, setMovementTarget] = useState<any>(null);
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [adjustTarget, setAdjustTarget] = useState<any>(null);
+  const [adjustQty, setAdjustQty] = useState("1");
   const queryClient = useQueryClient();
 
-  const { data: products, isLoading } = useQuery({
-    queryKey: ["inventory"],
-    queryFn: async () => { const r = await fetch("/api/inventory"); if (!r.ok) throw new Error(); return r.json(); }
+  const queryParams = useMemo(() => {
+    const p = new URLSearchParams();
+    p.set("page", String(page));
+    p.set("limit", String(PAGE_SIZE));
+    if (searchTerm) p.set("search", searchTerm);
+    if (filterCategory !== "all") p.set("category", filterCategory);
+    p.set("sortKey", sortKey);
+    p.set("sortDir", sortDir);
+    return p.toString();
+  }, [page, searchTerm, filterCategory, sortKey, sortDir]);
+
+  const { data: response, isLoading } = useQuery({
+    queryKey: ["inventory", queryParams],
+    queryFn: async () => {
+      const r = await fetch(`/api/inventory?${queryParams}`);
+      if (!r.ok) throw new Error();
+      return r.json();
+    },
   });
+
+  const products = response?.products ?? [];
+  const total = response?.total ?? 0;
+  const totalPages = response?.totalPages ?? 1;
 
   const adjustMutation = useMutation({
     mutationFn: async ({ productId, type, quantity }: { productId: string; type: "IN" | "OUT"; quantity: number }) => {
@@ -155,7 +176,6 @@ export default function InventoryPage() {
     return rows;
   }, [products, searchTerm, filterCategory, sortKey, sortDir]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const SortIcon = ({ k }: { k: SortKey }) => {
@@ -231,6 +251,41 @@ export default function InventoryPage() {
           <div className="flex gap-3 pt-2">
             <Button variant="outline" onClick={() => setDeleteTarget(null)} className="flex-1 h-10 rounded-xl border-slate-200 font-bold">Cancelar</Button>
             <Button onClick={() => deleteMutation.mutate(deleteTarget.id)} disabled={deleteMutation.isPending} className="flex-1 h-10 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold">Eliminar</Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
+  const AdjustStockModal = () => (
+    <Dialog open={!!adjustTarget} onOpenChange={o => { if (!o) { setAdjustTarget(null); setAdjustQty("1"); } }}>
+      <DialogContent className="sm:max-w-[400px] rounded-2xl border-none p-8 bg-white dark:bg-slate-900">
+        <div className="text-center space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center mx-auto">
+            <Package size={24} className="text-blue-500" />
+          </div>
+          <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white">Ajustar Stock</DialogTitle>
+          <p className="text-sm text-slate-500">
+            <strong>{adjustTarget?.name}</strong> &mdash; Stock atual: <strong>{adjustTarget?.stockQuantity}</strong> un.
+          </p>
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Quantidade</label>
+              <input type="number" min="1" value={adjustQty} onChange={e => setAdjustQty(e.target.value)}
+                className="w-full h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center font-bold text-lg" />
+            </div>
+          </div>
+          <div className="flex gap-3 pt-2">
+            <Button variant="outline" onClick={() => adjustMutation.mutate({ productId: adjustTarget.id, type: "IN", quantity: parseInt(adjustQty) || 1 })}
+              disabled={adjustMutation.isPending}
+              className="flex-1 h-10 rounded-xl border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 font-bold gap-1.5 transition-all">
+              <PlusCircle size={16} /> Entrada
+            </Button>
+            <Button variant="outline" onClick={() => adjustMutation.mutate({ productId: adjustTarget.id, type: "OUT", quantity: parseInt(adjustQty) || 1 })}
+              disabled={adjustMutation.isPending || adjustTarget?.stockQuantity === 0}
+              className="flex-1 h-10 rounded-xl border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white hover:border-rose-600 font-bold gap-1.5 transition-all">
+              <MinusCircle size={16} /> Saída
+            </Button>
           </div>
         </div>
       </DialogContent>
@@ -319,7 +374,7 @@ export default function InventoryPage() {
         {/* KPI Strip */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { label: "Total Artigos", value: products?.length ?? 0, icon: Package, color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-900/20" },
+            { label: "Total Artigos", value: total, icon: Package, color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-900/20" },
             { label: "Stock Crítico", value: stats.lowStock, icon: AlertTriangle, color: stats.lowStock > 0 ? "text-amber-600" : "text-slate-400", bg: stats.lowStock > 0 ? "bg-amber-50 dark:bg-amber-900/20" : "bg-slate-50 dark:bg-slate-800" },
             { label: "Expirados", value: stats.expired, icon: AlertCircle, color: stats.expired > 0 ? "text-rose-600" : "text-slate-400", bg: stats.expired > 0 ? "bg-rose-50 dark:bg-rose-900/20" : "bg-slate-50 dark:bg-slate-800" },
             { label: "Valor de Stock", value: `€${Math.floor(stats.totalValue).toLocaleString("pt-PT")}`, icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
@@ -397,11 +452,12 @@ export default function InventoryPage() {
 
       {/* Movements Modal */}
       <MovementsModal />
+      <AdjustStockModal />
 
       {/* Table */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm ring-1 ring-slate-200/60 dark:ring-white/5 overflow-hidden">
         <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{filtered.length.toLocaleString("pt-PT")} artigo{filtered.length !== 1 ? "s" : ""} encontrado{filtered.length !== 1 ? "s" : ""}</p>
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{total.toLocaleString("pt-PT")} artigo{total !== 1 ? "s" : ""} encontrado{total !== 1 ? "s" : ""}</p>
           <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Página {page} / {totalPages}</p>
         </div>
 
@@ -427,7 +483,7 @@ export default function InventoryPage() {
                     ))}
                   </tr>
                 ))
-              ) : paginated.length === 0 ? (
+              ) : products.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-24 text-center">
                     <Package size={48} className="mx-auto text-slate-200 dark:text-slate-800 mb-3" />
@@ -436,7 +492,7 @@ export default function InventoryPage() {
                   </td>
                 </tr>
               ) : (
-                paginated.map((p: any) => {
+                products.map((p: any) => {
                   const low = isLowStock(p);
                   const expired = isExpired(p);
                   const expiry = p.expiryDate ? new Date(p.expiryDate) : null;
@@ -480,8 +536,10 @@ export default function InventoryPage() {
                       </td>
                       <td className="px-4 py-3.5 pr-5">
                         <div className="flex items-center justify-end gap-1.5">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all active:scale-90" onClick={() => adjustMutation.mutate({ productId: p.id, type: "IN", quantity: 1 })} title="Entrada"><PlusCircle size={15} strokeWidth={2.5} /></Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-500 hover:bg-slate-900 hover:text-white dark:hover:bg-white dark:hover:text-slate-900 transition-all active:scale-90" onClick={() => adjustMutation.mutate({ productId: p.id, type: "OUT", quantity: 1 })} disabled={p.stockQuantity === 0} title="Saída"><MinusCircle size={15} strokeWidth={2.5} /></Button>
+                          <Button variant="ghost" size="sm" className="h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 hover:bg-blue-600 hover:text-white transition-all text-[10px] font-bold px-2.5 gap-1"
+                            onClick={() => { setAdjustTarget(p); setAdjustQty("1"); }}>
+                            <Package size={13} /> Ajustar
+                          </Button>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-500 hover:bg-slate-900 hover:text-white dark:hover:bg-white dark:hover:text-slate-900 transition-all active:scale-90"><MoreHorizontal size={14} strokeWidth={2.5} /></Button>
@@ -506,7 +564,7 @@ export default function InventoryPage() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="px-5 py-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4">
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">A mostrar {Math.min((page - 1) * PAGE_SIZE + 1, filtered.length)}–{Math.min(page * PAGE_SIZE, filtered.length)} de {filtered.length.toLocaleString("pt-PT")}</p>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">A mostrar {Math.min((page - 1) * PAGE_SIZE + 1, total)}–{Math.min(page * PAGE_SIZE, total)} de {total.toLocaleString("pt-PT")}</p>
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" disabled={page === 1} onClick={() => setPage(p => p - 1)}><ChevronLeft size={15} /></Button>
               {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
