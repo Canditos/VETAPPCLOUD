@@ -73,7 +73,17 @@ export async function POST(req: Request) {
       .setExpirationTime("7d")
       .sign(secret);
 
-    const response = NextResponse.json({ success: true, ownerId: owner.id });
+    const response = NextResponse.json({
+      success: true,
+      ownerId: owner.id,
+      jwt,
+      owner: {
+        id: owner.id,
+        name: owner.name,
+        email: owner.email,
+        phone: owner.phone,
+      },
+    });
 
     response.cookies.set("vet_portal_session", jwt, {
       httpOnly: true,

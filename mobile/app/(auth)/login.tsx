@@ -26,8 +26,9 @@ export default function LoginScreen() {
     }
     setLoading(true);
     try {
-      const res = await api.post("/api/portal/auth/mobile-login", { email: e, password: p });
+      const res = await api.post("/api/portal/auth/login", { email: e, password: p });
       const { jwt, owner } = res.data;
+      if (!jwt || !owner) throw new Error("Resposta inválida");
       await setSession(jwt, owner);
       router.replace("/(tabs)");
     } catch (error: any) {
