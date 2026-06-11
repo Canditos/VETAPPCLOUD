@@ -6,7 +6,7 @@ import {
   Package, Plus, Search, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown,
   MoreHorizontal, PlusCircle, MinusCircle, Calendar, Layers, History,
   TrendingUp, Filter, PackageCheck, Tag, Euro, Box,
-  ChevronRight, Download, ChevronLeft, AlertCircle, Edit, Trash2, X, Barcode,
+  ChevronRight, Download, ChevronLeft, AlertCircle, Edit, Trash2, X, Barcode, Mail,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -350,8 +350,27 @@ export default function InventoryPage() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" onClick={() => toast.success("Exportação iniciada...")} className="h-9 rounded-xl px-4 gap-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:bg-white transition-all active:scale-95">
-              <Download size={15} strokeWidth={2.5} /> Exportar
+            <Button variant="outline" onClick={() => {
+              const a = document.createElement("a");
+              a.href = "/api/reports/annual-inventory";
+              a.click();
+              toast.success("PDF gerado!");
+            }} className="h-9 rounded-xl px-4 gap-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:bg-white transition-all active:scale-95">
+              <Download size={15} strokeWidth={2.5} /> Download PDF
+            </Button>
+            <Button variant="outline" onClick={async () => {
+              const email = prompt("Enviar PDF para o email:");
+              if (!email) return;
+              try {
+                const r = await fetch("/api/reports/annual-inventory/send", {
+                  method: "POST", headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ email }),
+                });
+                if (r.ok) toast.success("PDF enviado para " + email);
+                else toast.error("Erro ao enviar");
+              } catch { toast.error("Erro ao enviar"); }
+            }} className="h-9 rounded-xl px-4 gap-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:bg-white transition-all active:scale-95">
+              <Mail size={15} strokeWidth={2.5} /> Enviar Email
             </Button>
             <Dialog open={createOpen} onOpenChange={setCreateOpen}>
               <DialogTrigger asChild>
