@@ -4,12 +4,15 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm ci --no-cache
 
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+# Clear caches to force fresh build
+RUN rm -rf .next node_modules/.cache
 
 # Memory-optimised build for ARM64 (RPi 4 with 4GB RAM)
 ENV NODE_OPTIONS="--max-old-space-size=768"

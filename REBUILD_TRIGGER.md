@@ -1,0 +1,2 @@
+# Rebuild trigger
+LAST_REBUILD=2026-06-12T21:00:00Z
