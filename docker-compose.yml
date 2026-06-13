@@ -150,23 +150,8 @@ services:
         delay: 5s
         max_attempts: 3
 
-  # === Monitor (opcional) ===
-  monitor:
-    image: prom/prometheus:latest
-    container_name: vetconnect-monitor
-    restart: unless-stopped
-    volumes:
-      - ./monitor/prometheus.yml:/etc/prometheus/prometheus.yml
-      - monitor-data:/prometheus
-    networks:
-      - coolify
-    ports:
-      - "9090:9090"
-
 volumes:
   db-data:
-    driver: local
-  monitor-data:
     driver: local
 
 networks:
