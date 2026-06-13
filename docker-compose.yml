@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # === Aplicação Principal ===
   app:
-    image: vetconnect:latest
+    image: qu4vzys28w5qfn252t4a81hl:a042bb3af3d7c053a49b426e663c1847e5932136
     container_name: vetconnect-app
     restart: unless-stopped
     env_file:
@@ -39,7 +39,7 @@ services:
 
   # === Canary (para testes) ===
   canary:
-    image: vetconnect:latest
+    image: qu4vzys28w5qfn252t4a81hl:a042bb3af3d7c053a49b426e663c1847e5932136
     container_name: vetconnect-canary
     restart: unless-stopped
     env_file:
