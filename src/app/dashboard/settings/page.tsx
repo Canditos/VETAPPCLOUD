@@ -10,7 +10,11 @@ import {
   Database,
   Link2,
   Loader2,
-  Package
+  Package,
+  Archive,
+  Download,
+  Clock,
+  HardDrive
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
