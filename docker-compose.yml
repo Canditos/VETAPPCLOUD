@@ -37,6 +37,8 @@ services:
       - NODE_ENV=production
       - HOST=0.0.0.0
       - PORT=3000
+    ports:
+      - "3001:3000"
     networks:
       - coolify
     healthcheck:
