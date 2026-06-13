@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { X, ChevronRight, LayoutDashboard, Stethoscope, Mail, PawPrint, Users, Bed, Pill, Activity, Package, Receipt, Send, BarChart3, Settings } from "lucide-react";
+import { X, ChevronRight, LayoutDashboard, Stethoscope, Mail, PawPrint, Users, Bed, Pill, Activity, Package, Receipt, Send, BarChart3, Settings, Heart } from "lucide-react";
 import { getVisibleMenuItems } from "@/lib/roles";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
