@@ -302,6 +302,7 @@ model Product {
   price         Decimal         @db.Decimal(10, 2)
   vatRate       Int             @default(23)
   stockQuantity Int             @default(0)
+  minStock      Int             @default(5)
   barcode       String?
   batchNumber   String?
   expiryDate    DateTime?

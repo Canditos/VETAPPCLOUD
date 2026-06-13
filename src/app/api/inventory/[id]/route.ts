@@ -9,7 +9,7 @@ export const PUT = withAuthParams(async ({ req, clinicId, tenantPrisma }, { id }
     if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const body = await req.json();
-    const { name, price, vatRate, stockQuantity, barcode, batchNumber, expiryDate, category } = body;
+    const { name, price, vatRate, stockQuantity, minStock, barcode, batchNumber, expiryDate, category } = body;
 
     const updated = await tenantPrisma.product.update({
       where: { id },
@@ -17,7 +17,8 @@ export const PUT = withAuthParams(async ({ req, clinicId, tenantPrisma }, { id }
         ...(name !== undefined && { name }),
         ...(price !== undefined && { price }),
         ...(vatRate !== undefined && { vatRate }),
-        ...(stockQuantity !== undefined && { stockQuantity }),
+        ...(stockQuantity !== undefined && { stockQuantity: parseInt(String(stockQuantity)) }),
+        ...(minStock !== undefined && { minStock: parseInt(String(minStock)) }),
         ...(barcode !== undefined && { barcode }),
         ...(batchNumber !== undefined && { batchNumber }),
         ...(expiryDate !== undefined && { expiryDate: expiryDate ? new Date(expiryDate) : null }),

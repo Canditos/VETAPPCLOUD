@@ -29,12 +29,12 @@ type SortKey = "name" | "category" | "stockQuantity" | "price" | "expiryDate";
 type SortDir = "asc" | "desc";
 
 interface ProductForm {
-  name: string; price: string; vatRate: number; stockQuantity: string;
+  name: string; price: string; vatRate: number; stockQuantity: string; minStock: string;
   barcode: string; batchNumber: string; expiryDate: string; category: string;
 }
 
 const emptyForm = (): ProductForm => ({
-  name: "", price: "", vatRate: 23, stockQuantity: "0",
+  name: "", price: "", vatRate: 23, stockQuantity: "0", minStock: "5",
   barcode: "", batchNumber: "", expiryDate: "", category: "",
 });
 
@@ -222,23 +222,29 @@ export default function InventoryPage() {
           <Input type="number" value={form.stockQuantity} onChange={e => setForm({ ...form, stockQuantity: e.target.value })} placeholder="0" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
         </div>
         <div className="space-y-2">
-          <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Categoria</Label>
-          <Input value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} placeholder="Ex: Medicamentos" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
+          <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Stock Mínimo</Label>
+          <Input type="number" value={form.minStock} onChange={e => setForm({ ...form, minStock: e.target.value })} placeholder="5" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
+          <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Categoria</Label>
+          <Input value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} placeholder="Ex: Medicamentos" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
+        </div>
+        <div className="space-y-2">
           <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Código de Barras</Label>
           <Input value={form.barcode} onChange={e => setForm({ ...form, barcode: e.target.value })} placeholder="Ex: 5601234567890" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
         </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nº Lote</Label>
           <Input value={form.batchNumber} onChange={e => setForm({ ...form, batchNumber: e.target.value })} placeholder="Ex: LOTE-2024-001" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
         </div>
-      </div>
-      <div className="space-y-2">
-        <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Validade</Label>
-        <Input type="date" value={form.expiryDate} onChange={e => setForm({ ...form, expiryDate: e.target.value })} className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
+        <div className="space-y-2">
+          <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Validade</Label>
+          <Input type="date" value={form.expiryDate} onChange={e => setForm({ ...form, expiryDate: e.target.value })} className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
+        </div>
       </div>
       <Button disabled={loading || !form.name || !form.price} onClick={onSubmit} className="w-full h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-widest">
         {loading ? "A guardar..." : title}
@@ -461,6 +467,7 @@ export default function InventoryPage() {
                 price: String(editTarget.price || ""),
                 vatRate: editTarget.vatRate ?? 23,
                 stockQuantity: String(editTarget.stockQuantity ?? 0),
+                minStock: String(editTarget.minStock ?? 5),
                 barcode: editTarget.barcode || "",
                 batchNumber: editTarget.batchNumber || "",
                 expiryDate: editTarget.expiryDate ? editTarget.expiryDate.split("T")[0] : "",
@@ -468,8 +475,8 @@ export default function InventoryPage() {
               }}
               setForm={(f) => setEditTarget({ ...editTarget, ...f } as any)}
               onSubmit={() => {
-                const { id, name, price, vatRate, stockQuantity, barcode, batchNumber, expiryDate, category } = editTarget;
-                updateMutation.mutate({ id, name: name || "", price: parseFloat(price) || 0, vatRate, stockQuantity: parseInt(stockQuantity) || 0, barcode, batchNumber, expiryDate, category });
+                const { id, name, price, vatRate, stockQuantity, minStock, barcode, batchNumber, expiryDate, category } = editTarget;
+                updateMutation.mutate({ id, name: name || "", price: parseFloat(price) || 0, vatRate, stockQuantity: parseInt(stockQuantity) || 0, minStock: parseInt(minStock) || 5, barcode, batchNumber, expiryDate, category });
               }}
               title="Guardar Alterações"
               loading={updateMutation.isPending}

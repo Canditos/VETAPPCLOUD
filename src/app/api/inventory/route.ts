@@ -55,7 +55,7 @@ export const GET = withAuth(async ({ req, tenantPrisma }) => {
 // POST /api/inventory — unchanged
 export const POST = withAuth(async ({ req, tenantPrisma, clinicId }) => {
   const body = await req.json();
-  const { id, name, price, vatRate, stockQuantity, barcode, batchNumber, expiryDate, category, type } = body;
+  const { id, name, price, vatRate, stockQuantity, minStock, barcode, batchNumber, expiryDate, category, type } = body;
 
   try {
     if (id) {
@@ -77,6 +77,7 @@ export const POST = withAuth(async ({ req, tenantPrisma, clinicId }) => {
           clinicId, name, price: parseFloat(price) || 0,
           vatRate: vatRate ?? 23,
           stockQuantity: parseInt(stockQuantity) || 0,
+          minStock: minStock !== undefined ? parseInt(minStock) : 5,
           barcode: barcode || null,
           batchNumber: batchNumber || null,
           expiryDate: expiryDate ? new Date(expiryDate) : null,
