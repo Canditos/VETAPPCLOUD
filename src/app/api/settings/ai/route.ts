@@ -19,6 +19,7 @@ export const GET = withAuth(async ({ clinicId }) => {
       aiApiKey: settings.aiApiKey || "",
       aiBaseUrl: settings.aiBaseUrl || "https://opencode.ai/zen/go/v1",
       aiModel: settings.aiModel || "deepseek-v4-flash",
+      aiVisionModel: settings.aiVisionModel || "qwen3.7-max",
     });
   } catch (error) {
     console.error("Error fetching AI settings:", error);
@@ -29,7 +30,7 @@ export const GET = withAuth(async ({ clinicId }) => {
 export const PUT = withAuth(async ({ req, clinicId }) => {
   try {
     const body = await req.json();
-    const { aiApiKey, aiBaseUrl, aiModel } = body;
+    const { aiApiKey, aiBaseUrl, aiModel, aiVisionModel } = body;
 
     await prisma.automationSettings.upsert({
       where: { clinicId },
@@ -37,12 +38,14 @@ export const PUT = withAuth(async ({ req, clinicId }) => {
         aiApiKey: aiApiKey || null,
         aiBaseUrl: aiBaseUrl || "https://opencode.ai/zen/go/v1",
         aiModel: aiModel || "deepseek-v4-flash",
+        aiVisionModel: aiVisionModel || "qwen3.7-max",
       },
       create: {
         clinicId,
         aiApiKey: aiApiKey || null,
         aiBaseUrl: aiBaseUrl || "https://opencode.ai/zen/go/v1",
         aiModel: aiModel || "deepseek-v4-flash",
+        aiVisionModel: aiVisionModel || "qwen3.7-max",
       }
     });
 
