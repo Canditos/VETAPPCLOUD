@@ -234,91 +234,34 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Activity feed */}
-          <Card className="border-none shadow-sm bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-slate-800 rounded-2xl overflow-hidden">
-            <CardHeader className="px-5 py-4 pb-2 flex flex-row justify-between items-center space-y-0 border-b border-slate-100 dark:border-slate-800/60">
-              <CardTitle className="text-sm font-bold text-slate-500 uppercase tracking-wider">
-                Atividade Recente
-              </CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push("/dashboard/appointments")}
-                className="text-xs font-bold uppercase text-blue-600 h-7 px-2 rounded-lg hover:bg-blue-50"
-              >
-                Ver Tudo
-              </Button>
-            </CardHeader>
-            <CardContent className="px-5 py-4">
-              <div className="space-y-4 relative">
-                <div className="absolute left-[11px] top-2 bottom-2 w-0.5 bg-slate-100 dark:bg-slate-800" />
-                {isLoading ? (
-                  Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="pl-9 space-y-1">
-                      <Skeleton className="h-3.5 w-3/4" />
-                      <Skeleton className="h-3 w-1/2" />
-                    </div>
-                  ))
-                ) : (data?.activity?.length ?? 0) > 0 ? (
-                  data.activity.map((log: any, idx: number) => {
-                    const Icon = log.icon === "Stethoscope" ? Stethoscope : TrendingUp;
-                    return (
-                      <div
-                        key={idx}
-                        onClick={() => log.href && router.push(log.href)}
-                        className="relative pl-9 group cursor-pointer"
-                      >
-                        <div
-                          className={`absolute left-0 top-0 w-5 h-5 rounded-lg border-[3px] border-white dark:border-slate-900 ${log.color} shadow-sm group-hover:scale-110 transition-transform duration-300 flex items-center justify-center z-10`}
-                        >
-                          <Icon size={9} className="text-white" strokeWidth={2.5} />
-                        </div>
-                        <p className="text-sm font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-tight">
-                          {log.title}
-                        </p>
-                        <p className="text-xs text-slate-400 font-medium">{log.desc}</p>
-                        <p className="text-[10px] font-bold text-slate-300 flex items-center gap-1 mt-0.5">
-                          <Clock size={10} strokeWidth={2} />
-                          {log.time ? format(new Date(log.time), "HH:mm") : "—"}
-                        </p>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <p className="pl-9 text-slate-400 font-medium text-sm py-3">Sem atividade recente</p>
+          {/* Vendus badge */}
+          <div className="p-4 bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl text-white shadow-lg shadow-blue-500/20 relative overflow-hidden group">
+            <div className="absolute -right-3 -bottom-3 opacity-10 group-hover:scale-110 transition-transform duration-700">
+              <ShieldCheck size={64} />
+            </div>
+            <div className="flex justify-between items-center mb-2 relative z-10">
+              <span className="text-[10px] font-bold opacity-70 uppercase tracking-wider">Vendus Cloud</span>
+              <Badge
+                className={cn(
+                  "text-[10px] px-2 border-none",
+                  health?.vendus?.status === "connected"
+                    ? "bg-emerald-400/20 text-emerald-300"
+                    : "bg-red-400/20 text-red-300"
                 )}
+              >
+                {health?.vendus?.status === "connected" ? "Online" : "Offline"}
+              </Badge>
+            </div>
+            <div className="flex items-center gap-2.5 relative z-10">
+              <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center backdrop-blur-md">
+                <ShieldCheck size={16} strokeWidth={2} />
               </div>
-
-              {/* Vendus badge */}
-              <div className="mt-4 p-4 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl text-white shadow-lg shadow-blue-500/20 relative overflow-hidden group">
-                <div className="absolute -right-3 -bottom-3 opacity-10 group-hover:scale-110 transition-transform duration-700">
-                  <ShieldCheck size={64} />
-                </div>
-                <div className="flex justify-between items-center mb-2 relative z-10">
-                  <span className="text-[10px] font-bold opacity-70 uppercase tracking-wider">Vendus Cloud</span>
-                  <Badge
-                    className={cn(
-                      "text-[10px] px-2 border-none",
-                      health?.vendus?.status === "connected"
-                        ? "bg-emerald-400/20 text-emerald-300"
-                        : "bg-red-400/20 text-red-300"
-                    )}
-                  >
-                    {health?.vendus?.status === "connected" ? "Online" : "Offline"}
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-2.5 relative z-10">
-                  <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center backdrop-blur-md">
-                    <ShieldCheck size={16} strokeWidth={2} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold">Faturação Ativa</p>
-                    <p className="text-[10px] opacity-60 font-medium">Sistema certificado AT</p>
-                  </div>
-                </div>
+              <div>
+                <p className="text-xs font-bold">Faturação Ativa</p>
+                <p className="text-[10px] opacity-60 font-medium">Sistema certificado AT</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
     </div>
