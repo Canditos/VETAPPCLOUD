@@ -298,6 +298,7 @@ export default function NotificationSettings() {
       <Tabs defaultValue="gateway" className="w-full">
         <TabsList className="bg-slate-100/50 dark:bg-slate-900/50 p-1.5 rounded-2xl ring-1 ring-slate-200 dark:ring-white/5 mb-8 w-full flex">
            <TabsTrigger value="gateway" className="flex-1 rounded-xl font-bold text-[10px] uppercase tracking-widest py-4 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 shadow-sm transition-all justify-center">Configuração Gateway</TabsTrigger>
+           <TabsTrigger value="ai" className="flex-1 rounded-xl font-bold text-[10px] uppercase tracking-widest py-4 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 shadow-sm transition-all justify-center">Assistente IA</TabsTrigger>
            <TabsTrigger value="templates" className="flex-1 rounded-xl font-bold text-[10px] uppercase tracking-widest py-4 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 shadow-sm transition-all justify-center">Templates de Mensagem</TabsTrigger>
            <TabsTrigger value="logs" className="flex-1 rounded-xl font-bold text-[10px] uppercase tracking-widest py-4 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 shadow-sm transition-all justify-center">Histórico de Envios</TabsTrigger>
         </TabsList>
@@ -341,37 +342,6 @@ export default function NotificationSettings() {
                     </CardContent>
                  </Card>
 
-                 <Card className="border-none shadow-xl rounded-2xl bg-slate-900 text-white overflow-hidden relative flex flex-col mt-6">
-                   <div className="absolute -top-4 -right-4 opacity-10">
-                      <Bot size={120} />
-                   </div>
-                   <CardHeader className="border-b border-white/10 relative z-10 p-8 pb-6">
-                      <CardTitle className="text-2xl font-bold tracking-tighter flex items-center gap-2">
-                         <Sparkles size={24} className="text-blue-400" /> Assistente IA (Opencode / OpenAI)
-                      </CardTitle>
-                   </CardHeader>
-                   <CardContent className="relative z-10 p-8 pt-6 space-y-6">
-                      <div className="space-y-2">
-                         <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Base URL da API</Label>
-                         <Input value={aiBaseUrl} onChange={(e) => setAiBaseUrl(e.target.value)} placeholder="https://opencode.ai/zen/go/v1" className="h-12 rounded-xl bg-slate-50/10 border-none font-bold text-white" />
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                         <div className="space-y-2">
-                            <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Chave de API</Label>
-                            <Input type="password" value={aiApiKey} onChange={(e) => setAiApiKey(e.target.value)} placeholder="sk-..." className="h-12 rounded-xl bg-slate-50/10 border-none font-bold text-white" />
-                         </div>
-                           <div className="space-y-2">
-                              <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Modelo Chat (Texto)</Label>
-                              <Input value={aiModel} onChange={(e) => setAiModel(e.target.value)} placeholder="deepseek-v4-flash" className="h-12 rounded-xl bg-slate-50/10 border-none font-bold text-white" />
-                           </div>
-                           <div className="space-y-2">
-                              <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Modelo de Visão (Raios-X)</Label>
-                              <Input value={aiVisionModel} onChange={(e) => setAiVisionModel(e.target.value)} placeholder="qwen3.7-max" className="h-12 rounded-xl bg-slate-50/10 border-none font-bold text-white" />
-                           </div>
-                      </div>
-                   </CardContent>
-                 </Card>
-
                <Card className="border-none shadow-2xl rounded-2xl bg-blue-600 text-white p-0 flex flex-col justify-between overflow-hidden">
                   <CardHeader className="border-b border-white/10 p-10 pb-6">
                      <CardTitle className="text-xl font-bold tracking-tighter">Teste de Diagnóstico</CardTitle>
@@ -405,6 +375,41 @@ export default function NotificationSettings() {
                   </CardContent>
                </Card>
             </div>
+         </TabsContent>
+
+         <TabsContent value="ai" className="space-y-6 animate-in fade-in duration-500">
+           <div className="max-w-3xl">
+             <Card className="border-none shadow-xl rounded-2xl bg-slate-900 text-white overflow-hidden relative flex flex-col">
+               <div className="absolute -top-4 -right-4 opacity-10">
+                  <Bot size={120} />
+               </div>
+               <CardHeader className="border-b border-white/10 relative z-10 p-8 pb-6">
+                  <CardTitle className="text-2xl font-bold tracking-tighter flex items-center gap-2">
+                     <Sparkles size={24} className="text-blue-400" /> Assistente IA (Opencode / OpenAI)
+                  </CardTitle>
+               </CardHeader>
+               <CardContent className="relative z-10 p-8 pt-6 space-y-6">
+                  <div className="space-y-2">
+                     <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Base URL da API</Label>
+                     <Input value={aiBaseUrl} onChange={(e) => setAiBaseUrl(e.target.value)} placeholder="https://opencode.ai/zen/go/v1" className="h-12 rounded-xl bg-slate-50/10 border-none font-bold text-white" />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Chave de API</Label>
+                        <Input type="password" value={aiApiKey} onChange={(e) => setAiApiKey(e.target.value)} placeholder="sk-..." className="h-12 rounded-xl bg-slate-50/10 border-none font-bold text-white" />
+                     </div>
+                       <div className="space-y-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Modelo Chat (Texto)</Label>
+                          <Input value={aiModel} onChange={(e) => setAiModel(e.target.value)} placeholder="deepseek-v4-flash" className="h-12 rounded-xl bg-slate-50/10 border-none font-bold text-white" />
+                       </div>
+                       <div className="space-y-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Modelo de Visão (Raios-X)</Label>
+                          <Input value={aiVisionModel} onChange={(e) => setAiVisionModel(e.target.value)} placeholder="qwen3.7-max" className="h-12 rounded-xl bg-slate-50/10 border-none font-bold text-white" />
+                       </div>
+                  </div>
+               </CardContent>
+             </Card>
+           </div>
          </TabsContent>
         
          <TabsContent value="templates">
