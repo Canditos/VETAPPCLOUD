@@ -407,6 +407,12 @@ export default function NotificationSettings() {
                           <Input value={aiVisionModel} onChange={(e) => setAiVisionModel(e.target.value)} placeholder="qwen3.7-max" className="h-12 rounded-xl bg-slate-50/10 border-none font-bold text-white" />
                        </div>
                   </div>
+                  <div className="mt-6 pt-6 border-t border-white/10 flex justify-end">
+                    <Button className="rounded-xl gap-2 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white px-6 h-10 shadow-lg shadow-blue-500/20" onClick={() => saveAiMutation.mutate({ aiApiKey, aiBaseUrl, aiModel, aiVisionModel })} disabled={saveAiMutation.isPending}>
+                      {saveAiMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                      Guardar Definições de IA
+                    </Button>
+                  </div>
                </CardContent>
              </Card>
            </div>
