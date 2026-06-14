@@ -59,6 +59,7 @@ export default function NotificationSettings() {
   const [aiApiKey, setAiApiKey] = useState("");
   const [aiBaseUrl, setAiBaseUrl] = useState("https://opencode.ai/zen/go/v1");
   const [aiModel, setAiModel] = useState("deepseek-v4-flash");
+  const [aiVisionModel, setAiVisionModel] = useState("qwen3.7-max");
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ["rut240-settings"],
@@ -111,6 +112,7 @@ export default function NotificationSettings() {
       setAiApiKey(aiSettings.aiApiKey || "");
       setAiBaseUrl(aiSettings.aiBaseUrl || "https://opencode.ai/zen/go/v1");
       setAiModel(aiSettings.aiModel || "deepseek-v4-flash");
+      setAiVisionModel(aiSettings.aiVisionModel || "qwen3.7-max");
     }
   }, [aiSettings]);
 
@@ -146,7 +148,7 @@ export default function NotificationSettings() {
 
   const handleSave = () => {
     saveMutation.mutate({ rut240Ip, rut240Port, rut240User, rut240Password, rut240Enabled });
-    saveAiMutation.mutate({ aiApiKey, aiBaseUrl, aiModel });
+    saveAiMutation.mutate({ aiApiKey, aiBaseUrl, aiModel, aiVisionModel });
   };
 
   const saveAutomationSwitches = async () => {
@@ -358,10 +360,14 @@ export default function NotificationSettings() {
                             <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Chave de API</Label>
                             <Input type="password" value={aiApiKey} onChange={(e) => setAiApiKey(e.target.value)} placeholder="sk-..." className="h-12 rounded-xl bg-slate-50/10 border-none font-bold text-white" />
                          </div>
-                         <div className="space-y-2">
-                            <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Modelo</Label>
-                            <Input value={aiModel} onChange={(e) => setAiModel(e.target.value)} placeholder="deepseek-v4-flash" className="h-12 rounded-xl bg-slate-50/10 border-none font-bold text-white" />
-                         </div>
+                           <div className="space-y-2">
+                              <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Modelo Chat (Texto)</Label>
+                              <Input value={aiModel} onChange={(e) => setAiModel(e.target.value)} placeholder="deepseek-v4-flash" className="h-12 rounded-xl bg-slate-50/10 border-none font-bold text-white" />
+                           </div>
+                           <div className="space-y-2">
+                              <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Modelo de Visão (Raios-X)</Label>
+                              <Input value={aiVisionModel} onChange={(e) => setAiVisionModel(e.target.value)} placeholder="qwen3.7-max" className="h-12 rounded-xl bg-slate-50/10 border-none font-bold text-white" />
+                           </div>
                       </div>
                    </CardContent>
                  </Card>
