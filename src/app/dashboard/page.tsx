@@ -148,45 +148,48 @@ export default function DashboardPage() {
       {/* Main content */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Appointments today */}
-        <div className="lg:col-span-8 space-y-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-                Agenda de Hoje
-              </h2>
-              <p className="text-sm font-bold text-slate-400 uppercase tracking-wider mt-0.5">
-                {isLoading ? "..." : `${data?.todayAppointments?.length ?? 0} marcações`}
-              </p>
-            </div>
-            <Link
-              href="/dashboard/appointments"
-              className="text-blue-600 dark:text-blue-400 font-bold flex items-center gap-1 group text-sm hover:underline"
-            >
-              Ver agenda <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
-
-          <div className="space-y-2.5">
-            {isLoading ? (
-              Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)
-            ) : (data?.todayAppointments?.length ?? 0) > 0 ? (
-              data.todayAppointments.map((appt: any) => (
-                <AppointmentRow key={appt.id} appt={appt} now={now} />
-              ))
-            ) : (
-              <div className="p-12 text-center bg-slate-50 dark:bg-slate-900/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800">
-                <Calendar className="mx-auto text-slate-300 mb-3" size={36} strokeWidth={1.5} />
-                <p className="text-slate-500 font-medium text-sm">Sem marcações para hoje.</p>
-                <Button
-                  onClick={() => router.push("/dashboard/appointments")}
-                  variant="link"
-                  className="text-blue-600 font-bold mt-1 text-sm"
-                >
-                  Abrir agenda →
-                </Button>
+        <div className="lg:col-span-8">
+          <Card className="border-none shadow-sm bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-slate-800 rounded-2xl overflow-hidden h-full flex flex-col">
+            <CardHeader className="px-5 py-4 pb-2 flex flex-row justify-between items-center space-y-0 border-b border-slate-100 dark:border-slate-800/60">
+              <div className="flex items-center gap-3">
+                <CardTitle className="text-sm font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                  <Calendar size={14} strokeWidth={2} /> Agenda de Hoje
+                </CardTitle>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded-full">
+                  {isLoading ? "..." : `${data?.todayAppointments?.length ?? 0} marcações`}
+                </span>
               </div>
-            )}
-          </div>
+              <Link
+                href="/dashboard/appointments"
+                className="text-xs font-bold text-blue-600 uppercase tracking-wider hover:underline"
+              >
+                Ver agenda
+              </Link>
+            </CardHeader>
+            <CardContent className="p-5 flex-1">
+              <div className="space-y-2.5">
+                {isLoading ? (
+                  Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)
+                ) : (data?.todayAppointments?.length ?? 0) > 0 ? (
+                  data.todayAppointments.map((appt: any) => (
+                    <AppointmentRow key={appt.id} appt={appt} now={now} />
+                  ))
+                ) : (
+                  <div className="p-12 text-center bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700">
+                    <Calendar className="mx-auto text-slate-300 dark:text-slate-600 mb-3" size={36} strokeWidth={1.5} />
+                    <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">Sem marcações para hoje.</p>
+                    <Button
+                      onClick={() => router.push("/dashboard/appointments")}
+                      variant="link"
+                      className="text-blue-600 font-bold mt-1 text-sm"
+                    >
+                      Abrir agenda →
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Right sidebar */}
