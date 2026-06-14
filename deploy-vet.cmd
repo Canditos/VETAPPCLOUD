@@ -7,7 +7,7 @@ cd /d C:\Users\marco\VETAPPCLOUD
 
 echo [1/3] A fazer push para GitHub...
 git push origin master
-git push origin main
+git push origin master:main
 if %ERRORLEVEL% neq 0 (
     echo ERRO: Push falhou
     pause
