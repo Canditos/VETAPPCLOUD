@@ -95,7 +95,7 @@ function ClinicalTimeline({ events }: { events: TimelineEvent[] }) {
 
 // ── Clinical Summary Banner Component ─────────────────────────────────────
 function ClinicalSummaryBanner({ patientId }: { patientId: string }) {
-  const { data: summary, isLoading: isLocalLoading } = useClinicalSummary(patientId);
+  const { data: summary, isLoading: isLocalLoading, error, isError } = useClinicalSummary(patientId);
   const [aiEnabled, setAiEnabled] = React.useState(false);
   const { data: aiSummary, isLoading: isAILoading } = useAISummary(patientId, aiEnabled);
 
@@ -103,6 +103,20 @@ function ClinicalSummaryBanner({ patientId }: { patientId: string }) {
     return (
       <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl p-8 shadow-xl shadow-blue-500/10 animate-pulse">
         <div className="h-24 bg-white/10 rounded-2xl" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="relative overflow-hidden bg-red-500/10 border border-red-500/20 rounded-3xl p-8 shadow-sm">
+        <div className="flex items-center gap-3">
+          <AlertCircle size={20} className="text-red-500" />
+          <h3 className="text-lg font-bold text-red-700 dark:text-red-400">Erro ao carregar o Resumo Clínico</h3>
+        </div>
+        <p className="text-red-600/80 dark:text-red-400/80 text-sm mt-2 font-medium">
+          {error instanceof Error ? error.message : "Ocorreu um erro desconhecido na API do resumo."}
+        </p>
       </div>
     );
   }
