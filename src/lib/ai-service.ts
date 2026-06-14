@@ -96,9 +96,14 @@ export function anonymizeClinicalData(data: {
  * Dados são 100% anonimizados antes do envio.
  */
 export async function generateAISummary(
-  data: AnonymizedClinicalData
+  data: AnonymizedClinicalData,
+  aiConfig?: { apiKey?: string; baseUrl?: string; model?: string }
 ): Promise<AISummaryResponse> {
-  if (!GROQ_API_KEY) {
+  const apiKey = aiConfig?.apiKey || GROQ_API_KEY;
+  const baseUrl = aiConfig?.baseUrl || GROQ_URL;
+  const model = aiConfig?.model || "llama-3.1-8b-instant";
+
+  if (!apiKey) {
     // Fallback: retorna mensagem educativa sem chamar API
     return {
       summary: `Resumo clínico gerado localmente (modo offline). ${data.species} ${data.gender.toLowerCase()}, ${data.ageText}, ${data.breed}.`,
@@ -116,14 +121,14 @@ export async function generateAISummary(
   const prompt = buildVeterinaryPrompt(data);
 
   try {
-    const response = await fetch(GROQ_URL, {
+    const response = await fetch(baseUrl, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${GROQ_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llama-3.1-8b-instant", // Gratuito e rápido na Groq
+        model: model, // Modelo configurado
         messages: [
           {
             role: "system",
@@ -254,9 +259,14 @@ function parseAIResponse(content: string, data: AnonymizedClinicalData): AISumma
  */
 export async function enhancePatientDescription(
   draftText: string,
-  data: AnonymizedClinicalData
+  data: AnonymizedClinicalData,
+  aiConfig?: { apiKey?: string; baseUrl?: string; model?: string }
 ): Promise<string> {
-  if (!GROQ_API_KEY) {
+  const apiKey = aiConfig?.apiKey || GROQ_API_KEY;
+  const baseUrl = aiConfig?.baseUrl || GROQ_URL;
+  const model = aiConfig?.model || "llama-3.1-8b-instant";
+
+  if (!apiKey) {
     return draftText || "Nenhuma observação clínica relevante registada.";
   }
 
@@ -290,14 +300,14 @@ Instruções:
 `;
 
   try {
-    const response = await fetch(GROQ_URL, {
+    const response = await fetch(baseUrl, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${GROQ_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
+        model: model,
         messages: [
           {
             role: "system",

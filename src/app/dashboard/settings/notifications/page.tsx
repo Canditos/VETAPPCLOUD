@@ -21,7 +21,9 @@ import {
   Pencil,
   Trash2,
   MessageSquare,
-  BarChart3
+  BarChart3,
+  Sparkles,
+  Bot
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -54,6 +56,10 @@ export default function NotificationSettings() {
   const [smsMarketing, setSmsMarketing] = useState(false);
   const [isSavingAutomation, setIsSavingAutomation] = useState(false);
 
+  const [aiApiKey, setAiApiKey] = useState("");
+  const [aiBaseUrl, setAiBaseUrl] = useState("https://opencode.ai/zen/go/v1");
+  const [aiModel, setAiModel] = useState("deepseek-v4-flash");
+
   const { data: settings, isLoading } = useQuery({
     queryKey: ["rut240-settings"],
     queryFn: async () => {
@@ -68,6 +74,15 @@ export default function NotificationSettings() {
     queryFn: async () => {
       const res = await fetch("/api/settings/automations");
       if (!res.ok) throw new Error("Erro ao carregar automações");
+      return res.json();
+    }
+  });
+
+  const { data: aiSettings, isLoading: loadingAi } = useQuery({
+    queryKey: ["ai-settings"],
+    queryFn: async () => {
+      const res = await fetch("/api/settings/ai");
+      if (!res.ok) throw new Error("Erro ao carregar IA");
       return res.json();
     }
   });
@@ -91,6 +106,14 @@ export default function NotificationSettings() {
     }
   }, [automations]);
 
+  useEffect(() => {
+    if (aiSettings && !aiSettings.error) {
+      setAiApiKey(aiSettings.aiApiKey || "");
+      setAiBaseUrl(aiSettings.aiBaseUrl || "https://opencode.ai/zen/go/v1");
+      setAiModel(aiSettings.aiModel || "deepseek-v4-flash");
+    }
+  }, [aiSettings]);
+
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
       const res = await fetch("/api/settings/rut240", {
@@ -108,8 +131,22 @@ export default function NotificationSettings() {
     onError: () => toast.error("Erro ao guardar configurações"),
   });
 
+  const saveAiMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await fetch("/api/settings/ai", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Erro ao guardar IA");
+      return res.json();
+    },
+    onSuccess: () => toast.success("Configuração de IA guardada!"),
+  });
+
   const handleSave = () => {
     saveMutation.mutate({ rut240Ip, rut240Port, rut240User, rut240Password, rut240Enabled });
+    saveAiMutation.mutate({ aiApiKey, aiBaseUrl, aiModel });
   };
 
   const saveAutomationSwitches = async () => {
@@ -164,7 +201,7 @@ export default function NotificationSettings() {
     }
   };
 
-  if (isLoading || loadingAuto) {
+  if (isLoading || loadingAuto || loadingAi) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 size={32} className="animate-spin text-slate-400" />
@@ -297,11 +334,37 @@ export default function NotificationSettings() {
                         <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Palavra-passe API</Label>
                         <div className="relative">
                            <Input type="password" value={rut240Password} onChange={(e) => setRut240Password(e.target.value)} placeholder="admin01" className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none font-bold pr-10" />
-                           <Lock size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300" />
+                          </div>
+                       </div>
+                    </CardContent>
+                 </Card>
+
+                 <Card className="border-none shadow-xl rounded-2xl bg-slate-900 text-white overflow-hidden relative flex flex-col mt-6">
+                   <div className="absolute -top-4 -right-4 opacity-10">
+                      <Bot size={120} />
+                   </div>
+                   <CardHeader className="border-b border-white/10 relative z-10 p-8 pb-6">
+                      <CardTitle className="text-2xl font-bold tracking-tighter flex items-center gap-2">
+                         <Sparkles size={24} className="text-blue-400" /> Assistente IA (Opencode / OpenAI)
+                      </CardTitle>
+                   </CardHeader>
+                   <CardContent className="relative z-10 p-8 pt-6 space-y-6">
+                      <div className="space-y-2">
+                         <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Base URL da API</Label>
+                         <Input value={aiBaseUrl} onChange={(e) => setAiBaseUrl(e.target.value)} placeholder="https://opencode.ai/zen/go/v1" className="h-12 rounded-xl bg-slate-50/10 border-none font-bold text-white" />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         <div className="space-y-2">
+                            <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Chave de API</Label>
+                            <Input type="password" value={aiApiKey} onChange={(e) => setAiApiKey(e.target.value)} placeholder="sk-..." className="h-12 rounded-xl bg-slate-50/10 border-none font-bold text-white" />
+                         </div>
+                         <div className="space-y-2">
+                            <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Modelo</Label>
+                            <Input value={aiModel} onChange={(e) => setAiModel(e.target.value)} placeholder="deepseek-v4-flash" className="h-12 rounded-xl bg-slate-50/10 border-none font-bold text-white" />
                          </div>
                       </div>
                    </CardContent>
-                </Card>
+                 </Card>
 
                <Card className="border-none shadow-2xl rounded-2xl bg-blue-600 text-white p-0 flex flex-col justify-between overflow-hidden">
                   <CardHeader className="border-b border-white/10 p-10 pb-6">
@@ -358,6 +421,8 @@ function TemplateManager() {
   const [name, setName] = useState("");
   const [key, setKey] = useState("");
   const [message, setMessage] = useState("");
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const fetchTemplates = async () => {
     setLoading(true);
@@ -371,7 +436,7 @@ function TemplateManager() {
   useEffect(() => { fetchTemplates(); }, []);
 
   const openNew = () => {
-    setEditing(null); setName(""); setKey(""); setMessage("");
+    setEditing(null); setName(""); setKey(""); setMessage(""); setAiPrompt("");
     setDialogOpen(true);
   };
 
@@ -402,6 +467,27 @@ function TemplateManager() {
       toast.success("Template removido");
       fetchTemplates();
     } catch { toast.error("Erro ao remover"); }
+  };
+
+  const generateAi = async () => {
+    if (!aiPrompt) return;
+    setIsGenerating(true);
+    try {
+      const res = await fetch("/api/settings/templates/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: aiPrompt })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro ao gerar.");
+      setMessage(data.result);
+      setAiPrompt("");
+      toast.success("Mensagem gerada com sucesso!");
+    } catch(e:any) {
+      toast.error(e.message);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   if (loading) return <div className="text-center py-20 text-slate-400 text-sm"><Loader2 size={24} className="mx-auto animate-spin mb-2" />A carregar...</div>;
@@ -467,6 +553,24 @@ function TemplateManager() {
                 className="w-full min-h-[120px] rounded-xl bg-slate-50 border-0 p-4 text-sm font-medium resize-y focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
               />
               <p className="text-[9px] text-slate-400 font-medium">Use {"{{nome}}"}, {"{{data}}"}, {"{{hora}}"}, {"{{animal}}"} como variáveis</p>
+            </div>
+            
+            <div className="space-y-1.5 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-900/50">
+               <Label className="text-[10px] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
+                 <Sparkles size={12} /> Ajuda da Inteligência Artificial
+               </Label>
+               <div className="flex gap-2">
+                 <Input 
+                   value={aiPrompt} 
+                   onChange={e => setAiPrompt(e.target.value)} 
+                   placeholder="Ex: Avisar vacina da raiva amanhã com 10% desconto" 
+                   className="h-10 rounded-xl bg-white dark:bg-slate-900 border-none font-medium text-xs flex-1" 
+                   onKeyDown={(e) => { if (e.key === 'Enter') generateAi(); }}
+                 />
+                 <Button onClick={generateAi} disabled={!aiPrompt || isGenerating} className="h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 gap-2">
+                   {isGenerating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Gerar
+                 </Button>
+               </div>
             </div>
           </div>
           <DialogFooter className="gap-2">

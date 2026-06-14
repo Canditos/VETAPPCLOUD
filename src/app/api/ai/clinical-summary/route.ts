@@ -112,12 +112,22 @@ export const POST = withAuth(async ({ tenantPrisma, clinicId, req }) => {
   });
 
   // Chamar IA
-  const aiResult = await generateAISummary(anonymized);
+  const automationSettings = await tenantPrisma.automationSettings.findUnique({
+    where: { clinicId },
+  });
+
+  const aiConfig = {
+    apiKey: automationSettings?.aiApiKey || process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY,
+    baseUrl: automationSettings?.aiBaseUrl || "https://api.groq.com/openai/v1/chat/completions",
+    model: automationSettings?.aiModel || "llama-3.1-8b-instant",
+  };
+
+  const aiResult = await generateAISummary(anonymized, aiConfig);
 
   return NextResponse.json({
     ...aiResult,
     privacy: "Dados anonimizados — nenhum PII foi enviado para IA externa",
-    model: "llama-3.1-8b-instant (Groq)",
+    model: aiConfig.model,
     patientName: patient.name, // Re-anonimizado para UI
   });
 });
