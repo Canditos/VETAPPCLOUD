@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { VaccinationForm } from "@/components/forms/VaccinationForm";
 import { VitalSignsForm } from "@/components/forms/VitalSignsForm";
 import { PrescriptionForm } from "@/components/forms/PrescriptionForm";
+import { LabChartsViewer } from "@/components/patients/LabChartsViewer";
 import { format, isPast, differenceInDays, differenceInYears, differenceInMonths } from "date-fns";
 import { pt } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -290,6 +291,12 @@ export default function PatientDetailPage() {
     enabled: !!patientId,
   });
 
+  const { data: labResults = [] } = useQuery({
+    queryKey: ["labResults", patientId],
+    queryFn: async () => { const r = await fetch(`/api/patients/${patientId}/lab`); return r.ok ? r.json() : []; },
+    enabled: !!patientId,
+  });
+
   const { data: history = [] } = useQuery({
     queryKey: ["patient-history", patientId],
     queryFn: async () => { const r = await fetch(`/api/patients/${patientId}/history`); return r.ok ? r.json() : []; },
@@ -523,6 +530,9 @@ export default function PatientDetailPage() {
                   <TabsTrigger value="prescriptions" className="rounded-xl flex-1 px-3 h-full font-bold text-xs uppercase tracking-wider data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm transition-all justify-center">
                     Receituário
                   </TabsTrigger>
+                  <TabsTrigger value="lab" className="rounded-xl flex-1 px-3 h-full font-bold text-xs uppercase tracking-wider data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm transition-all justify-center">
+                    Análises
+                  </TabsTrigger>
                 </TabsList>
               </div>
 
@@ -681,6 +691,18 @@ export default function PatientDetailPage() {
                     ))
                   )}
                 </TabsContent>
+
+                {/* ── LABORATÓRIO (Análises) ── */}
+                <TabsContent value="lab" className="m-0 space-y-4 animate-in fade-in slide-in-from-right-4 duration-500">
+                  <div className="flex justify-between items-center bg-indigo-50/50 dark:bg-indigo-900/10 p-5 rounded-2xl ring-1 ring-indigo-100 dark:ring-indigo-900/30">
+                    <div>
+                      <h4 className="text-lg font-bold text-slate-900 dark:text-white">Análises Laboratoriais</h4>
+                      <p className="text-sm text-slate-500 font-medium">Resultados integrados dos equipamentos locais.</p>
+                    </div>
+                  </div>
+                  <LabChartsViewer results={labResults} />
+                </TabsContent>
+
               </div>
             </Tabs>
           </Card>

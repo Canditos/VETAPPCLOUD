@@ -15,8 +15,8 @@ if %ERRORLEVEL% neq 0 (
 )
 
 echo [2/3] A triggerar deploy no Coolify...
-curl -s -X POST "https://coolify.gatoescondido.com/api/v1/deploy?force=false" ^
-  -H "Authorization: Bearer *** ^
+curl -s -X POST "https://coolify.gatoescondido.com/api/v1/deploy?uuid=qu4vzys28w5qfn252t4a81hl&force=false" ^
+  -H "Authorization: Bearer 2|FTozc01LOjcE2uX0OOsj6FsXi5VJCMbi2k3k7dmVa6afb7f5" ^
   -H "Content-Type: application/json" ^
   -d "{\"type\":\"raw\",\"deployment_uuid\":\"auto\",\"rollback\":false}"
 
