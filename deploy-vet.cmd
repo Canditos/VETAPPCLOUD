@@ -3,7 +3,7 @@ REM === COOLIFY AUTO DEPLOY ===
 REM Uso: deploy-vet.cmd
 REM Faz push da branch master e triggera deploy no Coolify automaticamente
 
-cd /d C:\Users\marco\VETAPPCLOUD
+cd /d D:\FATURAÇÂO\VETAPPCLOUD
 
 echo [1/3] A fazer push para GitHub...
 git push origin master
