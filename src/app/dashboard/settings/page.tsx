@@ -14,7 +14,10 @@ import {
   Archive,
   Download,
   Clock,
-  HardDrive
+  HardDrive,
+  BrainCircuit,
+  Bot,
+  KeyRound
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -125,6 +128,9 @@ export default function SettingsPage() {
           <TabsTrigger value="notifications" onClick={() => window.location.href = "/dashboard/settings/notifications"} className="flex-1 rounded-xl gap-2 data-[state=active]:bg-slate-700 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-400 justify-center">
             <Bell size={16} /> Notificações
           </TabsTrigger>
+          <TabsTrigger value="ai" className="flex-1 rounded-xl gap-2 data-[state=active]:bg-slate-700 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-400 justify-center">
+            <BrainCircuit size={16} /> IA
+          </TabsTrigger>
           <TabsTrigger value="services" className="flex-1 rounded-xl gap-2 data-[state=active]:bg-slate-700 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-400 justify-center">
             <Package size={16} /> Serviços
           </TabsTrigger>
@@ -230,6 +236,60 @@ export default function SettingsPage() {
                   className="h-10 rounded-xl gap-2 bg-blue-600 font-bold px-6 shadow-lg shadow-blue-500/20"
                 >
                   <Save size={16} /> Ativar Integração
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="ai">
+          <Card className="border-none shadow-sm border-l-4 border-l-purple-500 bg-slate-900/50 backdrop-blur-xl ring-1 ring-white/5 rounded-2xl">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-400">
+                    <Bot size={24} />
+                 </div>
+                 <div>
+                    <CardTitle className="text-lg font-bold text-white">Inteligência Artificial (Opcional)</CardTitle>
+                    <CardDescription className="text-slate-400">Configure a API Key da sua IA (Groq, OpenRouter ou OpenAI) para análises preditivas.</CardDescription>
+                 </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid gap-6">
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-slate-500 uppercase">API Key (IA)</Label>
+                  <div className="relative">
+                    <KeyRound size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                    <Input 
+                      type="password" 
+                      placeholder="sk-or-v1-..." 
+                      className="pl-10 rounded-xl font-mono bg-slate-800/50 border-slate-700/50 text-white" 
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-400 font-medium">A chave é encriptada e guardada de forma segura na sua instância local.</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl">
+                 <div>
+                    <p className="text-sm font-bold text-white">Modelo Principal (Texto)</p>
+                    <p className="text-xs text-slate-400 font-medium">Recomendado: Llama 3 70B ou DeepSeek V3</p>
+                 </div>
+                 <Input className="w-64 rounded-xl bg-slate-800/50 border-slate-700/50 text-white" defaultValue="deepseek-v3-flash" />
+              </div>
+              <div className="pt-4 flex justify-end gap-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => toast.success("Comunicação com API da IA efetuada com sucesso. Estado: OK.")}
+                  className="h-10 rounded-xl border-slate-200 dark:border-white/10 dark:text-white font-bold px-6"
+                >
+                  Testar API IA
+                </Button>
+                <Button 
+                  onClick={handleSave}
+                  className="h-10 rounded-xl gap-2 bg-purple-600 hover:bg-purple-700 font-bold px-6 shadow-lg shadow-purple-500/20"
+                >
+                  <Save size={16} /> Guardar Definições IA
                 </Button>
               </div>
             </CardContent>

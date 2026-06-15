@@ -18,9 +18,9 @@ import { NextResponse } from "next/server";
 import { withAuthParams } from "@/lib/api-wrapper";
 import { differenceInDays, differenceInMonths, differenceInYears, isPast } from "date-fns";
 
-export const GET = withAuthParams(async ({ tenantPrisma, clinicId }, { id: patientId }) => {
+export const GET = withAuthParams(async ({ tenantPrisma }, { id: patientId }) => {
   const patient = (await tenantPrisma.patient.findFirst({
-    where: { id: patientId, clinicId },
+    where: { id: patientId },
     include: {
       owner: { select: { name: true, phone: true } },
       vaccinations: { orderBy: { appliedAt: "desc" } },
