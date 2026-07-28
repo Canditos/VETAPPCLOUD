@@ -15,15 +15,23 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/api-wrapper";
-import { testDicomConnection, getDicomConfig } from "@/lib/dicom";
 import { getRxTargets } from "@/lib/gdt";
 import fs from "fs";
 import path from "path";
 
 export const GET = withAuth(async ({ tenantPrisma, clinicId }) => {
-  // Start DICOM store server if not running (lazy init)
-  const { startDicomStoreServer } = await import("@/lib/dicom");
-  startDicomStoreServer();
+  // DICOM — dynamic import, graceful fallback if module not available
+  let testDicomConnection: any = null;
+  let getDicomConfig: any = null;
+  let startDicomStoreServer: any = null;
+  try {
+    const dicom = await import("@/lib/dicom");
+    testDicomConnection = dicom.testDicomConnection;
+    getDicomConfig = dicom.getDicomConfig;
+    startDicomStoreServer = dicom.startDicomStoreServer;
+    startDicomStoreServer();
+  } catch { /* DICOM module not available */ }
+
   // Fetch clinic integrations config
   const clinic = await tenantPrisma.clinic.findUnique({
     where: { id: clinicId },
@@ -72,7 +80,7 @@ export const GET = withAuth(async ({ tenantPrisma, clinicId }) => {
   // Test real DICOM connectivity to Examion RX
   let dicomStatus: "online" | "offline" | "error" = "offline";
   let dicomLabel = "DICOM Offline";
-  if (process.env.DICOM_PACS_HOST || process.env.DICOM_PACS_URL) {
+  if (testDicomConnection && (process.env.DICOM_PACS_HOST || process.env.DICOM_PACS_URL)) {
     try {
       const dicomResult = await testDicomConnection();
       dicomStatus = dicomResult.success ? "online" : "error";

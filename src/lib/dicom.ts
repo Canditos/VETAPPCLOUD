@@ -3,28 +3,29 @@
  * Integrates with Examion X-DRS VET Smart via DICOM DIMSE
  * 
  * Supports auto-discovery of RX config via env vars or runtime config.
+ * 
+ * NOTE: Requires dcmjs-dimse package to be installed.
+ * Install with: npm install dcmjs-dimse
+ * If not installed, all DICOM functions will throw at runtime.
  */
 
-const dcmjsDimse = require('dcmjs-dimse');
-const { Client, Server, Scp, Dataset } = dcmjsDimse;
-const { 
-  CEchoRequest, 
-  CFindRequest, 
-  CStoreRequest,
-  NCreateRequest
-} = dcmjsDimse.requests;
-const { 
-  CEchoResponse, 
-  CFindResponse, 
-  CStoreResponse 
-} = dcmjsDimse.responses;
-const { 
-  Status, 
-  PresentationContextResult,
-  SopClass,
-  StorageClass,
-  TransferSyntax 
-} = dcmjsDimse.constants;
+// Dynamic import — doesn't fail at build time
+let _dcmjsDimse: any = null;
+
+async function getDcmjsDimse() {
+  if (!_dcmjsDimse) {
+    _dcmjsDimse = await import("dcmjs-dimse");
+  }
+  return _dcmjsDimse;
+}
+
+async function getClient() { return (await getDcmjsDimse()).Client; }
+async function getServer() { return (await getDcmjsDimse()).Server; }
+async function getScp() { return (await getDcmjsDimse()).Scp; }
+async function getDataset() { return (await getDcmjsDimse()).Dataset; }
+async function getRequests() { return (await getDcmjsDimse()).requests; }
+async function getResponses() { return (await getDcmjsDimse()).responses; }
+async function getConstants() { return (await getDcmjsDimse()).constants; }
 
 // DICOM Configuration with defaults and fallbacks
 const DEFAULT_HOST = '192.168.0.78';

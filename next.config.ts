@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
   productionBrowserSourceMaps: false,
-  serverExternalPackages: ['twilio', 'bcryptjs', 'pg', '@prisma/client', '@prisma/adapter-pg'],
+  serverExternalPackages: ['twilio', 'bcryptjs', 'pg', '@prisma/client', '@prisma/adapter-pg', 'dcmjs-dimse'],
   experimental: {
     webpackMemoryOptimizations: true,
     workerThreads: false,
