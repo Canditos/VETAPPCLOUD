@@ -6,6 +6,12 @@ const nextConfig: NextConfig = {
   typescript: { ignoreBuildErrors: true },
   productionBrowserSourceMaps: false,
   serverExternalPackages: ['twilio', 'bcryptjs', 'pg', '@prisma/client', '@prisma/adapter-pg', 'dcmjs-dimse'],
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.externals = [...(Array.isArray(config.externals) ? config.externals : []), 'dcmjs-dimse'];
+    }
+    return config;
+  },
   experimental: {
     webpackMemoryOptimizations: true,
     workerThreads: false,
