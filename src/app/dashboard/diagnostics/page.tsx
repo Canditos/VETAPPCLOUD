@@ -12,6 +12,7 @@ import {
   Eye,
   TrendingUp,
   AlertTriangle,
+  Radio,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -239,6 +240,19 @@ export default function DiagnosticsPage() {
                      : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-none font-medium"
                  }>
                    {health?.dicom?.label || "Offline"}
+                 </Badge>
+               </div>
+               <div className="flex justify-between items-center bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-100 dark:border-white/5">
+                 <div className="flex items-center gap-3">
+                   <div className={`w-2 h-2 rounded-full animate-pulse ${health?.gdt?.status === "online" ? "bg-emerald-500" : "bg-amber-500"}`} />
+                   <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">GDT Examion RX</p>
+                 </div>
+                 <Badge className={
+                   health?.gdt?.status === "online"
+                     ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-none font-medium"
+                     : "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-none font-medium"
+                 }>
+                   {health?.gdt?.label || "Offline"}
                  </Badge>
                </div>
              </div>

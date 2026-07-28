@@ -1,11 +1,12 @@
 /**
  * API ROUTE: /api/diagnostics/request
  *
- * Responsabilidade: Criar um pedido de exame diagnóstico (LAB ou IMAGING)
- * e guardá-lo na base de dados. Simula o envio para integradores HL7/DICOM.
+ * Responsabilidade: Criar um pedido de exame diagnostico (LAB ou IMAGING).
+ * Para IMAGING, regista o estudo e devolve os dados para gerar o GDT
+ * via /api/gdt/fazer-rx (download do ficheiro mgpcs.gdt para o Examion).
  *
  * Tenant: Sim
- * Auth: Requer sessão
+ * Auth: Requer sessao
  */
 
 export const dynamic = "force-dynamic";
@@ -28,20 +29,19 @@ export const POST = withAuth(async ({ tenantPrisma, clinicId, userId, req }) => 
 
   if (!validation.success) {
     return NextResponse.json(
-      { error: "Dados inválidos", details: validation.error.format() },
+      { error: "Dados invalidos", details: validation.error.format() },
       { status: 400 }
     );
   }
 
   const { patientId, consultationId, type, source, testName } = validation.data;
 
-  // Verify patient belongs to clinic
   const patient = await tenantPrisma.patient.findFirst({
     where: { id: patientId, clinicId },
   });
 
   if (!patient) {
-    return NextResponse.json({ error: "Paciente não encontrado" }, { status: 404 });
+    return NextResponse.json({ error: "Paciente nao encontrado" }, { status: 404 });
   }
 
   if (type === "LAB") {
@@ -57,23 +57,24 @@ export const POST = withAuth(async ({ tenantPrisma, clinicId, userId, req }) => 
 
     return NextResponse.json({
       success: true,
-      message: `Pedido de ${testName} registado em ${source}. Resultado pendente.`,
+      message: `Pedido de ${testName} registado em ${source}.`,
       id: labResult.id,
     });
-  } else {
-    const imagingStudy = await tenantPrisma.imagingStudy.create({
-      data: {
-        clinicId,
-        patientId,
-        dicomUrl: "pending",
-        metadataJson: { testName, requestedBy: userId, requestedAt: new Date().toISOString() },
-      },
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: `Pedido de ${testName} registado em ${source}. Estudo pendente.`,
-      id: imagingStudy.id,
-    });
   }
+
+  // IMAGING: register study in database
+  const imagingStudy = await tenantPrisma.imagingStudy.create({
+    data: {
+      clinicId,
+      patientId,
+      dicomUrl: "pending",
+      metadataJson: { testName, requestedBy: userId, requestedAt: new Date().toISOString() },
+    },
+  });
+
+  return NextResponse.json({
+    success: true,
+    message: `Pedido de ${testName} registado. Use /api/gdt/fazer-rx para gerar o ficheiro GDT.`,
+    id: imagingStudy.id,
+  });
 });

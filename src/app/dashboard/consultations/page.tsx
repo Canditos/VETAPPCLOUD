@@ -89,16 +89,61 @@ function ConsultationContent() {
   const { data: health } = useIntegrationHealth();
 
   const handleRequestExam = async (type: "LAB" | "IMAGING", source: string, testName: string) => {
-    toast.promise(
-      fetch("/api/diagnostics/request", {
-        method: "POST",
-        body: JSON.stringify({ patientId, type, source, testName }),
-        headers: { "Content-Type": "application/json" },
-      }).then(res => res.json()),
-      {
-        loading: `A comunicar com ${source}...`,
+    const isRxExam = source === "Examion RX" && testName !== "Ecografia";
+
+    const registerPromise = fetch("/api/diagnostics/request", {
+      method: "POST",
+      body: JSON.stringify({ patientId, type, source, testName }),
+      headers: { "Content-Type": "application/json" },
+    }).then(async (res) => {
+      if (!res.ok) throw new Error((await res.json()).error || "Erro ao registar exame");
+      return res.json();
+    });
+
+    if (!isRxExam) {
+      toast.promise(registerPromise, {
+        loading: `A registar ${testName}...`,
         success: (data) => data.message,
-        error: `Erro ao solicitar exame em ${source}.`,
+        error: "Erro ao registar exame.",
+      });
+      return;
+    }
+
+    // RX exam: register + push GDT in one flow
+    toast.promise(
+      registerPromise.then(async (regResult) => {
+        const gdtRes = await fetch("/api/gdt/fazer-rx", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ patientId }),
+        });
+        if (!gdtRes.ok) throw new Error("Erro ao gerar GDT");
+        const gdtData = await gdtRes.json();
+
+        if (gdtData.written) {
+          return `RX ${testName} enviado para ${gdtData.target}.`;
+        }
+        // Fallback: trigger client-side download with base64 content
+        if (gdtData.gdtContent) {
+          const binary = atob(gdtData.gdtContent);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+          const blob = new Blob([bytes], { type: "application/octet-stream" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "mgpcs.gdt";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+        return `RX ${testName} registado. Nenhum PC RX online — mgpcs.gdt descarregado.`;
+      }),
+      {
+        loading: `A enviar ${testName} para o RX...`,
+        success: (msg) => msg,
+        error: "Erro ao comunicar com o RX.",
       }
     );
   };

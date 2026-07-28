@@ -2,7 +2,7 @@
  * API ROUTE: /api/health/integrations
  *
  * Responsabilidade: Verificar estado de conectividade de todas as
- * integrações de terceiros: Vendus, Jasmin, HL7, DICOM, e stock sync.
+   * integrações de terceiros: Vendus, Jasmin, HL7, DICOM (Examion RX), e stock sync.
  *
  * Cache: Nenhum (cada request faz ping real). Considerar Redis
  *        se o volume de requests aumentar.
@@ -15,8 +15,15 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/api-wrapper";
+import { testDicomConnection, getDicomConfig } from "@/lib/dicom";
+import { getRxTargets } from "@/lib/gdt";
+import fs from "fs";
+import path from "path";
 
 export const GET = withAuth(async ({ tenantPrisma, clinicId }) => {
+  // Start DICOM store server if not running (lazy init)
+  const { startDicomStoreServer } = await import("@/lib/dicom");
+  startDicomStoreServer();
   // Fetch clinic integrations config
   const clinic = await tenantPrisma.clinic.findUnique({
     where: { id: clinicId },
@@ -61,7 +68,41 @@ export const GET = withAuth(async ({ tenantPrisma, clinicId }) => {
 
   // HL7 / DICOM status
   const hl7Status = process.env.HL7_BRIDGE_URL ? "online" : "offline";
-  const dicomStatus = process.env.DICOM_PACS_URL ? "online" : "offline";
+  
+  // Test real DICOM connectivity to Examion RX
+  let dicomStatus: "online" | "offline" | "error" = "offline";
+  let dicomLabel = "DICOM Offline";
+  if (process.env.DICOM_PACS_HOST || process.env.DICOM_PACS_URL) {
+    try {
+      const dicomResult = await testDicomConnection();
+      dicomStatus = dicomResult.success ? "online" : "error";
+      dicomLabel = dicomResult.success 
+        ? `DICOM Ligado (${getDicomConfig().host}:${dicomResult.port})` 
+        : `DICOM: ${dicomResult.message}`;
+    } catch {
+      dicomStatus = "error";
+      dicomLabel = "DICOM Erro de Rede";
+    }
+  }
+
+  // GDT status — check RX targets
+  const gdtTargets = getRxTargets();
+  const gdtOnline: string[] = [];
+  for (const t of gdtTargets) {
+    const p = path.join(t.mountPath, t.subdir);
+    try {
+      fs.accessSync(p, fs.constants.W_OK);
+      gdtOnline.push(t.label);
+    } catch { /* target offline */ }
+  }
+  const gdtStatus = gdtOnline.length > 0 ? "online"
+    : gdtTargets.length > 0 ? "offline"
+    : "not_configured";
+  const gdtLabel = gdtOnline.length > 0
+    ? `GDT RX Online (${gdtOnline.length})`
+    : gdtTargets.length > 0
+    ? "GDT RX Offline"
+    : "GDT RX Não Configurado";
 
   return NextResponse.json({
     vendus: {
@@ -82,7 +123,12 @@ export const GET = withAuth(async ({ tenantPrisma, clinicId }) => {
     },
     dicom: {
       status: dicomStatus,
-      label: dicomStatus === "online" ? "DICOM Ligado" : "DICOM Offline",
+      label: dicomLabel,
+    },
+    gdt: {
+      status: gdtStatus,
+      label: gdtLabel,
+      targets: gdtOnline,
     },
     checkedAt: new Date().toISOString(),
   });

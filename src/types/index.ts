@@ -365,6 +365,11 @@ export interface IntegrationHealth {
     status: "online" | "offline";
     label: string;
   };
+  gdt: {
+    status: "online" | "offline" | "not_configured";
+    label: string;
+    targets?: string[];
+  };
   checkedAt: string;
 }
 

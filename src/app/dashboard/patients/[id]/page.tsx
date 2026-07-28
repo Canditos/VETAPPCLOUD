@@ -7,7 +7,8 @@ import {
   ArrowLeft, PawPrint, User, Phone, Mail, Calendar, Activity,
   Stethoscope, Syringe, AlertCircle, Dog, Cat, FileText, Heart,
   Thermometer, Weight, Plus, Pill, Shield, TrendingUp, Info, Clock, 
-  Sparkles, ChevronRight, Microscope, Edit3
+  Sparkles, ChevronRight, Microscope, Edit3, Radio, ScanLine, Loader2,
+  CheckCircle2, WifiOff
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,51 @@ import { cn } from "@/lib/utils";
 import { useClinicalSummary } from "@/hooks/useClinicalSummary";
 import { useAISummary } from "@/hooks/useAISummary";
 import { PremiumCard } from "@/components/PremiumCard";
+import { isFeatureEnabled } from "@/lib/features";
+import { toast } from "sonner";
 import type { Vaccination, VitalSign, Prescription } from "@/types";
+
+// ── GDT send helper ───────────────────────────────────────────────────────
+
+async function sendGdt(endpoint: string, patientId: string): Promise<{
+  success: boolean;
+  written: boolean;
+  target?: string;
+  gdtContent?: string;
+  message: string;
+}> {
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ patientId }),
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({ error: "Erro ao gerar GDT" }));
+    throw new Error(e.error || "Erro ao gerar GDT");
+  }
+  return res.json();
+}
+
+function triggerDownload(base64: string, filename = "mgpcs.gdt") {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  const blob = new Blob([bytes], { type: "application/octet-stream" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+type GdtAction = "fazer-rx" | "ver-rx";
+const RX_LOADING_MAP: Record<GdtAction, string> = {
+  "fazer-rx": "A enviar pedido para o RX...",
+  "ver-rx": "A consultar arquivo RX...",
+};
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 const fmt = (d: string | Date) => format(new Date(d), "dd MMM yyyy", { locale: pt });
@@ -261,6 +306,30 @@ export default function PatientDetailPage() {
   const queryClient = useQueryClient();
   const patientId = params?.id as string;
   const [dialog, setDialog] = useState<"vaccine" | "vitals" | "prescription" | "edit" | null>(null);
+  const [rxLoading, setRxLoading] = useState<GdtAction | null>(null);
+
+  async function handleGdtSend(endpoint: string, action: GdtAction) {
+    setRxLoading(action);
+    try {
+      const result = await sendGdt(endpoint, patientId);
+      if (result.written) {
+        toast.success(result.message, {
+          icon: <CheckCircle2 size={18} className="text-emerald-500" />,
+          duration: 4000,
+        });
+      } else {
+        toast.warning(result.message, {
+          icon: <WifiOff size={18} className="text-amber-500" />,
+          duration: 6000,
+        });
+        if (result.gdtContent) triggerDownload(result.gdtContent);
+      }
+    } catch (err) {
+      toast.error(`Erro: ${err instanceof Error ? err.message : "Falha ao comunicar com RX"}`);
+    } finally {
+      setRxLoading(null);
+    }
+  }
 
   const [editForm, setEditForm] = useState({
     name: "",
@@ -408,6 +477,31 @@ export default function PatientDetailPage() {
           >
             <Plus size={18} strokeWidth={2.5} /> Nova Consulta
           </Button>
+          {isFeatureEnabled("gdtIntegration") && (
+            <>
+              <Button
+                onClick={() => handleGdtSend("/api/gdt/fazer-rx", "fazer-rx")}
+                disabled={rxLoading !== null}
+                size="lg"
+                title="Envia ficha do paciente para a worklist do RX Examion"
+                className="rounded-xl h-12 px-6 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-bold shadow-lg shadow-emerald-500/20 gap-2 transition-all active:scale-95"
+              >
+                {rxLoading === "fazer-rx" ? <Loader2 size={18} className="animate-spin" /> : <Radio size={18} />}
+                Fazer RX
+              </Button>
+              <Button
+                onClick={() => handleGdtSend("/api/gdt/ver-rx", "ver-rx")}
+                disabled={rxLoading !== null}
+                variant="outline"
+                size="lg"
+                title="Abre o visualizador de imagens arquivadas no RX Examion"
+                className="rounded-xl h-12 px-6 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-50 dark:hover:bg-slate-800/80 disabled:opacity-60 shadow-sm gap-2 transition-all active:scale-95"
+              >
+                {rxLoading === "ver-rx" ? <Loader2 size={18} className="animate-spin" /> : <ScanLine size={18} />}
+                Ver RX
+              </Button>
+            </>
+          )}
         </div>
       </div>
 

@@ -29,6 +29,9 @@ export const FEATURES = {
   /** Integração DICOM com PACS */
   dicomIntegration: false, // requer DICOM_PACS_URL
 
+  /** Integracao GDT com Examion RX (download de ficheiro mgpcs.gdt) */
+  gdtIntegration: true,
+
   /** Notificações SMS via Twilio/SMS gateway */
   smsNotifications: true,
 
