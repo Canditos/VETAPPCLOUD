@@ -79,7 +79,7 @@ export const PATCH = withAuthParams(async ({ req, tenantPrisma }, { id }) => {
     }
 
     const body = await req.json();
-    const { name, email, phone, vatNumber, address, notes } = body;
+    const { name, email, phone, vatNumber, address, notes, rxClientId } = body;
 
     const customer = await tenantPrisma.owner.update({
       where: { id },
@@ -90,6 +90,7 @@ export const PATCH = withAuthParams(async ({ req, tenantPrisma }, { id }) => {
         ...(vatNumber !== undefined && { vatNumber }),
         ...(address !== undefined && { address }),
         ...(notes !== undefined && { notes }),
+        ...(rxClientId !== undefined && { rxClientId }),
       },
     });
 

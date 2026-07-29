@@ -58,7 +58,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState({ name: "", email: "", phone: "", vatNumber: "", address: "", notes: "" });
+  const [editForm, setEditForm] = useState({ name: "", email: "", phone: "", vatNumber: "", address: "", notes: "", rxClientId: "" });
   
   // Portal Modal state
   const [isPortalModalOpen, setIsPortalModalOpen] = useState(false);
@@ -134,6 +134,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
         vatNumber: customer.vatNumber || "",
         address: customer.address || "",
         notes: customer.notes || "",
+        rxClientId: customer.rxClientId || "",
       });
       setIsEditing(true);
     }
@@ -362,6 +363,15 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                   <div>
                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">NIF</p>
                     <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 mt-0.5">{customer.vatNumber}</p>
+                  </div>
+                </div>
+              )}
+              {customer.rxClientId && (
+                <div className="flex items-start gap-3">
+                  <Smartphone size={14} className="text-slate-400 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">ID RX Examion</p>
+                    <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 mt-0.5">{customer.rxClientId}</p>
                   </div>
                 </div>
               )}
@@ -897,6 +907,10 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                 onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
                 className="w-full h-20 rounded-xl bg-slate-50 dark:bg-white/5 border-none ring-1 ring-slate-100 dark:ring-white/10 p-4 font-medium text-sm resize-none outline-none"
               />
+            </div>
+            <div className="grid gap-2">
+              <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">ID RX Examion</Label>
+              <Input value={editForm.rxClientId} onChange={(e) => setEditForm({ ...editForm, rxClientId: e.target.value })} placeholder="Ex: RX-00123" className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none ring-1 ring-slate-100 dark:ring-white/10 font-mono font-bold" />
             </div>
           </div>
           <DialogFooter className="gap-2">

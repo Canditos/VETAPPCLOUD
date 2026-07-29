@@ -126,6 +126,7 @@ model Owner {
   notes         String?
   passwordHash  String?
   clinicId      String
+  rxClientId    String?        @unique @db.VarChar(20)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   budgets       Budget[]

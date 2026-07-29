@@ -60,7 +60,7 @@ export const POST = withAuth(async ({ tenantPrisma, clinicId, req }) => {
     },
     owner: patient.owner
       ? {
-          ownerId: patient.owner.id,
+          ownerId: patient.owner.rxClientId || patient.owner.id,
           lastName: patient.owner.name?.split(" ").pop() || patient.owner.name,
           firstName: patient.owner.name?.split(" ").slice(0, -1).join(" ") || undefined,
           phone: patient.owner.phone || undefined,
