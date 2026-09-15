@@ -578,7 +578,7 @@ function CalendarContent() {
 
           <div className="flex items-center gap-4">
             {/* Vet filters */}
-            <div className="flex gap-2 border-r border-slate-200/60 dark:border-white/10 pr-6 overflow-x-auto max-w-[500px] no-scrollbar">
+            <div className="flex flex-wrap gap-2 border-r border-slate-200/60 dark:border-white/10 pr-6">
               <button
                 onClick={() => setSelectedVet("all")}
                 className={cn("px-5 h-10 rounded-2xl font-bold text-[10px] tracking-widest transition-all shadow-sm",
