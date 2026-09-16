@@ -15,6 +15,8 @@ import {
   Weight,
   Syringe,
   ShieldAlert,
+  ChevronDown,
+  Target,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,20 +26,30 @@ import { cn } from "@/lib/utils";
 
 type Target = "INTERNAL" | "EXTERNAL" | "BOTH";
 
+interface DoseBand {
+  minKg: number;
+  maxKg: number;
+  dose: string;
+  presentation?: string;
+}
+
 interface GuideRef {
   key: string;
   name: string;
   activeIngredient: string;
   target: Target;
   species: string[];
-  weightMinKg: number;
-  weightMaxKg: number;
   minAgeWeeks?: number;
   route: string;
-  doseText: string;
+  howToApply: string;
   protectionMonths: number;
   frequencyLabel: string;
   warnings?: string;
+  bands: DoseBand[];
+  weightMinKg: number;
+  weightMaxKg: number;
+  applicableBand: DoseBand | null;
+  applicableBandIndex: number;
   weightMatch: boolean;
   ageWarning: boolean;
 }
@@ -82,6 +94,8 @@ const TARGET_CLASS: Record<Target, string> = {
 };
 
 const eur = (v: number) => `${v.toFixed(2).replace(".", ",")} €`;
+const kg = (v: number) => `${v.toString().replace(".", ",")}`;
+const bandLabel = (b: DoseBand) => `${kg(b.minKg)}–${kg(b.maxKg)} kg`;
 
 function PatientPicker({ onPick }: { onPick: (p: { id: string }) => void }) {
   const [term, setTerm] = useState("");
@@ -145,6 +159,242 @@ function PatientPicker({ onPick }: { onPick: (p: { id: string }) => void }) {
   );
 }
 
+function BandTable({ refData }: { refData: GuideRef }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-3 rounded-2xl bg-slate-50 dark:bg-white/5 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-3 py-2.5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest hover:bg-slate-100/60 dark:hover:bg-white/5 transition-colors"
+      >
+        <span>Tabela por peso ({refData.bands.length})</span>
+        <ChevronDown size={14} className={cn("transition-transform", open && "rotate-180")} />
+      </button>
+      {open && (
+        <div className="px-3 pb-3">
+          <div className="rounded-xl overflow-hidden ring-1 ring-slate-100 dark:ring-white/5">
+            <div className="grid grid-cols-[1fr_1.2fr_1fr] bg-slate-100/70 dark:bg-white/5 px-3 py-2">
+              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                Peso
+              </span>
+              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                Dose
+              </span>
+              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                Apresentação
+              </span>
+            </div>
+            {refData.bands.map((b, i) => {
+              const current = i === refData.applicableBandIndex;
+              return (
+                <div
+                  key={i}
+                  className={cn(
+                    "grid grid-cols-[1fr_1.2fr_1fr] px-3 py-2 items-center text-[12px] border-t border-slate-100 dark:border-white/5",
+                    current
+                      ? "bg-blue-50/70 dark:bg-blue-500/10"
+                      : "bg-white dark:bg-transparent"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "font-bold",
+                      current
+                        ? "text-blue-700 dark:text-blue-300"
+                        : "text-slate-600 dark:text-slate-300"
+                    )}
+                  >
+                    {bandLabel(b)}
+                    {current && (
+                      <span className="ml-1.5 text-[8px] font-black uppercase text-blue-500">
+                        este
+                      </span>
+                    )}
+                  </span>
+                  <span className="font-black text-slate-900 dark:text-white">{b.dose}</span>
+                  <span className="text-slate-400 font-semibold text-[11px]">
+                    {b.presentation ?? "—"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ResultCard({ result, weightKg }: { result: GuideResult; weightKg: number | null }) {
+  const { ref, stock } = result;
+
+  const doseState: "ok" | "out" | "unknown" =
+    ref.applicableBand != null ? "ok" : weightKg == null ? "unknown" : "out";
+
+  return (
+    <Card
+      className={cn(
+        "border-none shadow-sm rounded-3xl p-5 bg-white dark:bg-slate-900/60 ring-1 transition-all hover:shadow-md",
+        ref.weightMatch ? "ring-slate-200/60 dark:ring-slate-800" : "ring-amber-200 dark:ring-amber-900/40"
+      )}
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <div
+            className={cn(
+              "w-11 h-11 rounded-2xl flex items-center justify-center shrink-0",
+              TARGET_CLASS[ref.target]
+            )}
+          >
+            {ref.target === "INTERNAL" ? <Bug size={20} /> : <Syringe size={20} />}
+          </div>
+          <div>
+            <h4 className="text-base font-black text-slate-900 dark:text-white leading-tight">
+              {ref.name}
+            </h4>
+            <p className="text-[11px] text-slate-400 font-semibold mt-0.5">{ref.activeIngredient}</p>
+          </div>
+        </div>
+        <Badge
+          className={cn(
+            "border-none font-black text-[8px] uppercase tracking-widest px-2.5 py-1 rounded-lg shrink-0",
+            TARGET_CLASS[ref.target]
+          )}
+        >
+          {TARGET_LABEL[ref.target]}
+        </Badge>
+      </div>
+
+      {/* Dose for this animal */}
+      <div
+        className={cn(
+          "mt-4 rounded-2xl p-4",
+          doseState === "ok" && "bg-blue-600 text-white shadow-lg shadow-blue-500/20",
+          doseState === "out" && "bg-amber-50 dark:bg-amber-500/10",
+          doseState === "unknown" && "bg-slate-50 dark:bg-white/5"
+        )}
+      >
+        <p
+          className={cn(
+            "text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5",
+            doseState === "ok" ? "text-blue-100" : "text-slate-400"
+          )}
+        >
+          <Target size={11} />
+          {doseState === "ok"
+            ? `Dose para este animal (${kg(weightKg!)} kg)`
+            : doseState === "out"
+              ? "Peso fora das apresentações"
+              : "Dose por peso"}
+        </p>
+        {doseState === "ok" ? (
+          <p className="text-lg font-black leading-tight mt-1">
+            {ref.applicableBand!.dose}
+            {ref.applicableBand!.presentation ? (
+              <span className="text-blue-100 font-bold text-sm"> — {ref.applicableBand!.presentation}</span>
+            ) : null}
+          </p>
+        ) : doseState === "out" ? (
+          <p className="text-[12px] font-bold text-amber-700 dark:text-amber-400 mt-1">
+            {kg(weightKg!)} kg não cai em nenhuma faixa ({kg(ref.weightMinKg)}–
+            {kg(ref.weightMaxKg)} kg). Combinar apresentações ou confirmar.
+          </p>
+        ) : (
+          <p className="text-[12px] font-bold text-slate-500 dark:text-slate-400 mt-1">
+            Faixas: {kg(ref.weightMinKg)}–{kg(ref.weightMaxKg)} kg — indica o peso para calcular.
+          </p>
+        )}
+      </div>
+
+      {/* How to apply */}
+      <div className="mt-3 rounded-2xl bg-slate-50 dark:bg-white/5 p-3">
+        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
+          Como aplicar
+        </p>
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          <span className="text-[10px] font-black uppercase tracking-wider bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md ring-1 ring-slate-200/60 dark:ring-white/10">
+            {ref.route}
+          </span>
+          <span className="text-[10px] font-black uppercase tracking-wider bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md ring-1 ring-slate-200/60 dark:ring-white/10">
+            {ref.frequencyLabel}
+          </span>
+        </div>
+        <p className="text-[12px] font-semibold text-slate-700 dark:text-slate-200 leading-snug">
+          {ref.howToApply}
+        </p>
+      </div>
+
+      {/* Band table (collapsible) */}
+      <BandTable refData={ref} />
+
+      {/* Notes */}
+      {ref.warnings && (
+        <div className="mt-3 flex items-start gap-2 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+          <AlertTriangle size={13} className="mt-0.5 shrink-0 text-amber-500" />
+          <span>{ref.warnings}</span>
+        </div>
+      )}
+      {ref.ageWarning && (
+        <div className="mt-2 flex items-start gap-2 text-[11px] font-bold text-rose-600 dark:text-rose-400">
+          <AlertTriangle size={13} className="mt-0.5 shrink-0" />
+          Animal abaixo da idade mínima recomendada ({ref.minAgeWeeks} semanas).
+        </div>
+      )}
+
+      {/* Footer: stock & price */}
+      <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+        {stock ? (
+          <div className="flex items-center gap-3">
+            <Badge
+              className={cn(
+                "border-none font-black text-[9px] uppercase tracking-widest px-2.5 py-1 rounded-lg gap-1",
+                stock.inStock
+                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                  : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
+              )}
+            >
+              {stock.inStock ? (
+                <>
+                  <PackageCheck size={11} /> Stock {stock.stockQuantity}
+                </>
+              ) : (
+                <>
+                  <PackageX size={11} /> Sem stock
+                </>
+              )}
+            </Badge>
+            <div>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                Preço do artigo
+              </p>
+              <p className="text-sm font-black text-slate-900 dark:text-white">
+                {stock.price != null ? eur(stock.price) : "—"}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <p className="text-[11px] font-bold text-slate-400 flex items-center gap-1.5">
+            <Pill size={13} /> Não consta no inventário
+          </p>
+        )}
+
+        {stock?.pricePerMonth != null && (
+          <div className="text-right">
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+              Por mês
+            </p>
+            <p className="text-lg font-black text-blue-600 dark:text-blue-400">
+              {eur(stock.pricePerMonth)}
+            </p>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}
+
 export function DewormingGuide({ patientId, compact = false }: DewormingGuideProps) {
   const [species, setSpecies] = useState<"Cão" | "Gato" | "">("");
   const [weight, setWeight] = useState("");
@@ -180,9 +430,9 @@ export function DewormingGuide({ patientId, compact = false }: DewormingGuidePro
     return r;
   }, [data, target, onlyStock]);
 
-  const ctxLabel = data?.query?.species
-    ? `${data.query.species}${data.query.weightKg != null ? ` · ${data.query.weightKg} kg` : ""}`
-    : null;
+  const ctxSpecies = data?.query?.species ?? null;
+  const ctxWeight = data?.query?.weightKg ?? null;
+  const ctxLabel = ctxSpecies ? `${ctxSpecies}${ctxWeight != null ? ` · ${kg(ctxWeight)} kg` : ""}` : null;
 
   return (
     <div className={cn("space-y-6", compact && "space-y-4")}>
@@ -267,9 +517,7 @@ export function DewormingGuide({ patientId, compact = false }: DewormingGuidePro
               onClick={() => setOnlyStock((v) => !v)}
               className={cn(
                 "h-9 px-3 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all",
-                onlyStock
-                  ? "bg-emerald-600 text-white"
-                  : "bg-slate-100 dark:bg-white/5 text-slate-400"
+                onlyStock ? "bg-emerald-600 text-white" : "bg-slate-100 dark:bg-white/5 text-slate-400"
               )}
             >
               Só com stock
@@ -281,7 +529,11 @@ export function DewormingGuide({ patientId, compact = false }: DewormingGuidePro
           <div className="mt-4 flex items-center gap-2 text-[11px] font-bold text-slate-500 dark:text-slate-400">
             <Info size={13} className="text-blue-500" />
             A mostrar opções para <span className="text-slate-900 dark:text-white">{ctxLabel}</span>
-            {activePatient && <Badge variant="ghost" className="text-[9px]">paciente</Badge>}
+            {activePatient && (
+              <Badge variant="ghost" className="text-[9px]">
+                paciente
+              </Badge>
+            )}
           </div>
         )}
       </Card>
@@ -302,7 +554,7 @@ export function DewormingGuide({ patientId, compact = false }: DewormingGuidePro
       {hasQuery && isFetching && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="h-40 rounded-3xl bg-slate-100 dark:bg-slate-800/60 animate-pulse" />
+            <div key={i} className="h-52 rounded-3xl bg-slate-100 dark:bg-slate-800/60 animate-pulse" />
           ))}
         </div>
       )}
@@ -319,141 +571,8 @@ export function DewormingGuide({ patientId, compact = false }: DewormingGuidePro
       {/* Results */}
       {hasQuery && !isFetching && results.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {results.map(({ ref, stock }) => (
-            <Card
-              key={ref.key}
-              className={cn(
-                "border-none shadow-sm rounded-3xl p-5 bg-white dark:bg-slate-900/60 ring-1 transition-all hover:shadow-md",
-                ref.weightMatch
-                  ? "ring-slate-200/60 dark:ring-slate-800"
-                  : "ring-amber-200 dark:ring-amber-900/40"
-              )}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <div
-                    className={cn(
-                      "w-11 h-11 rounded-2xl flex items-center justify-center shrink-0",
-                      TARGET_CLASS[ref.target]
-                    )}
-                  >
-                    {ref.target === "INTERNAL" ? <Bug size={20} /> : <Syringe size={20} />}
-                  </div>
-                  <div>
-                    <h4 className="text-base font-black text-slate-900 dark:text-white leading-tight">
-                      {ref.name}
-                    </h4>
-                    <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
-                      {ref.activeIngredient}
-                    </p>
-                  </div>
-                </div>
-                <Badge
-                  className={cn(
-                    "border-none font-black text-[8px] uppercase tracking-widest px-2.5 py-1 rounded-lg shrink-0",
-                    TARGET_CLASS[ref.target]
-                  )}
-                >
-                  {TARGET_LABEL[ref.target]}
-                </Badge>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 mt-4">
-                <div className="rounded-2xl bg-slate-50 dark:bg-white/5 p-3">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                    Via
-                  </p>
-                  <p className="text-[13px] font-bold text-slate-900 dark:text-white">{ref.route}</p>
-                </div>
-                <div className="rounded-2xl bg-slate-50 dark:bg-white/5 p-3">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                    Intervalo
-                  </p>
-                  <p className="text-[13px] font-bold text-slate-900 dark:text-white">
-                    {ref.frequencyLabel}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-3 rounded-2xl bg-slate-50 dark:bg-white/5 p-3">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                  Como aplicar
-                </p>
-                <p className="text-[12px] font-semibold text-slate-700 dark:text-slate-200 leading-snug">
-                  {ref.doseText}
-                </p>
-                <p className="text-[10px] text-slate-400 font-semibold mt-1">
-                  Faixa de peso: {ref.weightMinKg}–{ref.weightMaxKg} kg
-                  {ref.minAgeWeeks ? ` · idade mín. ${ref.minAgeWeeks} semanas` : ""}
-                </p>
-              </div>
-
-              {!ref.weightMatch && (
-                <div className="mt-3 flex items-start gap-2 text-[11px] font-bold text-amber-600 dark:text-amber-400">
-                  <AlertTriangle size={13} className="mt-0.5 shrink-0" />
-                  Fora da faixa de peso indicada — ajustar apresentação.
-                </div>
-              )}
-              {ref.ageWarning && (
-                <div className="mt-3 flex items-start gap-2 text-[11px] font-bold text-rose-600 dark:text-rose-400">
-                  <AlertTriangle size={13} className="mt-0.5 shrink-0" />
-                  Animal abaixo da idade mínima recomendada.
-                </div>
-              )}
-              {ref.warnings && (
-                <p className="mt-3 text-[11px] text-slate-400 font-medium leading-snug">
-                  ⚠ {ref.warnings}
-                </p>
-              )}
-
-              <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
-                {stock ? (
-                  <div className="flex items-center gap-3">
-                    <Badge
-                      className={cn(
-                        "border-none font-black text-[9px] uppercase tracking-widest px-2.5 py-1 rounded-lg gap-1",
-                        stock.inStock
-                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                          : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
-                      )}
-                    >
-                      {stock.inStock ? (
-                        <>
-                          <PackageCheck size={11} /> Stock {stock.stockQuantity}
-                        </>
-                      ) : (
-                        <>
-                          <PackageX size={11} /> Sem stock
-                        </>
-                      )}
-                    </Badge>
-                    <div className="text-right">
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                        Preço
-                      </p>
-                      <p className="text-sm font-black text-slate-900 dark:text-white">
-                        {stock.price != null ? eur(stock.price) : "—"}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-[11px] font-bold text-slate-400 flex items-center gap-1.5">
-                    <Pill size={13} /> Não consta no inventário
-                  </p>
-                )}
-
-                {stock?.pricePerMonth != null && (
-                  <div className="text-right">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                      Por mês
-                    </p>
-                    <p className="text-lg font-black text-blue-600 dark:text-blue-400">
-                      {eur(stock.pricePerMonth)}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </Card>
+          {results.map((r) => (
+            <ResultCard key={r.ref.key} result={r} weightKg={data?.query?.weightKg ?? null} />
           ))}
         </div>
       )}
