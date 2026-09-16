@@ -22,7 +22,7 @@ type Resource =
   | "patients" | "owners" | "consultations" | "prescriptions"
   | "exams" | "appointments" | "billing" | "inventory"
   | "team" | "settings" | "messages" | "marketing"
-  | "diagnostics" | "internamento" | "reports" | "sms";
+  | "diagnostics" | "internamento" | "reports" | "sms" | "deworming";
 
 const PERMISSIONS: Record<Resource, Record<Role, CrudLevel>> = {
   patients:       { SUPER_ADMIN: "CRUD", ADMIN: "CRUD", VETERINARIAN: "CRUD", ASSISTANT: "CRIAR_LER", RECEPTIONIST: "CRIAR_LER" },
@@ -41,6 +41,7 @@ const PERMISSIONS: Record<Resource, Record<Role, CrudLevel>> = {
   internamento:   { SUPER_ADMIN: "CRUD", ADMIN: "CRUD", VETERINARIAN: "CRUD", ASSISTANT: "CRIAR_LER", RECEPTIONIST: "LER" },
   reports:        { SUPER_ADMIN: "CRUD", ADMIN: "CRUD", VETERINARIAN: "LER", ASSISTANT: "NONE", RECEPTIONIST: "LER" },
   sms:            { SUPER_ADMIN: "CRUD", ADMIN: "CRUD", VETERINARIAN: "NONE", ASSISTANT: "NONE", RECEPTIONIST: "NONE" },
+  deworming:      { SUPER_ADMIN: "CRUD", ADMIN: "CRUD", VETERINARIAN: "CRUD", ASSISTANT: "LER", RECEPTIONIST: "LER" },
 };
 
 export function getPermission(resource: Resource, role: string): CrudLevel {
@@ -94,6 +95,7 @@ export const MENU_ITEMS: MenuItem[] = [
   { name: "Mensagens", href: "/dashboard/messages", resource: "messages", minLevel: "CRIAR_LER" },
   { name: "Pacientes", href: "/dashboard/patients", resource: "patients", minLevel: "CRIAR_LER" },
   { name: "Clientes", href: "/dashboard/customers", resource: "owners", minLevel: "CRIAR_LER" },
+  { name: "Desparasitação", href: "/dashboard/desparasitacao", resource: "deworming", minLevel: "LER" },
   { name: "Internamento", href: "/dashboard/internamento", resource: "internamento", minLevel: "LER" },
   { name: "Prescrições", href: "/dashboard/prescricoes", resource: "prescriptions", minLevel: "LER" },
   { name: "Diagnósticos", href: "/dashboard/diagnostics", resource: "diagnostics", minLevel: "CRIAR_LER" },
