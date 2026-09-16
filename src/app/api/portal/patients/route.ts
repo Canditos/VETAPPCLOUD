@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
         species: true,
         breed: true,
         birthDate: true,
-        color: true,
+        coatColor: true,
         weight: true,
       },
       orderBy: { name: "asc" },

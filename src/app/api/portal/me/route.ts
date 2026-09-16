@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
               take: 5,
             },
             vitalSigns: {
-              orderBy: { recordedAt: "desc" },
+              orderBy: { date: "desc" },
               take: 1,
             },
             consultations: {

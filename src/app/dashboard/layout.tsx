@@ -15,7 +15,7 @@ export default function DashboardLayout({
       <Sidebar />
       <MobileSidebar />
       <Header />
-      <main className="ml-64">{children}</main>
+      <main className="md:ml-64">{children}</main>
       <Toaster />
     </div>
   );

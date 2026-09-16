@@ -36,7 +36,7 @@ export async function GET(
         species: true,
         breed: true,
         birthDate: true,
-        color: true,
+        coatColor: true,
         weight: true,
       },
     });

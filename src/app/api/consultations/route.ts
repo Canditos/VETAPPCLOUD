@@ -98,7 +98,7 @@ export const POST = withAuth(async ({ req, session, tenantPrisma, clinicId, user
 
     // 1.1. Create Vital Signs if provided
     if (vitals && (vitals.weight || vitals.temperature || vitals.heartRate || vitals.respiratoryRate || vitals.painScale != null || vitals.bodyConditionScore != null)) {
-      await tenantPrisma.vitalSigns.create({
+      await tenantPrisma.vitalSign.create({
         data: {
           patientId,
           clinicId,

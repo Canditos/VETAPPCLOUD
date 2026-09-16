@@ -1,21 +1,24 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { withAuthParams } from "@/lib/api-wrapper";
 
-export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export const GET = withAuthParams(async ({ tenantPrisma }, { id: patientId }) => {
   try {
-    const { id } = params;
+    const patient = await tenantPrisma.patient.findFirst({ where: { id: patientId } });
+    if (!patient) {
+      return NextResponse.json({ error: "Patient not found" }, { status: 404 });
+    }
 
-    const labResults = await prisma.labResult.findMany({
-      where: { patientId: id },
+    const labResults = await tenantPrisma.labResult.findMany({
+      where: { patientId },
       orderBy: { createdAt: "desc" },
+      take: 100,
     });
 
     return NextResponse.json(labResults);
   } catch (error) {
-    console.error("Error fetching lab results:", error);
+    console.error("[PATIENT_LAB_GET]", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
-}
+});
