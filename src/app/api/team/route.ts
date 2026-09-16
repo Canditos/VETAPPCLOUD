@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/api-wrapper";
 import bcrypt from "bcryptjs";
+import { canAccess } from "@/lib/roles";
 
 export const dynamic = "force-dynamic";
 
-export const GET = withAuth(async ({ tenantPrisma }) => {
+export const GET = withAuth(async ({ tenantPrisma, session }) => {
   try {
+    if (!canAccess("team", (session.user as { role?: string }).role, "LER")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const users = await tenantPrisma.user.findMany({
       select: {
         id: true,

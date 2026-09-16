@@ -46,6 +46,8 @@ model Clinic {
   privacyConsents    PrivacyConsent[]
   vitalSigns         VitalSign[]
   servicePacks       ServicePack[]
+  vaccinations       Vaccination[]
+  dewormings         Deworming[]
 
   @@index([name])
 }
@@ -213,6 +215,8 @@ model Attachment {
   type           AttachmentType @default(IMAGE)
   createdAt      DateTime       @default(now())
   consultation   Consultation   @relation(fields: [consultationId], references: [id])
+
+  @@index([consultationId])
 }
 
 model Invoice {
@@ -257,6 +261,10 @@ model Payment {
   clinic    Clinic   @relation(fields: [clinicId], references: [id])
   invoice   Invoice? @relation(fields: [invoiceId], references: [id])
   owner     Owner    @relation(fields: [ownerId], references: [id])
+
+  @@index([clinicId])
+  @@index([ownerId])
+  @@index([paidAt])
 }
 
 model Budget {
@@ -273,6 +281,9 @@ model Budget {
   owner       Owner        @relation(fields: [ownerId], references: [id])
   patient     Patient?     @relation(fields: [patientId], references: [id])
   items       BudgetItem[]
+
+  @@index([clinicId])
+  @@index([ownerId])
 }
 
 model BudgetItem {
@@ -294,6 +305,8 @@ model InvoiceItem {
   vatRate     Int      @default(23)
   invoice     Invoice  @relation(fields: [invoiceId], references: [id])
   product     Product? @relation(fields: [productId], references: [id])
+
+  @@index([invoiceId])
 }
 
 model Product {
@@ -405,6 +418,7 @@ model HospitalizationTask {
   @@index([hospitalizationId])
   @@index([status])
   @@index([scheduledTime])
+  @@index([completedById])
 }
 
 model OwnerPortalToken {
@@ -464,6 +478,8 @@ model HealthPlan {
   updatedAt     DateTime       @updatedAt
   clinic        Clinic         @relation(fields: [clinicId], references: [id])
   subscriptions Subscription[]
+
+  @@index([clinicId])
 }
 
 model Subscription {
@@ -481,6 +497,11 @@ model Subscription {
   owner       Owner      @relation(fields: [ownerId], references: [id])
   patient     Patient    @relation(fields: [patientId], references: [id])
   plan        HealthPlan @relation(fields: [planId], references: [id])
+
+  @@index([clinicId])
+  @@index([ownerId])
+  @@index([patientId])
+  @@index([status])
 }
 
 model VitalSign {
@@ -506,20 +527,24 @@ model VitalSign {
 
 model Vaccination {
   id          String    @id @default(uuid())
+  clinicId    String
   patientId   String
   vaccineName String
   batchNumber String?
   appliedAt   DateTime  @default(now())
   expiresAt   DateTime?
   notes       String?
+  clinic      Clinic    @relation(fields: [clinicId], references: [id])
   patient     Patient   @relation(fields: [patientId], references: [id])
 
+  @@index([clinicId])
   @@index([patientId])
   @@index([appliedAt])
 }
 
 model Deworming {
   id          String    @id @default(uuid())
+  clinicId    String
   patientId   String
   type        String
   productName String
@@ -527,8 +552,10 @@ model Deworming {
   appliedAt   DateTime  @default(now())
   expiresAt   DateTime?
   notes       String?
+  clinic      Clinic    @relation(fields: [clinicId], references: [id])
   patient     Patient   @relation(fields: [patientId], references: [id])
 
+  @@index([clinicId])
   @@index([patientId])
   @@index([appliedAt])
 }
@@ -548,6 +575,9 @@ model Prescription {
   patient        Patient            @relation(fields: [patientId], references: [id])
   veterinarian   User               @relation(fields: [veterinarianId], references: [id])
   items          PrescriptionItem[]
+
+  @@index([clinicId])
+  @@index([patientId])
 }
 
 model PrescriptionItem {
@@ -559,6 +589,8 @@ model PrescriptionItem {
   duration       String
   notes          String?
   prescription   Prescription @relation(fields: [prescriptionId], references: [id])
+
+  @@index([prescriptionId])
 }
 
 enum Role {

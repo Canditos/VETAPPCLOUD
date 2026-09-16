@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { sendSMSViaRUT240 } from "@/lib/sms-rut240";
+import { canAccess } from "@/lib/roles";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,10 @@ export async function POST(req: Request) {
   }
 
   const clinicId = (session.user as any).clinicId;
+
+  if (!canAccess("marketing", (session.user as { role?: string }).role, "CRUD")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   try {
     const { message, ownerIds } = await req.json();

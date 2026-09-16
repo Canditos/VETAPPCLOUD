@@ -5,3 +5,10 @@
 scratch/
 AI_CONTEXT.md
 
+# Segredos / scripts locais de deploy (nunca commitar)
+.hermes.env
+deploy-vet.cmd
+deploy-vet.sh
+deploy.sh
+setup-tunnel.js
+tsconfig.tsbuildinfo

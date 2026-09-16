@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { exec } from "child_process";
 import { promisify } from "util";
 import { withAuth } from "@/lib/api-wrapper";
+import { canAccess } from "@/lib/roles";
 import { readdir, stat, readFile } from "fs/promises";
 import path from "path";
 
@@ -10,8 +11,12 @@ const execAsync = promisify(exec);
 
 const BACKUP_DIR = process.env.BACKUP_DIR || "/home/canditos/backups/vetconnect";
 
-export const GET = withAuth(async () => {
+export const GET = withAuth(async ({ session }) => {
   try {
+    if (!canAccess("settings", (session.user as { role?: string }).role, "CRUD")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const backups: Array<{
       name: string;
       size: string;
@@ -89,7 +94,11 @@ export const GET = withAuth(async () => {
   }
 });
 
-export const POST = withAuth(async ({ req }) => {
+export const POST = withAuth(async ({ req, session }) => {
+  if (!canAccess("settings", (session.user as { role?: string }).role, "CRUD")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   try {
     const body = await req.json().catch(() => ({}));
     const { type = "manual" } = body;

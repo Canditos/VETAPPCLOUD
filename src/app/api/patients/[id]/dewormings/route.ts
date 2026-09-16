@@ -1,21 +1,23 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
 import { withAuthParams } from "@/lib/api-wrapper";
 
 export const GET = withAuthParams(async ({ tenantPrisma }, { id: patientId }) => {
   try {
-    const patient = await tenantPrisma.patient.findUnique({ where: { id: patientId } });
+    const patient = await tenantPrisma.patient.findFirst({ where: { id: patientId } });
     if (!patient) {
       return NextResponse.json({ error: "Patient not found" }, { status: 404 });
     }
 
-    const dewormings = await prisma.deworming.findMany({
+    const dewormings = await tenantPrisma.deworming.findMany({
       where: { patientId },
       orderBy: { appliedAt: "desc" },
+      take: 100,
     });
 
     return NextResponse.json(dewormings);
-  } catch (error: any) {
+  } catch (error) {
     console.error("[DEWORMINGS_GET]", error);
     return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
@@ -23,7 +25,7 @@ export const GET = withAuthParams(async ({ tenantPrisma }, { id: patientId }) =>
 
 export const POST = withAuthParams(async ({ req, tenantPrisma }, { id: patientId }) => {
   try {
-    const patient = await tenantPrisma.patient.findUnique({ where: { id: patientId } });
+    const patient = await tenantPrisma.patient.findFirst({ where: { id: patientId } });
     if (!patient) {
       return NextResponse.json({ error: "Patient not found" }, { status: 404 });
     }
@@ -35,7 +37,7 @@ export const POST = withAuthParams(async ({ req, tenantPrisma }, { id: patientId
       return NextResponse.json({ error: "Type and product name are required" }, { status: 400 });
     }
 
-    const deworming = await prisma.deworming.create({
+    const deworming = await tenantPrisma.deworming.create({
       data: {
         patientId,
         type,
@@ -48,7 +50,7 @@ export const POST = withAuthParams(async ({ req, tenantPrisma }, { id: patientId
     });
 
     return NextResponse.json(deworming);
-  } catch (error: any) {
+  } catch (error) {
     console.error("[DEWORMINGS_POST]", error);
     return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }

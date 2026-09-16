@@ -4,30 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { X, ChevronRight, LayoutDashboard, Stethoscope, Mail, PawPrint, Users, Bed, Pill, Activity, Package, Receipt, Send, BarChart3, Settings, Heart, Bug } from "lucide-react";
+import { X, ChevronRight, LayoutDashboard, Heart } from "lucide-react";
 import { getVisibleMenuItems } from "@/lib/roles";
+import { MENU_ICONS, MENU_GROUPS } from "@/lib/menu-config";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-
-const ICON_MAP: Record<string, React.ElementType> = {
-  Dashboard: LayoutDashboard,
-  Agenda: Stethoscope,
-  Mensagens: Mail,
-  Pacientes: PawPrint,
-  Clientes: Users,
-  Internamento: Bed,
-  "Desparasitação": Bug,
-  Prescrições: Pill,
-  Diagnósticos: Activity,
-  Inventário: Package,
-  Faturação: Receipt,
-  "Marketing SMS": Send,
-  "SMS Stats": BarChart3,
-  Relatórios: BarChart3,
-  Equipa: Users,
-  Definições: Settings,
-};
 
 export default function MobileSidebar() {
   const [open, setOpen] = useState(false);
@@ -36,13 +18,6 @@ export default function MobileSidebar() {
   const role = session?.user?.role;
   const visible = getVisibleMenuItems(role);
   const visibleNames = new Set(visible.map((m) => m.name));
-
-  const menuGroups = [
-    { label: "Principal", keys: ["Dashboard", "Agenda", "Mensagens"] },
-    { label: "Clínica", keys: ["Pacientes", "Clientes", "Internamento", "Desparasitação", "Prescrições", "Diagnósticos"] },
-    { label: "Administrativo", keys: ["Inventário", "Faturação", "Marketing SMS", "SMS Stats", "Relatórios"] },
-    { label: "Configuração", keys: ["Equipa", "Definições"] },
-  ];
 
   return (
     <>
@@ -75,7 +50,7 @@ export default function MobileSidebar() {
             </div>
 
             <nav className="flex-1 overflow-y-auto p-4 space-y-6">
-              {menuGroups.map((group) => {
+              {MENU_GROUPS.map((group) => {
                 const items = group.keys.filter((k) => visibleNames.has(k));
                 if (items.length === 0) return null;
                 return (
@@ -86,7 +61,7 @@ export default function MobileSidebar() {
                     <div className="space-y-1">
                       {items.map((name) => {
                         const item = visible.find((m) => m.name === name)!;
-                        const Icon = ICON_MAP[name] || LayoutDashboard;
+                        const Icon = MENU_ICONS[name] || LayoutDashboard;
                         const isActive = pathname === item.href;
                         return (
                           <Link

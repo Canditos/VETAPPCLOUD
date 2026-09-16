@@ -12,7 +12,16 @@ export function csrfProtection(req: Request): NextResponse | null {
   const referer = req.headers.get("referer");
   const source = origin || (referer ? new URL(referer).origin : null);
 
-  if (!source) return null;
+  if (!source) {
+    // Sem Origin/Referer: pode ser cliente não-browser (cron, integrações) ou
+    // um browser cross-site. Usamos Sec-Fetch-Site para distinguir.
+    const site = req.headers.get("sec-fetch-site");
+    if (site && site !== "same-origin" && site !== "none") {
+      console.warn(`[CSRF] Rejected ${req.method} ${req.url} (cross-site, sem origin)`);
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    return null;
+  }
 
   const expected = process.env.NEXTAUTH_URL || "https://vet.gatoescondido.com";
   const allowed = [expected.replace(/\/$/, ""), ...ALLOWED_ORIGINS];

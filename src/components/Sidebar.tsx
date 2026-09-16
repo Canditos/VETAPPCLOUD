@@ -2,66 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  PawPrint,
-  Stethoscope,
-  Package,
-  Receipt,
-  Settings,
-  Users,
-  LogOut,
-  Activity,
-  Bed,
-  BarChart3,
-  Heart,
-  ChevronRight,
-  User,
-  Pill,
-  Mail,
-  Send,
-  Bug
-} from "lucide-react";
+import { LayoutDashboard, LogOut, Heart, ChevronRight, User } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { getVisibleMenuItems, ROLE_LABELS } from "@/lib/roles";
-
-const ICON_MAP: Record<string, React.ElementType> = {
-  Dashboard: LayoutDashboard,
-  Agenda: Stethoscope,
-  Mensagens: Mail,
-  Pacientes: PawPrint,
-  Clientes: Users,
-  Internamento: Bed,
-  "Desparasitação": Bug,
-  "Prescrições": Pill,
-  "Diagnósticos": Activity,
-  "Inventário": Package,
-  "Faturação": Receipt,
-  "Marketing SMS": Send,
-  "SMS Stats": BarChart3,
-  "Relatórios": BarChart3,
-  "Equipa": Users,
-  "Definições": Settings,
-};
-
-const menuGroups = [
-  {
-    label: "Principal",
-    keys: ["Dashboard", "Agenda", "Mensagens"]
-  },
-  {
-    label: "Clínica",
-    keys: ["Pacientes", "Clientes", "Internamento", "Desparasitação", "Prescrições", "Diagnósticos"]
-  },
-  {
-    label: "Administrativo",
-    keys: ["Inventário", "Faturação", "Marketing SMS", "SMS Stats", "Relatórios"]
-  },
-  {
-    label: "Configuração",
-    keys: ["Equipa", "Definições"]
-  }
-];
+import { MENU_ICONS, MENU_GROUPS } from "@/lib/menu-config";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -85,7 +29,7 @@ export default function Sidebar() {
       </Link>
 
       <nav className="flex-1 px-4 py-4 space-y-8 overflow-y-auto no-scrollbar">
-        {menuGroups.map((group) => {
+        {MENU_GROUPS.map((group) => {
           const groupItems = group.keys.filter((k) => visibleNames.has(k));
           if (groupItems.length === 0) return null;
           return (
@@ -96,7 +40,7 @@ export default function Sidebar() {
               <div className="space-y-1">
                 {groupItems.map((name) => {
                   const item = visible.find((m) => m.name === name)!;
-                  const Icon = ICON_MAP[name] || LayoutDashboard;
+                  const Icon = MENU_ICONS[name] || LayoutDashboard;
                   const isActive = pathname === item.href;
                   return (
                     <Link
