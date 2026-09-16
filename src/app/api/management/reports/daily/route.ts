@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { withAuth } from "@/lib/api-wrapper";
+import { toCents, fromCents } from "@/lib/money";
 
 export const dynamic = "force-dynamic";
 
@@ -16,14 +17,17 @@ export const GET = withAuth(async ({ clinicId }) => {
       },
     });
 
-    const paymentsByMethod = paymentsRaw.reduce((acc: any, p: any) => {
+    const centsByMethod = paymentsRaw.reduce((acc: Record<string, number>, p) => {
       const method = p.method || "UNKNOWN";
-      if (!acc[method]) acc[method] = 0;
-      acc[method] += Number(p.amount);
-      acc.total += Number(p.amount);
+      acc[method] = (acc[method] || 0) + toCents(p.amount);
+      acc.total = (acc.total || 0) + toCents(p.amount);
       return acc;
     }, { total: 0 });
-    
+
+    const paymentsByMethod: Record<string, number> = Object.fromEntries(
+      Object.entries(centsByMethod).map(([k, v]) => [k, fromCents(v)])
+    );
+
     return NextResponse.json({
       date: new Date().toISOString().split('T')[0],
       payments: paymentsByMethod,

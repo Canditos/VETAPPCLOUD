@@ -19,6 +19,7 @@ export const GET = withAuth(async ({ req, tenantPrisma }) => {
         items: true,
       },
       orderBy: { createdAt: "desc" },
+      take: 200,
     });
 
     // Filter by search term (client name or invoice id)

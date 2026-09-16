@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { withAuth } from "@/lib/api-wrapper";
+import { toCents, fromCents } from "@/lib/money";
 
 export const dynamic = "force-dynamic";
 
@@ -24,23 +25,23 @@ export const GET = withAuth(async ({ req, clinicId }) => {
       include: { items: true }
     });
 
-    const report = invoices.reduce((acc: any, inv: any) => {
-      inv.items.forEach((item: any) => {
+    const report = invoices.reduce((acc: Record<string, number | string>, inv) => {
+      inv.items.forEach((item) => {
         const rate = item.vatRate || 23;
-        const base = Number(item.price) * item.quantity;
-        const vat = base * (rate / 100);
+        const base = toCents(Number(item.price) * item.quantity);
+        const vat = Math.round(base * (rate / 100));
 
         if (rate === 6) {
-          acc.base6 += base;
-          acc.totalVat6 += vat;
+          (acc.base6 as number) += base;
+          (acc.totalVat6 as number) += vat;
         } else if (rate === 13) {
-          acc.base13 += base;
-          acc.totalVat13 += vat;
+          (acc.base13 as number) += base;
+          (acc.totalVat13 as number) += vat;
         } else {
-          acc.base23 += base;
-          acc.totalVat23 += vat;
+          (acc.base23 as number) += base;
+          (acc.totalVat23 as number) += vat;
         }
-        acc.totalGross += (base + vat);
+        acc.totalGross = (acc.totalGross as number) + base + vat;
       });
       return acc;
     }, {
@@ -55,7 +56,18 @@ export const GET = withAuth(async ({ req, clinicId }) => {
       status: "REAL"
     });
 
-    return NextResponse.json(report);
+    const result = {
+      ...report,
+      base6: fromCents(report.base6 as number),
+      totalVat6: fromCents(report.totalVat6 as number),
+      base13: fromCents(report.base13 as number),
+      totalVat13: fromCents(report.totalVat13 as number),
+      base23: fromCents(report.base23 as number),
+      totalVat23: fromCents(report.totalVat23 as number),
+      totalGross: fromCents(report.totalGross as number),
+    };
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error("[VAT_REPORT_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });

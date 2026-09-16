@@ -17,6 +17,7 @@ export const GET = withAuth(async ({ req, tenantPrisma, clinicId }) => {
         veterinarian: { select: { name: true } }
       },
       orderBy: { createdAt: "desc" },
+      take: 100,
     });
 
     return NextResponse.json(prescriptions);

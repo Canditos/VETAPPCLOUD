@@ -16,6 +16,7 @@ export const GET = withAuth(async ({ tenantPrisma }) => {
         },
       },
       orderBy: { admissionDate: "asc" },
+      take: 100,
     });
 
     return NextResponse.json(hospitalizations);

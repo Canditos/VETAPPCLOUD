@@ -18,11 +18,13 @@ export const GET = withAuth(async ({ tenantPrisma, clinicId }) => {
       where: { clinicId },
       include: { patient: { select: { name: true, owner: { select: { name: true } } } } },
       orderBy: { createdAt: "desc" },
+      take: 100,
     }),
     tenantPrisma.imagingStudy.findMany({
       where: { clinicId },
       include: { patient: { select: { name: true, owner: { select: { name: true } } } } },
       orderBy: { createdAt: "desc" },
+      take: 100,
     }),
   ]);
 

@@ -16,8 +16,10 @@ import {
   Legend,
 } from "recharts";
 import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import { AlertTriangle, ChevronRight } from "lucide-react";
 import { format, isAfter } from "date-fns";
+import { getChartTheme } from "@/lib/chart-theme";
 
 const fmt = (v: number) =>
   v.toLocaleString("pt-PT", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
@@ -32,6 +34,8 @@ export function RevenueChart({
   data?: RevenuePoint[];
   loading?: boolean;
 }) {
+  const { resolvedTheme } = useTheme();
+  const t = getChartTheme(resolvedTheme === "dark");
   return (
     <Card className="border-none shadow-sm bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-slate-800 rounded-2xl">
       <CardHeader className="px-5 py-4 pb-2 flex flex-row justify-between items-center space-y-0">
@@ -45,17 +49,17 @@ export function RevenueChart({
         ) : (
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={data ?? []}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" />
+              <CartesianGrid strokeDasharray="3 3" stroke={t.grid} />
               <XAxis
                 dataKey="date"
-                tick={{ fontSize: 11, fill: "#94a3b8" }}
+                tick={{ fontSize: 11, fill: t.tick }}
                 tickFormatter={(v) => v}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
                 tickFormatter={(v) => `${v / 1000}k`}
-                tick={{ fontSize: 11, fill: "#94a3b8" }}
+                tick={{ fontSize: 11, fill: t.tick }}
                 axisLine={false}
                 tickLine={false}
               />
@@ -64,10 +68,12 @@ export function RevenueChart({
                 labelFormatter={(label) => label}
                 contentStyle={{
                   borderRadius: 12,
-                  border: "1px solid #e2e8f0",
+                  backgroundColor: t.tooltipBg,
+                  border: "1px solid " + t.tooltipBorder,
+                  color: t.tooltipText,
                   boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
                 }}
-                labelStyle={{ color: "#0f172a", fontWeight: 700 }}
+                labelStyle={{ color: t.tooltipText, fontWeight: 700 }}
               />
               <Line
                 type="monotone"
@@ -92,6 +98,8 @@ export function AppointmentsChart({
   data?: AppointmentPoint[];
   loading?: boolean;
 }) {
+  const { resolvedTheme } = useTheme();
+  const t = getChartTheme(resolvedTheme === "dark");
   return (
     <Card className="border-none shadow-sm bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-slate-800 rounded-2xl">
       <CardHeader className="px-5 py-4 pb-2 flex flex-row justify-between items-center space-y-0">
@@ -105,16 +113,16 @@ export function AppointmentsChart({
         ) : (
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={data ?? []}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" />
+              <CartesianGrid strokeDasharray="3 3" stroke={t.grid} />
               <XAxis
                 dataKey="date"
-                tick={{ fontSize: 11, fill: "#94a3b8" }}
+                tick={{ fontSize: 11, fill: t.tick }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
                 allowDecimals={false}
-                tick={{ fontSize: 11, fill: "#94a3b8" }}
+                tick={{ fontSize: 11, fill: t.tick }}
                 axisLine={false}
                 tickLine={false}
               />
@@ -122,10 +130,12 @@ export function AppointmentsChart({
                 formatter={(value: number) => [value, "Marca\u00e7\u00f5es"]}
                 contentStyle={{
                   borderRadius: 12,
-                  border: "1px solid #e2e8f0",
+                  backgroundColor: t.tooltipBg,
+                  border: "1px solid " + t.tooltipBorder,
+                  color: t.tooltipText,
                   boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
                 }}
-                labelStyle={{ color: "#0f172a", fontWeight: 700 }}
+                labelStyle={{ color: t.tooltipText, fontWeight: 700 }}
               />
               <Bar dataKey="value" radius={[8, 8, 0, 0]} fill="#3b82f6" />
             </BarChart>

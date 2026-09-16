@@ -26,11 +26,15 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
+import { useTheme } from "next-themes";
+import { getChartTheme } from "@/lib/chart-theme";
 
 const COLORS = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981"];
 
 export default function ManagementDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
+  const { resolvedTheme } = useTheme();
+  const t = getChartTheme(resolvedTheme === "dark");
 
   // BI Data
   const { data: biData, isLoading: isBiLoading, refetch: refetchBi } = useQuery({
@@ -149,22 +153,22 @@ export default function ManagementDashboard() {
                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                        </linearGradient>
                      </defs>
-                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f011" />
+                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={t.grid} />
                      <XAxis 
                        dataKey="month" 
                        axisLine={false} 
                        tickLine={false} 
-                       tick={{fill: '#64748b', fontSize: 11, fontWeight: 900}}
+                       tick={{fill: t.tick, fontSize: 11, fontWeight: 900}}
                        dy={15}
                      />
                      <YAxis 
                        axisLine={false} 
                        tickLine={false} 
-                       tick={{fill: '#64748b', fontSize: 11, fontWeight: 900}}
+                       tick={{fill: t.tick, fontSize: 11, fontWeight: 900}}
                        tickFormatter={(val) => `${val}€`}
                      />
                      <Tooltip 
-                       contentStyle={{backgroundColor: '#0f172a', border: 'none', borderRadius: '24px', padding: '20px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)'}}
+                       contentStyle={{backgroundColor: t.tooltipBg, border: "1px solid " + t.tooltipBorder, color: t.tooltipText, borderRadius: '24px', padding: '20px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)'}}
                        itemStyle={{color: '#3b82f6', fontWeight: 900, textTransform: 'uppercase', fontSize: '12px'}}
                        cursor={{stroke: '#3b82f6', strokeWidth: 2, strokeDasharray: '5 5'}}
                      />
@@ -204,7 +208,7 @@ export default function ManagementDashboard() {
                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
                        ))}
                      </Pie>
-                     <Tooltip />
+                     <Tooltip contentStyle={{ backgroundColor: t.tooltipBg, border: "1px solid " + t.tooltipBorder, borderRadius: 12, color: t.tooltipText }} />
                    </RePieChart>
                  </ResponsiveContainer>
                </div>

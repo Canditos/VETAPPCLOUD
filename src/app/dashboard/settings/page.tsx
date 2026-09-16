@@ -98,8 +98,8 @@ export default function SettingsPage() {
     <div className="space-y-6 animate-in fade-in duration-700 max-w-[1400px] mx-auto">
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Definições</h1>
-          <p className="text-slate-400 font-medium">Configure a identidade e integrações da sua clínica.</p>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Definições</h1>
+          <p className="text-slate-500 dark:text-slate-400 font-medium">Configure a identidade e integrações da sua clínica.</p>
         </div>
         <Button 
           onClick={handleSave}
@@ -112,48 +112,48 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="bg-slate-800/50 p-1.5 rounded-2xl ring-1 ring-white/5 w-full flex">
-          <TabsTrigger value="general" className="flex-1 rounded-xl gap-2 data-[state=active]:bg-slate-700 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-400 justify-center">
+        <TabsList className="bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-2xl ring-1 ring-slate-200 dark:ring-white/5 w-full flex">
+          <TabsTrigger value="general" className="flex-1 rounded-xl gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-500 dark:text-slate-400 justify-center">
             <Building2 size={16} /> Geral
           </TabsTrigger>
-          <TabsTrigger value="billing" className="flex-1 rounded-xl gap-2 data-[state=active]:bg-slate-700 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-400 justify-center">
+          <TabsTrigger value="billing" className="flex-1 rounded-xl gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-500 dark:text-slate-400 justify-center">
             <CreditCard size={16} /> Faturação (Vendus)
           </TabsTrigger>
-          <TabsTrigger value="integrations" className="flex-1 rounded-xl gap-2 data-[state=active]:bg-slate-700 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-400 justify-center">
+          <TabsTrigger value="integrations" className="flex-1 rounded-xl gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-500 dark:text-slate-400 justify-center">
             <Database size={16} /> Laboratório & RX
           </TabsTrigger>
-          <TabsTrigger value="security" className="flex-1 rounded-xl gap-2 data-[state=active]:bg-slate-700 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-400 justify-center">
+          <TabsTrigger value="security" className="flex-1 rounded-xl gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-500 dark:text-slate-400 justify-center">
             <Shield size={16} /> Segurança
           </TabsTrigger>
-          <TabsTrigger value="notifications" onClick={() => window.location.href = "/dashboard/settings/notifications"} className="flex-1 rounded-xl gap-2 data-[state=active]:bg-slate-700 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-400 justify-center">
+          <TabsTrigger value="notifications" onClick={() => window.location.href = "/dashboard/settings/notifications"} className="flex-1 rounded-xl gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-500 dark:text-slate-400 justify-center">
             <Bell size={16} /> Notificações
           </TabsTrigger>
-          <TabsTrigger value="ai" className="flex-1 rounded-xl gap-2 data-[state=active]:bg-slate-700 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-400 justify-center">
+          <TabsTrigger value="ai" className="flex-1 rounded-xl gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-500 dark:text-slate-400 justify-center">
             <BrainCircuit size={16} /> IA
           </TabsTrigger>
-          <TabsTrigger value="services" className="flex-1 rounded-xl gap-2 data-[state=active]:bg-slate-700 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-400 justify-center">
+          <TabsTrigger value="services" className="flex-1 rounded-xl gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-500 dark:text-slate-400 justify-center">
             <Package size={16} /> Serviços
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="general">
-          <Card className="border-none shadow-sm bg-slate-900/50 backdrop-blur-xl ring-1 ring-white/5 rounded-2xl">
+          <Card className="border-none shadow-sm bg-white dark:bg-slate-900/50 backdrop-blur-xl ring-1 ring-slate-200 dark:ring-white/5 rounded-2xl">
             <CardHeader>
-              <CardTitle className="text-lg font-bold text-white">Informação da Clínica</CardTitle>
-              <CardDescription className="text-slate-400">Estes dados serão usados nos cabeçalhos das faturas e relatórios.</CardDescription>
+              <CardTitle className="text-lg font-bold text-slate-900 dark:text-white">Informação da Clínica</CardTitle>
+              <CardDescription className="text-slate-500 dark:text-slate-400">Estes dados serão usados nos cabeçalhos das faturas e relatórios.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label className="text-xs font-bold text-slate-500 uppercase">Nome da Clínica</Label>
+                  <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Nome da Clínica</Label>
                   <Input 
                     value={clinic.name} 
                     onChange={(e) => setClinic({ ...clinic, name: e.target.value })}
-                    className="rounded-xl bg-slate-800/50 border-slate-700/50 text-white" 
+                    className="rounded-xl bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/50 text-slate-900 dark:text-white" 
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-bold text-slate-500 uppercase">NIF / VAT Number</Label>
+                  <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">NIF / VAT Number</Label>
                   <Input 
                     value={clinic.vatNumber}
                     onChange={(e) => setClinic({ ...clinic, vatNumber: e.target.value })}
@@ -161,7 +161,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-bold text-slate-500 uppercase">Email Geral</Label>
+                  <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Email Geral</Label>
                   <Input 
                     value={clinic.email}
                     onChange={(e) => setClinic({ ...clinic, email: e.target.value })}
@@ -169,7 +169,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-bold text-slate-500 uppercase">Telefone</Label>
+                  <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Telefone</Label>
                   <Input 
                     value={clinic.phone}
                     onChange={(e) => setClinic({ ...clinic, phone: e.target.value })}
@@ -177,7 +177,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div className="md:col-span-2 space-y-2">
-                  <Label className="text-xs font-bold text-slate-500 uppercase">Morada</Label>
+                  <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Morada</Label>
                   <Input 
                     value={clinic.address}
                     onChange={(e) => setClinic({ ...clinic, address: e.target.value })}
@@ -190,36 +190,36 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="billing">
-          <Card className="border-none shadow-sm border-l-4 border-l-blue-500 bg-slate-900/50 backdrop-blur-xl ring-1 ring-white/5 rounded-2xl">
+          <Card className="border-none shadow-sm border-l-4 border-l-blue-500 bg-white dark:bg-slate-900/50 backdrop-blur-xl ring-1 ring-slate-200 dark:ring-white/5 rounded-2xl">
             <CardHeader>
               <div className="flex items-center gap-3">
-                 <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-400">
+                 <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-600 dark:text-blue-400">
                     <Link2 size={24} />
                  </div>
                  <div>
-                    <CardTitle className="text-lg font-bold text-white">Ligação ao Vendus ERP</CardTitle>
-                    <CardDescription className="text-slate-400">Configure a sua API Key para emissão de faturas legais.</CardDescription>
+                    <CardTitle className="text-lg font-bold text-slate-900 dark:text-white">Ligação ao Vendus ERP</CardTitle>
+                    <CardDescription className="text-slate-500 dark:text-slate-400">Configure a sua API Key para emissão de faturas legais.</CardDescription>
                  </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid gap-6">
                 <div className="space-y-2">
-                  <Label className="text-xs font-bold text-slate-500 uppercase">Vendus API Key</Label>
+                  <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Vendus API Key</Label>
                   <Input 
                     type="password" 
                     value={clinic.vendusApiKey}
                     onChange={(e) => setClinic({ ...clinic, vendusApiKey: e.target.value })}
                     placeholder="Introduza a sua API Key do Vendus" 
-                    className="rounded-xl font-mono bg-slate-800/50 border-slate-700/50 text-white" 
+                    className="rounded-xl font-mono bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/50 text-slate-900 dark:text-white" 
                   />
-                  <p className="text-[10px] text-slate-400 font-medium">Pode encontrar a sua chave em Definições &gt; API no painel do Vendus.</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Pode encontrar a sua chave em Definições &gt; API no painel do Vendus.</p>
                 </div>
               </div>
-              <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl">
+              <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl">
                  <div>
-                    <p className="text-sm font-bold text-white">Sincronização Automática</p>
-                    <p className="text-xs text-slate-400 font-medium">Enviar faturas para o Vendus assim que a consulta termina.</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">Sincronização Automática</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Enviar faturas para o Vendus assim que a consulta termina.</p>
                  </div>
                  <Switch defaultChecked />
               </div>
@@ -243,39 +243,39 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="ai">
-          <Card className="border-none shadow-sm border-l-4 border-l-purple-500 bg-slate-900/50 backdrop-blur-xl ring-1 ring-white/5 rounded-2xl">
+          <Card className="border-none shadow-sm border-l-4 border-l-purple-500 bg-white dark:bg-slate-900/50 backdrop-blur-xl ring-1 ring-slate-200 dark:ring-white/5 rounded-2xl">
             <CardHeader>
               <div className="flex items-center gap-3">
-                 <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-400">
+                 <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-600 dark:text-purple-400">
                     <Bot size={24} />
                  </div>
                  <div>
-                    <CardTitle className="text-lg font-bold text-white">Inteligência Artificial (Opcional)</CardTitle>
-                    <CardDescription className="text-slate-400">Configure a API Key da sua IA (Groq, OpenRouter ou OpenAI) para análises preditivas.</CardDescription>
+                    <CardTitle className="text-lg font-bold text-slate-900 dark:text-white">Inteligência Artificial (Opcional)</CardTitle>
+                    <CardDescription className="text-slate-500 dark:text-slate-400">Configure a API Key da sua IA (Groq, OpenRouter ou OpenAI) para análises preditivas.</CardDescription>
                  </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid gap-6">
                 <div className="space-y-2">
-                  <Label className="text-xs font-bold text-slate-500 uppercase">API Key (IA)</Label>
+                  <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">API Key (IA)</Label>
                   <div className="relative">
                     <KeyRound size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                     <Input 
                       type="password" 
                       placeholder="sk-or-v1-..." 
-                      className="pl-10 rounded-xl font-mono bg-slate-800/50 border-slate-700/50 text-white" 
+                      className="pl-10 rounded-xl font-mono bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/50 text-slate-900 dark:text-white" 
                     />
                   </div>
-                  <p className="text-[10px] text-slate-400 font-medium">A chave é encriptada e guardada de forma segura na sua instância local.</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">A chave é encriptada e guardada de forma segura na sua instância local.</p>
                 </div>
               </div>
-              <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl">
+              <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl">
                  <div>
-                    <p className="text-sm font-bold text-white">Modelo Principal (Texto)</p>
-                    <p className="text-xs text-slate-400 font-medium">Recomendado: Llama 3 70B ou DeepSeek V3</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">Modelo Principal (Texto)</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Recomendado: Llama 3 70B ou DeepSeek V3</p>
                  </div>
-                 <Input className="w-64 rounded-xl bg-slate-800/50 border-slate-700/50 text-white" defaultValue="deepseek-v3-flash" />
+                 <Input className="w-64 rounded-xl bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/50 text-slate-900 dark:text-white" defaultValue="deepseek-v3-flash" />
               </div>
               <div className="pt-4 flex justify-end gap-3">
                 <Button 

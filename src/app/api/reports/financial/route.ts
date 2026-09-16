@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { withAuth } from "@/lib/api-wrapper";
+import { toCents, fromCents, sumMoney } from "@/lib/money";
 
 export const dynamic = "force-dynamic";
 
@@ -9,23 +10,23 @@ export const GET = withAuth(async ({ clinicId }) => {
     // Fetch payments for revenue
     const payments = await prisma.payment.findMany({
       where: { clinicId },
-      orderBy: { createdAt: "asc" }
+      orderBy: { createdAt: "asc" },
+      take: 2000,
     });
 
-    const totalRevenue = payments.reduce((acc: any, p: any) => acc + Number(p.amount), 0);
+    const totalRevenue = sumMoney(payments.map((p) => p.amount));
 
     // Group by month
-    const monthlyData: Record<string, { revenue: number; expenses: number }> = {};
-    payments.forEach((p: any) => {
+    const monthlyCents: Record<string, number> = {};
+    payments.forEach((p) => {
       const month = p.createdAt.toLocaleString('pt-PT', { month: 'short' });
-      if (!monthlyData[month]) monthlyData[month] = { revenue: 0, expenses: 0 };
-      monthlyData[month].revenue += Number(p.amount);
+      monthlyCents[month] = (monthlyCents[month] || 0) + toCents(p.amount);
     });
 
-    const monthlyArray = Object.entries(monthlyData).map(([month, data]) => ({
+    const monthlyArray = Object.entries(monthlyCents).map(([month, cents]) => ({
       month,
-      revenue: data.revenue,
-      expenses: data.expenses
+      revenue: fromCents(cents),
+      expenses: 0
     })).slice(-6);
 
     // Top Clients

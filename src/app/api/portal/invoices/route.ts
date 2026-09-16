@@ -23,6 +23,7 @@ export async function GET(req: Request) {
         items: true,
       },
       orderBy: { createdAt: "desc" },
+      take: 100,
     });
 
      const stats = {

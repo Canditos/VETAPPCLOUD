@@ -10,6 +10,8 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, PieChart, Pie, Cell, Legend, AreaChart, Area,
 } from "recharts";
+import { useTheme } from "next-themes";
+import { getChartTheme } from "@/lib/chart-theme";
 
 const STATUS_COLORS = { SENT: "#22c55e", FAILED: "#ef4444", PENDING: "#f59e0b" };
 const TYPE_COLORS: Record<string, string> = { MANUAL: "#3b82f6", REMINDER_24H: "#8b5cf6", VACCINE_ALERT: "#06b6d4", MARKETING: "#f97316" };
@@ -26,6 +28,8 @@ export default function SmsDashboard() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState("30d");
+  const { resolvedTheme } = useTheme();
+  const t = getChartTheme(resolvedTheme === "dark");
 
   const periodDays = PERIODS.find(p => p.key === period)?.days ?? 30;
 
@@ -156,10 +160,10 @@ export default function SmsDashboard() {
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={typeBar.length > 0 ? typeBar : [{ name: "Sem dados", value: 0 }]} layout="vertical" margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
-                  <XAxis type="number" tick={{ fontSize: 10, fill: "#94a3b8" }} allowDecimals={false} />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "#94a3b8", fontWeight: 700 }} width={100} />
-                  <Tooltip contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: 12 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={t.grid} horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 10, fill: t.tick }} allowDecimals={false} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: t.tick, fontWeight: 700 }} width={100} />
+                  <Tooltip contentStyle={{ borderRadius: 12, backgroundColor: t.tooltipBg, border: "1px solid " + t.tooltipBorder, color: t.tooltipText, boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: 12 }} />
                   <Bar dataKey="value" radius={[0, 6, 6, 0]} maxBarSize={28}>
                     {typeBar.map((e: any, i: number) => <Cell key={i} fill={e.color} />)}
                   </Bar>
@@ -195,10 +199,10 @@ export default function SmsDashboard() {
                     <linearGradient id="sentGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/><stop offset="95%" stopColor="#22c55e" stopOpacity={0}/></linearGradient>
                     <linearGradient id="totalGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15}/><stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/></linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="date" tick={{ fontSize: 8, fill: "#94a3b8" }} tickFormatter={(v) => v?.slice(5) || ""} />
-                  <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} allowDecimals={false} />
-                  <Tooltip contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.15)", fontSize: 12 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={t.grid} />
+                  <XAxis dataKey="date" tick={{ fontSize: 8, fill: t.tick }} tickFormatter={(v) => v?.slice(5) || ""} />
+                  <YAxis tick={{ fontSize: 10, fill: t.tick }} allowDecimals={false} />
+                  <Tooltip contentStyle={{ borderRadius: 12, backgroundColor: t.tooltipBg, border: "1px solid " + t.tooltipBorder, color: t.tooltipText, boxShadow: "0 4px 20px rgba(0,0,0,0.15)", fontSize: 12 }} />
                   <Area type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={1} fill="url(#totalGrad)" strokeDasharray="4 4" dot={false} name="Total" />
                   <Area type="monotone" dataKey="sent" stroke="#22c55e" strokeWidth={2.5} fill="url(#sentGrad)" dot={{ r: 3, fill: "#22c55e", strokeWidth: 0 }} activeDot={{ r: 5, fill: "#22c55e", strokeWidth: 2, stroke: "#fff" }} name="Enviados" />
                   <Line type="monotone" dataKey="failed" stroke="#ef4444" strokeWidth={1.5} dot={false} strokeDasharray="3 3" name="Falhas" />
@@ -230,10 +234,10 @@ export default function SmsDashboard() {
               <div className="h-48">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={monthlyRev} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis dataKey="month" tick={{ fontSize: 9, fill: "#94a3b8" }} />
-                    <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} allowDecimals={false} />
-                    <Tooltip contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: 12 }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={t.grid} />
+                    <XAxis dataKey="month" tick={{ fontSize: 9, fill: t.tick }} />
+                    <YAxis tick={{ fontSize: 10, fill: t.tick }} allowDecimals={false} />
+                    <Tooltip contentStyle={{ borderRadius: 12, backgroundColor: t.tooltipBg, border: "1px solid " + t.tooltipBorder, color: t.tooltipText, boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: 12 }} />
                     <Bar dataKey="sent" name="Enviados" radius={[4, 4, 0, 0]} maxBarSize={40} fill="#22c55e" />
                     <Bar dataKey="failed" name="Falhas" radius={[4, 4, 0, 0]} maxBarSize={40} fill="#ef4444" />
                   </BarChart>
@@ -259,8 +263,8 @@ export default function SmsDashboard() {
                       <Pie data={statusPie} cx="50%" cy="50%" outerRadius={70} innerRadius={40} paddingAngle={4} dataKey="value">
                         {statusPie.map((e: any, i: number) => <Cell key={i} fill={e.color} />)}
                       </Pie>
-                      <Tooltip contentStyle={{ borderRadius: 12, border: "none", fontSize: 12 }} />
-                      <Legend formatter={(v) => <span className="text-[10px] font-bold text-slate-600">{v}</span>} />
+                      <Tooltip contentStyle={{ borderRadius: 12, backgroundColor: t.tooltipBg, border: "1px solid " + t.tooltipBorder, color: t.tooltipText, fontSize: 12 }} />
+                      <Legend formatter={(v) => <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">{v}</span>} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
