@@ -19,7 +19,8 @@ import {
   User,
   Pill,
   Mail,
-  Send
+  Send,
+  Bug
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { getVisibleMenuItems, ROLE_LABELS } from "@/lib/roles";
@@ -31,6 +32,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Pacientes: PawPrint,
   Clientes: Users,
   Internamento: Bed,
+  "Desparasitação": Bug,
   "Prescrições": Pill,
   "Diagnósticos": Activity,
   "Inventário": Package,
@@ -49,7 +51,7 @@ const menuGroups = [
   },
   {
     label: "Clínica",
-    keys: ["Pacientes", "Clientes", "Internamento", "Prescrições", "Diagnósticos"]
+    keys: ["Pacientes", "Clientes", "Internamento", "Desparasitação", "Prescrições", "Diagnósticos"]
   },
   {
     label: "Administrativo",

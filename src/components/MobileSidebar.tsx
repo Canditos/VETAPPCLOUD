@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { X, ChevronRight, LayoutDashboard, Stethoscope, Mail, PawPrint, Users, Bed, Pill, Activity, Package, Receipt, Send, BarChart3, Settings, Heart } from "lucide-react";
+import { X, ChevronRight, LayoutDashboard, Stethoscope, Mail, PawPrint, Users, Bed, Pill, Activity, Package, Receipt, Send, BarChart3, Settings, Heart, Bug } from "lucide-react";
 import { getVisibleMenuItems } from "@/lib/roles";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Pacientes: PawPrint,
   Clientes: Users,
   Internamento: Bed,
+  "Desparasitação": Bug,
   Prescrições: Pill,
   Diagnósticos: Activity,
   Inventário: Package,
@@ -38,7 +39,7 @@ export default function MobileSidebar() {
 
   const menuGroups = [
     { label: "Principal", keys: ["Dashboard", "Agenda", "Mensagens"] },
-    { label: "Clínica", keys: ["Pacientes", "Clientes", "Internamento", "Prescrições", "Diagnósticos"] },
+    { label: "Clínica", keys: ["Pacientes", "Clientes", "Internamento", "Desparasitação", "Prescrições", "Diagnósticos"] },
     { label: "Administrativo", keys: ["Inventário", "Faturação", "Marketing SMS", "SMS Stats", "Relatórios"] },
     { label: "Configuração", keys: ["Equipa", "Definições"] },
   ];
