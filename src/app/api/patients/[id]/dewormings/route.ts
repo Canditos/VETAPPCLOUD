@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { withAuthParams } from "@/lib/api-wrapper";
+import { audit } from "@/lib/audit";
 
 export const GET = withAuthParams(async ({ tenantPrisma }, { id: patientId }) => {
   try {
@@ -23,7 +24,7 @@ export const GET = withAuthParams(async ({ tenantPrisma }, { id: patientId }) =>
   }
 });
 
-export const POST = withAuthParams(async ({ req, tenantPrisma }, { id: patientId }) => {
+export const POST = withAuthParams(async ({ req, tenantPrisma, clinicId, userId }, { id: patientId }) => {
   try {
     const patient = await tenantPrisma.patient.findFirst({ where: { id: patientId } });
     if (!patient) {
@@ -48,6 +49,8 @@ export const POST = withAuthParams(async ({ req, tenantPrisma }, { id: patientId
         notes,
       },
     });
+
+    await audit({ clinicId, userId, action: "CREATE", entity: "Deworming", entityId: deworming.id });
 
     return NextResponse.json(deworming);
   } catch (error) {

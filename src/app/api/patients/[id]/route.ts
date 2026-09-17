@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { withAuthParams } from "@/lib/api-wrapper";
+import { audit } from "@/lib/audit";
 
-export const GET = withAuthParams(async ({ tenantPrisma }, { id }) => {
+export const GET = withAuthParams(async ({ tenantPrisma, clinicId, userId, session }, { id }) => {
   try {
     const patient = await tenantPrisma.patient.findUnique({
       where: { id },
@@ -14,6 +15,8 @@ export const GET = withAuthParams(async ({ tenantPrisma }, { id }) => {
       return NextResponse.json({ error: "Paciente não encontrado" }, { status: 404 });
     }
 
+    await audit({ clinicId, userId, userName: session?.user?.name ?? null, action: "VIEW", entity: "Patient", entityId: id });
+
     return NextResponse.json(patient);
   } catch (error) {
     console.error("[PATIENT_GET]", error);
@@ -21,7 +24,7 @@ export const GET = withAuthParams(async ({ tenantPrisma }, { id }) => {
   }
 });
 
-export const PATCH = withAuthParams(async ({ req, tenantPrisma }, { id }) => {
+export const PATCH = withAuthParams(async ({ req, tenantPrisma, clinicId, userId, session }, { id }) => {
   try {
     const existing = await tenantPrisma.patient.findUnique({
       where: { id },
@@ -62,6 +65,8 @@ export const PATCH = withAuthParams(async ({ req, tenantPrisma }, { id }) => {
         ...(allergies !== undefined && { allergies }),
       },
     });
+
+    await audit({ clinicId, userId, userName: session?.user?.name ?? null, action: "UPDATE", entity: "Patient", entityId: id });
 
     return NextResponse.json(patient);
   } catch (error) {

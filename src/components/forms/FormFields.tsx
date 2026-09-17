@@ -35,11 +35,11 @@ export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
             {...props}
           />
           {rightElement ? (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">{rightElement}</div>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400">{rightElement}</div>
           ) : null}
         </div>
         {hint && !error ? (
-          <p className="text-[11px] font-medium text-slate-400">{hint}</p>
+          <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">{hint}</p>
         ) : null}
         {error ? <p className="text-[11px] font-bold text-red-600">{error}</p> : null}
       </div>
@@ -76,7 +76,7 @@ export const TextareaField = React.forwardRef<HTMLTextAreaElement, TextareaField
           {...props}
         />
         {hint && !error ? (
-          <p className="text-[11px] font-medium text-slate-400">{hint}</p>
+          <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">{hint}</p>
         ) : null}
         {error ? <p className="text-[11px] font-bold text-red-600">{error}</p> : null}
       </div>
@@ -122,7 +122,7 @@ export const SelectField = React.forwardRef<HTMLSelectElement, SelectFieldProps>
           ))}
         </select>
         {hint && !error ? (
-          <p className="text-[11px] font-medium text-slate-400">{hint}</p>
+          <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">{hint}</p>
         ) : null}
         {error ? <p className="text-[11px] font-bold text-red-600">{error}</p> : null}
       </div>

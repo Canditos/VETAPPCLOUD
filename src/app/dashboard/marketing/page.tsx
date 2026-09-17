@@ -98,7 +98,7 @@ export default function MarketingPage() {
                 </div>
               </div>
               <div className="relative mt-4">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
                 <Input
                   placeholder="Procurar por nome ou telefone..."
                   value={search}
@@ -106,17 +106,17 @@ export default function MarketingPage() {
                   className="h-10 pl-10 rounded-xl bg-slate-50 dark:bg-white/5 border-none text-sm"
                 />
               </div>
-              <p className="text-xs text-slate-400 font-medium mt-2">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-2">
                 {selectedOwners.size} selecionados de {owners?.length || 0} tutores com telefone
               </p>
             </CardHeader>
             <CardContent className="p-0 max-h-[400px] overflow-y-auto">
               {isLoading ? (
                 <div className="flex items-center justify-center py-20">
-                  <Loader2 size={24} className="animate-spin text-slate-400" />
+                  <Loader2 size={24} className="animate-spin text-slate-500 dark:text-slate-400" />
                 </div>
               ) : filteredOwners.length === 0 ? (
-                <div className="text-center py-20 text-slate-400 font-medium">
+                <div className="text-center py-20 text-slate-500 dark:text-slate-400 font-medium">
                   Nenhum tutor encontrado.
                 </div>
               ) : (
@@ -136,12 +136,12 @@ export default function MarketingPage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{owner.name}</p>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <Phone size={11} className="text-slate-400 shrink-0" />
+                        <Phone size={11} className="text-slate-500 dark:text-slate-400 shrink-0" />
                         <span className="text-xs text-slate-500 font-medium truncate">{owner.phone}</span>
                         {owner.patientsCount > 0 && (
                           <>
                             <span className="text-slate-300">•</span>
-                            <span className="text-xs text-slate-400">{owner.patientsCount} animais</span>
+                            <span className="text-xs text-slate-500 dark:text-slate-400">{owner.patientsCount} animais</span>
                           </>
                         )}
                       </div>
@@ -163,7 +163,7 @@ export default function MarketingPage() {
             </CardHeader>
             <CardContent className="p-6 space-y-4">
               <div className="space-y-2">
-                <Label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Mensagem SMS</Label>
+                <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Mensagem SMS</Label>
                 <Textarea
                   placeholder="Escreva a sua mensagem..."
                   value={message}
@@ -172,17 +172,17 @@ export default function MarketingPage() {
                   maxLength={480}
                 />
                 <div className="flex justify-between text-xs">
-                  <span className={cn("font-bold", charsLeft < 0 ? "text-rose-600" : "text-slate-400")}>
+                  <span className={cn("font-bold", charsLeft < 0 ? "text-rose-600" : "text-slate-500 dark:text-slate-400")}>
                     {message.length}/480 caracteres
                   </span>
-                  <span className="text-slate-400 font-medium">
+                  <span className="text-slate-500 dark:text-slate-400 font-medium">
                     ~{Math.ceil(message.length / 160)} SMS(es)
                   </span>
                 </div>
               </div>
 
               <div className="p-4 bg-amber-50 dark:bg-amber-900/10 rounded-2xl border border-amber-100 dark:border-amber-900/20">
-                <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest flex items-center gap-1.5">
+                <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest flex items-center gap-1.5">
                   <AlertTriangle size={12} /> Aviso
                 </p>
                 <p className="text-xs text-amber-700 dark:text-amber-300 font-medium mt-1">
@@ -226,10 +226,10 @@ export default function MarketingPage() {
                     )}
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{r.name}</p>
-                      <p className="text-xs text-slate-400">{r.phone}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{r.phone}</p>
                     </div>
                     <Badge className={cn(
-                      "text-[9px] font-bold uppercase border-none",
+                      "text-[11px] font-bold uppercase border-none",
                       r.status === "sent" ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
                     )}>
                       {r.status === "sent" ? "OK" : "Falha"}

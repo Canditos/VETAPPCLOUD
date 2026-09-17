@@ -101,7 +101,7 @@ export default function AutomationsPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-slate-500 dark:text-slate-400" />
       </div>
     );
   }
@@ -139,7 +139,7 @@ export default function AutomationsPage() {
                     <div className="h-12 w-12 rounded-xl bg-white/10 flex items-center justify-center text-blue-400 font-bold italic">R</div>
                     <div>
                       <p className="font-bold">Resend (Email)</p>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">Ligado</p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase">Ligado</p>
                     </div>
                   </div>
                   <Badge className="bg-emerald-500/20 text-emerald-400 border-none text-[8px]">ATIVO</Badge>
@@ -150,14 +150,14 @@ export default function AutomationsPage() {
                     <div className="h-12 w-12 rounded-xl bg-white/10 flex items-center justify-center text-red-400 font-bold italic">T</div>
                     <div>
                       <p className="font-bold">Twilio (SMS)</p>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">Desligado</p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase">Desligado</p>
                     </div>
                   </div>
                   <ChevronRight size={18} className="text-slate-600" />
                 </div>
               </div>
               
-              <p className="text-[10px] text-slate-500 font-bold leading-relaxed italic">
+              <p className="text-[11px] text-slate-500 font-bold leading-relaxed italic">
                 A integração com Resend é gratuita até 3,000 emails/mês. SMS Twilio requer carregamento de saldo.
               </p>
             </CardContent>
@@ -196,10 +196,10 @@ export default function AutomationsPage() {
                     <h4 className="text-lg font-bold text-slate-900">Lembrete de Consulta (24h)</h4>
                     <p className="text-slate-500 text-sm font-medium mt-1">Envia um lembrete automático por email e SMS 24 horas antes do agendamento.</p>
                     <div className="flex gap-3 mt-4">
-                       <Button variant="ghost" size="sm" onClick={() => setPreviewTemplate('reminder24h')} className="text-[10px] font-bold uppercase text-blue-600 p-0 h-auto hover:bg-transparent">Ver Template</Button>
+                       <Button variant="ghost" size="sm" onClick={() => setPreviewTemplate('reminder24h')} className="text-[11px] font-bold uppercase text-blue-600 p-0 h-auto hover:bg-transparent">Ver Template</Button>
                        <span className="text-slate-200">|</span>
-                       <Badge variant="outline" className="rounded-lg text-[9px] font-bold uppercase text-slate-400">Canal: Email</Badge>
-                       <Badge variant="outline" className="rounded-lg text-[9px] font-bold uppercase text-slate-400">Canal: SMS</Badge>
+                       <Badge variant="outline" className="rounded-lg text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Canal: Email</Badge>
+                       <Badge variant="outline" className="rounded-lg text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Canal: SMS</Badge>
                     </div>
                   </div>
                 </div>
@@ -216,9 +216,9 @@ export default function AutomationsPage() {
                     <h4 className="text-lg font-bold text-slate-900">Avisos de Vacinação</h4>
                     <p className="text-slate-500 text-sm font-medium mt-1">Notifica o tutor 15 dias antes da vacina expirar para agendar o reforço.</p>
                     <div className="flex gap-3 mt-4">
-                       <Button variant="ghost" size="sm" onClick={() => setPreviewTemplate('vaccineAlert')} className="text-[10px] font-bold uppercase text-amber-600 p-0 h-auto hover:bg-transparent">Ver Template</Button>
+                       <Button variant="ghost" size="sm" onClick={() => setPreviewTemplate('vaccineAlert')} className="text-[11px] font-bold uppercase text-amber-600 p-0 h-auto hover:bg-transparent">Ver Template</Button>
                        <span className="text-slate-200">|</span>
-                       <Badge className="bg-amber-100 text-amber-600 border-none rounded-lg text-[9px] font-bold uppercase">Alta Conversão</Badge>
+                       <Badge className="bg-amber-100 text-amber-600 border-none rounded-lg text-[11px] font-bold uppercase">Alta Conversão</Badge>
                     </div>
                   </div>
                 </div>
@@ -240,7 +240,7 @@ export default function AutomationsPage() {
               </div>
 
               <div className="pt-8 border-t border-slate-50">
-                <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Logs de Envio (Hoje)</h4>
+                <h4 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-6">Logs de Envio (Hoje)</h4>
                 <div className="space-y-3">
                   {[
                     { target: "marco@example.com", type: "Email", status: "SENT", msg: "Lembrete Consulta - Bolinha" },
@@ -249,10 +249,10 @@ export default function AutomationsPage() {
                   ].map((log, i) => (
                     <div key={i} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
                       <div className="flex items-center gap-3">
-                        {log.type === "Email" ? <Mail size={14} className="text-slate-400" /> : <MessageSquare size={14} className="text-slate-400" />}
+                        {log.type === "Email" ? <Mail size={14} className="text-slate-500 dark:text-slate-400" /> : <MessageSquare size={14} className="text-slate-500 dark:text-slate-400" />}
                         <div>
                           <p className="text-xs font-bold text-slate-900">{log.msg}</p>
-                          <p className="text-[10px] font-bold text-slate-400 tracking-tight">{log.target}</p>
+                          <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 tracking-tight">{log.target}</p>
                         </div>
                       </div>
                       <Badge className={`rounded-lg text-[8px] font-bold uppercase ${log.status === 'SENT' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
@@ -275,19 +275,19 @@ export default function AutomationsPage() {
                 <div className="absolute top-0 right-0 p-10 opacity-10">
                    <Mail size={120} />
                 </div>
-                <Badge className="bg-blue-600 text-white border-none font-bold text-[10px] uppercase mb-4 px-3 py-1">Pré-visualização</Badge>
+                <Badge className="bg-blue-600 text-white border-none font-bold text-[11px] uppercase mb-4 px-3 py-1">Pré-visualização</Badge>
                 <DialogTitle className="text-3xl font-bold tracking-tight">{templates[previewTemplate as keyof typeof templates].title}</DialogTitle>
-                <DialogDescription className="text-slate-400 font-medium mt-2">Veja como o tutor receberá esta mensagem.</DialogDescription>
+                <DialogDescription className="text-slate-500 dark:text-slate-400 font-medium mt-2">Veja como o tutor receberá esta mensagem.</DialogDescription>
               </div>
               <div className="p-10 space-y-6 bg-slate-50">
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Assunto do Email</Label>
+                  <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Assunto do Email</Label>
                   <div className="p-4 bg-white rounded-2xl border border-slate-100 font-bold text-slate-700">
                     {templates[previewTemplate as keyof typeof templates].subject}
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Corpo da Mensagem</Label>
+                  <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Corpo da Mensagem</Label>
                   <div className="p-6 bg-white rounded-3xl border border-slate-100 text-slate-600 leading-relaxed font-medium min-h-[150px]">
                     {templates[previewTemplate as keyof typeof templates].body}
                   </div>

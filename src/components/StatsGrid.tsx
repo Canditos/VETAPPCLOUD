@@ -56,7 +56,7 @@ export function StatsGrid({ items, columns = 3, className }: StatsGridProps) {
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{item.label}</p>
               <p className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">{item.value}</p>
               {item.subtext && (
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{item.subtext}</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-0.5">{item.subtext}</p>
               )}
             </div>
           </div>

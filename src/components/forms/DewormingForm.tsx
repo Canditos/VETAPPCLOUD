@@ -64,7 +64,7 @@ export function DewormingForm({ patientId, onSuccess }: DewormingFormProps) {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+          <Label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
             <Bug size={12} /> Tipo de Desparasitação
           </Label>
           <div className="grid grid-cols-2 gap-2">
@@ -74,10 +74,10 @@ export function DewormingForm({ patientId, onSuccess }: DewormingFormProps) {
                 type="button"
                 variant={formData.type === t ? "default" : "outline"}
                 className={cn(
-                  "h-12 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all",
+                  "h-12 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all",
                   formData.type === t 
                     ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20" 
-                    : "border-slate-100 dark:border-slate-800 text-slate-400"
+                    : "border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400"
                 )}
                 onClick={() => setFormData({ ...formData, type: t })}
               >
@@ -88,7 +88,7 @@ export function DewormingForm({ patientId, onSuccess }: DewormingFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+          <Label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
              Nome do Produto
           </Label>
           <Input 
@@ -101,7 +101,7 @@ export function DewormingForm({ patientId, onSuccess }: DewormingFormProps) {
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <Label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
               <Tag size={12} /> Lote / Batch
             </Label>
             <Input 
@@ -113,7 +113,7 @@ export function DewormingForm({ patientId, onSuccess }: DewormingFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <Label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
               <CalendarIcon size={12} /> Data Aplicação
             </Label>
             <Popover>
@@ -143,7 +143,7 @@ export function DewormingForm({ patientId, onSuccess }: DewormingFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+          <Label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
             <CalendarIcon size={12} /> Próxima Dose (Validade)
           </Label>
           <Popover>
@@ -172,7 +172,7 @@ export function DewormingForm({ patientId, onSuccess }: DewormingFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+          <Label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
             <FileText size={12} /> Observações
           </Label>
           <Textarea 

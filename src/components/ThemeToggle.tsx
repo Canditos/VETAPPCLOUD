@@ -31,7 +31,7 @@ export function ThemeToggle() {
           <Moon size={16} className="text-blue-400" /> Escuro
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme("system")} className="gap-2 font-bold rounded-xl p-3 cursor-pointer">
-          <Laptop size={16} className="text-slate-400" /> Sistema
+          <Laptop size={16} className="text-slate-500 dark:text-slate-400" /> Sistema
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

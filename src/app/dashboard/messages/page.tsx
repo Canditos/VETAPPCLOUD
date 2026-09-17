@@ -213,7 +213,7 @@ export default function MessageCenter() {
           {/* Procura */}
           <div className="p-4 border-b border-slate-100 dark:border-white/5 space-y-3">
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" size={16} />
               <Input 
                 placeholder="Pesquisar tutor..." 
                 className="pl-11 h-10 rounded-2xl bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-white/5 font-semibold text-sm tracking-tight"
@@ -249,12 +249,12 @@ export default function MessageCenter() {
           {/* Listagem */}
           <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-white/5">
             {isLoading ? (
-              <div className="p-12 text-center text-slate-400 font-bold animate-pulse">A carregar inbox...</div>
+              <div className="p-12 text-center text-slate-500 dark:text-slate-400 font-bold animate-pulse">A carregar inbox...</div>
             ) : filteredThreads.length === 0 ? (
               <div className="p-12 text-center py-20">
                 <Inbox className="mx-auto mb-3 text-slate-300 dark:text-slate-600" size={32} />
                 <h4 className="text-sm font-bold text-slate-900 dark:text-white">Sem conversas</h4>
-                <p className="text-xs text-slate-400 mt-1">Nenhuma mensagem ou pedido com estes filtros.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Nenhuma mensagem ou pedido com estes filtros.</p>
               </div>
             ) : (
               filteredThreads.map((thread) => {
@@ -282,7 +282,7 @@ export default function MessageCenter() {
                         <h4 className="font-bold text-slate-900 dark:text-white text-sm tracking-tight truncate pr-2">
                           {thread.ownerName}
                         </h4>
-                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 shrink-0 uppercase tracking-tighter">
+                        <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 shrink-0 uppercase tracking-tighter">
                           {formatDistanceToNow(new Date(thread.lastMessage.createdAt), { addSuffix: false, locale: pt }).replace("cerca de", "")}
                         </span>
                       </div>
@@ -332,7 +332,7 @@ export default function MessageCenter() {
                     <h3 className="font-bold text-slate-900 dark:text-white text-base tracking-tight leading-tight">
                       {selectedThread?.ownerName}
                     </h3>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 tracking-tight font-medium mt-0.5">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 tracking-tight font-medium mt-0.5">
                       {selectedThread?.ownerEmail}
                     </p>
                   </div>
@@ -372,7 +372,7 @@ export default function MessageCenter() {
                         >
                           <div className="flex items-center justify-between mb-3.5">
                             <span className={cn(
-                              "text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5",
+                              "text-[11px] font-black uppercase tracking-widest flex items-center gap-1.5",
                               isPending && "text-amber-600 dark:text-amber-400",
                               isApproved && "text-emerald-600 dark:text-emerald-400",
                               isRejected && "text-rose-600 dark:text-rose-400"
@@ -382,21 +382,21 @@ export default function MessageCenter() {
                               {isApproved && "Pedido Aprovado na Agenda"}
                               {isRejected && "Pedido Rejeitado / Cancelado"}
                             </span>
-                            <span className="text-[10px] font-bold text-slate-400">
+                            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
                               {formatDistanceToNow(new Date(req.createdAt), { addSuffix: true, locale: pt })}
                             </span>
                           </div>
 
                           <div className="grid grid-cols-2 gap-4 mb-4">
                             <div className="p-3.5 bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 rounded-xl">
-                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Paciente</span>
+                              <span className="text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1">Paciente</span>
                               <span className="font-bold text-slate-800 dark:text-slate-200 text-sm flex items-center gap-1.5">
                                 <Activity size={14} className="text-blue-500" />
                                 {req.patientName || "Animal"}
                               </span>
                             </div>
                             <div className="p-3.5 bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 rounded-xl">
-                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Preferência de Horário</span>
+                              <span className="text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1">Preferência de Horário</span>
                               <span className="font-bold text-slate-800 dark:text-slate-200 text-sm flex items-center gap-1.5">
                                 <Calendar size={14} className="text-indigo-500" />
                                 {req.preferred || "Sem preferência"}
@@ -405,7 +405,7 @@ export default function MessageCenter() {
                           </div>
 
                           <div className="p-3.5 bg-slate-100/50 dark:bg-white/[0.02] rounded-xl mb-4 border border-slate-200/20">
-                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Motivo / Notas do Tutor</span>
+                            <span className="text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1">Motivo / Notas do Tutor</span>
                             <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 leading-relaxed">
                               "{req.content.split(": ").slice(1).join(": ") || req.content}"
                             </p>
@@ -440,7 +440,7 @@ export default function MessageCenter() {
                 {/* 2. Histórico de Conversação (Mensagens de Chat) */}
                 <div className="space-y-4 pt-2">
                   <div className="text-center py-2 shrink-0">
-                    <span className="bg-slate-100 dark:bg-white/5 text-[9px] font-extrabold text-slate-400 dark:text-slate-500 px-3 py-1 rounded-full uppercase tracking-wider">
+                    <span className="bg-slate-100 dark:bg-white/5 text-[11px] font-extrabold text-slate-500 dark:text-slate-400 dark:text-slate-500 px-3 py-1 rounded-full uppercase tracking-wider">
                       Início da conversa
                     </span>
                   </div>
@@ -448,7 +448,7 @@ export default function MessageCenter() {
                   {activeMessages.length === 0 ? (
                     <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-200 dark:border-white/5 py-16">
                       <MessageSquare className="mx-auto mb-3 text-slate-300 dark:text-slate-700" size={32} />
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Sem mensagens escritas</p>
+                      <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Sem mensagens escritas</p>
                       <p className="text-[11px] text-slate-500 mt-1 font-medium">Use a barra abaixo para iniciar o chat com o tutor.</p>
                     </div>
                   ) : (
@@ -472,7 +472,7 @@ export default function MessageCenter() {
                             {msg.content}
                           </div>
                           
-                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest px-1.5 flex items-center gap-1.5">
+                          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest px-1.5 flex items-center gap-1.5">
                             {isClinic ? "Clínica" : selectedThread?.ownerName} • {format(new Date(msg.createdAt), "HH:mm")}
                           </span>
                         </div>
@@ -540,7 +540,7 @@ export default function MessageCenter() {
               {/* Grelha de Estatísticas Rápidas */}
               <div className="grid grid-cols-2 gap-4 mt-8 w-full max-w-md">
                 <Card className="border-none bg-slate-50 dark:bg-white/[0.02] ring-1 ring-slate-100 dark:ring-white/5 rounded-2xl p-5 text-left">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Pedidos Pendentes</span>
+                  <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1">Pedidos Pendentes</span>
                   <div className="flex items-center gap-2">
                     <span className="text-3xl font-black text-amber-500 tracking-tighter">
                       {totalPendingRequests}
@@ -552,7 +552,7 @@ export default function MessageCenter() {
                 </Card>
 
                 <Card className="border-none bg-slate-50 dark:bg-white/[0.02] ring-1 ring-slate-100 dark:ring-white/5 rounded-2xl p-5 text-left">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Conversas Ativas</span>
+                  <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1">Conversas Ativas</span>
                   <div className="flex items-center gap-2">
                     <span className="text-3xl font-black text-blue-500 tracking-tighter">
                       {totalActiveChats}

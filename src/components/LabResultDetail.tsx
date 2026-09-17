@@ -23,10 +23,10 @@ export function LabResultDetail({ event }: { event: any }) {
 
   if (results.length === 0) {
     return (
-      <div className="p-4 text-center text-slate-400 text-sm">
+      <div className="p-4 text-center text-slate-500 dark:text-slate-400 text-sm">
         <FlaskConical size={24} className="mx-auto mb-2 opacity-40" />
         <p className="font-medium">A aguardar resultados...</p>
-        <p className="text-[10px] mt-1">{data?.dataJson?.testName || "Análise solicitada"}</p>
+        <p className="text-[11px] mt-1">{data?.dataJson?.testName || "Análise solicitada"}</p>
       </div>
     );
   }
@@ -45,7 +45,7 @@ export function LabResultDetail({ event }: { event: any }) {
             ? "bg-rose-50 dark:bg-rose-500/5 border-rose-100 dark:border-rose-500/10"
             : "bg-emerald-50 dark:bg-emerald-500/5 border-emerald-100 dark:border-emerald-500/10"
         )}>
-          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Alterados</p>
+          <p className="text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Alterados</p>
           {abnormal.length > 0 ? (
             <p className="text-lg font-black text-rose-600">{abnormal.length}</p>
           ) : (
@@ -58,10 +58,10 @@ export function LabResultDetail({ event }: { event: any }) {
         <table className="w-full text-xs">
           <thead>
             <tr className="bg-slate-50 dark:bg-slate-900/60">
-              <th className="text-left px-3 py-2 text-[8px] font-black text-slate-400 uppercase tracking-widest">Parâmetro</th>
-              <th className="text-right px-3 py-2 text-[8px] font-black text-slate-400 uppercase tracking-widest">Resultado</th>
-              <th className="text-center px-3 py-2 text-[8px] font-black text-slate-400 uppercase tracking-widest">Ref.</th>
-              <th className="text-center px-3 py-2 text-[8px] font-black text-slate-400 uppercase tracking-widest">Flag</th>
+              <th className="text-left px-3 py-2 text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Parâmetro</th>
+              <th className="text-right px-3 py-2 text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Resultado</th>
+              <th className="text-center px-3 py-2 text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Ref.</th>
+              <th className="text-center px-3 py-2 text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Flag</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-white/5">
@@ -71,23 +71,23 @@ export function LabResultDetail({ event }: { event: any }) {
                 <tr key={i} className={cn(isAbnormal ? "bg-rose-50/30 dark:bg-rose-500/5" : "hover:bg-slate-50 dark:hover:bg-white/5")}>
                   <td className="px-3 py-2.5 font-bold text-slate-800 dark:text-slate-200 whitespace-nowrap">
                     {r.name}
-                    <span className="text-[9px] text-slate-400 ml-1 font-mono">({r.code})</span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 ml-1 font-mono">({r.code})</span>
                   </td>
                   <td className={cn("px-3 py-2.5 text-right font-black tabular-nums",
                     isAbnormal ? "text-rose-600" : "text-slate-900 dark:text-white"
                   )}>
-                    {r.value} <span className="text-[9px] font-medium text-slate-400">{r.unit}</span>
+                    {r.value} <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">{r.unit}</span>
                   </td>
-                  <td className="px-3 py-2.5 text-center text-slate-400 font-mono text-[10px]">
+                  <td className="px-3 py-2.5 text-center text-slate-500 dark:text-slate-400 font-mono text-[11px]">
                     {r.refLow} – {r.refHigh}
                   </td>
                   <td className="px-3 py-2.5 text-center">
                     {r.flag === "N" ? (
-                      <span className="inline-block w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 text-[9px] font-black flex items-center justify-center mx-auto">N</span>
+                      <span className="inline-block w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 text-[11px] font-black flex items-center justify-center mx-auto">N</span>
                     ) : r.flag === "H" ? (
-                      <span className="inline-block w-5 h-5 rounded-full bg-rose-100 text-rose-600 text-[9px] font-black flex items-center justify-center mx-auto" title="Alto">H</span>
+                      <span className="inline-block w-5 h-5 rounded-full bg-rose-100 text-rose-600 text-[11px] font-black flex items-center justify-center mx-auto" title="Alto">H</span>
                     ) : (
-                      <span className="inline-block w-5 h-5 rounded-full bg-amber-100 text-amber-600 text-[9px] font-black flex items-center justify-center mx-auto" title="Baixo">L</span>
+                      <span className="inline-block w-5 h-5 rounded-full bg-amber-100 text-amber-600 text-[11px] font-black flex items-center justify-center mx-auto" title="Baixo">L</span>
                     )}
                   </td>
                 </tr>
@@ -98,7 +98,7 @@ export function LabResultDetail({ event }: { event: any }) {
       </div>
 
       {data?.dataJson?.lab && (
-        <p className="text-[9px] text-slate-400 font-medium">
+        <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
           Equipamento: {data.dataJson.lab} • {format(new Date(event.date), "dd MMM yyyy 'às' HH:mm", { locale: pt })}
         </p>
       )}
@@ -117,12 +117,12 @@ export function LabResultsChart({ patientId }: { patientId: string }) {
     enabled: !!patientId,
   });
 
-  if (isLoading) return <div className="text-center text-slate-400 py-8 text-sm">A carregar gráficos...</div>;
+  if (isLoading) return <div className="text-center text-slate-500 dark:text-slate-400 py-8 text-sm">A carregar gráficos...</div>;
   if (!trends || trends.length === 0) return (
-    <div className="text-center text-slate-400 py-8 text-sm">
+    <div className="text-center text-slate-500 dark:text-slate-400 py-8 text-sm">
       <TrendingUp size={24} className="mx-auto mb-2 opacity-40" />
       <p className="font-medium">Sem dados suficientes para gráficos</p>
-      <p className="text-[10px] mt-1">São precisos pelo menos 2 resultados para mostrar tendências</p>
+      <p className="text-[11px] mt-1">São precisos pelo menos 2 resultados para mostrar tendências</p>
     </div>
   );
 
@@ -135,8 +135,8 @@ export function LabResultsChart({ patientId }: { patientId: string }) {
             {group.parameters.map((param: any, pi: number) => (
               <div key={pi} className="p-4 rounded-xl bg-white dark:bg-slate-950/60 border border-slate-100 dark:border-white/5">
                 <div className="flex justify-between items-center mb-2">
-                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{param.name} <span className="text-[10px] text-slate-400 font-mono">({param.code})</span></p>
-                  <p className="text-[9px] text-slate-400 font-mono">{param.unit}</p>
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{param.name} <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">({param.code})</span></p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">{param.unit}</p>
                 </div>
                 <div className="h-48">
                   <ResponsiveContainer width="100%" height="100%">
@@ -168,7 +168,7 @@ export function LabResultsChart({ patientId }: { patientId: string }) {
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
-                <div className="flex justify-between mt-2 text-[9px] text-slate-400">
+                <div className="flex justify-between mt-2 text-[11px] text-slate-500 dark:text-slate-400">
                   <span>Ref: {param.refLow} – {param.refHigh} {param.unit}</span>
                   <span>{param.values.length} análises</span>
                 </div>

@@ -213,7 +213,7 @@ export default function SettingsPage() {
                     placeholder="Introduza a sua API Key do Vendus" 
                     className="rounded-xl font-mono bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/50 text-slate-900 dark:text-white" 
                   />
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Pode encontrar a sua chave em Definições &gt; API no painel do Vendus.</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Pode encontrar a sua chave em Definições &gt; API no painel do Vendus.</p>
                 </div>
               </div>
               <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl">
@@ -267,7 +267,7 @@ export default function SettingsPage() {
                       className="pl-10 rounded-xl font-mono bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/50 text-slate-900 dark:text-white" 
                     />
                   </div>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">A chave é encriptada e guardada de forma segura na sua instância local.</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">A chave é encriptada e guardada de forma segura na sua instância local.</p>
                 </div>
               </div>
               <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl">

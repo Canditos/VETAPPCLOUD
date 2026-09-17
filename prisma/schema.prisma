@@ -48,6 +48,7 @@ model Clinic {
   servicePacks       ServicePack[]
   vaccinations       Vaccination[]
   dewormings         Deworming[]
+  auditLogs          AuditLog[]
 
   @@index([name])
 }
@@ -739,6 +740,24 @@ model ServicePack {
 
   @@index([clinicId])
   @@index([type])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  clinicId  String
+  userId    String?
+  userName  String?
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+
+  @@index([clinicId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@index([userId])
 }
 
 model ServicePackItem {

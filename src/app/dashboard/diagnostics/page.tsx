@@ -160,18 +160,18 @@ export default function DiagnosticsPage() {
                         <div className="flex items-center gap-2 mb-1">
                           <Badge
                             variant="secondary"
-                            className="font-medium text-[10px]"
+                            className="font-medium text-[11px]"
                           >
                             {dx.id?.slice(-6) ?? "—"}
                           </Badge>
-                          <Badge className={`${status.bg} ${status.color} border-none text-[10px] font-medium`}>
+                          <Badge className={`${status.bg} ${status.color} border-none text-[11px] font-medium`}>
                             <StatusIcon size={10} className="mr-1" />
                             {status.label}
                           </Badge>
                         </div>
                         <h3 className="text-lg font-bold text-slate-900 dark:text-white truncate">
                            {dx.patientName ?? "—"}{" "}
-                           <span className="text-slate-400 font-normal text-sm">
+                           <span className="text-slate-500 dark:text-slate-400 font-normal text-sm">
                              ({dx.ownerName ?? "—"})
                           </span>
                         </h3>
@@ -184,7 +184,7 @@ export default function DiagnosticsPage() {
                       </div>
 
                       <div className="flex flex-col items-end gap-2">
-                        <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase">
+                        <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase">
                           {dx.createdAt
                             ? formatDistanceToNow(new Date(dx.createdAt), { addSuffix: true, locale: pt })
                             : "—"}

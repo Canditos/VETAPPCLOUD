@@ -133,13 +133,13 @@ export function PrescriptionForm({ patientId: initialPatientId, consultationId, 
       {/* Patient Selection */}
       {!initialPatientId && (
         <div className="bg-blue-600/5 p-6 rounded-[2.5rem] border border-blue-500/10 space-y-4">
-          <Label className="text-[10px] font-black text-blue-500 uppercase tracking-widest flex items-center gap-2 ml-2">
+          <Label className="text-[11px] font-black text-blue-500 uppercase tracking-widest flex items-center gap-2 ml-2">
             <PawPrint size={14} /> Seleção do Paciente
           </Label>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="relative">
               <div className="relative group">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
                 <input
                   className="w-full h-16 pl-14 pr-6 rounded-2xl bg-white dark:bg-slate-900 border-none ring-1 ring-slate-200 dark:ring-white/10 font-black text-sm text-slate-900 dark:text-white placeholder:text-slate-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all shadow-sm"
                   placeholder="Pesquisar Animal ou Tutor..."
@@ -167,10 +167,10 @@ export function PrescriptionForm({ patientId: initialPatientId, consultationId, 
                     >
                       <div className="flex flex-col">
                         <span className="font-black text-slate-900 dark:text-white group-hover:text-white">{p.name}</span>
-                        <span className="text-[10px] font-bold text-slate-400 group-hover:text-blue-100 uppercase tracking-widest">{p.species}</span>
+                        <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 group-hover:text-blue-100 uppercase tracking-widest">{p.species}</span>
                       </div>
                       <div className="text-right">
-                        <span className="text-[10px] font-black text-slate-400 group-hover:text-white uppercase tracking-tighter block">{p.owner?.name}</span>
+                        <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 group-hover:text-white uppercase tracking-tighter block">{p.owner?.name}</span>
                       </div>
                     </button>
                   )) : (
@@ -186,9 +186,9 @@ export function PrescriptionForm({ patientId: initialPatientId, consultationId, 
                   <UserIcon size={20} strokeWidth={2.5} />
                 </div>
                 <div className="flex flex-col flex-1 overflow-hidden">
-                  <span className="text-[10px] font-black text-blue-600/60 dark:text-blue-400/40 uppercase tracking-widest leading-none mb-1">Tutor Associado</span>
+                  <span className="text-[11px] font-black text-blue-600/60 dark:text-blue-400/40 uppercase tracking-widest leading-none mb-1">Tutor Associado</span>
                   <span className="font-black text-slate-900 dark:text-white truncate">{selectedPatient.owner?.name}</span>
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">{selectedPatient.owner?.email || "Sem email"}</span>
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tighter">{selectedPatient.owner?.email || "Sem email"}</span>
                 </div>
                 <button 
                   type="button"
@@ -199,8 +199,8 @@ export function PrescriptionForm({ patientId: initialPatientId, consultationId, 
                 </button>
               </div>
             ) : (
-              <div className="flex items-center justify-center border-2 border-dashed border-slate-200 dark:border-white/5 rounded-2xl p-4 text-slate-400 dark:text-slate-600">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em]">Aguardando seleção...</p>
+              <div className="flex items-center justify-center border-2 border-dashed border-slate-200 dark:border-white/5 rounded-2xl p-4 text-slate-500 dark:text-slate-400 dark:text-slate-600">
+                <p className="text-[11px] font-black uppercase tracking-[0.2em]">Aguardando seleção...</p>
               </div>
             )}
           </div>
@@ -211,7 +211,7 @@ export function PrescriptionForm({ patientId: initialPatientId, consultationId, 
       <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800">
         <div className="flex items-center justify-between mb-6">
           <div className="space-y-1">
-            <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <Label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
               <CalendarIcon size={12} /> Validade da Prescrição
             </Label>
             <Popover>
@@ -239,7 +239,7 @@ export function PrescriptionForm({ patientId: initialPatientId, consultationId, 
               </PopoverContent>
             </Popover>
           </div>
-          <Badge className="bg-blue-600 text-white font-black text-[10px] px-4 py-2 rounded-xl shadow-lg shadow-blue-500/20 uppercase tracking-widest">
+          <Badge className="bg-blue-600 text-white font-black text-[11px] px-4 py-2 rounded-xl shadow-lg shadow-blue-500/20 uppercase tracking-widest">
             Protocolo Clínico
           </Badge>
         </div>
@@ -249,7 +249,7 @@ export function PrescriptionForm({ patientId: initialPatientId, consultationId, 
             <div key={index} className="relative bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-4 animate-in fade-in zoom-in-95 duration-300">
               <div className="flex justify-between items-start">
                 <div className="flex-1 space-y-2">
-                  <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Medicamento / Substância</Label>
+                  <Label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Medicamento / Substância</Label>
                   <Input 
                     placeholder="Ex: Clavaseptin 500mg" 
                     className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-black text-lg"
@@ -272,7 +272,7 @@ export function PrescriptionForm({ patientId: initialPatientId, consultationId, 
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Posologia</Label>
+                  <Label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Posologia</Label>
                   <Input 
                     placeholder="Ex: 1 comp" 
                     className="h-10 rounded-lg bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-3 font-bold"
@@ -281,7 +281,7 @@ export function PrescriptionForm({ patientId: initialPatientId, consultationId, 
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Frequência</Label>
+                  <Label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Frequência</Label>
                   <Input 
                     placeholder="Ex: 12/12h" 
                     className="h-10 rounded-lg bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-3 font-bold"
@@ -290,7 +290,7 @@ export function PrescriptionForm({ patientId: initialPatientId, consultationId, 
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Duração</Label>
+                  <Label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Duração</Label>
                   <Input 
                     placeholder="Ex: 7 dias" 
                     className="h-10 rounded-lg bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-3 font-bold"
@@ -301,7 +301,7 @@ export function PrescriptionForm({ patientId: initialPatientId, consultationId, 
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Instruções Adicionais</Label>
+                <Label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Instruções Adicionais</Label>
                 <Input 
                   placeholder="Ex: Administrar com alimento..." 
                   className="h-10 rounded-lg bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-3 font-medium text-xs"
@@ -316,7 +316,7 @@ export function PrescriptionForm({ patientId: initialPatientId, consultationId, 
         <Button 
           type="button"
           variant="outline"
-          className="w-full mt-6 py-8 border-dashed border-slate-200 dark:border-slate-800 rounded-[2rem] bg-white/50 dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-900 text-slate-400 dark:text-slate-600 font-black uppercase text-[10px] tracking-widest transition-all"
+          className="w-full mt-6 py-8 border-dashed border-slate-200 dark:border-slate-800 rounded-[2rem] bg-white/50 dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-900 text-slate-500 dark:text-slate-400 dark:text-slate-600 font-black uppercase text-[11px] tracking-widest transition-all"
           onClick={addItem}
         >
           <Plus size={16} className="mr-2" strokeWidth={3} /> Adicionar Medicamento
@@ -340,7 +340,7 @@ export function PrescriptionForm({ patientId: initialPatientId, consultationId, 
             <Button 
               variant="outline" 
               type="button"
-              className="flex-1 rounded-xl font-black uppercase text-[10px] tracking-widest h-12"
+              className="flex-1 rounded-xl font-black uppercase text-[11px] tracking-widest h-12"
               onClick={() => {
                 setCreatedPrescription(null);
                 setItems([{ medicineName: "", dosage: "", frequency: "", duration: "", notes: "" }]);

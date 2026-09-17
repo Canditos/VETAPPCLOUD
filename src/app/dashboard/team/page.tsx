@@ -100,7 +100,7 @@ export default function TeamPage() {
       case "ADMIN": return <Badge className="bg-purple-500/10 text-purple-400 border-none gap-1 px-3 py-1 rounded-lg"><Shield size={12} /> Admin</Badge>;
       case "VETERINARIAN": return <Badge className="bg-sky-500/10 text-sky-400 border-none gap-1 px-3 py-1 rounded-lg"><Stethoscope size={12} /> Veterinário</Badge>;
       case "ASSISTANT": return <Badge className="bg-emerald-500/10 text-emerald-400 border-none gap-1 px-3 py-1 rounded-lg"><Briefcase size={12} /> Assistente</Badge>;
-      case "RECEPTIONIST": return <Badge className="bg-slate-500/10 text-slate-400 border-none gap-1 px-3 py-1 rounded-lg"><UserCircle size={12} /> Receção</Badge>;
+      case "RECEPTIONIST": return <Badge className="bg-slate-500/10 text-slate-500 dark:text-slate-400 border-none gap-1 px-3 py-1 rounded-lg"><UserCircle size={12} /> Receção</Badge>;
       default: return <Badge>{role}</Badge>;
     }
   };
@@ -183,7 +183,7 @@ export default function TeamPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="border-none shadow-sm rounded-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/5">
           <CardHeader className="pb-2">
-            <CardTitle className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Staff</CardTitle>
+            <CardTitle className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Total Staff</CardTitle>
           </CardHeader>
           <CardContent>
              <p className="text-4xl font-bold text-slate-900 dark:text-white">{team.length}</p>
@@ -192,11 +192,11 @@ export default function TeamPage() {
         </Card>
         <Card className="border-none shadow-sm rounded-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/5">
           <CardHeader className="pb-2">
-            <CardTitle className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Acessos Ativos</CardTitle>
+            <CardTitle className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Acessos Ativos</CardTitle>
           </CardHeader>
           <CardContent>
              <p className="text-4xl font-bold text-slate-900 dark:text-white">{team.filter(u => u.role === 'ADMIN' || u.role === 'VETERINARIAN').length}</p>
-             <p className="text-xs text-slate-400 font-bold mt-1">Gestão & Área Clínica</p>
+             <p className="text-xs text-slate-500 dark:text-slate-400 font-bold mt-1">Gestão & Área Clínica</p>
           </CardContent>
         </Card>
       </div>
@@ -206,10 +206,10 @@ export default function TeamPage() {
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
-                <TableHead className="px-8 py-5 text-slate-400 font-bold text-[10px] uppercase tracking-widest">Colaborador</TableHead>
-                <TableHead className="px-8 py-5 text-slate-400 font-bold text-[10px] uppercase tracking-widest">Permissões</TableHead>
-                <TableHead className="px-8 py-5 text-slate-400 font-bold text-[10px] uppercase tracking-widest">Desde</TableHead>
-                <TableHead className="px-8 py-5 text-right font-bold text-[10px] uppercase tracking-widest text-slate-400">Ações</TableHead>
+                <TableHead className="px-8 py-5 text-slate-500 dark:text-slate-400 font-bold text-[11px] uppercase tracking-widest">Colaborador</TableHead>
+                <TableHead className="px-8 py-5 text-slate-500 dark:text-slate-400 font-bold text-[11px] uppercase tracking-widest">Permissões</TableHead>
+                <TableHead className="px-8 py-5 text-slate-500 dark:text-slate-400 font-bold text-[11px] uppercase tracking-widest">Desde</TableHead>
+                <TableHead className="px-8 py-5 text-right font-bold text-[11px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -241,7 +241,7 @@ export default function TeamPage() {
                       variant="ghost" 
                       size="sm" 
                       onClick={() => toast.info(`A abrir definições de ${m.name}...`)}
-                      className="font-bold text-[10px] uppercase tracking-widest text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl px-4 h-9"
+                      className="font-bold text-[11px] uppercase tracking-widest text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl px-4 h-9"
                     >
                       Configurar
                     </Button>

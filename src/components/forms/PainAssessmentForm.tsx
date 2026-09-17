@@ -95,7 +95,7 @@ function getSeverity(normalizedScore: number): {
   color: string;
   badge: string;
 } {
-  if (normalizedScore < 0) return { label: "Não avaliado", color: "text-slate-400", badge: "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400" };
+  if (normalizedScore < 0) return { label: "Não avaliado", color: "text-slate-500 dark:text-slate-400", badge: "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400" };
   if (normalizedScore <= 2) return { label: "Sem dor / mínima", color: "text-emerald-600 dark:text-emerald-400", badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" };
   if (normalizedScore <= 4) return { label: "Dor ligeira", color: "text-yellow-600 dark:text-yellow-400", badge: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" };
   if (normalizedScore <= 6) return { label: "Dor moderada", color: "text-orange-600 dark:text-orange-400", badge: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" };
@@ -138,16 +138,16 @@ export function PainAssessmentForm({ species, value, onChange }: PainAssessmentF
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-0.5">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+          <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
             Avaliação de Dor — {protocolName}
           </p>
-          <p className="text-[10px] text-slate-400 font-medium">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
             {isCat ? "Expressão facial + comportamental" : "Escala comportamental composta"} · {answeredCount}/{protocol.length} categorias avaliadas
           </p>
         </div>
         {answeredCount > 0 && (
           <div className="flex items-center gap-2">
-            <Badge className={cn("border-none text-[10px] font-bold px-3 py-1", severity.badge)}>
+            <Badge className={cn("border-none text-[11px] font-bold px-3 py-1", severity.badge)}>
               {severity.label}
             </Badge>
             <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
@@ -175,8 +175,8 @@ export function PainAssessmentForm({ species, value, onChange }: PainAssessmentF
             <div key={ci} className="space-y-2.5">
               <div className="flex items-center gap-2">
                 <span className={cn(
-                  "w-5 h-5 rounded-md text-[10px] font-black flex items-center justify-center shrink-0",
-                  selections[ci] < 0 ? "bg-slate-100 dark:bg-slate-800 text-slate-400" :
+                  "w-5 h-5 rounded-md text-[11px] font-black flex items-center justify-center shrink-0",
+                  selections[ci] < 0 ? "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400" :
                   selections[ci] === 0 ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400" :
                   selections[ci] === 1 ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400" :
                   selections[ci] === 2 ? "bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400" :
@@ -186,7 +186,7 @@ export function PainAssessmentForm({ species, value, onChange }: PainAssessmentF
                 </span>
                 <div>
                   <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{cat.label}</p>
-                  {cat.hint && <p className="text-[10px] text-slate-400 font-medium">{cat.hint}</p>}
+                  {cat.hint && <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{cat.hint}</p>}
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-7">
@@ -215,13 +215,13 @@ export function PainAssessmentForm({ species, value, onChange }: PainAssessmentF
                       )}
                     >
                       <span className={cn(
-                        "inline-block w-4 h-4 rounded-md text-[9px] font-black mr-1.5 align-middle leading-4 text-center",
+                        "inline-block w-4 h-4 rounded-md text-[11px] font-black mr-1.5 align-middle leading-4 text-center",
                         isSelected
                           ? score === 0 ? "bg-emerald-500 text-white" :
                             score === 1 ? "bg-yellow-500 text-white" :
                             score === 2 ? "bg-orange-500 text-white" :
                             "bg-rose-600 text-white"
-                          : "bg-slate-100 dark:bg-slate-800 text-slate-400"
+                          : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
                       )}>
                         {score}
                       </span>
@@ -238,7 +238,7 @@ export function PainAssessmentForm({ species, value, onChange }: PainAssessmentF
       {/* Score bar */}
       {answeredCount > 0 && (
         <div className="pt-2 space-y-2">
-          <div className="flex justify-between text-[10px] font-bold text-slate-400">
+          <div className="flex justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
             <span>Sem dor</span><span>Ligeira</span><span>Moderada</span><span>Intensa</span><span>Máxima</span>
           </div>
           <div className="h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">

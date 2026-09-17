@@ -183,7 +183,7 @@ function PatientsPageContent() {
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-xl text-slate-900 dark:text-white truncate">{patient.name}</span>
                         {patient.gender && (
-                          <Badge variant="outline" className="rounded-md px-1.5 py-0 text-[9px] font-semibold border-slate-200 dark:border-slate-700 text-slate-400">
+                          <Badge variant="outline" className="rounded-md px-1.5 py-0 text-[11px] font-semibold border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400">
                             {patient.gender}
                           </Badge>
                         )}
@@ -204,21 +204,21 @@ function PatientsPageContent() {
                         {patient.species}
                       </span>
                     </div>
-                    <p className="text-xs font-medium text-slate-400 dark:text-slate-500 truncate pl-3.5">
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 truncate pl-3.5">
                       {patient.breed || "Indefinida"}
                     </p>
                   </div>
 
                   {/* Owner */}
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+                    <div className="w-9 h-9 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400">
                       <User size={16} />
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">
                         {patient.owner?.name || "—"}
                       </p>
-                      <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500">
+                      <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">
                         {patient.owner?.phone || "Sem telefone"}
                       </p>
                     </div>
@@ -234,7 +234,7 @@ function PatientsPageContent() {
 
                   {/* Action */}
                   <div className="text-right">
-                    <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
+                    <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
                       <ChevronRight size={20} strokeWidth={3} />
                     </div>
                   </div>
@@ -247,7 +247,7 @@ function PatientsPageContent() {
         {/* Pagination */}
         {pagination && pagination.totalPages > 1 && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6 px-4 py-4">
-            <p className="text-sm font-medium text-slate-400 dark:text-slate-500">
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">
               Página {pagination.page} / {pagination.totalPages}
             </p>
 

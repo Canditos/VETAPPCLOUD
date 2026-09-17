@@ -70,7 +70,7 @@ export default function BackupDashboard() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tighter">
             Backup & Recuperação
           </h1>
-          <p className="text-slate-400 text-sm font-medium mt-1">
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">
             Backup automático a cada 2 dias. Retém apenas os 2 mais recentes.
           </p>
         </div>
@@ -97,7 +97,7 @@ export default function BackupDashboard() {
                 <CheckCircle size={20} className="text-emerald-600" />
               </div>
               <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                   Último Backup
                 </p>
                 <p className="text-sm font-bold text-slate-900 dark:text-white">
@@ -127,7 +127,7 @@ export default function BackupDashboard() {
                 <HardDrive size={20} className="text-blue-600" />
               </div>
               <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                   Backups Locais
                 </p>
                 <p className="text-sm font-bold text-slate-900 dark:text-white">
@@ -145,10 +145,10 @@ export default function BackupDashboard() {
           <CardContent className="p-5 space-y-3">
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${cloudConfigured ? "bg-emerald-50 dark:bg-emerald-900/20" : "bg-slate-50 dark:bg-slate-800"}`}>
-                <Cloud size={20} className={cloudConfigured ? "text-emerald-600" : "text-slate-400"} />
+                <Cloud size={20} className={cloudConfigured ? "text-emerald-600" : "text-slate-500 dark:text-slate-400"} />
               </div>
               <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                   Cloud
                 </p>
                 <p className="text-sm font-bold text-slate-900 dark:text-white">
@@ -208,7 +208,7 @@ export default function BackupDashboard() {
                   <p className="text-sm font-bold text-slate-900 dark:text-white">
                     {c.label}
                   </p>
-                  <p className="text-[10px] text-slate-400 font-medium">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                     {c.desc}
                   </p>
                 </div>
@@ -232,7 +232,7 @@ export default function BackupDashboard() {
               <p className="text-sm font-bold text-slate-500">
                 Nenhum backup encontrado
               </p>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Clique em "Fazer Backup Agora" para criar o primeiro.
               </p>
             </div>
@@ -251,7 +251,7 @@ export default function BackupDashboard() {
                       <p className="text-sm font-bold text-slate-900 dark:text-white">
                         {b.name}
                       </p>
-                      <p className="text-[10px] text-slate-400 font-mono">
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                         {new Date(b.date).toLocaleString("pt-PT")} — {b.size}
                       </p>
                     </div>
@@ -259,11 +259,11 @@ export default function BackupDashboard() {
                   <div className="flex items-center gap-2">
                     <Badge
                       variant="secondary"
-                      className="text-[9px] font-bold bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 border-none"
+                      className="text-[11px] font-bold bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 border-none"
                     >
                       {b.components.length} componentes
                     </Badge>
-                    <ChevronRight size={14} className="text-slate-400" />
+                    <ChevronRight size={14} className="text-slate-500 dark:text-slate-400" />
                   </div>
                 </div>
               ))}
@@ -275,21 +275,21 @@ export default function BackupDashboard() {
       {/* Config Info */}
       <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-5 space-y-3">
         <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-          <Clock size={16} className="text-slate-400" />
+          <Clock size={16} className="text-slate-500 dark:text-slate-400" />
           Configuração do Servidor
         </h3>
         <div className="grid grid-cols-2 gap-3 text-xs font-mono text-slate-500">
           <div>
-            <span className="text-slate-400">Cron:</span> {data?.cron ?? "0 2 */2 * *"}
+            <span className="text-slate-500 dark:text-slate-400">Cron:</span> {data?.cron ?? "0 2 */2 * *"}
           </div>
           <div>
-            <span className="text-slate-400">Retenção:</span> {data?.retentionCount ?? 2} backups
+            <span className="text-slate-500 dark:text-slate-400">Retenção:</span> {data?.retentionCount ?? 2} backups
           </div>
           <div>
-            <span className="text-slate-400">Diretório:</span> {data?.backupDir ?? "/backups"}
+            <span className="text-slate-500 dark:text-slate-400">Diretório:</span> {data?.backupDir ?? "/backups"}
           </div>
           <div>
-            <span className="text-slate-400">Próximo:</span> {lastBackup ? new Date(lastBackup.nextBackup).toLocaleDateString("pt-PT") : "N/A"}
+            <span className="text-slate-500 dark:text-slate-400">Próximo:</span> {lastBackup ? new Date(lastBackup.nextBackup).toLocaleDateString("pt-PT") : "N/A"}
           </div>
         </div>
       </div>

@@ -97,7 +97,7 @@ export default function CustomersPage() {
         </Card>
 
         {/* Labels for "Columns" in Card Layout (Desktop) */}
-        <div className="hidden md:grid grid-cols-[1fr_200px_300px_150px_80px] gap-4 px-8 text-slate-400 dark:text-slate-500 font-bold text-[10px] uppercase tracking-wider">
+        <div className="hidden md:grid grid-cols-[1fr_200px_300px_150px_80px] gap-4 px-8 text-slate-500 dark:text-slate-400 dark:text-slate-500 font-bold text-[11px] uppercase tracking-wider">
           <span>Cliente & Identificação</span>
           <span>Contactos</span>
           <span>Faturação & Morada</span>
@@ -194,7 +194,7 @@ export default function CustomersPage() {
                           alert("Erro ao gerar link do portal");
                         }
                       }}
-                      className="h-10 px-3 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase tracking-wider hover:bg-blue-600 hover:text-white transition-all duration-300 shrink-0"
+                      className="h-10 px-3 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-[11px] font-bold uppercase tracking-wider hover:bg-blue-600 hover:text-white transition-all duration-300 shrink-0"
                       title="Enviar Portal ao Tutor"
                     >
                       Portal
@@ -212,7 +212,7 @@ export default function CustomersPage() {
         {/* Pagination Section */}
         {pagination && pagination.totalPages > 1 && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-4">
-            <p className="text-sm font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest">
+            <p className="text-sm font-bold text-slate-500 dark:text-slate-400 dark:text-slate-600 uppercase tracking-widest">
               Página {pagination.page} <span className="mx-2 text-slate-200 dark:text-slate-800">/</span> {pagination.totalPages}
             </p>
             

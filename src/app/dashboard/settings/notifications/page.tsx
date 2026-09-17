@@ -206,7 +206,7 @@ export default function NotificationSettings() {
   if (isLoading || loadingAuto || loadingAi) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 size={32} className="animate-spin text-slate-400" />
+        <Loader2 size={32} className="animate-spin text-slate-500 dark:text-slate-400" />
       </div>
     );
   }
@@ -221,10 +221,10 @@ export default function NotificationSettings() {
           <p className="text-slate-500 dark:text-slate-400 font-bold mt-2">Configure o motor de comunicação e integração SMS.</p>
         </div>
         <div className="flex items-center gap-3">
-          <a href="/dashboard/sms" className="text-[10px] font-bold uppercase tracking-widest text-blue-600 hover:text-blue-700 dark:text-blue-400 flex items-center gap-1.5">
+          <a href="/dashboard/sms" className="text-[11px] font-bold uppercase tracking-widest text-blue-600 hover:text-blue-700 dark:text-blue-400 flex items-center gap-1.5">
             <BarChart3 size={14} /> Dashboard SMS
           </a>
-          <Button className="rounded-2xl gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase text-[10px] tracking-widest px-6 shadow-xl shadow-blue-500/20"
+          <Button className="rounded-2xl gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase text-[11px] tracking-widest px-6 shadow-xl shadow-blue-500/20"
             onClick={handleSave} disabled={saveMutation.isPending}>
              {saveMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} strokeWidth={3} />} Guardar Configurações
           </Button>
@@ -240,17 +240,17 @@ export default function NotificationSettings() {
            </div>
            <CardHeader className="border-b border-white/10 relative z-10 p-8 pb-6">
               <Badge className={cn(
-                "border-none font-bold text-[9px] uppercase tracking-widest px-3 py-1 mb-2",
+                "border-none font-bold text-[11px] uppercase tracking-widest px-3 py-1 mb-2",
                 gatewayStatus === "online" ? "bg-emerald-500 text-white" : "bg-rose-500 text-white"
               )}>
                 {gatewayStatus === "online" ? "Gateway Online" : "Gateway Offline"}
               </Badge>
               <CardTitle className="text-2xl font-bold tracking-tighter">Teltonika RUT240</CardTitle>
-              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">IP: {rut240Ip || "Não configurado"} {rut240Port !== 80 && `:${rut240Port}`}</p>
+              <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">IP: {rut240Ip || "Não configurado"} {rut240Port !== 80 && `:${rut240Port}`}</p>
            </CardHeader>
            <CardContent className="relative z-10 p-8 pt-6 flex-1 flex flex-col justify-between min-h-[140px]">
               <div className="space-y-4">
-                 <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                 <div className="flex justify-between items-center text-[11px] font-bold uppercase tracking-widest text-slate-500">
                     <span>Gateway RUT240</span>
                     {rut240Enabled ? (
                       <span className="text-emerald-400">Ativo</span>
@@ -273,7 +273,7 @@ export default function NotificationSettings() {
                  ].map((item) => (
                    <div key={item.id} className="flex items-center justify-between group">
                       <div className="flex items-center gap-4">
-                         <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-2xl text-slate-400 group-hover:text-blue-600 transition-colors">
+                         <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-2xl text-slate-500 dark:text-slate-400 group-hover:text-blue-600 transition-colors">
                             <item.icon size={20} />
                          </div>
                          <div>
@@ -297,10 +297,10 @@ export default function NotificationSettings() {
 
       <Tabs defaultValue="gateway" className="w-full">
         <TabsList className="bg-slate-100/50 dark:bg-slate-900/50 p-1.5 rounded-2xl ring-1 ring-slate-200 dark:ring-white/5 mb-8 w-full flex">
-           <TabsTrigger value="gateway" className="flex-1 rounded-xl font-bold text-[10px] uppercase tracking-widest py-4 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 shadow-sm transition-all justify-center">Configuração Gateway</TabsTrigger>
-           <TabsTrigger value="ai" className="flex-1 rounded-xl font-bold text-[10px] uppercase tracking-widest py-4 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 shadow-sm transition-all justify-center">Assistente IA</TabsTrigger>
-           <TabsTrigger value="templates" className="flex-1 rounded-xl font-bold text-[10px] uppercase tracking-widest py-4 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 shadow-sm transition-all justify-center">Templates de Mensagem</TabsTrigger>
-           <TabsTrigger value="logs" className="flex-1 rounded-xl font-bold text-[10px] uppercase tracking-widest py-4 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 shadow-sm transition-all justify-center">Histórico de Envios</TabsTrigger>
+           <TabsTrigger value="gateway" className="flex-1 rounded-xl font-bold text-[11px] uppercase tracking-widest py-4 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 shadow-sm transition-all justify-center">Configuração Gateway</TabsTrigger>
+           <TabsTrigger value="ai" className="flex-1 rounded-xl font-bold text-[11px] uppercase tracking-widest py-4 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 shadow-sm transition-all justify-center">Assistente IA</TabsTrigger>
+           <TabsTrigger value="templates" className="flex-1 rounded-xl font-bold text-[11px] uppercase tracking-widest py-4 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 shadow-sm transition-all justify-center">Templates de Mensagem</TabsTrigger>
+           <TabsTrigger value="logs" className="flex-1 rounded-xl font-bold text-[11px] uppercase tracking-widest py-4 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 shadow-sm transition-all justify-center">Histórico de Envios</TabsTrigger>
         </TabsList>
 
         <TabsContent value="gateway" className="space-y-6 animate-in fade-in duration-500">
@@ -316,25 +316,25 @@ export default function NotificationSettings() {
                        <Switch checked={rut240Enabled} onCheckedChange={setRut240Enabled} />
                        <div>
                          <p className="font-bold text-sm text-slate-900 dark:text-white">Gateway Ativo</p>
-                         <p className="text-[10px] text-slate-400 font-medium">Ligar/desligar envio de SMS via RUT240</p>
+                         <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Ligar/desligar envio de SMS via RUT240</p>
                        </div>
                      </div>
                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                           <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Endereço IP Gateway</Label>
+                           <Label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Endereço IP Gateway</Label>
                            <Input value={rut240Ip} onChange={(e) => setRut240Ip(e.target.value)} placeholder="192.168.1.1" className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none font-bold" />
                         </div>
                         <div className="space-y-2">
-                           <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Porta (HTTP/S)</Label>
+                           <Label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Porta (HTTP/S)</Label>
                            <Input type="number" value={rut240Port} onChange={(e) => setRut240Port(parseInt(e.target.value) || 80)} className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none font-bold" />
                         </div>
                      </div>
                      <div className="space-y-2">
-                        <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Utilizador API</Label>
+                        <Label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Utilizador API</Label>
                         <Input value={rut240User} onChange={(e) => setRut240User(e.target.value)} placeholder="admin" className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none font-bold" />
                      </div>
                      <div className="space-y-2">
-                        <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Palavra-passe API</Label>
+                        <Label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Palavra-passe API</Label>
                         <div className="relative">
                            <Input type="password" value={rut240Password} onChange={(e) => setRut240Password(e.target.value)} placeholder="admin01" className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none font-bold pr-10" />
                           </div>
@@ -350,7 +350,7 @@ export default function NotificationSettings() {
                   <CardContent className="p-10 pt-6 flex-1 flex flex-col justify-between">
                   <div className="space-y-4">
                      <div className="space-y-2">
-                        <Label className="text-[10px] font-bold uppercase tracking-widest text-blue-200">Telemóvel para Teste</Label>
+                        <Label className="text-[11px] font-bold uppercase tracking-widest text-blue-200">Telemóvel para Teste</Label>
                          <Input value={testPhone} onChange={(e) => setTestPhone(e.target.value)} className="h-10 rounded-xl bg-white/10 border-none text-white placeholder:text-blue-300 font-bold" />
                      </div>
                      <Button 
@@ -390,20 +390,20 @@ export default function NotificationSettings() {
                </CardHeader>
                <CardContent className="relative z-10 p-8 pt-6 space-y-6">
                   <div className="space-y-2">
-                     <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Base URL da API</Label>
+                     <Label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Base URL da API</Label>
                      <Input value={aiBaseUrl} onChange={(e) => setAiBaseUrl(e.target.value)} placeholder="https://opencode.ai/zen/go/v1" className="h-12 rounded-xl bg-slate-50/10 border-none font-bold text-white" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      <div className="space-y-2">
-                        <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Chave de API</Label>
+                        <Label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Chave de API</Label>
                         <Input type="password" value={aiApiKey} onChange={(e) => setAiApiKey(e.target.value)} placeholder="sk-..." className="h-12 rounded-xl bg-slate-50/10 border-none font-bold text-white" />
                      </div>
                        <div className="space-y-2">
-                          <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Modelo Chat (Texto)</Label>
+                          <Label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Modelo Chat (Texto)</Label>
                           <Input value={aiModel} onChange={(e) => setAiModel(e.target.value)} placeholder="deepseek-v4-flash" className="h-12 rounded-xl bg-slate-50/10 border-none font-bold text-white" />
                        </div>
                        <div className="space-y-2">
-                          <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Modelo de Visão (Raios-X)</Label>
+                          <Label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Modelo de Visão (Raios-X)</Label>
                           <Input value={aiVisionModel} onChange={(e) => setAiVisionModel(e.target.value)} placeholder="qwen3.7-max" className="h-12 rounded-xl bg-slate-50/10 border-none font-bold text-white" />
                        </div>
                   </div>
@@ -507,7 +507,7 @@ function TemplateManager() {
     }
   };
 
-  if (loading) return <div className="text-center py-20 text-slate-400 text-sm"><Loader2 size={24} className="mx-auto animate-spin mb-2" />A carregar...</div>;
+  if (loading) return <div className="text-center py-20 text-slate-500 dark:text-slate-400 text-sm"><Loader2 size={24} className="mx-auto animate-spin mb-2" />A carregar...</div>;
 
   return (
     <div className="space-y-4">
@@ -533,7 +533,7 @@ function TemplateManager() {
             <div key={t.id} className="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <Badge className="bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 text-[9px] font-bold uppercase border-none">{t.key || "geral"}</Badge>
+                  <Badge className="bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 text-[11px] font-bold uppercase border-none">{t.key || "geral"}</Badge>
                   <p className="font-bold text-slate-900 dark:text-white text-sm truncate">{t.name}</p>
                 </div>
                 <p className="text-xs text-slate-500 leading-relaxed line-clamp-2 whitespace-pre-wrap">{t.message}</p>
@@ -555,25 +555,25 @@ function TemplateManager() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Identificador técnico (key)</Label>
+              <Label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Identificador técnico (key)</Label>
               <Input value={key} onChange={e => setKey(e.target.value)} placeholder="ex: reminder-24h, vaccine-alert, marketing" className="h-10 rounded-xl bg-slate-50 border-none font-mono text-xs" />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Nome do Template</Label>
+              <Label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Nome do Template</Label>
               <Input value={name} onChange={e => setName(e.target.value)} placeholder="ex: Lembrete 24h" className="h-10 rounded-xl bg-slate-50 border-none font-bold" />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Mensagem</Label>
+              <Label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Mensagem</Label>
               <textarea
                 value={message} onChange={e => setMessage(e.target.value)}
                 placeholder="Olá {{nome}}, lembre-se da sua consulta em {{data}}."
                 className="w-full min-h-[120px] rounded-xl bg-slate-50 border-0 p-4 text-sm font-medium resize-y focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
               />
-              <p className="text-[9px] text-slate-400 font-medium">Use {"{{nome}}"}, {"{{data}}"}, {"{{hora}}"}, {"{{animal}}"} como variáveis</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Use {"{{nome}}"}, {"{{data}}"}, {"{{hora}}"}, {"{{animal}}"} como variáveis</p>
             </div>
             
             <div className="space-y-1.5 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-900/50">
-               <Label className="text-[10px] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
+               <Label className="text-[11px] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
                  <Sparkles size={12} /> Ajuda da Inteligência Artificial
                </Label>
                <div className="flex gap-2">
@@ -613,7 +613,7 @@ function SmsLogView() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 size={24} className="animate-spin text-slate-400" />
+        <Loader2 size={24} className="animate-spin text-slate-500 dark:text-slate-400" />
       </div>
     );
   }
@@ -642,20 +642,20 @@ function SmsLogView() {
             <div>
               <p className="text-sm font-bold text-slate-900 dark:text-white">{log.message}</p>
               <div className="flex gap-3 mt-1.5">
-                <span className="text-[10px] font-bold text-slate-400">{log.phone}</span>
-                <span className="text-[10px] font-bold text-slate-300">•</span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase">{log.type}</span>
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">{log.phone}</span>
+                <span className="text-[11px] font-bold text-slate-300">•</span>
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase">{log.type}</span>
                 {log.sentAt && (
                   <>
-                    <span className="text-[10px] font-bold text-slate-300">•</span>
-                    <span className="text-[10px] font-bold text-slate-400">{new Date(log.sentAt).toLocaleString("pt-PT")}</span>
+                    <span className="text-[11px] font-bold text-slate-300">•</span>
+                    <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">{new Date(log.sentAt).toLocaleString("pt-PT")}</span>
                   </>
                 )}
               </div>
             </div>
           </div>
           <Badge className={cn(
-            "text-[9px] font-bold uppercase border-none",
+            "text-[11px] font-bold uppercase border-none",
             log.status === "SENT" ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
           )}>
             {log.status === "SENT" ? "Enviado" : "Falhou"}

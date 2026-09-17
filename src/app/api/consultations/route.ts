@@ -21,6 +21,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { withAuth } from "@/lib/api-wrapper";
+import { audit } from "@/lib/audit";
 import { JasminService } from "@/lib/jasmin-service";
 import { VendusService } from "@/lib/vendus-service";
 
@@ -95,6 +96,8 @@ export const POST = withAuth(async ({ req, session, tenantPrisma, clinicId, user
         }
       },
     });
+
+    await audit({ clinicId, userId, action: "CREATE", entity: "Consultation", entityId: consultation.id });
 
     // 1.1. Create Vital Signs if provided
     if (vitals && (vitals.weight || vitals.temperature || vitals.heartRate || vitals.respiratoryRate || vitals.painScale != null || vitals.bodyConditionScore != null)) {

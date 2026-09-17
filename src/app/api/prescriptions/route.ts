@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/api-wrapper";
+import { audit } from "@/lib/audit";
 
 export const GET = withAuth(async ({ req, tenantPrisma, clinicId }) => {
   try {
@@ -57,6 +58,8 @@ export const POST = withAuth(async ({ req, tenantPrisma, clinicId, userId }) => 
         items: true
       }
     });
+
+    await audit({ clinicId, userId, action: "CREATE", entity: "Prescription", entityId: prescription.id });
 
     return NextResponse.json(prescription);
   } catch (error: any) {

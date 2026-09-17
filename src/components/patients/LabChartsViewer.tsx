@@ -88,7 +88,7 @@ export function LabChartsViewer({ results }: Props) {
   if (results.length === 0) {
     return (
       <div className="text-center py-12 text-slate-500 bg-slate-50 rounded-lg border border-slate-200">
-        <Beaker className="w-12 h-12 mx-auto text-slate-400 mb-4" />
+        <Beaker className="w-12 h-12 mx-auto text-slate-500 dark:text-slate-400 mb-4" />
         <h3 className="text-lg font-medium text-slate-900">Sem análises registadas</h3>
         <p className="mt-2 text-sm">Este paciente ainda não tem resultados de laboratório associados.</p>
       </div>
@@ -124,7 +124,7 @@ export function LabChartsViewer({ results }: Props) {
                   <span>{param}</span>
                   {isAlert && <AlertTriangle className="w-4 h-4 text-red-500" />}
                 </div>
-                <ChevronRight className={`w-4 h-4 ${selectedParam === param ? 'text-indigo-500' : 'text-slate-400'}`} />
+                <ChevronRight className={`w-4 h-4 ${selectedParam === param ? 'text-indigo-500' : 'text-slate-500 dark:text-slate-400'}`} />
               </button>
             );
           })}

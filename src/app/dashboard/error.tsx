@@ -35,7 +35,7 @@ export default function DashboardError({
           Ocorreu um erro inesperado nesta página. Os dados estão seguros — é apenas um problema de carregamento.
         </p>
         {error.digest && (
-          <p className="text-[10px] font-mono text-slate-300 dark:text-slate-600">
+          <p className="text-[11px] font-mono text-slate-300 dark:text-slate-600">
             Ref: {error.digest}
           </p>
         )}

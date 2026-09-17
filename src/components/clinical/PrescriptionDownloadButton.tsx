@@ -19,7 +19,7 @@ export function PrescriptionDownloadButton({ prescription, clinic }: Prescriptio
     >
       {({ loading }) => (
         <Button 
-          className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-[10px] tracking-widest shadow-lg shadow-blue-500/20 gap-2"
+          className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-[11px] tracking-widest shadow-lg shadow-blue-500/20 gap-2"
           disabled={loading}
         >
           {loading ? (

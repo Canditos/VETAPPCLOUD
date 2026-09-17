@@ -47,11 +47,11 @@ export default function SmsDashboard() {
         <div className="h-16 w-16 rounded-full border-4 border-blue-100 dark:border-blue-900/50" />
         <div className="absolute inset-0 h-16 w-16 rounded-full border-4 border-transparent border-t-blue-600 animate-spin" />
       </div>
-      <p className="text-sm font-bold text-slate-400 animate-pulse">A carregar dashboard...</p>
+      <p className="text-sm font-bold text-slate-500 dark:text-slate-400 animate-pulse">A carregar dashboard...</p>
     </div>
   );
   if (!data) return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-slate-400">
+    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-slate-500 dark:text-slate-400">
       <BarChart3 size={48} className="opacity-30" />
       <p className="text-lg font-bold">Sem dados disponíveis</p>
       <p className="text-sm">Envie SMS para começar a ver as estatísticas.</p>
@@ -102,8 +102,8 @@ export default function SmsDashboard() {
           <div className="flex bg-slate-100 dark:bg-slate-900 rounded-2xl p-1 ring-1 ring-slate-200 dark:ring-white/5">
             {PERIODS.map((p) => (
               <button key={p.key} onClick={() => setPeriod(p.key)}
-                className={cn("px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all",
-                  period === p.key ? "bg-white dark:bg-slate-800 text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                className={cn("px-4 py-1.5 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all",
+                  period === p.key ? "bg-white dark:bg-slate-800 text-blue-600 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-600"
                 )}>{p.label}</button>
             ))}
           </div>
@@ -127,7 +127,7 @@ export default function SmsDashboard() {
         <CardContent className="p-6 relative">
           <div className="flex items-center gap-2 mb-5">
             <div className="h-7 w-7 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center"><Euro size={14} /></div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Análise de Custos</p>
+            <p className="text-[11px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Análise de Custos</p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
@@ -137,9 +137,9 @@ export default function SmsDashboard() {
               { label: "Economia", value: "€" + (data.custos?.economia?.toFixed(2) || "0.00"), sub: "Poupança total", color: "text-emerald-600 dark:text-emerald-400", icon: <PiggyBank size={18} className="text-emerald-500" /> },
             ].map((c, i) => (
               <div key={i} className="p-4 rounded-2xl bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm ring-1 ring-white/50 dark:ring-white/5">
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">{c.label}</p>
+                <p className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{c.label}</p>
                 <p className={cn("text-2xl font-black mt-1 flex items-center gap-1.5", c.color)}>{c.icon}{c.value}</p>
-                <p className="text-[9px] text-slate-400 font-medium mt-0.5">{c.sub}</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">{c.sub}</p>
               </div>
             ))}
           </div>
@@ -152,7 +152,7 @@ export default function SmsDashboard() {
         {/* Category Bar */}
         <Card className="border-none shadow-xl rounded-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/5 col-span-1">
           <CardHeader className="pb-0 px-6 pt-6">
-            <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+            <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
               <BarChart3 size={14} className="text-blue-600" /> Categorias
             </CardTitle>
           </CardHeader>
@@ -175,7 +175,7 @@ export default function SmsDashboard() {
                 <div key={t.name} className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
                   <div className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: t.color }} />
                   <div className="min-w-0 flex-1">
-                    <p className="text-[9px] font-bold text-slate-500 truncate">{t.name}</p>
+                    <p className="text-[11px] font-bold text-slate-500 truncate">{t.name}</p>
                     <p className="text-xs font-black text-slate-900 dark:text-white">{t.value}</p>
                   </div>
                 </div>
@@ -187,8 +187,8 @@ export default function SmsDashboard() {
         {/* Trend Area */}
         <Card className="border-none shadow-xl rounded-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/5 col-span-1 lg:col-span-2">
           <CardHeader className="pb-0 px-6 pt-6">
-            <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-              <TrendingUp size={14} className="text-blue-600" /> Tendência Diária <span className="text-[9px] text-slate-300 font-medium normal-case">(últimos 30 dias)</span>
+            <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
+              <TrendingUp size={14} className="text-blue-600" /> Tendência Diária <span className="text-[11px] text-slate-300 font-medium normal-case">(últimos 30 dias)</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
@@ -210,11 +210,11 @@ export default function SmsDashboard() {
               </ResponsiveContainer>
             </div>
             <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
-              <div className="flex items-center gap-4 text-[10px] font-bold">
+              <div className="flex items-center gap-4 text-[11px] font-bold">
                 <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Enviados: <span className="text-slate-900 dark:text-white">{dailyRev.slice(-7).reduce((a: number, d: any) => a + d.sent, 0)}</span></span>
                 <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-red-500" /> Falhas: <span className="text-slate-900 dark:text-white">{dailyRev.slice(-7).reduce((a: number, d: any) => a + d.failed, 0)}</span></span>
               </div>
-              <Badge className={cn("text-[9px] font-bold uppercase border-none", weekChange >= 0 ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300" : "bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300")}>
+              <Badge className={cn("text-[11px] font-bold uppercase border-none", weekChange >= 0 ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300" : "bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300")}>
                 {weekChange >= 0 ? <ArrowUpRight size={12} className="inline" /> : <ArrowDownRight size={12} className="inline" />}
                 {(weekChange >= 0 ? "+" : "") + weekChange + "% vs semana anterior"}
               </Badge>
@@ -226,7 +226,7 @@ export default function SmsDashboard() {
         {monthlyRev.length > 0 && (
           <Card className="border-none shadow-xl rounded-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/5 col-span-1 lg:col-span-2">
             <CardHeader className="pb-0 px-6 pt-6">
-              <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+              <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
                 <CalendarDays size={14} className="text-blue-600" /> Mensal
               </CardTitle>
             </CardHeader>
@@ -252,7 +252,7 @@ export default function SmsDashboard() {
           {statusPie.length > 0 && (
             <Card className="border-none shadow-xl rounded-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/5">
               <CardHeader className="pb-0 px-6 pt-6">
-                <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
                   <Smartphone size={14} className="text-blue-600" /> Distribuição
                 </CardTitle>
               </CardHeader>
@@ -264,7 +264,7 @@ export default function SmsDashboard() {
                         {statusPie.map((e: any, i: number) => <Cell key={i} fill={e.color} />)}
                       </Pie>
                       <Tooltip contentStyle={{ borderRadius: 12, backgroundColor: t.tooltipBg, border: "1px solid " + t.tooltipBorder, color: t.tooltipText, fontSize: 12 }} />
-                      <Legend formatter={(v) => <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">{v}</span>} />
+                      <Legend formatter={(v) => <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">{v}</span>} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -274,21 +274,21 @@ export default function SmsDashboard() {
 
           <Card className="border-none shadow-xl rounded-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-white/5">
             <CardHeader className="pb-0 px-6 pt-6">
-              <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+              <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
                 <Clock size={14} className="text-blue-600" /> Últimos
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
               <div className="space-y-1.5 max-h-56 overflow-y-auto custom-scroll">
                 {(data.recent || []).length === 0 ? (
-                  <p className="text-xs text-slate-400 text-center py-8">Nenhum envio registado</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-8">Nenhum envio registado</p>
                 ) : (data.recent || []).slice(0, 6).map((log: any) => (
                   <div key={log.id} className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                     <div className="flex items-center gap-2.5 min-w-0">
                       {log.status === "SENT" ? <CheckCircle2 size={12} className="text-emerald-500 shrink-0" /> : <XCircle size={12} className="text-rose-500 shrink-0" />}
                       <div className="min-w-0">
-                        <p className="text-[10px] font-bold text-slate-700 dark:text-slate-300 truncate">{log.phone}</p>
-                        <p className="text-[8px] text-slate-400 truncate">{(log.message || "").slice(0, 30)}</p>
+                        <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 truncate">{log.phone}</p>
+                        <p className="text-[8px] text-slate-500 dark:text-slate-400 truncate">{(log.message || "").slice(0, 30)}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
@@ -337,8 +337,8 @@ function KpiCard({ icon, label, value, sub, color }: { icon: React.ReactNode; la
         )}>
           <span className="text-2xl font-black">{value}</span>
         </p>
-        <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-0.5 truncate">{label}</p>
-        <p className="text-[8px] text-slate-400 mt-0.5 truncate">{sub}</p>
+        <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 mt-0.5 truncate">{label}</p>
+        <p className="text-[8px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">{sub}</p>
       </CardContent>
     </Card>
   );

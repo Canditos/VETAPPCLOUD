@@ -253,7 +253,7 @@ function ConsultationContent() {
               <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">{patient?.name}</h1>
                <Badge className="bg-blue-600 text-white border-none font-semibold text-xs px-3 py-1 rounded-lg">{patient?.species}</Badge>
                {!appointmentId && (
-                 <Badge variant="outline" className="border-amber-200 dark:border-amber-900/30 text-amber-600 dark:text-amber-400 font-medium text-[10px] px-3 py-1 rounded-lg animate-pulse">Walk-in</Badge>
+                 <Badge variant="outline" className="border-amber-200 dark:border-amber-900/30 text-amber-600 dark:text-amber-400 font-medium text-[11px] px-3 py-1 rounded-lg animate-pulse">Walk-in</Badge>
                )}
             </div>
             <div className="flex flex-wrap items-center gap-4 text-sm">
@@ -267,11 +267,11 @@ function ConsultationContent() {
                       <p className="font-extrabold text-sm tracking-wide uppercase">⚠ ALERTA DE ALERGIAS</p>
                       <p className="text-rose-100 text-sm font-semibold mt-0.5 truncate">{allergies}</p>
                     </div>
-                    <Badge className="bg-white/20 text-white border-none font-bold text-[10px] px-3 py-1.5 shrink-0">ATENÇÃO MÉDICA</Badge>
+                    <Badge className="bg-white/20 text-white border-none font-bold text-[11px] px-3 py-1.5 shrink-0">ATENÇÃO MÉDICA</Badge>
                   </div>
                 )}
                {lastVitals && (
-                 <span className="flex items-center gap-1.5 text-slate-400 font-medium text-[10px]">
+                 <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 font-medium text-[11px]">
                    <Weight size={12} /> {lastVitals.weight}kg
                  </span>
                )}
@@ -319,14 +319,14 @@ function ConsultationContent() {
                 <div className="px-6 py-6 pb-4 border-b border-slate-50 dark:border-white/5 bg-slate-50/30 dark:bg-white/5">
                   <div className="flex justify-between items-center">
                     <h2 className="text-lg font-bold text-slate-900 dark:text-white">Protocolo Clínico SOAP</h2>
-                    <Badge className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-medium px-3 py-1 rounded-lg">Standard Workflow</Badge>
+                    <Badge className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[11px] font-medium px-3 py-1 rounded-lg">Standard Workflow</Badge>
                   </div>
                 </div>
                 <div className="p-6 space-y-6">
                   
                   {/* Vitals Input — 4 core measurements */}
                   <div className="space-y-4 p-6 bg-slate-50 dark:bg-slate-800/40 rounded-3xl border border-slate-100 dark:border-white/5">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sinais Vitais</p>
+                    <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Sinais Vitais</p>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       {[
                         { label: "Peso", icon: Weight, unit: "kg", color: "text-blue-500", placeholder: "12.45", key: "weight" },
@@ -337,11 +337,11 @@ function ConsultationContent() {
                         <div key={i} className="flex flex-col gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm ring-1 ring-slate-100 dark:ring-white/5 transition-all hover:ring-blue-500/30">
                           <div className="flex items-center gap-2">
                              <vital.icon size={14} className={vital.color} strokeWidth={3} />
-                             <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{vital.label}</span>
+                             <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{vital.label}</span>
                           </div>
                           <div className="flex items-baseline gap-2 mt-1">
                              <Input type="number" step="0.1" className="border-none bg-transparent p-0 h-auto text-2xl font-bold text-slate-900 dark:text-white placeholder:text-slate-200 dark:placeholder:text-slate-700 focus-visible:ring-0" placeholder={vital.placeholder} value={(vitals as any)[vital.key]} onChange={(e) => setVitals({ ...vitals, [vital.key]: e.target.value })} />
-                             <span className="text-xs font-medium text-slate-400">{vital.unit}</span>
+                             <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{vital.unit}</span>
                           </div>
                         </div>
                       ))}
@@ -358,8 +358,8 @@ function ConsultationContent() {
                     <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-white/5">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">BCS — Condição Corporal (1–9)</p>
-                          <p className="text-[10px] text-slate-400 font-medium">Avaliação visual e palpação das costelas, coluna e gordura subcutânea</p>
+                          <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">BCS — Condição Corporal (1–9)</p>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Avaliação visual e palpação das costelas, coluna e gordura subcutânea</p>
                         </div>
                         {vitals.bodyConditionScore >= 1 && (
                           <span className={cn("text-xs font-bold px-2 py-1 rounded-lg",
@@ -398,7 +398,7 @@ function ConsultationContent() {
                           </button>
                         ))}
                       </div>
-                      <div className="flex justify-between text-[9px] font-semibold text-slate-400 px-0.5">
+                      <div className="flex justify-between text-[11px] font-semibold text-slate-500 dark:text-slate-400 px-0.5">
                         <span className="text-blue-500">← Caquético</span>
                         <span className="text-emerald-500">Ideal</span>
                         <span className="text-rose-500">Obeso →</span>
@@ -410,21 +410,21 @@ function ConsultationContent() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 ml-1">
-                        <span className="w-5 h-5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-md text-[10px] font-black flex items-center justify-center">S</span>
+                        <span className="w-5 h-5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-md text-[11px] font-black flex items-center justify-center">S</span>
                         <Label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Anamnese (Subjetivo)</Label>
                       </div>
                       <Textarea className="min-h-[140px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-100 dark:border-white/5 focus-visible:ring-blue-500/20 resize-none text-sm" value={notes.subjective} onChange={(e) => setNotes({ ...notes, subjective: e.target.value })} placeholder="Queixa principal, história clínica, evolução, alimentação, ambiente, medicação em curso, vacinações anteriores..." />
                     </div>
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 ml-1">
-                        <span className="w-5 h-5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-md text-[10px] font-black flex items-center justify-center">O</span>
+                        <span className="w-5 h-5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-md text-[11px] font-black flex items-center justify-center">O</span>
                         <Label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Exame Físico (Objetivo)</Label>
                       </div>
                       <Textarea className="min-h-[140px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-100 dark:border-white/5 focus-visible:ring-blue-500/20 resize-none text-sm" value={notes.objective} onChange={(e) => setNotes({ ...notes, objective: e.target.value })} placeholder="Alerta mental, mucosas (cor, TRC, hidratação), auscultação cardiopulmonar, palpação abdominal, linfonodos, olhos, ouvidos, pele/pelo..." />
                     </div>
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 ml-1">
-                        <span className="w-5 h-5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-md text-[10px] font-black flex items-center justify-center">A</span>
+                        <span className="w-5 h-5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-md text-[11px] font-black flex items-center justify-center">A</span>
                         <Label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Diagnóstico (Avaliação)</Label>
                       </div>
                       <Textarea className="min-h-[140px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-100 dark:border-white/5 focus-visible:ring-blue-500/20 resize-none text-sm" value={notes.assessment} onChange={(e) => setNotes({ ...notes, assessment: e.target.value })} placeholder="Lista de problemas, diagnóstico presuntivo, diagnósticos diferenciais, prognóstico..." />
@@ -432,7 +432,7 @@ function ConsultationContent() {
                     <div className="space-y-3">
                       <div className="flex items-center justify-between ml-1">
                         <div className="flex items-center gap-2">
-                          <span className="w-5 h-5 bg-blue-600 text-white rounded-md text-[10px] font-black flex items-center justify-center">P</span>
+                          <span className="w-5 h-5 bg-blue-600 text-white rounded-md text-[11px] font-black flex items-center justify-center">P</span>
                           <Label className="text-xs font-semibold text-blue-600 dark:text-blue-400">Plano Terapêutico</Label>
                         </div>
                         <Button variant="ghost" size="sm" className="h-7 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 gap-2" onClick={() => { if (!notes.plan) { toast.error("Escreva o plano primeiro!"); return; } updateTab("prescriptions"); toast.success("Plano transferido!"); }}>
@@ -456,14 +456,14 @@ function ConsultationContent() {
                     <div className="px-6 py-4 bg-emerald-50/50 dark:bg-emerald-900/10 border-b border-emerald-100 dark:border-emerald-900/20">
                       <div className="flex items-center justify-between">
                         <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2"><Syringe size={14} className="text-emerald-600" /> Boletim Vacinal</h3>
-                        <Button variant="ghost" size="sm" className="h-7 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 gap-1.5" onClick={() => updateTab("vaccines")}>
+                        <Button variant="ghost" size="sm" className="h-7 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 gap-1.5" onClick={() => updateTab("vaccines")}>
                           Ver completo <ChevronLeft className="rotate-180" size={10} />
                         </Button>
                       </div>
                     </div>
                     <div className="p-4 space-y-2">
                       {vaccEvents.length === 0 ? (
-                        <p className="text-xs text-slate-400 font-medium text-center py-4">Sem vacinas registadas</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium text-center py-4">Sem vacinas registadas</p>
                       ) : vaccEvents.slice(0, 4).map((v: { id: string; title: string; date: string; data?: { expiresAt?: string } }) => {
                         const expiresAt = v.data?.expiresAt ? new Date(v.data.expiresAt) : null;
                         const isExpired = expiresAt && expiresAt < now;
@@ -471,7 +471,7 @@ function ConsultationContent() {
                         return (
                           <div key={v.id} className="flex items-center justify-between gap-2 p-2.5 bg-slate-50 dark:bg-white/5 rounded-xl">
                             <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate flex-1">{v.title}</p>
-                            <Badge className={cn("border-none text-[9px] font-bold shrink-0",
+                            <Badge className={cn("border-none text-[11px] font-bold shrink-0",
                               isExpired ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" :
                               isDueSoon ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
                               "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
@@ -490,7 +490,7 @@ function ConsultationContent() {
                 <div className="px-6 py-4 bg-slate-50/50 dark:bg-white/5 border-b border-slate-100 dark:border-white/5">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2"><History size={14} className="text-blue-600" /> Histórico</h3>
-                    <Badge variant="ghost" className="text-[10px] font-medium text-slate-400">{history?.length || 0} Eventos</Badge>
+                    <Badge variant="ghost" className="text-[11px] font-medium text-slate-500 dark:text-slate-400">{history?.length || 0} Eventos</Badge>
                   </div>
                 </div>
                 <div className="flex-1 overflow-y-auto max-h-[700px] p-6 no-scrollbar">
@@ -523,7 +523,7 @@ function ConsultationContent() {
                      <div className="absolute top-0 right-0 p-6 opacity-10"><Pill size={80} /></div>
                      <div className="relative z-10">
                         <h3 className="text-base font-bold mb-4">Notas Legais</h3>
-                        <p className="text-slate-400 text-sm leading-relaxed mb-6">Prescrições de antibióticos requerem todos os campos para conformidade legal.</p>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-6">Prescrições de antibióticos requerem todos os campos para conformidade legal.</p>
                         <div className="space-y-3">
                            <div className="flex items-start gap-3"><div className="mt-1 w-2 h-2 rounded-full bg-blue-500 shrink-0" /><p className="text-xs text-slate-300">Válido por 30 dias por defeito.</p></div>
                            <div className="flex items-start gap-3"><div className="mt-1 w-2 h-2 rounded-full bg-blue-500 shrink-0" /><p className="text-xs text-slate-300">Gera PDF assinado digitalmente.</p></div>
@@ -542,8 +542,8 @@ function ConsultationContent() {
                      <div>
                         <Badge className={
                           health?.inventorySync?.status === "active"
-                            ? "bg-emerald-600 text-white font-medium text-[10px] px-3 py-1 mb-3 rounded-lg"
-                            : "bg-slate-600 text-white font-medium text-[10px] px-3 py-1 mb-3 rounded-lg"
+                            ? "bg-emerald-600 text-white font-medium text-[11px] px-3 py-1 mb-3 rounded-lg"
+                            : "bg-slate-600 text-white font-medium text-[11px] px-3 py-1 mb-3 rounded-lg"
                         }>
                           {health?.inventorySync?.label || "Inventory Sync"}
                         </Badge>
@@ -566,7 +566,7 @@ function ConsultationContent() {
                         <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-2xl text-purple-600 dark:text-purple-400"><FlaskConical size={24} strokeWidth={2.5} /></div>
                         <div>
                            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Laboratório</h3>
-                           <p className="text-xs text-slate-400 font-medium">Fuji DX-500 • HL7 Gateway</p>
+                           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Fuji DX-500 • HL7 Gateway</p>
                         </div>
                      </div>
                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -582,7 +582,7 @@ function ConsultationContent() {
                         <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl text-emerald-600 dark:text-emerald-400"><ImageIcon size={24} strokeWidth={2.5} /></div>
                         <div>
                            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Imagiologia</h3>
-                           <p className="text-xs text-slate-400 font-medium">Examion RX • DICOM 1.4</p>
+                           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Examion RX • DICOM 1.4</p>
                         </div>
                      </div>
                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -603,8 +603,8 @@ function ConsultationContent() {
                      {!diagnostics || diagnostics.length === 0 ? (
                        <div className="py-12 text-center bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-100 dark:border-white/5">
                           <FlaskConical size={32} className="mx-auto text-slate-200 dark:text-slate-700 mb-3" />
-                          <p className="text-slate-400 font-bold text-sm">Sem resultados para este paciente</p>
-                          <p className="text-slate-400 text-xs mt-1">Os resultados aparecerão aqui quando recebidos dos integradores.</p>
+                          <p className="text-slate-500 dark:text-slate-400 font-bold text-sm">Sem resultados para este paciente</p>
+                          <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">Os resultados aparecerão aqui quando recebidos dos integradores.</p>
                        </div>
                     ) : (
                        <div className="space-y-3">
@@ -616,7 +616,7 @@ function ConsultationContent() {
                                    </div>
                                    <div>
                                       <p className="font-bold text-sm text-slate-900 dark:text-white">{dx.summary ?? dx.testName ?? "—"}</p>
-                                      <p className="text-[10px] text-slate-400 font-bold">{dx.source} • {dx.createdAt ? formatDistanceToNow(new Date(dx.createdAt), { addSuffix: true, locale: pt }) : "—"}</p>
+                                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold">{dx.source} • {dx.createdAt ? formatDistanceToNow(new Date(dx.createdAt), { addSuffix: true, locale: pt }) : "—"}</p>
                                    </div>
                                 </div>
                                 <div className="flex items-center gap-3">
@@ -626,7 +626,7 @@ function ConsultationContent() {
                                       dx.status === "ALERT" ? "bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400" :
                                       "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
                                    )}>{dx.status === "COMPLETED" ? "Recebido" : dx.status === "ALERT" ? "Alerta" : "Pendente"}</Badge>
-                                   <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-400 group-hover:text-blue-600 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-all">
+                                   <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-500 dark:text-slate-400 group-hover:text-blue-600 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-all">
                                       <Eye size={14} />
                                    </Button>
                                 </div>
@@ -652,7 +652,7 @@ function ConsultationContent() {
 
  export default function ConsultationPage() {
    return (
-     <Suspense fallback={<div className="p-12 text-center font-semibold text-slate-400 animate-pulse">A sincronizar contexto clínico...</div>}>
+     <Suspense fallback={<div className="p-12 text-center font-semibold text-slate-500 dark:text-slate-400 animate-pulse">A sincronizar contexto clínico...</div>}>
        <ConsultationContent />
      </Suspense>
    );

@@ -72,13 +72,13 @@ function StatCard({ label, value, icon: Icon, trend, color, bg }: any) {
           <Icon size={26} strokeWidth={2.5} />
         </div>
         {trend && (
-          <Badge variant="outline" className="text-[10px] font-bold border-slate-100 dark:border-white/10 text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2 py-1">
+          <Badge variant="outline" className="text-[11px] font-bold border-slate-100 dark:border-white/10 text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2 py-1">
             {trend}
           </Badge>
         )}
       </CardHeader>
       <CardContent className="pt-4">
-        <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{label}</p>
+        <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider">{label}</p>
         <p className="text-4xl font-bold text-slate-900 dark:text-slate-100 mt-2 tracking-tighter">{value}</p>
       </CardContent>
     </Card>
@@ -151,7 +151,7 @@ function AdmitDialog({
               Paciente
             </Label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={16} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 dark:text-slate-500" size={16} />
               <Input
                 className="pl-9 rounded-xl border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
                 placeholder="Procurar paciente..."
@@ -174,12 +174,12 @@ function AdmitDialog({
                     }}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                      <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-500 dark:text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                         {p.name[0]}
                       </div>
                       <div>
                         <p className="font-bold text-slate-900 dark:text-slate-200 leading-none mb-1">{p.name}</p>
-                        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">
+                        <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase">
                           {p.species} <span className="mx-1 opacity-20">|</span> {p.owner?.name}
                         </p>
                       </div>
@@ -227,23 +227,23 @@ function TaskItem({ task, onComplete }: { task: any; onComplete: (id: string) =>
   const isSkipped = task.status === "SKIPPED";
   return (
     <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 transition-colors">
-      <div className="text-xs font-bold text-slate-400 dark:text-slate-500 w-12 shrink-0">
+      <div className="text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 w-12 shrink-0">
         {new Date(task.scheduledTime).toLocaleTimeString("pt-PT", {
           hour: "2-digit",
           minute: "2-digit",
         })}
       </div>
-      <div className={`flex-1 font-bold text-sm ${isSkipped ? "line-through text-slate-400 dark:text-slate-600" : "text-slate-700 dark:text-slate-300"}`}>
+      <div className={`flex-1 font-bold text-sm ${isSkipped ? "line-through text-slate-500 dark:text-slate-400 dark:text-slate-600" : "text-slate-700 dark:text-slate-300"}`}>
         {task.description}
       </div>
       {isDone ? (
         <CheckCircle2 size={18} className="text-green-500 shrink-0" />
       ) : isSkipped ? (
-        <span className="text-xs text-slate-400 dark:text-slate-600 shrink-0 uppercase font-bold tracking-tighter">Saltado</span>
+        <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-600 shrink-0 uppercase font-bold tracking-tighter">Saltado</span>
       ) : (
         <Button
           size="sm"
-          className="h-7 rounded-lg text-[10px] font-bold uppercase shrink-0 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-400"
+          className="h-7 rounded-lg text-[11px] font-bold uppercase shrink-0 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-400"
           onClick={() => onComplete(task.id)}
         >
           Fazer
@@ -296,7 +296,7 @@ function AddTaskDialog({
       <DialogContent className="sm:max-w-[420px] rounded-3xl border-none shadow-2xl bg-white dark:bg-slate-900">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-slate-900 dark:text-slate-100">Nova Tarefa</DialogTitle>
-          <DialogDescription className="text-slate-400">Adicionar ao plano de tratamento.</DialogDescription>
+          <DialogDescription className="text-slate-500 dark:text-slate-400">Adicionar ao plano de tratamento.</DialogDescription>
         </DialogHeader>
         <div className="space-y-5 mt-2">
           <div className="space-y-2">
@@ -461,7 +461,7 @@ export default function InternamentoPage() {
             <Button
               variant={view === "grid" ? "default" : "ghost"}
               size="sm"
-              className={`rounded-lg font-bold text-[10px] uppercase gap-2 ${view === "grid" ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm hover:bg-white dark:hover:bg-slate-700' : 'text-slate-400 dark:text-slate-500'}`}
+              className={`rounded-lg font-bold text-[11px] uppercase gap-2 ${view === "grid" ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm hover:bg-white dark:hover:bg-slate-700' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}
               onClick={() => setView("grid")}
             >
               <LayoutGrid size={14} /> Grelha
@@ -469,7 +469,7 @@ export default function InternamentoPage() {
             <Button
               variant={view === "list" ? "default" : "ghost"}
               size="sm"
-              className={`rounded-lg font-bold text-[10px] uppercase gap-2 ${view === "list" ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm hover:bg-white dark:hover:bg-slate-700' : 'text-slate-400 dark:text-slate-500'}`}
+              className={`rounded-lg font-bold text-[11px] uppercase gap-2 ${view === "list" ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm hover:bg-white dark:hover:bg-slate-700' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}
               onClick={() => setView("list")}
             >
               <List size={14} /> Lista
@@ -477,7 +477,7 @@ export default function InternamentoPage() {
             <Button
               variant={view === "map" ? "default" : "ghost"}
               size="sm"
-              className={`rounded-lg font-bold text-[10px] uppercase gap-2 ${view === "map" ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm hover:bg-white dark:hover:bg-slate-700' : 'text-slate-400 dark:text-slate-500'}`}
+              className={`rounded-lg font-bold text-[11px] uppercase gap-2 ${view === "map" ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm hover:bg-white dark:hover:bg-slate-700' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}
               onClick={() => setView("map")}
             >
               <Activity size={14} /> Mapa
@@ -512,7 +512,7 @@ export default function InternamentoPage() {
             onClick={() => setSelectedZone(zone.id)}
           >
             <zone.icon size={20} />
-            <span className="text-[10px] font-bold uppercase tracking-widest">{zone.name}</span>
+            <span className="text-[11px] font-bold uppercase tracking-widest">{zone.name}</span>
           </Button>
         ))}
       </div>
@@ -554,11 +554,11 @@ export default function InternamentoPage() {
                     onClick={() => setSelectedHosp(hosp)}
                   >
                     <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
-                      <Badge className="font-bold text-[10px] uppercase bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-none px-3 h-7 rounded-xl">
+                      <Badge className="font-bold text-[11px] uppercase bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-none px-3 h-7 rounded-xl">
                         {hosp.boxNumber ?? "Box —"}
                       </Badge>
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</span>
+                        <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{label}</span>
                         <div className={`w-2.5 h-2.5 rounded-full ${dotColor} ring-4 ring-white dark:ring-slate-900 shadow-sm`} />
                       </div>
                     </CardHeader>
@@ -570,7 +570,7 @@ export default function InternamentoPage() {
                            </div>
                            <div>
                              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight leading-none mb-1">{hosp.patient.name}</h3>
-                             <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-tight">
+                             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-tight">
                                {hosp.patient.species}
                                {hosp.patient.breed ? ` • ${hosp.patient.breed}` : ""}
                              </p>
@@ -578,7 +578,7 @@ export default function InternamentoPage() {
                         </div>
                         {tasks.length > 0 && (
                           <div className="space-y-2 bg-slate-50/50 dark:bg-slate-800/30 p-4 rounded-2xl border border-slate-100/50 dark:border-white/5">
-                            <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">
+                            <div className="flex justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-none mb-1">
                               <span>Tratamentos</span>
                               <span>{completed}/{tasks.length}</span>
                             </div>
@@ -593,14 +593,14 @@ export default function InternamentoPage() {
                             <Link href={`/dashboard/patients/${hosp.patientId}`} onClick={(e) => e.stopPropagation()} className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
                               <ArrowUpRight size={14} />
                             </Link>
-                            <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-400">
+                            <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
                               <Stethoscope size={14} />
                             </div>
                           </div>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 text-[10px] font-bold uppercase text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl px-4"
+                            className="h-8 text-[11px] font-bold uppercase text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl px-4"
                             onClick={(e) => {
                               e.stopPropagation();
                               setSelectedHosp(hosp);
@@ -627,8 +627,8 @@ export default function InternamentoPage() {
                     <Bed size={28} strokeWidth={1.5} className="text-slate-200 dark:text-slate-800" />
                   </div>
                   <div className="text-center">
-                    <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-600">{boxLabel}</p>
-                    <p className="text-[10px] font-bold text-slate-300 dark:text-slate-700 uppercase tracking-widest mt-1">Disponível</p>
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 dark:text-slate-600">{boxLabel}</p>
+                    <p className="text-[11px] font-bold text-slate-300 dark:text-slate-700 uppercase tracking-widest mt-1">Disponível</p>
                   </div>
                 </CardContent>
               </Card>
@@ -640,11 +640,11 @@ export default function InternamentoPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-50 dark:border-white/5 bg-slate-50/50 dark:bg-slate-900">
-                  <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Status</th>
-                  <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Box</th>
-                  <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Paciente</th>
-                  <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Proprietário</th>
-                  <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Tratamentos</th>
+                  <th className="px-8 py-5 text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Status</th>
+                  <th className="px-8 py-5 text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Box</th>
+                  <th className="px-8 py-5 text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Paciente</th>
+                  <th className="px-8 py-5 text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Proprietário</th>
+                  <th className="px-8 py-5 text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Tratamentos</th>
                   <th className="px-8 py-5 text-right"></th>
                 </tr>
               </thead>
@@ -662,7 +662,7 @@ export default function InternamentoPage() {
                       </div>
                     </td>
                     <td className="px-8 py-6">
-                       <Badge variant="outline" className="rounded-lg font-bold text-[10px] border-slate-200 dark:border-white/10 text-slate-500 uppercase tracking-tighter">
+                       <Badge variant="outline" className="rounded-lg font-bold text-[11px] border-slate-200 dark:border-white/10 text-slate-500 uppercase tracking-tighter">
                          {hosp.boxNumber}
                        </Badge>
                     </td>
@@ -673,13 +673,13 @@ export default function InternamentoPage() {
                         </div>
                         <div>
                           <p className="font-bold text-slate-900 dark:text-white leading-none mb-1">{hosp.patient.name}</p>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase">{hosp.patient.species} • {hosp.patient.breed}</p>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase">{hosp.patient.species} • {hosp.patient.breed}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-8 py-6">
                       <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{hosp.patient.owner?.name}</p>
-                      <p className="text-[10px] text-slate-400 font-medium">{hosp.patient.owner?.phone}</p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{hosp.patient.owner?.phone}</p>
                     </td>
                     <td className="px-8 py-6">
                        <div className="flex items-center gap-3">
@@ -687,7 +687,7 @@ export default function InternamentoPage() {
                             value={((hosp.tasks?.filter((t:any) => t.status === "COMPLETED").length || 0) / (hosp.tasks?.length || 1)) * 100} 
                             className="w-24 h-1.5" 
                           />
-                          <span className="text-[10px] font-bold text-slate-400 uppercase">
+                          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase">
                             {hosp.tasks?.filter((t:any) => t.status === "COMPLETED").length || 0}/{hosp.tasks?.length || 0}
                           </span>
                        </div>
@@ -739,13 +739,13 @@ export default function InternamentoPage() {
 
               <div className="p-8 space-y-6">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                  <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                     Plano de Tratamento
                   </h4>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 rounded-lg text-[10px] font-bold uppercase text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                    className="h-7 rounded-lg text-[11px] font-bold uppercase text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
                     onClick={() => setIsAddTaskOpen(true)}
                   >
                     <Plus size={14} className="mr-1" /> Adicionar
@@ -763,7 +763,7 @@ export default function InternamentoPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-slate-400">
+                  <div className="text-center py-8 text-slate-500 dark:text-slate-400">
                     <ClipboardList size={32} strokeWidth={1.5} className="mx-auto mb-2" />
                     <p className="text-sm font-bold">Sem tarefas agendadas</p>
                   </div>

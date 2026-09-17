@@ -144,7 +144,7 @@ export function ConsultationBilling({ onItemsChange }: { onItemsChange: (items: 
   return (
     <div className="space-y-6">
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600" size={18} />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 dark:text-slate-600" size={18} />
         <Barcode className={`absolute right-4 top-1/2 -translate-y-1/2 transition-all duration-300 ${scanFeedback ? "text-blue-500 scale-125" : "text-slate-300 dark:text-slate-700"}`} size={20} />
         <Input 
           ref={inputRef}
@@ -170,7 +170,7 @@ export function ConsultationBilling({ onItemsChange }: { onItemsChange: (items: 
                     </div>
                     <div>
                       <p className="font-black text-sm text-slate-900 dark:text-white uppercase tracking-tight">{product.name}</p>
-                      <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500">Stock: {product.stockQuantity} un.</p>
+                      <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500">Stock: {product.stockQuantity} un.</p>
                     </div>
                   </div>
                   <p className="font-black text-blue-600 dark:text-blue-400">€{product.price}</p>
@@ -185,7 +185,7 @@ export function ConsultationBilling({ onItemsChange }: { onItemsChange: (items: 
         {items.length === 0 ? (
           <div className="text-center py-12 border-2 border-dashed border-slate-100 dark:border-white/5 rounded-3xl">
              <ShoppingCart size={32} className="mx-auto text-slate-100 dark:text-slate-800 mb-2" />
-             <p className="text-slate-400 dark:text-slate-600 text-sm font-medium">Nenhum item adicionado à consulta.</p>
+             <p className="text-slate-500 dark:text-slate-400 dark:text-slate-600 text-sm font-medium">Nenhum item adicionado à consulta.</p>
              <Button onClick={addPackConsulta} className="mt-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm">
                <Stethoscope size={16} className="mr-2" /> Adicionar Pack Consulta (€45)
              </Button>
@@ -202,27 +202,27 @@ export function ConsultationBilling({ onItemsChange }: { onItemsChange: (items: 
               return (
                 <div key={item.id} className="flex items-center justify-between p-4 bg-white dark:bg-slate-900/40 rounded-2xl border border-slate-50 dark:border-white/5 shadow-sm animate-in slide-in-from-right-2 duration-300">
                   <div className="flex items-center gap-4">
-                     <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-center font-black text-slate-400 dark:text-slate-500 text-xs">
+                     <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-center font-black text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs">
                         {item.quantity}x
                      </div>
                      <div>
                         <p className="font-black text-slate-900 dark:text-white text-sm uppercase tracking-tight">{item.name}</p>
-                        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500">Preço unitário: €{item.price} · IVA {item.vatRate}%</p>
+                        <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500">Preço unitário: €{item.price} · IVA {item.vatRate}%</p>
                      </div>
                   </div>
                   <div className="flex items-center gap-3">
                      <div className="flex items-center gap-1 bg-slate-50 dark:bg-white/5 rounded-lg">
-                        <Button variant="ghost" size="icon" onClick={() => updateQuantity(item.id, -1)} className="h-7 w-7 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                        <Button variant="ghost" size="icon" onClick={() => updateQuantity(item.id, -1)} className="h-7 w-7 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
                            <span className="text-sm font-bold">-</span>
                         </Button>
                         <span className="w-6 text-center text-xs font-black text-slate-700 dark:text-slate-300">{item.quantity}</span>
-                        <Button variant="ghost" size="icon" onClick={() => updateQuantity(item.id, 1)} className="h-7 w-7 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                        <Button variant="ghost" size="icon" onClick={() => updateQuantity(item.id, 1)} className="h-7 w-7 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
                            <span className="text-sm font-bold">+</span>
                         </Button>
                      </div>
                      <div className="text-right">
                         <p className="font-black text-slate-900 dark:text-white text-lg tracking-tighter">€{(lineBase + lineVat).toFixed(2)}</p>
-                        <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500">+€{lineVat.toFixed(2)} IVA</p>
+                        <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500">+€{lineVat.toFixed(2)} IVA</p>
                      </div>
                      <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)} className="text-slate-300 dark:text-slate-700 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">
                         <Trash2 size={16} />
@@ -234,7 +234,7 @@ export function ConsultationBilling({ onItemsChange }: { onItemsChange: (items: 
             
             <div className="pt-6 border-t border-slate-100 dark:border-white/5 space-y-4">
                <div className="space-y-2">
-                  <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Detalhamento IVA</p>
+                  <p className="text-[11px] font-black text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-widest">Detalhamento IVA</p>
                   {vatBreakdown.map(({ rate, base, vat, total }) => (
                     <div key={rate} className="flex justify-between items-center text-sm">
                        <span className="font-bold text-slate-600 dark:text-slate-400">Base IVA {rate}%</span>
@@ -249,19 +249,19 @@ export function ConsultationBilling({ onItemsChange }: { onItemsChange: (items: 
 
                <div className="pt-4 border-t border-slate-100 dark:border-white/5 flex justify-between items-end px-4">
                   <div>
-                     <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Total com IVA</p>
+                     <p className="text-[11px] font-black text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-widest">Total com IVA</p>
                      <div className="flex items-center gap-2 mt-1">
                         <CreditCard size={20} className="text-blue-600 dark:text-blue-400" />
                         <p className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">€{total.toFixed(2)}</p>
                      </div>
-                     <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-1">Base: €{subtotal.toFixed(2)} · IVA: €{totalVat.toFixed(2)}</p>
+                     <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">Base: €{subtotal.toFixed(2)} · IVA: €{totalVat.toFixed(2)}</p>
                   </div>
                    <Badge className={
                      health?.vendus?.status === "connected"
-                       ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-none px-4 py-1.5 mb-1 font-semibold text-[10px] rounded-lg"
+                       ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-none px-4 py-1.5 mb-1 font-semibold text-[11px] rounded-lg"
                        : health?.vendus?.status === "configured"
-                       ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-none px-4 py-1.5 mb-1 font-semibold text-[10px] rounded-lg"
-                       : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-none px-4 py-1.5 mb-1 font-semibold text-[10px] rounded-lg"
+                       ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-none px-4 py-1.5 mb-1 font-semibold text-[11px] rounded-lg"
+                       : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-none px-4 py-1.5 mb-1 font-semibold text-[11px] rounded-lg"
                    }>
                      {health?.vendus?.label || "Vendus"}
                   </Badge>

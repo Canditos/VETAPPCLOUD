@@ -103,7 +103,7 @@ export function ServicePacks() {
               </div>
               <div>
                 <CardTitle className="text-lg font-bold text-white">Packs de Serviços</CardTitle>
-                <CardDescription className="text-slate-400">Crie packs pré-definidos para faturação rápida (cirurgias, vacinas, consultas).</CardDescription>
+                <CardDescription className="text-slate-500 dark:text-slate-400">Crie packs pré-definidos para faturação rápida (cirurgias, vacinas, consultas).</CardDescription>
               </div>
             </div>
             <Button onClick={() => { setShowForm(!showForm); setEditingId(null); setForm({ name: "", type: "CUSTOM", items: [{ description: "", quantity: 1, unitPrice: 0, vatRate: 23 }] }); }}
@@ -131,26 +131,26 @@ export function ServicePacks() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label className="text-xs font-bold text-slate-500 uppercase">Itens do Pack</Label>
-                  <Button variant="outline" size="sm" onClick={addItem} className="h-8 rounded-xl text-[10px] gap-1 border-slate-600 text-slate-300">
+                  <Button variant="outline" size="sm" onClick={addItem} className="h-8 rounded-xl text-[11px] gap-1 border-slate-600 text-slate-300">
                     <Plus size={12} /> Adicionar Item
                   </Button>
                 </div>
                 {form.items.map((item, i) => (
                   <div key={i} className="grid grid-cols-12 gap-2 items-end">
                     <div className="col-span-5 space-y-1">
-                      <Label className="text-[10px] text-slate-500">Descrição</Label>
+                      <Label className="text-[11px] text-slate-500">Descrição</Label>
                       <Input value={item.description} onChange={(e) => updateItem(i, "description", e.target.value)} placeholder="Ex: Cirurgia + Anestesia" className="rounded-xl bg-slate-800/50 border-slate-700/50 text-white h-9 text-xs" />
                     </div>
                     <div className="col-span-2 space-y-1">
-                      <Label className="text-[10px] text-slate-500">Qty</Label>
+                      <Label className="text-[11px] text-slate-500">Qty</Label>
                       <Input type="number" min={1} value={item.quantity} onChange={(e) => updateItem(i, "quantity", parseInt(e.target.value) || 1)} className="rounded-xl bg-slate-800/50 border-slate-700/50 text-white h-9 text-xs" />
                     </div>
                     <div className="col-span-2 space-y-1">
-                      <Label className="text-[10px] text-slate-500">Preço</Label>
+                      <Label className="text-[11px] text-slate-500">Preço</Label>
                       <Input type="number" min={0} step={0.01} value={item.unitPrice} onChange={(e) => updateItem(i, "unitPrice", parseFloat(e.target.value) || 0)} className="rounded-xl bg-slate-800/50 border-slate-700/50 text-white h-9 text-xs" />
                     </div>
                     <div className="col-span-2 space-y-1">
-                      <Label className="text-[10px] text-slate-500">IVA %</Label>
+                      <Label className="text-[11px] text-slate-500">IVA %</Label>
                       <select value={item.vatRate} onChange={(e) => updateItem(i, "vatRate", parseInt(e.target.value))}
                         className="w-full h-9 rounded-xl bg-slate-800/50 border border-slate-700/50 text-white px-2 text-xs">
                         <option value={23}>23%</option>
@@ -183,13 +183,13 @@ export function ServicePacks() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-bold text-white">{pack.name}</p>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-700 text-slate-300 font-medium">{PACK_TYPES.find(t => t.value === pack.type)?.label || pack.type}</span>
-                      {!pack.active && <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-medium">Inativo</span>}
+                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-700 text-slate-300 font-medium">{PACK_TYPES.find(t => t.value === pack.type)?.label || pack.type}</span>
+                      {!pack.active && <span className="text-[11px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-medium">Inativo</span>}
                     </div>
                     <p className="text-xs text-slate-500 mt-1">{pack.items.length} item(ns) · Total: {pack.items.reduce((s, i) => s + i.quantity * i.unitPrice, 0).toFixed(2)}€</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0 ml-4">
-                    <Button variant="ghost" size="sm" onClick={() => editPack(pack)} className="h-8 px-3 rounded-xl text-xs text-slate-400 hover:text-white">Editar</Button>
+                    <Button variant="ghost" size="sm" onClick={() => editPack(pack)} className="h-8 px-3 rounded-xl text-xs text-slate-500 dark:text-slate-400 hover:text-white">Editar</Button>
                     <Button variant="ghost" size="sm" onClick={() => deletePack(pack.id)} className="h-8 w-8 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-500/10"><Trash2 size={14} /></Button>
                   </div>
                 </div>

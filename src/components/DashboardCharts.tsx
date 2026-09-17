@@ -184,13 +184,13 @@ export function StatCard({
             <Icon size={22} strokeWidth={2} />
           </div>
           {trend && (
-            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-2 py-0.5 border border-slate-100 dark:border-slate-700 rounded-full">
+            <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider px-2 py-0.5 border border-slate-100 dark:border-slate-700 rounded-full">
               {trend}
             </div>
           )}
         </div>
         <div className="mt-5">
-          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+          <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider">
             {name}
           </p>
           {loading ? (
@@ -267,10 +267,10 @@ export function AppointmentRow({ appt, now }: { appt: any; now: Date }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <p className="font-bold text-slate-900 dark:text-white text-sm truncate">{appt.patient?.name}</p>
-            {isNext && <span className="bg-blue-600 text-white text-[9px] font-bold px-2 py-0 rounded-full">A seguir</span>}
-            {isPast && <span className="text-slate-400 text-[9px] font-bold border border-slate-200 px-2 py-0 rounded-full">Passou</span>}
+            {isNext && <span className="bg-blue-600 text-white text-[11px] font-bold px-2 py-0 rounded-full">A seguir</span>}
+            {isPast && <span className="text-slate-500 dark:text-slate-400 text-[11px] font-bold border border-slate-200 px-2 py-0 rounded-full">Passou</span>}
           </div>
-          <p className="text-xs text-slate-400 font-medium truncate">{appt.patient?.owner?.name} · {appt.type ?? "Consulta"}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">{appt.patient?.owner?.name} · {appt.type ?? "Consulta"}</p>
         </div>
 
         <div className="text-right shrink-0">

@@ -70,10 +70,10 @@ export function NotificationsDropdown() {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl text-slate-400 dark:text-slate-300 relative bg-slate-50 dark:bg-card hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm group">
+          <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl text-slate-500 dark:text-slate-400 dark:text-slate-300 relative bg-slate-50 dark:bg-card hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm group">
             <Bell size={20} strokeWidth={2.5} className="group-hover:rotate-12 transition-transform" />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-black rounded-full flex items-center justify-center ring-4 ring-white dark:ring-slate-950 shadow-lg shadow-rose-500/30 animate-in zoom-in duration-300">
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[11px] font-black rounded-full flex items-center justify-center ring-4 ring-white dark:ring-slate-950 shadow-lg shadow-rose-500/30 animate-in zoom-in duration-300">
                 {unreadCount > 9 ? "+9" : unreadCount}
               </span>
             )}
@@ -81,12 +81,12 @@ export function NotificationsDropdown() {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-80 rounded-[2rem] p-2 bg-white dark:bg-slate-950 border-slate-200 dark:border-white/10 shadow-2xl z-[100]">
           <DropdownMenuLabel className="flex items-center justify-between px-4 py-3">
-            <span className="font-black text-[11px] uppercase tracking-[0.2em] text-slate-400">Notificações</span>
+            <span className="font-black text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Notificações</span>
             {unreadCount > 0 && (
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="h-6 text-[9px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-500/10"
+                className="h-6 text-[11px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-500/10"
                 onClick={() => {
                   fetch("/api/notifications", { 
                     method: "PATCH",
@@ -107,7 +107,7 @@ export function NotificationsDropdown() {
                     <Bell size={20} />
                 </div>
                 <p className="text-xs font-bold text-slate-500">Tudo em dia!</p>
-                <p className="text-[10px] text-slate-400 mt-1">Não tens notificações pendentes.</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Não tens notificações pendentes.</p>
               </div>
             ) : (
               <div className="space-y-1 p-1">
@@ -131,14 +131,14 @@ export function NotificationsDropdown() {
                        </div>
                        <div className="flex-1 min-w-0">
                           <p className="text-[11px] font-black text-slate-900 dark:text-white truncate">{n.title}</p>
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed line-clamp-2 mt-0.5">
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed line-clamp-2 mt-0.5">
                             {n.message}
                           </p>
                        </div>
                     </div>
                     <div className="flex items-center gap-2 mt-3 ml-11">
                        <Clock size={10} className="text-slate-300" />
-                       <p className="text-[9px] font-bold text-slate-400 uppercase">
+                       <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase">
                          {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: pt })}
                        </p>
                     </div>

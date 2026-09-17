@@ -41,7 +41,7 @@ export const EmptyState = ({
   const Icon = icon || defaultIcons.empty;
   return (
     <div className={cn("flex flex-col items-center justify-center px-6 py-16 text-center", className)}>
-      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400">
+      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
         <Icon size={28} strokeWidth={1.5} />
       </div>
       <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{title}</p>

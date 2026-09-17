@@ -23,6 +23,7 @@ import {
   RevenueChart,
   AppointmentsChart,
 } from "@/components/DashboardCharts";
+import { PageHeader } from "@/components/PageHeader";
 
 const greeting = () => {
   const h = new Date().getHours();
@@ -63,47 +64,34 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-[1600px] mx-auto space-y-6 p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="space-y-0.5">
-          {isLoading ? (
-            <Skeleton className="h-10 w-56" />
-          ) : (
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-              {greeting()}{data?.userName ? `, ${data.userName.split(" ")[0]}` : ""}{" "}
-              <span className="text-2xl">👋</span>
-            </h1>
-          )}
-          <p className="text-slate-500 dark:text-slate-400 font-medium text-base capitalize">
-            {format(now, "EEEE, d 'de' MMMM", { locale: pt })}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-10 w-10 rounded-xl border-slate-200 dark:border-slate-800"
-            onClick={() => refetch()}
-            disabled={isRefetching}
-          >
-            <RefreshCw size={16} className={cn(isRefetching && "animate-spin")} />
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => router.push("/dashboard/management")}
-            className="h-10 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 font-bold px-5 text-sm"
-          >
-            Relatórios
-          </Button>
-          <Button
-            onClick={() => router.push("/dashboard/appointments")}
-            className="h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 gap-1.5 text-sm active:scale-95"
-          >
-            <Plus size={16} strokeWidth={2.5} />
-            Nova Consulta
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title={`${greeting()}${data?.userName ? `, ${data.userName.split(" ")[0]}` : ""} 👋`}
+        description={format(now, "EEEE, d 'de' MMMM", { locale: pt }).replace(/^./, (c) => c.toUpperCase())}
+      >
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-10 w-10 rounded-xl border-slate-200 dark:border-slate-800"
+          onClick={() => refetch()}
+          disabled={isRefetching}
+        >
+          <RefreshCw size={16} className={cn(isRefetching && "animate-spin")} />
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => router.push("/dashboard/management")}
+          className="h-10 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 font-bold px-5 text-sm"
+        >
+          Relatórios
+        </Button>
+        <Button
+          onClick={() => router.push("/dashboard/appointments")}
+          className="h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 gap-1.5 text-sm active:scale-95"
+        >
+          <Plus size={16} strokeWidth={2.5} />
+          Nova Consulta
+        </Button>
+      </PageHeader>
 
       {/* Error state */}
       {isError && (
@@ -155,7 +143,7 @@ export default function DashboardPage() {
                 <CardTitle className="text-sm font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
                   <Calendar size={14} strokeWidth={2} /> Agenda de Hoje
                 </CardTitle>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded-full">
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded-full">
                   {isLoading ? "..." : `${data?.todayAppointments?.length ?? 0} marcações`}
                 </span>
               </div>
@@ -222,17 +210,17 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-slate-800 dark:text-slate-100 text-sm truncate">{h.patientName}</p>
-                      <p className="text-xs text-slate-400 truncate">{h.boxNumber ?? "Sem box"}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{h.boxNumber ?? "Sem box"}</p>
                     </div>
                     {(h.pendingTasks ?? 0) > 0 && (
-                      <Badge className="bg-amber-100 text-amber-700 border-none text-[10px] font-bold shrink-0">
+                      <Badge className="bg-amber-100 text-amber-700 border-none text-[11px] font-bold shrink-0">
                         {h.pendingTasks} tarefa{h.pendingTasks > 1 ? "s" : ""}
                       </Badge>
                     )}
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-slate-400 font-medium py-3 text-center">Nenhum animal internado</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium py-3 text-center">Nenhum animal internado</p>
               )}
             </CardContent>
           </Card>
@@ -243,10 +231,10 @@ export default function DashboardPage() {
               <ShieldCheck size={64} />
             </div>
             <div className="flex justify-between items-center mb-2 relative z-10">
-              <span className="text-[10px] font-bold opacity-70 uppercase tracking-wider">Vendus Cloud</span>
+              <span className="text-[11px] font-bold opacity-70 uppercase tracking-wider">Vendus Cloud</span>
               <Badge
                 className={cn(
-                  "text-[10px] px-2 border-none",
+                  "text-[11px] px-2 border-none",
                   health?.vendus?.status === "connected"
                     ? "bg-emerald-400/20 text-emerald-300"
                     : "bg-red-400/20 text-red-300"
@@ -261,7 +249,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <p className="text-xs font-bold">Faturação Ativa</p>
-                <p className="text-[10px] opacity-60 font-medium">Sistema certificado AT</p>
+                <p className="text-[11px] opacity-60 font-medium">Sistema certificado AT</p>
               </div>
             </div>
           </div>

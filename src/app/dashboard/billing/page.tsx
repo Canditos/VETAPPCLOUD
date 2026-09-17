@@ -59,7 +59,7 @@ export default function BillingPage() {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-1">
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tighter">Faturação & Finanças</h1>
-            <div className="flex items-center gap-2 text-slate-400 font-bold text-[10px] tracking-wider">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 font-bold text-[11px] tracking-wider">
                <Receipt size={14} className="text-blue-600" />
                <span>Controlo Legal via Vendus ERP & Vendas Locais</span>
             </div>
@@ -68,7 +68,7 @@ export default function BillingPage() {
           <div className="flex flex-wrap items-center gap-3">
             <Button 
               variant="outline" 
-              className="h-10 rounded-xl px-4 gap-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-bold text-[10px] tracking-wider hover:bg-white transition-all active:scale-95"
+              className="h-10 rounded-xl px-4 gap-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-bold text-[11px] tracking-wider hover:bg-white transition-all active:scale-95"
               onClick={() => {
                 const now = new Date();
                 const month = now.getMonth() + 1;
@@ -86,7 +86,7 @@ export default function BillingPage() {
               disabled={isRefetching}
             >
               <RefreshCw size={16} className={isRefetching ? "animate-spin" : ""} />
-              <span className="text-[10px] tracking-wider">Sincronizar</span>
+              <span className="text-[11px] tracking-wider">Sincronizar</span>
             </Button>
           </div>
         </div>
@@ -107,7 +107,7 @@ export default function BillingPage() {
               value: formatEur(stats?.pendingTotal ?? 0), 
               sub: `${stats?.pendingCount ?? 0} rascunhos`,
               icon: Clock, 
-              color: stats?.pendingCount > 0 ? "text-amber-600" : "text-slate-400", 
+              color: stats?.pendingCount > 0 ? "text-amber-600" : "text-slate-500 dark:text-slate-400", 
               bg: stats?.pendingCount > 0 ? "bg-amber-50/50" : "bg-slate-50/50" 
             },
             { 
@@ -125,13 +125,13 @@ export default function BillingPage() {
                   <stat.icon size={22} strokeWidth={2.5} />
                 </div>
                 <div>
-                  <p className="text-[8px] font-bold text-slate-400 tracking-wider leading-tight">{stat.label}</p>
+                  <p className="text-[8px] font-bold text-slate-500 dark:text-slate-400 tracking-wider leading-tight">{stat.label}</p>
                   {isLoading ? (
                     <Skeleton className="h-6 w-20 mt-1" />
                   ) : (
                     <p className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">{stat.value}</p>
                   )}
-                  <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">{stat.sub}</p>
+                  <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-0.5">{stat.sub}</p>
                 </div>
               </CardHeader>
             </Card>
@@ -141,7 +141,7 @@ export default function BillingPage() {
         {/* Search Bottom Row */}
         <div className="pt-6 border-t border-slate-100 dark:border-slate-800/50">
           <div className="relative group">
-            <FileSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
+            <FileSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
             <Input
               placeholder="Pesquisar por fatura, cliente ou número externo..."
               className="h-14 pl-12 pr-6 rounded-xl border-none bg-slate-50 dark:bg-slate-800/50 ring-1 ring-slate-100 dark:ring-slate-800 focus-visible:ring-2 focus-visible:ring-blue-500/50 font-bold text-sm text-slate-700 dark:text-slate-200"
@@ -187,14 +187,14 @@ export default function BillingPage() {
                 {/* Invoice Header */}
                 <div className="flex justify-between items-start">
                   <div className="flex gap-4 items-center">
-                    <div className="w-16 h-16 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-inner">
+                    <div className="w-16 h-16 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-inner">
                       <Receipt size={28} strokeWidth={2} />
                     </div>
                     <div className="min-w-0">
                       <h3 className="font-bold text-xl text-slate-900 dark:text-white truncate tracking-tight leading-none group-hover:text-blue-600 transition-colors">
                         {inv.externalId ?? `FT ${inv.id.substring(0, 8).toUpperCase()}`}
                       </h3>
-                      <p className="text-[10px] font-bold text-slate-400 dark:text-slate-600 tracking-wider mt-2">
+                      <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 dark:text-slate-600 tracking-wider mt-2">
                         {date.toLocaleDateString("pt-PT", { day: '2-digit', month: 'short', year: 'numeric' })}
                       </p>
                     </div>
@@ -220,7 +220,7 @@ export default function BillingPage() {
                 {/* Client Info Section */}
                 <div className="p-4 bg-slate-50/50 dark:bg-slate-800/30 rounded-2xl border border-slate-100/50 dark:border-white/5">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-900 flex items-center justify-center text-slate-400 ring-1 ring-slate-100 dark:ring-slate-800">
+                    <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 ring-1 ring-slate-100 dark:ring-slate-800">
                       <Receipt size={14} />
                     </div>
                     <div className="min-w-0">
@@ -228,7 +228,7 @@ export default function BillingPage() {
                         {ownerName}
                       </p>
                       {patientName && (
-                        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider">
+                        <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 tracking-wider">
                           Paciente: {patientName}
                         </p>
                       )}
@@ -240,7 +240,7 @@ export default function BillingPage() {
                 <div className="flex items-center justify-between mt-auto">
                    <div className="flex -space-x-2">
                       {inv.items?.slice(0, 3).map((item: any, i: number) => (
-                        <div key={i} className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-white dark:border-slate-900 flex items-center justify-center text-[8px] font-bold text-slate-400">
+                        <div key={i} className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-white dark:border-slate-900 flex items-center justify-center text-[8px] font-bold text-slate-500 dark:text-slate-400">
                           {item.description[0]}
                         </div>
                       ))}
@@ -253,7 +253,7 @@ export default function BillingPage() {
 
                    <div className="flex gap-2">
                       {inv.pdfUrl && (
-                        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all">
+                        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all">
                           <Download size={18} />
                         </Button>
                       )}
@@ -269,7 +269,7 @@ export default function BillingPage() {
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="h-10 w-10 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-400 hover:bg-slate-900 dark:hover:bg-white hover:text-white dark:hover:text-slate-900 transition-all"
+                        className="h-10 w-10 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-900 dark:hover:bg-white hover:text-white dark:hover:text-slate-900 transition-all"
                       >
                         <ChevronRight size={20} strokeWidth={3} />
                       </Button>

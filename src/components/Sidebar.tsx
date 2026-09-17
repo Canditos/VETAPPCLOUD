@@ -23,7 +23,7 @@ export default function Sidebar() {
           </div>
           <div>
             <span className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tighter block leading-none">VetConnect</span>
-            <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] mt-1 block">Clinic Pro</span>
+            <span className="text-[11px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] mt-1 block">Clinic Pro</span>
           </div>
         </div>
       </Link>
@@ -34,7 +34,7 @@ export default function Sidebar() {
           if (groupItems.length === 0) return null;
           return (
             <div key={group.label} className="space-y-2">
-              <h3 className="px-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em] mb-3">
+              <h3 className="px-4 text-[11px] font-black text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em] mb-3">
                 {group.label}
               </h3>
               <div className="space-y-1">
@@ -85,7 +85,7 @@ export default function Sidebar() {
             <p className="text-sm font-black text-slate-900 dark:text-white truncate">
               {session?.user?.name || "Dr. Marco"}
             </p>
-            <p className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">
+            <p className="text-[11px] font-black text-slate-500 dark:text-slate-400 dark:text-slate-600 uppercase tracking-widest">
               {role ? (ROLE_LABELS[role as keyof typeof ROLE_LABELS] || role) : "---"}
             </p>
           </div>

@@ -72,7 +72,7 @@ export default function ManagementDashboard() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20 font-bold text-[10px] uppercase tracking-widest px-4 py-1 mb-3 rounded-full">
+          <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20 font-bold text-[11px] uppercase tracking-widest px-4 py-1 mb-3 rounded-full">
             Executive Control Panel
           </Badge>
           <h1 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tighter flex items-center gap-4">
@@ -94,13 +94,13 @@ export default function ManagementDashboard() {
 
       <Tabs defaultValue="overview" className="space-y-6" onValueChange={setActiveTab}>
         <TabsList className="bg-slate-100 dark:bg-white/5 p-1.5 rounded-2xl border border-slate-200 dark:border-white/10 h-12 w-full flex">
-          <TabsTrigger value="overview" className="rounded-xl font-bold text-[10px] uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-blue-600 dark:data-[state=active]:text-white transition-all flex-1 h-full justify-center">
+          <TabsTrigger value="overview" className="rounded-xl font-bold text-[11px] uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-blue-600 dark:data-[state=active]:text-white transition-all flex-1 h-full justify-center">
             <Activity className="mr-2" size={14} /> Visão Geral
           </TabsTrigger>
-          <TabsTrigger value="finance" className="rounded-xl font-bold text-[10px] uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-blue-600 dark:data-[state=active]:text-white transition-all flex-1 h-full justify-center">
+          <TabsTrigger value="finance" className="rounded-xl font-bold text-[11px] uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-blue-600 dark:data-[state=active]:text-white transition-all flex-1 h-full justify-center">
             <Euro className="mr-2" size={14} /> Financeiro & IVA
           </TabsTrigger>
-          <TabsTrigger value="performance" className="rounded-xl font-bold text-[10px] uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-blue-600 dark:data-[state=active]:text-white transition-all flex-1 h-full justify-center">
+          <TabsTrigger value="performance" className="rounded-xl font-bold text-[11px] uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-blue-600 dark:data-[state=active]:text-white transition-all flex-1 h-full justify-center">
             <TrendingUp className="mr-2" size={14} /> Performance
           </TabsTrigger>
         </TabsList>
@@ -120,11 +120,11 @@ export default function ManagementDashboard() {
                       <div className={`p-5 rounded-2xl ${kpi.bg} ${kpi.color} shadow-sm group-hover:scale-110 transition-transform duration-500`}>
                          <kpi.icon size={24} strokeWidth={2.5} />
                       </div>
-                      <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                      <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-500 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
                          <ArrowUpRight size={12} /> {kpi.trend}
                       </div>
                    </div>
-                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{kpi.label}</p>
+                   <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">{kpi.label}</p>
                    <h3 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tighter">{kpi.value}</h3>
                    <p className="text-[11px] text-slate-500 font-bold mt-3 uppercase tracking-widest">{kpi.sub}</p>
                 </CardContent>
@@ -237,7 +237,7 @@ export default function ManagementDashboard() {
                   </CardTitle>
                   <CardDescription className="text-slate-500 font-medium text-base mt-1">Resumo para contabilidade - Período: {vatData?.month}</CardDescription>
                 </div>
-                <Button variant="outline" className="rounded-2xl font-bold text-[10px] uppercase tracking-widest gap-2">
+                <Button variant="outline" className="rounded-2xl font-bold text-[11px] uppercase tracking-widest gap-2">
                   <Download size={14} /> Baixar PDF
                 </Button>
               </CardHeader>
@@ -245,10 +245,10 @@ export default function ManagementDashboard() {
                 <Table>
                   <TableHeader className="bg-slate-50 dark:bg-white/5">
                     <TableRow className="border-none hover:bg-transparent">
-                      <TableHead className="font-bold text-[10px] uppercase tracking-widest py-6">Taxa de IVA</TableHead>
-                      <TableHead className="font-bold text-[10px] uppercase tracking-widest text-right">Base Tributável</TableHead>
-                      <TableHead className="font-bold text-[10px] uppercase tracking-widest text-right">Total IVA</TableHead>
-                      <TableHead className="font-bold text-[10px] uppercase tracking-widest text-right">Total Bruto</TableHead>
+                      <TableHead className="font-bold text-[11px] uppercase tracking-widest py-6">Taxa de IVA</TableHead>
+                      <TableHead className="font-bold text-[11px] uppercase tracking-widest text-right">Base Tributável</TableHead>
+                      <TableHead className="font-bold text-[11px] uppercase tracking-widest text-right">Total IVA</TableHead>
+                      <TableHead className="font-bold text-[11px] uppercase tracking-widest text-right">Total Bruto</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -292,13 +292,13 @@ export default function ManagementDashboard() {
                   </CardHeader>
                   <CardContent className="space-y-6 p-0">
                     <div className="p-6 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10">
-                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Entradas (Este Mês)</p>
+                       <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Entradas (Este Mês)</p>
                        <h4 className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">+{vatData?.totalGross.toFixed(0)}€</h4>
                     </div>
                     <div className="p-6 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 opacity-50">
-                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Saídas Estimadas</p>
+                       <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Saídas Estimadas</p>
                        <h4 className="text-3xl font-bold text-rose-500 dark:text-rose-400">-0.00€</h4>
-                       <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter mt-2">Módulo de despesas não configurado</p>
+                       <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tighter mt-2">Módulo de despesas não configurado</p>
                     </div>
                   </CardContent>
                   <Button className="w-full mt-6 h-10 rounded-2xl bg-blue-600 text-white font-bold uppercase tracking-widest text-[11px] hover:bg-blue-700 transition-all group">

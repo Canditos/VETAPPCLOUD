@@ -28,7 +28,7 @@ export default function Header() {
             <p className="text-sm font-black text-slate-900 dark:text-slate-100 leading-none tracking-tight uppercase">
               {userName}
             </p>
-            <p className="text-[10px] text-blue-600 dark:text-blue-400 font-black uppercase tracking-[0.2em] mt-1.5">
+            <p className="text-[11px] text-blue-600 dark:text-blue-400 font-black uppercase tracking-[0.2em] mt-1.5">
               {roleLabel}
             </p>
           </div>

@@ -41,7 +41,7 @@ export default function MobileSidebar() {
                 </div>
                 <div>
                   <span className="text-lg font-black text-slate-900 dark:text-slate-100 tracking-tighter">VetConnect</span>
-                  <span className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] block">Clinic Pro</span>
+                  <span className="text-[11px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] block">Clinic Pro</span>
                 </div>
               </div>
               <Button variant="ghost" size="icon" onClick={() => setOpen(false)} className="rounded-xl">
@@ -55,7 +55,7 @@ export default function MobileSidebar() {
                 if (items.length === 0) return null;
                 return (
                   <div key={group.label} className="space-y-2">
-                    <h3 className="px-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em]">
+                    <h3 className="px-4 text-[11px] font-black text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em]">
                       {group.label}
                     </h3>
                     <div className="space-y-1">

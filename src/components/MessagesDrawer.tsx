@@ -99,10 +99,10 @@ export function MessagesDrawer({
           {/* Header */}
           <div className="p-8 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-white/5">
             <div className="flex items-center justify-between mb-6">
-              <Badge variant="outline" className="px-3 py-1 rounded-full border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 font-black text-[10px] uppercase tracking-widest bg-blue-50/50 dark:bg-blue-500/5">
+              <Badge variant="outline" className="px-3 py-1 rounded-full border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 font-black text-[11px] uppercase tracking-widest bg-blue-50/50 dark:bg-blue-500/5">
                 {notification.type === "PORTAL_APPOINTMENT_REQUEST" ? "Pedido de Marcação" : "Conversa"}
               </Badge>
-              <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-2">
+              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase flex items-center gap-2">
                 <Clock size={12} /> {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true, locale: pt })}
               </span>
             </div>
@@ -122,7 +122,7 @@ export function MessagesDrawer({
                 <div className="space-y-8 animate-in fade-in slide-in-from-top-2 duration-500">
                   <div className="grid grid-cols-2 gap-4">
                      <div className="p-5 rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 shadow-sm">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">Paciente</span>
+                        <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Paciente</span>
                         <div className="flex items-center gap-3">
                            <div className="w-10 h-10 rounded-xl bg-blue-600/10 text-blue-600 flex items-center justify-center">
                               <Activity size={18} />
@@ -131,7 +131,7 @@ export function MessagesDrawer({
                         </div>
                      </div>
                      <div className="p-5 rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 shadow-sm">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">Tutor</span>
+                        <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Tutor</span>
                         <div className="flex items-center gap-3">
                            <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
                               <User size={18} />
@@ -145,11 +145,11 @@ export function MessagesDrawer({
                      <h4 className="text-[11px] font-black text-slate-900 dark:text-white uppercase tracking-[0.2em] border-b border-slate-100 dark:border-white/5 pb-4">Detalhes da Solicitação</h4>
                      <div className="flex items-center justify-between group">
                         <div className="flex items-center gap-4">
-                           <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                           <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 dark:text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all">
                               <Calendar size={18} />
                            </div>
                            <div>
-                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Previsão</p>
+                              <p className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Previsão</p>
                               <p className="font-black text-slate-900 dark:text-white">A definir na aprovação</p>
                            </div>
                         </div>
@@ -166,7 +166,7 @@ export function MessagesDrawer({
                   {messages.length === 0 ? (
                     <div className="p-8 text-center bg-slate-50 dark:bg-white/5 rounded-[2rem] border border-dashed border-slate-200 dark:border-white/10">
                       <MessageSquare className="mx-auto mb-3 text-slate-300" size={32} />
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Inicie a conversa com o tutor</p>
+                      <p className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Inicie a conversa com o tutor</p>
                     </div>
                   ) : (
                     messages.map((msg: any) => (
@@ -182,7 +182,7 @@ export function MessagesDrawer({
                         )}>
                           {msg.content}
                         </div>
-                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest px-1">
+                        <span className="text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-1">
                           {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true, locale: pt })}
                         </span>
                       </div>
@@ -236,7 +236,7 @@ export function MessagesDrawer({
                      Aprovar Pedido <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                   </Button>
                </div>
-               <p className="text-[10px] text-center text-slate-400 font-medium mt-6 uppercase tracking-widest">
+               <p className="text-[11px] text-center text-slate-500 dark:text-slate-400 font-medium mt-6 uppercase tracking-widest">
                   Ao aprovar, poderá sugerir um horário final na agenda.
                </p>
             </div>

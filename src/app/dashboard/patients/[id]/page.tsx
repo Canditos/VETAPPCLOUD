@@ -79,7 +79,7 @@ const fmtFull = (d: string | Date) => format(new Date(d), "dd 'de' MMMM 'de' yyy
 
 function EmptyState({ icon: Icon, text }: { icon: React.ComponentType<{ size?: number; strokeWidth?: number }>; text: string }) {
   return (
-    <div className="flex flex-col items-center justify-center py-14 text-slate-400 gap-3">
+    <div className="flex flex-col items-center justify-center py-14 text-slate-500 dark:text-slate-400 gap-3">
       <Icon size={36} strokeWidth={1.2} />
       <p className="text-sm font-medium">{text}</p>
     </div>
@@ -87,12 +87,12 @@ function EmptyState({ icon: Icon, text }: { icon: React.ComponentType<{ size?: n
 }
 
 function VaccineStatusBadge({ expiresAt }: { expiresAt: string | null }) {
-  if (!expiresAt) return <Badge variant="outline" className="text-[10px]">Sem reforço</Badge>;
+  if (!expiresAt) return <Badge variant="outline" className="text-[11px]">Sem reforço</Badge>;
   const d = new Date(expiresAt);
   const days = differenceInDays(d, new Date());
-  if (isPast(d)) return <Badge className="bg-red-100 text-red-700 border-none text-[10px]">Expirada</Badge>;
-  if (days <= 30) return <Badge className="bg-amber-100 text-amber-700 border-none text-[10px]">Em {days}d</Badge>;
-  return <Badge className="bg-green-100 text-green-700 border-none text-[10px]">Válida</Badge>;
+  if (isPast(d)) return <Badge className="bg-red-100 text-red-700 border-none text-[11px]">Expirada</Badge>;
+  if (days <= 30) return <Badge className="bg-amber-100 text-amber-700 border-none text-[11px]">Em {days}d</Badge>;
+  return <Badge className="bg-green-100 text-green-700 border-none text-[11px]">Válida</Badge>;
 }
 
 // ── Timeline Component ──
@@ -120,15 +120,15 @@ function ClinicalTimeline({ events }: { events: TimelineEvent[] }) {
           {/* Content */}
           <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-6 rounded-[2rem] bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all ml-6 md:ml-0 md:group-odd:mr-10 md:group-even:ml-10">
             <div className="flex items-center justify-between mb-2">
-              <time className="text-[10px] font-black text-blue-500 uppercase tracking-widest">{fmt(event.date)}</time>
-              <Badge variant="outline" className="text-[9px] uppercase tracking-tighter border-slate-200 dark:border-slate-700">{event.type}</Badge>
+              <time className="text-[11px] font-black text-blue-500 uppercase tracking-widest">{fmt(event.date)}</time>
+              <Badge variant="outline" className="text-[11px] uppercase tracking-tighter border-slate-200 dark:border-slate-700">{event.type}</Badge>
             </div>
             <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">{event.title}</h4>
             <p className="text-sm text-slate-500 font-medium mt-1 leading-relaxed">{event.description}</p>
             {event.doctor && (
                <div className="mt-4 pt-4 border-t border-slate-50 dark:border-slate-800/50 flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center"><User size={12} className="text-slate-400" /></div>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Dr. {event.doctor}</span>
+                  <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center"><User size={12} className="text-slate-500 dark:text-slate-400" /></div>
+                  <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Dr. {event.doctor}</span>
                </div>
             )}
           </div>
@@ -181,7 +181,7 @@ function ClinicalSummaryBanner({ patientId }: { patientId: string }) {
           <div className="flex items-center gap-3 flex-wrap">
             <div className="bg-white/20 p-2 rounded-xl text-white"><Sparkles size={18} /></div>
             <h3 className="text-lg font-bold text-white">Resumo Clínico</h3>
-            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+            <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
               aiEnabled
                 ? "bg-purple-400/30 text-purple-100"
                 : "bg-white/10 text-white/70"
@@ -190,7 +190,7 @@ function ClinicalSummaryBanner({ patientId }: { patientId: string }) {
             </span>
             <button
               onClick={() => setAiEnabled(!aiEnabled)}
-              className="text-[10px] font-medium text-white/80 bg-white/10 hover:bg-white/20 px-2 py-0.5 rounded-full transition-colors"
+              className="text-[11px] font-medium text-white/80 bg-white/10 hover:bg-white/20 px-2 py-0.5 rounded-full transition-colors"
             >
               {aiEnabled ? "↩ Voltar Local" : "✨ Analisar com IA"}
             </button>
@@ -224,7 +224,7 @@ function ClinicalSummaryBanner({ patientId }: { patientId: string }) {
                   ))}
                 </div>
               )}
-              <p className="text-[10px] text-white/50">{aiSummary.disclaimer}</p>
+              <p className="text-[11px] text-white/50">{aiSummary.disclaimer}</p>
             </>
           ) : (
             <>
@@ -274,7 +274,7 @@ function ClinicalSummaryBanner({ patientId }: { patientId: string }) {
 
         <div className="flex flex-wrap gap-4">
           <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 min-w-[100px]">
-            <p className="text-[10px] font-semibold text-blue-200 mb-1">Peso</p>
+            <p className="text-[11px] font-semibold text-blue-200 mb-1">Peso</p>
             <p className="text-2xl font-bold text-white">{summary.weight ?? "—"}</p>
             {summary.weightTrend && (
               <p className={`text-xs font-medium mt-1 ${summary.weightTrend.startsWith("+") ? "text-blue-200" : "text-emerald-200"}`}>
@@ -283,11 +283,11 @@ function ClinicalSummaryBanner({ patientId }: { patientId: string }) {
             )}
           </div>
           <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 min-w-[100px]">
-            <p className="text-[10px] font-semibold text-blue-200 mb-1">Idade</p>
+            <p className="text-[11px] font-semibold text-blue-200 mb-1">Idade</p>
             <p className="text-2xl font-bold text-white">{summary.ageText}</p>
           </div>
           <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 min-w-[100px]">
-            <p className="text-[10px] font-semibold text-blue-200 mb-1">Vacinas</p>
+            <p className="text-[11px] font-semibold text-blue-200 mb-1">Vacinas</p>
             <p className="text-2xl font-bold text-white">{summary.vaccines.total}</p>
             {summary.vaccines.expired.length > 0 && (
               <p className="text-xs text-blue-200 mt-1">{summary.vaccines.expired.length} exp.</p>
@@ -537,7 +537,7 @@ export default function PatientDetailPage() {
                     <Icon size={20} className={color} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">{label}</p>
+                    <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-0.5">{label}</p>
                     <p className="text-base font-bold text-slate-900 dark:text-white">{val}</p>
                   </div>
                 </div>
@@ -581,9 +581,9 @@ export default function PatientDetailPage() {
                   <p className="text-sm font-semibold leading-relaxed whitespace-pre-wrap">{patient.allergies}</p>
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-4 text-slate-400 gap-2">
+                <div className="flex flex-col items-center justify-center py-4 text-slate-500 dark:text-slate-400 gap-2">
                   <Heart size={24} className="text-emerald-500/80" strokeWidth={1.5} />
-                  <p className="text-xs font-semibold text-slate-400">Sem alergias ou observações.</p>
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Sem alergias ou observações.</p>
                 </div>
               )}
             </CardContent>
@@ -601,7 +601,7 @@ export default function PatientDetailPage() {
             </CardHeader>
             <CardContent className="p-6 space-y-5">
                <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Nome Completo</p>
+                  <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-0.5">Nome Completo</p>
                   <p className="text-base font-bold text-slate-900 dark:text-white">{patient.owner?.name || "—"}</p>
                </div>
                <div className="flex items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-800/50">
@@ -672,7 +672,7 @@ export default function PatientDetailPage() {
                             <div className="w-12 h-12 rounded-xl bg-blue-100/50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform"><Shield size={20} /></div>
                             <div>
                               <p className="font-bold text-slate-900 dark:text-white text-base leading-tight">{v.vaccineName}</p>
-                              <p className="text-xs text-slate-400 font-medium mt-0.5 uppercase tracking-tighter">
+                              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5 uppercase tracking-tighter">
                                 {v.appliedAt ? fmt(v.appliedAt) : "Sem data"} {v.veterinarian?.name ? `· Dr. ${v.veterinarian.name}` : ""}
                               </p>
                             </div>
@@ -704,22 +704,22 @@ export default function PatientDetailPage() {
                         <div key={v.id} className="p-5 rounded-2xl bg-white dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 shadow-sm">
                            <div className="flex flex-wrap gap-6 md:gap-8">
                               <div className="space-y-1">
-                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Peso</p>
+                                 <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Peso</p>
                                  <p className="text-lg font-bold">{v.weight || "—"} kg</p>
                               </div>
                               <div className="space-y-1">
-                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Temp</p>
+                                 <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Temp</p>
                                  <p className="text-lg font-bold">{v.temperature || "—"} °C</p>
                               </div>
                               {v.heartRate && (
                                 <div className="space-y-1">
-                                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">FC</p>
+                                   <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">FC</p>
                                    <p className="text-lg font-bold">{v.heartRate} bpm</p>
                                 </div>
                               )}
                               {v.respiratoryRate && (
                                 <div className="space-y-1">
-                                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">FR</p>
+                                   <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">FR</p>
                                    <p className="text-lg font-bold">{v.respiratoryRate} rpm</p>
                                 </div>
                               )}
@@ -746,7 +746,7 @@ export default function PatientDetailPage() {
                             </div>
                             <div>
                               <p className="font-bold text-slate-900 dark:text-white text-base">Receituário #{rx.id.slice(0, 8)}</p>
-                              <p className="text-xs text-slate-400 font-medium">
+                              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                                 {fmt(rx.createdAt)}
                                 {rx.veterinarian?.name && ` · Dr. ${rx.veterinarian.name}`}
                               </p>
@@ -755,7 +755,7 @@ export default function PatientDetailPage() {
                           <div className="flex items-center gap-2">
                             {rx.validUntil && (
                               <Badge className={cn(
-                                "rounded-full text-[10px] px-3 py-1",
+                                "rounded-full text-[11px] px-3 py-1",
                                 isPast(new Date(rx.validUntil))
                                   ? "bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400 border-none"
                                   : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 border-none"
@@ -763,7 +763,7 @@ export default function PatientDetailPage() {
                                 {isPast(new Date(rx.validUntil)) ? "Expirada" : `Válida até ${fmt(new Date(rx.validUntil))}`}
                               </Badge>
                             )}
-                            <Badge className="rounded-full text-[10px] px-3 py-1 bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 border-none">
+                            <Badge className="rounded-full text-[11px] px-3 py-1 bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 border-none">
                               {rx.items?.length || 0} medicamento{rx.items?.length !== 1 ? "s" : ""}
                             </Badge>
                           </div>
@@ -775,20 +775,20 @@ export default function PatientDetailPage() {
                               <div className="flex-1 min-w-[200px]">
                                 <p className="font-bold text-slate-900 dark:text-white text-sm">{item.medicineName}</p>
                                 {item.notes && (
-                                  <p className="text-xs text-slate-400 mt-1">{item.notes}</p>
+                                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{item.notes}</p>
                                 )}
                               </div>
                               <div className="flex flex-wrap gap-4 text-xs">
                                 <div className="text-center">
-                                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Dosagem</p>
+                                  <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Dosagem</p>
                                   <p className="font-bold text-slate-700 dark:text-slate-200 mt-0.5">{item.dosage}</p>
                                 </div>
                                 <div className="text-center">
-                                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Frequência</p>
+                                  <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Frequência</p>
                                   <p className="font-bold text-slate-700 dark:text-slate-200 mt-0.5">{item.frequency}</p>
                                 </div>
                                 <div className="text-center">
-                                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Duração</p>
+                                  <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Duração</p>
                                   <p className="font-bold text-slate-700 dark:text-slate-200 mt-0.5">{item.duration}</p>
                                 </div>
                               </div>
@@ -862,7 +862,7 @@ export default function PatientDetailPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5 col-span-2">
-                <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Nome</label>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider">Nome</label>
                 <input
                   type="text"
                   value={editForm.name}
@@ -873,7 +873,7 @@ export default function PatientDetailPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Espécie</label>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider">Espécie</label>
                 <input
                   type="text"
                   value={editForm.species}
@@ -884,7 +884,7 @@ export default function PatientDetailPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Raça</label>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider">Raça</label>
                 <input
                   type="text"
                   value={editForm.breed}
@@ -894,7 +894,7 @@ export default function PatientDetailPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Género</label>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider">Género</label>
                 <select
                   value={editForm.gender}
                   onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })}
@@ -906,7 +906,7 @@ export default function PatientDetailPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Data de Nascimento</label>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider">Data de Nascimento</label>
                 <input
                   type="date"
                   value={editForm.birthDate}
@@ -916,7 +916,7 @@ export default function PatientDetailPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Microchip</label>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider">Microchip</label>
                 <input
                   type="text"
                   value={editForm.microchip}
@@ -927,7 +927,7 @@ export default function PatientDetailPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Status</label>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider">Status</label>
                 <select
                   value={editForm.status}
                   onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
@@ -940,7 +940,7 @@ export default function PatientDetailPage() {
 
               <div className="space-y-1.5 col-span-2">
                 <div className="flex justify-between items-center mb-1">
-                  <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Alergias & Observações Clínicas</label>
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider">Alergias & Observações Clínicas</label>
                   <Button
                     type="button"
                     onClick={async () => {

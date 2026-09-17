@@ -116,7 +116,7 @@ function PatientPicker({ onPick }: { onPick: (p: { id: string }) => void }) {
 
   return (
     <div className="relative">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" size={16} />
       <Input
         value={term}
         onChange={(e) => {
@@ -143,12 +143,12 @@ function PatientPicker({ onPick }: { onPick: (p: { id: string }) => void }) {
             >
               <div>
                 <p className="font-bold text-slate-900 dark:text-white text-sm">{p.name}</p>
-                <p className="text-[11px] text-slate-400 font-medium">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                   {p.species}
                   {p.owner?.name ? ` · ${p.owner.name}` : ""}
                 </p>
               </div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-blue-500">
+              <span className="text-[11px] font-black uppercase tracking-widest text-blue-500">
                 Usar
               </span>
             </button>
@@ -166,7 +166,7 @@ function BandTable({ refData }: { refData: GuideRef }) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-3 py-2.5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest hover:bg-slate-100/60 dark:hover:bg-white/5 transition-colors"
+        className="w-full flex items-center justify-between px-3 py-2.5 text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest hover:bg-slate-100/60 dark:hover:bg-white/5 transition-colors"
       >
         <span>Tabela por peso ({refData.bands.length})</span>
         <ChevronDown size={14} className={cn("transition-transform", open && "rotate-180")} />
@@ -175,13 +175,13 @@ function BandTable({ refData }: { refData: GuideRef }) {
         <div className="px-3 pb-3">
           <div className="rounded-xl overflow-hidden ring-1 ring-slate-100 dark:ring-white/5">
             <div className="grid grid-cols-[1fr_1.2fr_1fr] bg-slate-100/70 dark:bg-white/5 px-3 py-2">
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+              <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                 Peso
               </span>
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+              <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                 Dose
               </span>
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+              <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                 Apresentação
               </span>
             </div>
@@ -213,7 +213,7 @@ function BandTable({ refData }: { refData: GuideRef }) {
                     )}
                   </span>
                   <span className="font-black text-slate-900 dark:text-white">{b.dose}</span>
-                  <span className="text-slate-400 font-semibold text-[11px]">
+                  <span className="text-slate-500 dark:text-slate-400 font-semibold text-[11px]">
                     {b.presentation ?? "—"}
                   </span>
                 </div>
@@ -254,7 +254,7 @@ function ResultCard({ result, weightKg }: { result: GuideResult; weightKg: numbe
             <h4 className="text-base font-black text-slate-900 dark:text-white leading-tight">
               {ref.name}
             </h4>
-            <p className="text-[11px] text-slate-400 font-semibold mt-0.5">{ref.activeIngredient}</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold mt-0.5">{ref.activeIngredient}</p>
           </div>
         </div>
         <Badge
@@ -278,8 +278,8 @@ function ResultCard({ result, weightKg }: { result: GuideResult; weightKg: numbe
       >
         <p
           className={cn(
-            "text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5",
-            doseState === "ok" ? "text-blue-100" : "text-slate-400"
+            "text-[11px] font-black uppercase tracking-widest flex items-center gap-1.5",
+            doseState === "ok" ? "text-blue-100" : "text-slate-500 dark:text-slate-400"
           )}
         >
           <Target size={11} />
@@ -310,14 +310,14 @@ function ResultCard({ result, weightKg }: { result: GuideResult; weightKg: numbe
 
       {/* How to apply */}
       <div className="mt-3 rounded-2xl bg-slate-50 dark:bg-white/5 p-3">
-        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
+        <p className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">
           Como aplicar
         </p>
         <div className="flex flex-wrap gap-1.5 mb-2">
-          <span className="text-[10px] font-black uppercase tracking-wider bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md ring-1 ring-slate-200/60 dark:ring-white/10">
+          <span className="text-[11px] font-black uppercase tracking-wider bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md ring-1 ring-slate-200/60 dark:ring-white/10">
             {ref.route}
           </span>
-          <span className="text-[10px] font-black uppercase tracking-wider bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md ring-1 ring-slate-200/60 dark:ring-white/10">
+          <span className="text-[11px] font-black uppercase tracking-wider bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md ring-1 ring-slate-200/60 dark:ring-white/10">
             {ref.frequencyLabel}
           </span>
         </div>
@@ -349,7 +349,7 @@ function ResultCard({ result, weightKg }: { result: GuideResult; weightKg: numbe
           <div className="flex items-center gap-3">
             <Badge
               className={cn(
-                "border-none font-black text-[9px] uppercase tracking-widest px-2.5 py-1 rounded-lg gap-1",
+                "border-none font-black text-[11px] uppercase tracking-widest px-2.5 py-1 rounded-lg gap-1",
                 stock.inStock
                   ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                   : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
@@ -366,7 +366,7 @@ function ResultCard({ result, weightKg }: { result: GuideResult; weightKg: numbe
               )}
             </Badge>
             <div>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+              <p className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                 Preço do artigo
               </p>
               <p className="text-sm font-black text-slate-900 dark:text-white">
@@ -375,14 +375,14 @@ function ResultCard({ result, weightKg }: { result: GuideResult; weightKg: numbe
             </div>
           </div>
         ) : (
-          <p className="text-[11px] font-bold text-slate-400 flex items-center gap-1.5">
+          <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
             <Pill size={13} /> Não consta no inventário
           </p>
         )}
 
         {stock?.pricePerMonth != null && (
           <div className="text-right">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+            <p className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
               Por mês
             </p>
             <p className="text-lg font-black text-blue-600 dark:text-blue-400">
@@ -440,7 +440,7 @@ export function DewormingGuide({ patientId, compact = false }: DewormingGuidePro
       <Card className="border-none shadow-lg rounded-3xl p-5 bg-white dark:bg-slate-900/60 ring-1 ring-slate-200/60 dark:ring-slate-800">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
           <div className="md:col-span-3">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">
+            <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">
               Espécie
             </label>
             <div className="grid grid-cols-2 gap-2">
@@ -457,7 +457,7 @@ export function DewormingGuide({ patientId, compact = false }: DewormingGuidePro
                     "h-12 rounded-2xl font-black text-[11px] uppercase tracking-widest gap-2 transition-all",
                     species === s
                       ? "bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20"
-                      : "border-slate-200 dark:border-slate-800 text-slate-400"
+                      : "border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400"
                   )}
                 >
                   {s === "Cão" ? <Dog size={16} /> : <Cat size={16} />}
@@ -468,7 +468,7 @@ export function DewormingGuide({ patientId, compact = false }: DewormingGuidePro
           </div>
 
           <div className="md:col-span-2">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+            <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
               <Weight size={11} /> Peso (kg)
             </label>
             <Input
@@ -484,7 +484,7 @@ export function DewormingGuide({ patientId, compact = false }: DewormingGuidePro
           </div>
 
           <div className="md:col-span-4">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">
+            <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">
               Ou escolher paciente
             </label>
             <PatientPicker
@@ -503,10 +503,10 @@ export function DewormingGuide({ patientId, compact = false }: DewormingGuidePro
                 type="button"
                 onClick={() => setTarget(t)}
                 className={cn(
-                  "h-9 px-3 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all",
+                  "h-9 px-3 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all",
                   target === t
                     ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900"
-                    : "bg-slate-100 dark:bg-white/5 text-slate-400"
+                    : "bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400"
                 )}
               >
                 {t === "all" ? "Todas" : t === "INTERNAL" ? "Interna" : "Externa"}
@@ -516,8 +516,8 @@ export function DewormingGuide({ patientId, compact = false }: DewormingGuidePro
               type="button"
               onClick={() => setOnlyStock((v) => !v)}
               className={cn(
-                "h-9 px-3 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all",
-                onlyStock ? "bg-emerald-600 text-white" : "bg-slate-100 dark:bg-white/5 text-slate-400"
+                "h-9 px-3 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all",
+                onlyStock ? "bg-emerald-600 text-white" : "bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400"
               )}
             >
               Só com stock
@@ -530,7 +530,7 @@ export function DewormingGuide({ patientId, compact = false }: DewormingGuidePro
             <Info size={13} className="text-blue-500" />
             A mostrar opções para <span className="text-slate-900 dark:text-white">{ctxLabel}</span>
             {activePatient && (
-              <Badge variant="ghost" className="text-[9px]">
+              <Badge variant="ghost" className="text-[11px]">
                 paciente
               </Badge>
             )}
@@ -542,10 +542,10 @@ export function DewormingGuide({ patientId, compact = false }: DewormingGuidePro
       {!hasQuery && (
         <Card className="border-none shadow-sm rounded-3xl py-16 text-center bg-slate-50 dark:bg-slate-900/40 ring-1 ring-slate-100 dark:ring-slate-800">
           <Bug size={44} className="mx-auto text-slate-200 dark:text-slate-700 mb-4" />
-          <p className="text-slate-400 font-bold uppercase text-[11px] tracking-[0.2em]">
+          <p className="text-slate-500 dark:text-slate-400 font-bold uppercase text-[11px] tracking-[0.2em]">
             Indica a espécie e o peso, ou escolhe um paciente
           </p>
-          <p className="text-slate-400/80 text-xs mt-2">
+          <p className="text-slate-500 dark:text-slate-400/80 text-xs mt-2">
             A cabula mostra as opções de desparasitação adequadas ao animal.
           </p>
         </Card>
@@ -562,7 +562,7 @@ export function DewormingGuide({ patientId, compact = false }: DewormingGuidePro
       {hasQuery && !isFetching && results.length === 0 && (
         <Card className="border-none shadow-sm rounded-3xl py-14 text-center bg-slate-50 dark:bg-slate-900/40 ring-1 ring-slate-100 dark:ring-slate-800">
           <ShieldAlert size={40} className="mx-auto text-slate-200 dark:text-slate-700 mb-4" />
-          <p className="text-slate-400 font-bold uppercase text-[11px] tracking-[0.2em]">
+          <p className="text-slate-500 dark:text-slate-400 font-bold uppercase text-[11px] tracking-[0.2em]">
             Sem opções para estes critérios
           </p>
         </Card>
@@ -578,7 +578,7 @@ export function DewormingGuide({ patientId, compact = false }: DewormingGuidePro
       )}
 
       {data?.disclaimer && hasQuery && (
-        <p className="text-[10px] text-slate-400 font-medium text-center px-4">{data.disclaimer}</p>
+        <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium text-center px-4">{data.disclaimer}</p>
       )}
     </div>
   );

@@ -54,10 +54,10 @@ function HistoryEvent({ event }: HistoryEventProps) {
 
   const getStatusBadge = () => {
     if (event.status === "COMPLETED" || event.status === "PAID" || event.status === "READ") 
-      return <Badge className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-none text-[9px] font-black uppercase">{event.status === "PAID" ? "Pago" : event.status === "READ" ? "Lido" : "Concluído"}</Badge>;
-    if (event.status === "ACTIVE") return <Badge className="bg-blue-600 text-white border-none text-[9px] font-black uppercase shadow-lg shadow-blue-500/20">Ativo</Badge>;
-    if (event.status === "SCHEDULED") return <Badge className="bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-none text-[9px] font-black uppercase">Agendado</Badge>;
-    return <Badge variant="outline" className="text-[9px] font-black uppercase border-slate-200 dark:border-white/10">{event.status}</Badge>;
+      return <Badge className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-none text-[11px] font-black uppercase">{event.status === "PAID" ? "Pago" : event.status === "READ" ? "Lido" : "Concluído"}</Badge>;
+    if (event.status === "ACTIVE") return <Badge className="bg-blue-600 text-white border-none text-[11px] font-black uppercase shadow-lg shadow-blue-500/20">Ativo</Badge>;
+    if (event.status === "SCHEDULED") return <Badge className="bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-none text-[11px] font-black uppercase">Agendado</Badge>;
+    return <Badge variant="outline" className="text-[11px] font-black uppercase border-slate-200 dark:border-white/10">{event.status}</Badge>;
   };
 
   const eur = (v: number) => `€${v.toFixed(2)}`;
@@ -90,20 +90,20 @@ function HistoryEvent({ event }: HistoryEventProps) {
           >
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                   {new Date(event.date).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' })}
                 </span>
                 {getStatusBadge()}
               </div>
               <div className="flex items-baseline gap-2">
                 <h3 className="text-sm font-black text-slate-900 dark:text-white truncate">{event.title}</h3>
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold hidden sm:inline">•</span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500 font-bold hidden sm:inline">•</span>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate hidden sm:inline">{event.subtitle}</p>
               </div>
             </div>
             <div className="flex items-center gap-2 ml-4">
               <Button variant="ghost" size="icon" className={cn(
-                "h-7 w-7 rounded-lg text-slate-400 transition-transform duration-300",
+                "h-7 w-7 rounded-lg text-slate-500 dark:text-slate-400 transition-transform duration-300",
                 isExpanded && "rotate-180 text-blue-500"
               )}>
                 <ChevronDown size={16} strokeWidth={3} />
@@ -117,7 +117,7 @@ function HistoryEvent({ event }: HistoryEventProps) {
                 {event.type === "CONSULTATION" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-white/5">
-                      <p className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">Diagnóstico / Assessment</p>
+                      <p className="text-[8px] font-black text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">Diagnóstico / Assessment</p>
                       <p className="text-xs text-slate-700 dark:text-slate-300 font-medium leading-relaxed">{event.data?.notes?.assessment || "Sem notas de diagnóstico."}</p>
                     </div>
                     <div className="p-3 rounded-xl bg-blue-50/30 dark:bg-blue-500/5 border border-blue-100/50 dark:border-blue-500/10">
@@ -126,10 +126,10 @@ function HistoryEvent({ event }: HistoryEventProps) {
                     </div>
                     {event.data?.invoice && (
                       <div className="col-span-1 md:col-span-2 p-3 bg-white dark:bg-slate-950/60 border border-slate-100 dark:border-white/5 rounded-xl flex justify-between items-center shadow-sm">
-                         <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-black text-[10px] uppercase tracking-tight">
+                         <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-black text-[11px] uppercase tracking-tight">
                             <Receipt size={14} /> Fatura: {eur(event.data.invoice.total)}
                          </div>
-                         <Button variant="ghost" size="sm" className="h-7 px-3 text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 dark:text-white">Ver Detalhes</Button>
+                         <Button variant="ghost" size="sm" className="h-7 px-3 text-[11px] font-black uppercase tracking-widest rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 dark:text-white">Ver Detalhes</Button>
                       </div>
                     )}
                   </div>
@@ -142,7 +142,7 @@ function HistoryEvent({ event }: HistoryEventProps) {
                       <Button
                         variant="outline" size="sm"
                         onClick={(e) => { e.stopPropagation(); setShowChart(true); }}
-                        className="h-8 rounded-xl gap-2 text-[10px] font-bold border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                        className="h-8 rounded-xl gap-2 text-[11px] font-bold border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20"
                       >
                         <TrendingUp size={14} /> Ver Evolução
                       </Button>
@@ -166,10 +166,10 @@ function HistoryEvent({ event }: HistoryEventProps) {
                      <div className="flex justify-between items-start">
                         <div>
                            <p className="text-sm font-black text-slate-900 dark:text-white">{event.data?.vaccineName}</p>
-                           <p className="text-[10px] text-slate-500 font-bold mt-1">Lote: {event.data?.batchNumber || "N/A"}</p>
+                           <p className="text-[11px] text-slate-500 font-bold mt-1">Lote: {event.data?.batchNumber || "N/A"}</p>
                         </div>
                         {event.data?.expiresAt && (
-                           <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 border-none text-[9px] font-black">
+                           <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 border-none text-[11px] font-black">
                               Reforço: {format(new Date(event.data.expiresAt), "dd/MM/yyyy")}
                            </Badge>
                         )}
@@ -185,10 +185,10 @@ function HistoryEvent({ event }: HistoryEventProps) {
                      <div className="flex justify-between items-start">
                         <div>
                            <p className="text-sm font-black text-slate-900 dark:text-white">{event.data?.productName}</p>
-                           <p className="text-[10px] text-slate-500 font-bold mt-1">Tipo: {event.data?.type}</p>
+                           <p className="text-[11px] text-slate-500 font-bold mt-1">Tipo: {event.data?.type}</p>
                         </div>
                         {event.data?.expiresAt && (
-                           <Badge className="bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400 border-none text-[9px] font-black">
+                           <Badge className="bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400 border-none text-[11px] font-black">
                               Próxima dose: {format(new Date(event.data.expiresAt), "dd/MM/yyyy")}
                            </Badge>
                         )}
@@ -199,7 +199,7 @@ function HistoryEvent({ event }: HistoryEventProps) {
                 {event.type === "PRESCRIPTION" && (
                   <div className="bg-slate-900 dark:bg-black p-5 rounded-xl border border-slate-800 space-y-4">
                      <div className="flex justify-between items-center pb-3 border-b border-white/5">
-                        <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Itens Prescritos</p>
+                        <p className="text-[11px] font-black text-blue-400 uppercase tracking-widest">Itens Prescritos</p>
                         <Badge className="bg-blue-600/20 text-blue-400 border border-blue-500/30 text-[8px]">OFICIAL</Badge>
                      </div>
                      <div className="space-y-3">
@@ -207,7 +207,7 @@ function HistoryEvent({ event }: HistoryEventProps) {
                            <div key={i} className="flex justify-between items-center group/item">
                               <div>
                                  <p className="text-xs font-black text-white">{item.medicineName}</p>
-                                 <p className="text-[9px] text-slate-500 mt-0.5">{item.dosage} • {item.frequency} • {item.duration}</p>
+                                 <p className="text-[11px] text-slate-500 mt-0.5">{item.dosage} • {item.frequency} • {item.duration}</p>
                               </div>
                            </div>
                         ))}
@@ -224,7 +224,7 @@ function HistoryEvent({ event }: HistoryEventProps) {
                       { label: "FR", value: event.data?.respiratoryRate || "---", color: "text-indigo-500" },
                     ].map((v, i) => (
                       <div key={i} className="p-3 bg-white dark:bg-slate-950/60 rounded-xl border border-slate-100 dark:border-white/5 text-center">
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">{v.label}</p>
+                        <p className="text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">{v.label}</p>
                         <p className={cn("text-xs font-black", v.color)}>{v.value}</p>
                       </div>
                     ))}
@@ -244,7 +244,7 @@ function HistoryEvent({ event }: HistoryEventProps) {
                    <div className="p-4 rounded-xl bg-emerald-50/30 dark:bg-emerald-500/5 border border-emerald-100/50 dark:border-emerald-500/10 flex justify-between items-center">
                       <div>
                          <p className="text-xs font-black text-slate-900 dark:text-white">Pagamento de €{Number(event.data?.amount).toFixed(2)}</p>
-                         <p className="text-[10px] text-slate-500 font-medium">Método: {event.data?.method}</p>
+                         <p className="text-[11px] text-slate-500 font-medium">Método: {event.data?.method}</p>
                       </div>
                       <Receipt className="text-emerald-500 opacity-40" size={24} />
                    </div>
@@ -279,8 +279,8 @@ export function ClinicalTimeline({ history, isLoading }: { history: any[], isLoa
         <div className="h-16 w-16 bg-slate-100 dark:bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
           <Clock size={28} className="text-slate-300 dark:text-slate-700" />
         </div>
-        <p className="text-slate-400 dark:text-slate-600 font-black text-xs uppercase tracking-widest">Sem registos clínicos</p>
-        <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Este animal ainda não tem eventos registados.</p>
+        <p className="text-slate-500 dark:text-slate-400 dark:text-slate-600 font-black text-xs uppercase tracking-widest">Sem registos clínicos</p>
+        <p className="text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">Este animal ainda não tem eventos registados.</p>
       </div>
     );
   }
@@ -291,7 +291,7 @@ export function ClinicalTimeline({ history, isLoading }: { history: any[], isLoa
          <div className="w-5 h-5 rounded-md bg-slate-500/10 flex items-center justify-center text-slate-500 group-hover/header:bg-slate-900 dark:group-hover/header:bg-white dark:group-hover/header:text-slate-900 transition-all">
            <History size={10} strokeWidth={3} />
          </div>
-         <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] group-hover/header:text-slate-900 dark:group-hover/header:text-white transition-colors">Timeline de Eventos</h3>
+         <h3 className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] group-hover/header:text-slate-900 dark:group-hover/header:text-white transition-colors">Timeline de Eventos</h3>
          <div className="h-px flex-1 bg-linear-to-r from-slate-100 to-transparent dark:from-white/5 dark:to-transparent ml-2 opacity-50" />
       </div>
       <div className="space-y-1">

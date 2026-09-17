@@ -55,7 +55,7 @@ export function PortalLoginForm({ onSuccess, className }: PortalLoginFormProps) 
   return (
     <form onSubmit={handleLogin} className={`space-y-5 ${className}`}>
       <div className="space-y-2">
-        <Label className="text-slate-500 dark:text-slate-400 font-black text-[10px] uppercase tracking-widest px-1">Email</Label>
+        <Label className="text-slate-500 dark:text-slate-400 font-black text-[11px] uppercase tracking-widest px-1">Email</Label>
         <div className="relative group">
           <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors" size={18} />
           <Input
@@ -70,7 +70,7 @@ export function PortalLoginForm({ onSuccess, className }: PortalLoginFormProps) 
       </div>
 
       <div className="space-y-2">
-        <Label className="text-slate-500 dark:text-slate-400 font-black text-[10px] uppercase tracking-widest px-1">Password</Label>
+        <Label className="text-slate-500 dark:text-slate-400 font-black text-[11px] uppercase tracking-widest px-1">Password</Label>
         <div className="relative group">
           <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors" size={18} />
           <Input
@@ -98,7 +98,7 @@ export function PortalLoginForm({ onSuccess, className }: PortalLoginFormProps) 
       </Button>
 
       <div className="text-center">
-        <button type="button" className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-blue-500 transition-colors">
+        <button type="button" className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest hover:text-blue-500 transition-colors">
           Esqueceu-se da password?
         </button>
       </div>

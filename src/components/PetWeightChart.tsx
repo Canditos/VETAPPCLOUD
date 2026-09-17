@@ -43,7 +43,7 @@ export function PetWeightChart({ entries, loading }: { entries?: WeightEntry[]; 
               <Badge
                 variant="outline"
                 className={cn(
-                  "text-[10px] font-bold border-0 px-2 py-0.5",
+                  "text-[11px] font-bold border-0 px-2 py-0.5",
                   status === "up" && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
                   status === "down" && "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
                   status === "equal" && "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
@@ -60,7 +60,7 @@ export function PetWeightChart({ entries, loading }: { entries?: WeightEntry[]; 
         {loading ? (
           <Skeleton className="h-52 w-full" />
         ) : data.length <= 1 ? (
-          <div className="h-52 flex flex-col items-center justify-center text-slate-400 gap-1">
+          <div className="h-52 flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 gap-1">
             <Activity size={28} strokeWidth={1.5} />
             <p className="text-xs font-medium">Sem pesos registados</p>
           </div>

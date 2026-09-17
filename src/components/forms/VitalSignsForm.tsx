@@ -54,7 +54,7 @@ export function VitalSignsForm({ patientId, onSuccess }: VitalSignsFormProps) {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-2">
-          <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+          <Label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
             <Weight size={12} className="text-blue-500" /> Peso (kg)
           </Label>
           <Input 
@@ -68,7 +68,7 @@ export function VitalSignsForm({ patientId, onSuccess }: VitalSignsFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+          <Label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
             <Thermometer size={12} className="text-blue-500" /> Temp (ºC)
           </Label>
           <Input 
@@ -82,7 +82,7 @@ export function VitalSignsForm({ patientId, onSuccess }: VitalSignsFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+          <Label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
             <Heart size={12} className="text-rose-500" /> FC (BPM)
           </Label>
           <Input 
@@ -95,7 +95,7 @@ export function VitalSignsForm({ patientId, onSuccess }: VitalSignsFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+          <Label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
             <Activity size={12} className="text-emerald-500" /> FR (RPM)
           </Label>
           <Input 
@@ -109,7 +109,7 @@ export function VitalSignsForm({ patientId, onSuccess }: VitalSignsFormProps) {
       </div>
 
       <div className="space-y-2">
-        <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+        <Label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
           <FileText size={12} /> Notas Clínicas
         </Label>
         <Textarea 

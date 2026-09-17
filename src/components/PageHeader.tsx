@@ -26,7 +26,7 @@ export function PageHeader({
         {badge && (
           <Badge
             variant={badgeVariant}
-            className="mb-3 font-semibold text-[10px] uppercase tracking-wider px-3 py-1 rounded-lg"
+            className="mb-3 font-semibold text-[11px] uppercase tracking-wider px-3 py-1 rounded-lg"
           >
             {badge}
           </Badge>

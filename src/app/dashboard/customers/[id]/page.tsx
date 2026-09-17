@@ -194,7 +194,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
 
   const patientSortHeader = (label: string, k: string, className?: string) => (
     <th
-      className={cn("px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors whitespace-nowrap", className)}
+      className={cn("px-4 py-3 text-left text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors whitespace-nowrap", className)}
       onClick={() => handleSort(k)}
     >
       {label} <SortIcon k={k} />
@@ -212,14 +212,14 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">{customer.name}</h1>
-              <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-none font-bold text-[9px] uppercase tracking-wider px-2 py-0.5">
+              <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-none font-bold text-[11px] uppercase tracking-wider px-2 py-0.5">
                 Cliente Ativo
               </Badge>
-              <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800" onClick={handleEdit}>
+              <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg text-slate-500 dark:text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800" onClick={handleEdit}>
                 <Edit3 size={14} />
               </Button>
             </div>
-            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">ID: #{id.substring(0, 8).toUpperCase()}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-1">ID: #{id.substring(0, 8).toUpperCase()}</p>
           </div>
         </div>
 
@@ -248,7 +248,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                 {!generatedPassword ? (
                   <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                     <div>
-                      <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Password Personalizada (Opcional)</Label>
+                      <Label className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Password Personalizada (Opcional)</Label>
                       <Input 
                         value={manualPassword}
                         onChange={(e) => setManualPassword(e.target.value)}
@@ -288,7 +288,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                 ) : (
                   <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800 animate-in fade-in slide-in-from-bottom-2">
                     <div className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 p-4 rounded-xl border border-emerald-100 dark:border-emerald-900/50 text-center">
-                      <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">Nova Password</p>
+                      <p className="text-[11px] font-bold uppercase tracking-widest opacity-80 mb-1">Nova Password</p>
                       <p className="text-2xl font-black tracking-widest">{generatedPassword}</p>
                     </div>
                     <Button
@@ -337,40 +337,40 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
             </div>
             <div className="space-y-3">
               <div className="flex items-start gap-3">
-                <Phone size={14} className="text-slate-400 mt-0.5 shrink-0" />
+                <Phone size={14} className="text-slate-500 dark:text-slate-400 mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Telemóvel</p>
+                  <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Telemóvel</p>
                   <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 mt-0.5">{customer.phone || "Não configurado"}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <Mail size={14} className="text-slate-400 mt-0.5 shrink-0" />
+                <Mail size={14} className="text-slate-500 dark:text-slate-400 mt-0.5 shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Email</p>
+                  <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Email</p>
                   <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 mt-0.5 truncate">{customer.email || "Não configurado"}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <MapPin size={14} className="text-slate-400 mt-0.5 shrink-0" />
+                <MapPin size={14} className="text-slate-500 dark:text-slate-400 mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Morada</p>
+                  <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Morada</p>
                   <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 mt-0.5 leading-relaxed">{customer.address || "Não configurado"}</p>
                 </div>
               </div>
               {customer.vatNumber && (
                 <div className="flex items-start gap-3">
-                  <FileText size={14} className="text-slate-400 mt-0.5 shrink-0" />
+                  <FileText size={14} className="text-slate-500 dark:text-slate-400 mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">NIF</p>
+                    <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">NIF</p>
                     <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 mt-0.5">{customer.vatNumber}</p>
                   </div>
                 </div>
               )}
               {customer.rxClientId && (
                 <div className="flex items-start gap-3">
-                  <Smartphone size={14} className="text-slate-400 mt-0.5 shrink-0" />
+                  <Smartphone size={14} className="text-slate-500 dark:text-slate-400 mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">ID RX Examion</p>
+                    <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">ID RX Examion</p>
                     <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 mt-0.5">{customer.rxClientId}</p>
                   </div>
                 </div>
@@ -393,7 +393,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 py-1 px-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400 w-fit">
                     <ShieldCheck size={14} />
-                    <span className="text-[10px] font-bold uppercase tracking-wider">Consentimento Ativo ✓</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wider">Consentimento Ativo ✓</span>
                   </div>
                   
                   {(() => {
@@ -401,19 +401,19 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                     return (
                       <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[11px] pt-1">
                         <div>
-                          <p className="text-slate-400 font-bold text-[9px] uppercase tracking-wider">Data</p>
+                          <p className="text-slate-500 dark:text-slate-400 font-bold text-[11px] uppercase tracking-wider">Data</p>
                           <p className="text-slate-700 dark:text-slate-300 font-semibold">{format(new Date(c.acceptedAt || c.createdAt), "dd/MM/yyyy HH:mm", { locale: pt })}</p>
                         </div>
                         <div>
-                          <p className="text-slate-400 font-bold text-[9px] uppercase tracking-wider">IP</p>
+                          <p className="text-slate-500 dark:text-slate-400 font-bold text-[11px] uppercase tracking-wider">IP</p>
                           <p className="text-slate-700 dark:text-slate-300 font-mono font-semibold">{c.ip || "—"}</p>
                         </div>
                         <div>
-                          <p className="text-slate-400 font-bold text-[9px] uppercase tracking-wider">Versão</p>
+                          <p className="text-slate-500 dark:text-slate-400 font-bold text-[11px] uppercase tracking-wider">Versão</p>
                           <p className="text-slate-700 dark:text-slate-300 font-mono font-semibold">{c.version}</p>
                         </div>
                         <div>
-                          <p className="text-slate-400 font-bold text-[9px] uppercase tracking-wider">Método</p>
+                          <p className="text-slate-500 dark:text-slate-400 font-bold text-[11px] uppercase tracking-wider">Método</p>
                           <p className="text-slate-700 dark:text-slate-300 font-semibold capitalize">{c.method === "portal" ? "Portal" : c.method}</p>
                         </div>
                       </div>
@@ -425,7 +425,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 py-1 px-3 rounded-lg bg-amber-50 dark:bg-amber-955/20 border border-amber-100 dark:border-amber-900/30 text-amber-700 dark:text-amber-400 w-fit">
                       <AlertCircle size={14} />
-                      <span className="text-[10px] font-bold uppercase tracking-wider">Pendente</span>
+                      <span className="text-[11px] font-bold uppercase tracking-wider">Pendente</span>
                     </div>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
                       O tutor ainda não assinou o consentimento RGPD. Solicite o consentimento enviando um convite.
@@ -436,7 +436,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="flex-1 rounded-xl h-9 border-slate-200 dark:border-slate-800 text-[10px] font-bold uppercase tracking-wider gap-1.5"
+                      className="flex-1 rounded-xl h-9 border-slate-200 dark:border-slate-800 text-[11px] font-bold uppercase tracking-wider gap-1.5"
                       onClick={() => router.push(`/dashboard/messages?customerId=${id}`)}
                     >
                       <Clock size={12} strokeWidth={2.5} /> Chat
@@ -446,7 +446,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                       size="sm" 
                       onClick={() => sendConsentInvite.mutate()}
                       disabled={sendConsentInvite.isPending}
-                      className="flex-1 rounded-xl h-9 border-emerald-200 dark:border-emerald-900/30 bg-emerald-50 dark:bg-emerald-950/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider gap-1.5"
+                      className="flex-1 rounded-xl h-9 border-emerald-200 dark:border-emerald-900/30 bg-emerald-50 dark:bg-emerald-950/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold uppercase tracking-wider gap-1.5"
                     >
                       <Send size={12} strokeWidth={2.5} /> {sendConsentInvite.isPending ? "A enviar..." : "Solicitar"}
                     </Button>
@@ -458,13 +458,13 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
             {consentLink && (
               <div className="mt-3 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Link</p>
-                  <p className="text-[10px] text-slate-600 dark:text-slate-300 truncate font-mono mt-0.5">{consentLink}</p>
+                  <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Link</p>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-300 truncate font-mono mt-0.5">{consentLink}</p>
                 </div>
                 <Button
                   size="sm"
                   onClick={() => { navigator.clipboard.writeText(consentLink); toast.success("Link copiado!"); }}
-                  className="h-8 rounded-lg bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-[9px] font-bold uppercase tracking-wider px-2.5"
+                  className="h-8 rounded-lg bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-[11px] font-bold uppercase tracking-wider px-2.5"
                 >
                   Copiar
                 </Button>
@@ -490,7 +490,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
               
               <div className="flex justify-between items-center py-2">
                 <div>
-                  <p className="text-[9px] font-bold uppercase tracking-widest opacity-70">Saldo em Dívida</p>
+                  <p className="text-[11px] font-bold uppercase tracking-widest opacity-70">Saldo em Dívida</p>
                   <p className="text-3xl font-black mt-1">€{(balance || 0).toFixed(2)}</p>
                 </div>
                 {balance > 0 ? (
@@ -507,11 +507,11 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
 
             <div className="grid grid-cols-2 gap-3 mt-4 pt-3 border-t border-black/5 dark:border-white/5 text-xs">
               <div>
-                <p className="opacity-70 font-bold text-[9px] uppercase tracking-wider">Total Faturado</p>
+                <p className="opacity-70 font-bold text-[11px] uppercase tracking-wider">Total Faturado</p>
                 <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">€{(customer.stats?.totalInvoiced || 0).toFixed(2)}</p>
               </div>
               <div>
-                <p className="opacity-70 font-bold text-[9px] uppercase tracking-wider">Total Liquidado</p>
+                <p className="opacity-70 font-bold text-[11px] uppercase tracking-wider">Total Liquidado</p>
                 <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">€{(customer.stats?.totalPaid || 0).toFixed(2)}</p>
               </div>
             </div>
@@ -539,11 +539,11 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
         {/* Animals Tab */}
         <TabsContent value="animals" className="animate-in fade-in slide-in-from-top-2 duration-500">
           <div className="flex items-center justify-end gap-2 mb-4">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mr-2">Vista:</span>
+            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mr-2">Vista:</span>
             <Button
               variant="ghost"
               size="sm"
-              className={cn("h-8 rounded-lg px-3 text-xs font-bold", effectiveViewMode === "cards" ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400" : "text-slate-400")}
+              className={cn("h-8 rounded-lg px-3 text-xs font-bold", effectiveViewMode === "cards" ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-slate-400")}
               onClick={() => setViewMode("cards")}
             >
               <PawPrint size={14} className="mr-1.5" /> Cards
@@ -551,7 +551,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
             <Button
               variant="ghost"
               size="sm"
-              className={cn("h-8 rounded-lg px-3 text-xs font-bold", effectiveViewMode === "table" ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400" : "text-slate-400")}
+              className={cn("h-8 rounded-lg px-3 text-xs font-bold", effectiveViewMode === "table" ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-slate-400")}
               onClick={() => setViewMode("table")}
             >
               <Layers size={14} className="mr-1.5" /> Tabela
@@ -568,19 +568,19 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                     <div>
                       <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">{animal.name}</h3>
                       <div className="flex gap-2 mt-1">
-                        <Badge variant="outline" className="border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 font-black text-[9px] uppercase">{animal.species}</Badge>
-                        <Badge variant="outline" className="border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 font-black text-[9px] uppercase">{animal.breed || "Indefinida"}</Badge>
+                        <Badge variant="outline" className="border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 dark:text-slate-500 font-black text-[11px] uppercase">{animal.species}</Badge>
+                        <Badge variant="outline" className="border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 dark:text-slate-500 font-black text-[11px] uppercase">{animal.breed || "Indefinida"}</Badge>
                       </div>
                     </div>
                   </div>
                   <CardContent className="p-8 space-y-6 bg-white dark:bg-slate-900">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
-                        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Peso Atual</p>
+                        <p className="text-[11px] font-black text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-widest">Peso Atual</p>
                         <p className="text-lg font-black text-slate-900 dark:text-slate-100 mt-1">{animal.weight ? `${Number(animal.weight).toFixed(1)} kg` : "---"}</p>
                       </div>
                       <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
-                        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Consultas</p>
+                        <p className="text-[11px] font-black text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-widest">Consultas</p>
                         <p className="text-lg font-black text-slate-900 dark:text-slate-100 mt-1">{animal._count?.visitCount || 0}</p>
 
 
@@ -594,7 +594,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                           Ver Histórico <ArrowUpRight size={14} />
                         </Button>
                       </Link>
-                      <Button variant="ghost" size="icon" className="rounded-xl h-12 w-12 bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500">
+                      <Button variant="ghost" size="icon" className="rounded-xl h-12 w-12 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 dark:text-slate-500">
                         <MoreHorizontal size={20} />
                       </Button>
                     </div>
@@ -611,11 +611,11 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
           ) : (
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm ring-1 ring-slate-200/60 dark:ring-white/5 overflow-hidden">
               <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                   {patients.length} animal{patients.length !== 1 ? "is" : ""}
                 </p>
                 <Link href={`/dashboard/patients?new=true&ownerId=${id}`}>
-                  <Button className="h-8 rounded-xl gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] uppercase tracking-widest px-3">
+                  <Button className="h-8 rounded-xl gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] uppercase tracking-widest px-3">
                     <Plus size={13} strokeWidth={3} /> Novo Animal
                   </Button>
                 </Link>
@@ -629,7 +629,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                       {patientSortHeader("Raça", "breed", "min-w-[140px]")}
                       {patientSortHeader("Peso", "weight", "min-w-[90px]")}
                       {patientSortHeader("Consultas", "_count", "min-w-[100px]")}
-                      <th className="px-4 py-3 text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest pr-5">Ações</th>
+                      <th className="px-4 py-3 text-right text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest pr-5">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -644,7 +644,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                           </div>
                         </td>
                         <td className="px-4 py-3.5">
-                          <Badge variant="secondary" className="text-[9px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 uppercase tracking-widest border-none px-2 py-0.5">
+                          <Badge variant="secondary" className="text-[11px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 uppercase tracking-widest border-none px-2 py-0.5">
                             {animal.species || "---"}
                           </Badge>
                         </td>
@@ -691,11 +691,11 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                 <Table>
                   <TableHeader>
                     <TableRow className="hover:bg-transparent border-slate-50 dark:border-slate-800">
-                      <TableHead className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Nº Documento</TableHead>
-                      <TableHead className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Data</TableHead>
-                      <TableHead className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Total</TableHead>
-                      <TableHead className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Estado</TableHead>
-                      <TableHead className="px-8 py-5 text-right text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Ações</TableHead>
+                      <TableHead className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 dark:text-slate-500">Nº Documento</TableHead>
+                      <TableHead className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 dark:text-slate-500">Data</TableHead>
+                      <TableHead className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 dark:text-slate-500">Total</TableHead>
+                      <TableHead className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 dark:text-slate-500">Estado</TableHead>
+                      <TableHead className="px-8 py-5 text-right text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 dark:text-slate-500">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -705,14 +705,14 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                         <TableCell className="px-8 py-6 font-bold text-slate-500 dark:text-slate-400">{inv.createdAt ? format(new Date(inv.createdAt), "dd/MM/yyyy") : "---"}</TableCell>
                         <TableCell className="px-8 py-6 font-black text-slate-900 dark:text-slate-100">€{(Number(inv.total) || 0).toFixed(2)}</TableCell>
                         <TableCell className="px-8 py-6">
-                          <Badge className={`rounded-lg font-black text-[9px] uppercase ${inv.status === 'PAID' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'}`}>
+                          <Badge className={`rounded-lg font-black text-[11px] uppercase ${inv.status === 'PAID' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'}`}>
                             {inv.status}
                           </Badge>
                         </TableCell>
                         <TableCell className="px-8 py-6 text-right">
                           <div className="flex justify-end items-center gap-4">
                             <InvoiceDownloadBtn invoice={inv} clinic={clinic} owner={customer} />
-                            <Button variant="ghost" size="icon" className="rounded-xl text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400">
+                            <Button variant="ghost" size="icon" className="rounded-xl text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400">
                                <ExternalLink size={18} />
                             </Button>
                           </div>
@@ -734,11 +734,11 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                 </CardHeader>
                 <CardContent className="p-8 space-y-8">
                   <div className="space-y-1">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Total Faturado</p>
+                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Total Faturado</p>
                     <p className="text-3xl font-black text-white">€{(customer.stats?.totalInvoiced || 0).toFixed(2)}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Total Liquidado</p>
+                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Total Liquidado</p>
                     <p className="text-3xl font-black text-emerald-400">€{(customer.stats?.totalPaid || 0).toFixed(2)}</p>
                   </div>
                   <div className="pt-8 border-t border-white/5">
@@ -762,7 +762,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                       <div key={p.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
                         <div>
                           <p className="font-black text-slate-900 dark:text-slate-100">€{(Number(p.amount) || 0).toFixed(2)}</p>
-                          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">{p.method} • {p.paidAt ? format(new Date(p.paidAt), "dd MMM") : "---"}</p>
+                          <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase">{p.method} • {p.paidAt ? format(new Date(p.paidAt), "dd MMM") : "---"}</p>
                         </div>
                         <div className="h-10 w-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                           <CheckCircle2 size={18} />
@@ -798,11 +798,11 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                           </div>
                           <div>
                             <p className="font-black text-slate-900 dark:text-white">{patient.name}</p>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase">{patient._count?.visitCount || 0} consultas</p>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase">{patient._count?.visitCount || 0} consultas</p>
                           </div>
                         </div>
                         <Link href={`/dashboard/patients/${patient.id}`}>
-                          <Button variant="ghost" className="text-blue-600 dark:text-blue-400 font-black text-[10px] uppercase tracking-widest gap-1">
+                          <Button variant="ghost" className="text-blue-600 dark:text-blue-400 font-black text-[11px] uppercase tracking-widest gap-1">
                             Ver histórico completo <ArrowRight size={14} />
                           </Button>
                         </Link>
@@ -814,8 +814,8 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                   <div className="h-16 w-16 bg-slate-100 dark:bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <Clock size={28} className="text-slate-300 dark:text-slate-700" />
                   </div>
-                  <p className="text-slate-400 dark:text-slate-600 font-black text-xs uppercase tracking-widest">Sem registos clínicos</p>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Nenhum animal deste cliente tem consultas registadas.</p>
+                  <p className="text-slate-500 dark:text-slate-400 dark:text-slate-600 font-black text-xs uppercase tracking-widest">Sem registos clínicos</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">Nenhum animal deste cliente tem consultas registadas.</p>
                 </div>
               )}
            </Card>
@@ -844,9 +844,9 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                       <div className="flex justify-between items-start mb-4">
                          <div>
                             <p className="font-black text-slate-900 dark:text-slate-100 text-lg">€{(Number(budget.totalAmount) || 0).toFixed(2)}</p>
-                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Emitido em {budget.createdAt ? format(new Date(budget.createdAt), "dd MMM") : "---"}</p>
+                            <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase">Emitido em {budget.createdAt ? format(new Date(budget.createdAt), "dd MMM") : "---"}</p>
                          </div>
-                         <Badge className={`rounded-lg font-black text-[9px] ${budget.status === 'ACCEPTED' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500'}`}>
+                         <Badge className={`rounded-lg font-black text-[11px] ${budget.status === 'ACCEPTED' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}>
                             {budget.status}
                          </Badge>
                       </div>
@@ -879,29 +879,29 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
           </DialogHeader>
           <div className="space-y-5 py-4">
             <div className="grid gap-2">
-              <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nome Completo</Label>
+              <Label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Nome Completo</Label>
               <Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none ring-1 ring-slate-100 dark:ring-white/10 font-bold" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">NIF</Label>
+                <Label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">NIF</Label>
                 <Input value={editForm.vatNumber} onChange={(e) => setEditForm({ ...editForm, vatNumber: e.target.value })} className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none ring-1 ring-slate-100 dark:ring-white/10 font-mono font-bold" />
               </div>
               <div className="grid gap-2">
-                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Telemóvel</Label>
+                <Label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Telemóvel</Label>
                 <Input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none ring-1 ring-slate-100 dark:ring-white/10 font-bold" />
               </div>
             </div>
             <div className="grid gap-2">
-              <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Email</Label>
+              <Label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Email</Label>
               <Input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none ring-1 ring-slate-100 dark:ring-white/10 font-bold" />
             </div>
             <div className="grid gap-2">
-              <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Morada</Label>
+              <Label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Morada</Label>
               <Input value={editForm.address} onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none ring-1 ring-slate-100 dark:ring-white/10 font-bold" />
             </div>
             <div className="grid gap-2">
-              <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Observações</Label>
+              <Label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Observações</Label>
               <textarea
                 value={editForm.notes}
                 onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
@@ -909,7 +909,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">ID RX Examion</Label>
+              <Label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">ID RX Examion</Label>
               <Input value={editForm.rxClientId} onChange={(e) => setEditForm({ ...editForm, rxClientId: e.target.value })} placeholder="Ex: RX-00123" className="h-12 rounded-xl bg-slate-50 dark:bg-white/5 border-none ring-1 ring-slate-100 dark:ring-white/10 font-mono font-bold" />
             </div>
           </div>
