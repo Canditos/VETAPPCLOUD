@@ -8,6 +8,10 @@ import { canAccess } from "@/lib/roles";
 
 export const POST = withAuth(async ({ session, clinicId }) => {
   try {
+    if (process.env.NODE_ENV === "production" && process.env.ALLOW_SETUP_USERS !== "true") {
+      return NextResponse.json({ error: "Desativado em ambiente de produção para segurança dos dados." }, { status: 403 });
+    }
+
     const role = (session.user as { role?: string })?.role;
     if (!canAccess("team", role, "CRUD")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });

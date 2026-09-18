@@ -4,10 +4,14 @@ import { withAuthParams } from "@/lib/api-wrapper";
 
 export const GET = withAuthParams(async ({ clinicId, tenantPrisma }, { id }) => {
   try {
-    const patient = await tenantPrisma.patient.findUnique({
-      where: { id },
+    const patient = await tenantPrisma.patient.findFirst({
+      where: { id, clinicId },
       select: { ownerId: true }
     });
+
+    if (!patient) {
+      return NextResponse.json({ error: "Paciente não encontrado" }, { status: 404 });
+    }
 
     const [consultations, labResults, imagingStudies, vaccinations, dewormings, prescriptions, vitals, payments, appointments] = await Promise.all([
       tenantPrisma.consultation.findMany({

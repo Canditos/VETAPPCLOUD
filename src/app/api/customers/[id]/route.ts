@@ -3,10 +3,10 @@ import { withAuthParams } from "@/lib/api-wrapper";
 
 export const dynamic = "force-dynamic";
 
-export const GET = withAuthParams(async ({ tenantPrisma }, { id }) => {
+export const GET = withAuthParams(async ({ tenantPrisma, clinicId }, { id }) => {
   try {
-    const customer = await tenantPrisma.owner.findUnique({
-      where: { id },
+    const customer = await tenantPrisma.owner.findFirst({
+      where: { id, clinicId },
       include: {
         patients: {
           include: {
@@ -68,10 +68,10 @@ export const GET = withAuthParams(async ({ tenantPrisma }, { id }) => {
   }
 });
 
-export const PATCH = withAuthParams(async ({ req, tenantPrisma }, { id }) => {
+export const PATCH = withAuthParams(async ({ req, tenantPrisma, clinicId }, { id }) => {
   try {
-    const existing = await tenantPrisma.owner.findUnique({
-      where: { id },
+    const existing = await tenantPrisma.owner.findFirst({
+      where: { id, clinicId },
     });
 
     if (!existing) {

@@ -115,6 +115,7 @@ model Patient {
   @@index([species])
   @@index([status])
   @@index([name])
+  @@index([clinicId, name])
   @@index([microchip])
 }
 
@@ -144,6 +145,8 @@ model Owner {
   subscriptions       Subscription[]
 
   @@index([clinicId])
+  @@index([name])
+  @@index([clinicId, name])
   @@index([email])
   @@index([phone])
 }

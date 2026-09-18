@@ -43,8 +43,29 @@ function ConsultationContent() {
   const [billingItems, setBillingItems] = useState<BillingItem[]>([]);
   const [notes, setNotes] = useState({ subjective: "", objective: "", assessment: "", plan: "" });
   const [vitals, setVitals] = useState({ weight: "", temperature: "", heartRate: "", respiratoryRate: "", painScale: -1, bodyConditionScore: -1 });
+  const [patientSearch, setPatientSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   useEffect(() => { setActiveTab(urlTab); }, [urlTab]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(patientSearch.trim());
+    }, 250);
+    return () => clearTimeout(handler);
+  }, [patientSearch]);
+
+  const { data: searchResults, isLoading: isSearchingPatients } = useQuery({
+    queryKey: ["quick-patient-search", debouncedSearch],
+    queryFn: async () => {
+      if (!debouncedSearch) return [];
+      const res = await fetch(`/api/patients?search=${encodeURIComponent(debouncedSearch)}&limit=6`);
+      if (!res.ok) return [];
+      const json = await res.json();
+      return json.data || [];
+    },
+    enabled: !patientId && debouncedSearch.length >= 2,
+  });
 
   const { data: patient, isLoading: isPatientLoading, error: patientError } = useQuery({
     queryKey: ["patient", patientId],
@@ -193,28 +214,98 @@ function ConsultationContent() {
 
   if (!patientId || patientError) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh] gap-6 animate-in fade-in zoom-in-95 duration-1000">
+      <div className="flex flex-col items-center justify-center min-h-[70vh] gap-6 animate-in fade-in zoom-in-95 duration-1000 max-w-2xl mx-auto px-4 w-full">
         <div className="relative">
           <div className="absolute inset-0 bg-blue-500/10 blur-[80px] rounded-full animate-pulse" />
-          <div className="w-40 h-40 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-400 border border-slate-100 dark:border-white/5 shadow-2xl relative z-10">
-             <Stethoscope size={80} strokeWidth={1} />
+          <div className="w-28 h-28 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-400 border border-slate-100 dark:border-white/5 shadow-2xl relative z-10">
+             <Stethoscope size={56} strokeWidth={1.5} />
           </div>
-          <div className="absolute -right-4 -bottom-4 w-16 h-16 bg-slate-900 dark:bg-white rounded-3xl flex items-center justify-center text-white dark:text-slate-900 shadow-2xl z-20 animate-bounce delay-500">
-             <Plus size={32} strokeWidth={3} />
+          <div className="absolute -right-2 -bottom-2 w-10 h-10 bg-slate-900 dark:bg-white rounded-2xl flex items-center justify-center text-white dark:text-slate-900 shadow-xl z-20">
+             <Plus size={20} strokeWidth={3} />
           </div>
         </div>
-        <div className="text-center space-y-4 relative z-10">
-          <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tighter">Clinical Environment</h2>
-          <p className="text-slate-500 dark:text-slate-400 font-bold max-w-md mx-auto text-xl leading-relaxed">
-            Selecione um paciente na <span className="text-blue-600">Agenda</span> ou <span className="text-blue-600">Base de Dados</span> para iniciar um atendimento clínico de alta performance.
+        <div className="text-center space-y-2 relative z-10">
+          <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Atendimento Clínico</h2>
+          <p className="text-slate-500 dark:text-slate-400 font-medium text-base">
+            Pesquise um paciente ou selecione da agenda para iniciar a consulta.
           </p>
         </div>
-        <div className="flex gap-4">
-          <Button onClick={() => router.push("/dashboard/appointments")} className="h-16 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:scale-105 px-10 font-bold transition-all active:scale-95 shadow-2xl shadow-blue-500/20 tracking-widest text-xs">
+
+        {/* Quick Search Bar */}
+        <div className="w-full relative z-10 space-y-3">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <Input
+              value={patientSearch}
+              onChange={(e) => setPatientSearch(e.target.value)}
+              placeholder="Pesquisar por nome do animal, microchip ou tutor..."
+              className="h-14 pl-11 pr-4 rounded-2xl border-slate-200 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 backdrop-blur shadow-lg text-base focus-visible:ring-blue-500"
+            />
+            {patientSearch && (
+              <button
+                onClick={() => setPatientSearch("")}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              >
+                Limpar
+              </button>
+            )}
+          </div>
+
+          {/* Search Results Dropdown */}
+          {debouncedSearch.length >= 2 && (
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden divide-y divide-slate-100 dark:divide-white/5 animate-in fade-in slide-in-from-top-2 duration-200">
+              {isSearchingPatients ? (
+                <div className="p-4 text-center text-sm text-slate-500">A pesquisar pacientes...</div>
+              ) : searchResults && searchResults.length > 0 ? (
+                searchResults.map((p: any) => (
+                  <div
+                    key={p.id}
+                    onClick={() => router.push(`/dashboard/consultations?patientId=${p.id}`)}
+                    className="p-3.5 flex items-center justify-between hover:bg-blue-50/50 dark:hover:bg-blue-950/20 cursor-pointer transition-colors group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm">
+                        {p.species === "CANINE" ? "🐶" : p.species === "FELINE" ? "🐱" : "🐾"}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
+                            {p.name}
+                          </span>
+                          {p.breed && (
+                            <span className="text-xs text-slate-400">({p.breed})</span>
+                          )}
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                          Tutor: <strong className="text-slate-700 dark:text-slate-300">{p.owner?.name || "Sem tutor"}</strong>
+                          {p.owner?.phone && ` • ${p.owner.phone}`}
+                          {p.microchip && ` • Chip: ${p.microchip}`}
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      className="rounded-xl h-8 px-3 text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                    >
+                      Iniciar
+                    </Button>
+                  </div>
+                ))
+              ) : (
+                <div className="p-4 text-center text-sm text-slate-500">
+                  Nenhum paciente encontrado com &ldquo;{debouncedSearch}&rdquo;.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-4 pt-2">
+          <Button onClick={() => router.push("/dashboard/appointments")} className="h-12 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:scale-105 px-8 font-bold transition-all active:scale-95 shadow-xl shadow-blue-500/10 tracking-wide text-xs">
             Abrir Agenda
           </Button>
-          <Button variant="outline" onClick={() => router.push("/dashboard/patients")} className="h-16 rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white hover:scale-105 px-10 font-bold transition-all active:scale-95 tracking-widest text-xs">
-            Procurar Paciente
+          <Button variant="outline" onClick={() => router.push("/dashboard/patients")} className="h-12 rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white hover:scale-105 px-8 font-bold transition-all active:scale-95 tracking-wide text-xs">
+            Ver Todos os Pacientes
           </Button>
         </div>
       </div>

@@ -4,8 +4,8 @@ import { audit } from "@/lib/audit";
 
 export const GET = withAuthParams(async ({ tenantPrisma, clinicId, userId, session }, { id }) => {
   try {
-    const patient = await tenantPrisma.patient.findUnique({
-      where: { id },
+    const patient = await tenantPrisma.patient.findFirst({
+      where: { id, clinicId },
       include: {
         owner: true,
       },
@@ -26,8 +26,8 @@ export const GET = withAuthParams(async ({ tenantPrisma, clinicId, userId, sessi
 
 export const PATCH = withAuthParams(async ({ req, tenantPrisma, clinicId, userId, session }, { id }) => {
   try {
-    const existing = await tenantPrisma.patient.findUnique({
-      where: { id },
+    const existing = await tenantPrisma.patient.findFirst({
+      where: { id, clinicId },
     });
 
     if (!existing) {

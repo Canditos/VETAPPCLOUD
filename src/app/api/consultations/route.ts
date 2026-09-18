@@ -162,10 +162,12 @@ export const POST = withAuth(async ({ req, session, tenantPrisma, clinicId, user
           const registers = await vendusRegisters.json();
           const registerId = Array.isArray(registers) && registers.length > 0 ? registers[0].id : undefined;
 
+          const vendusMode = process.env.VENDUS_MODE || (process.env.NODE_ENV === "production" ? "normal" : "tests");
+
           const vendusDoc = await vendus.createDocument({
             type: "FT",
             register_id: registerId,
-            mode: "tests",
+            mode: vendusMode,
             date: new Date().toISOString().split('T')[0],
             client: clientData,
             items: items.map((it: any) => ({
@@ -236,14 +238,46 @@ export const POST = withAuth(async ({ req, session, tenantPrisma, clinicId, user
           }
         });
       }
+
+      // Decrement stock for inventory products
+      for (const it of items) {
+        if (it.id && it.type === "PRODUCT" && !String(it.id).startsWith("pack-")) {
+          try {
+            const prod = await tenantPrisma.product.findFirst({ where: { id: it.id, clinicId } });
+            if (prod) {
+              await tenantPrisma.product.update({
+                where: { id: prod.id },
+                data: {
+                  stockQuantity: { decrement: it.quantity || 1 },
+                },
+              });
+              await tenantPrisma.stockMovement.create({
+                data: {
+                  productId: prod.id,
+                  type: "OUT",
+                  quantity: it.quantity || 1,
+                  source: `Consulta ${consultation.id}`,
+                },
+              });
+            }
+          } catch (stkErr) {
+            console.warn("Stock deduction warning for item:", it.id, stkErr);
+          }
+        }
+      }
     }
 
-    // 3. Update Appointment status if exists
-    if (appointmentId) {
-      await tenantPrisma.appointment.update({
+    // 3. Update Appointment status if exists and is not a walk-in placeholder
+    if (appointmentId && !appointmentId.startsWith("walk-in-")) {
+      const appt = await tenantPrisma.appointment.findFirst({
         where: { id: appointmentId },
-        data: { status: "COMPLETED" }
       });
+      if (appt) {
+        await tenantPrisma.appointment.update({
+          where: { id: appointmentId },
+          data: { status: "COMPLETED" },
+        });
+      }
     }
 
     return NextResponse.json({ 

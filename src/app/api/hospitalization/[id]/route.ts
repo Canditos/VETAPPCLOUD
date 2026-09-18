@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 import { withAuthParams } from "@/lib/api-wrapper";
 
-export const GET = withAuthParams(async ({ tenantPrisma }, { id }) => {
+export const GET = withAuthParams(async ({ tenantPrisma, clinicId }, { id }) => {
   try {
-    const hospitalization = await tenantPrisma.hospitalization.findUnique({
-      where: { id },
+    const hospitalization = await tenantPrisma.hospitalization.findFirst({
+      where: { id, clinicId },
       include: {
         patient: { include: { owner: true } },
         admissionBy: { select: { name: true } },
@@ -27,10 +27,10 @@ export const GET = withAuthParams(async ({ tenantPrisma }, { id }) => {
   }
 });
 
-export const PATCH = withAuthParams(async ({ req, tenantPrisma }, { id }) => {
+export const PATCH = withAuthParams(async ({ req, tenantPrisma, clinicId }, { id }) => {
   try {
-    const existing = await tenantPrisma.hospitalization.findUnique({
-      where: { id },
+    const existing = await tenantPrisma.hospitalization.findFirst({
+      where: { id, clinicId },
     });
 
     if (!existing) {
