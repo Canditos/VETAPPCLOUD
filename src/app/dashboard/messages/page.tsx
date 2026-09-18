@@ -2,9 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { 
-  Mail, 
-  Search, 
+import {
+  Search,
   Clock, 
   User, 
   Filter, 
@@ -26,6 +25,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/PageHeader";
 import { formatDistanceToNow, format } from "date-fns";
 import { pt } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -193,16 +193,11 @@ export default function MessageCenter() {
   return (
     <div className="p-8 space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-700 h-[calc(100vh-130px)] flex flex-col">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
-        <div>
-          <h1 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tighter flex items-center gap-3.5">
-            Inbox & Portal <Mail size={32} className="text-blue-600 dark:text-blue-500" />
-          </h1>
-          <p className="text-slate-500 font-medium tracking-tight mt-1 text-base">
-            Canal de conversação em direto e central de marcações com os Tutores.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Inbox & Portal"
+        description="Canal de conversação em direto e central de marcações com os Tutores."
+        className="shrink-0"
+      />
 
       {/* Main Workspace Layout */}
       <div className="flex-1 flex gap-6 overflow-hidden min-h-0">
@@ -341,7 +336,7 @@ export default function MessageCenter() {
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
-                    className="rounded-xl h-9 font-bold text-[11px] uppercase tracking-widest gap-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
+                    className="rounded-xl h-9 font-bold text-[11px] uppercase tracking-wider gap-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
                     onClick={() => window.open(`/dashboard/customers/${selectedOwnerId}`, "_blank")}
                   >
                     Ficha do Tutor <ExternalLink size={12} />
@@ -372,7 +367,7 @@ export default function MessageCenter() {
                         >
                           <div className="flex items-center justify-between mb-3.5">
                             <span className={cn(
-                              "text-[11px] font-black uppercase tracking-widest flex items-center gap-1.5",
+                              "text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5",
                               isPending && "text-amber-600 dark:text-amber-400",
                               isApproved && "text-emerald-600 dark:text-emerald-400",
                               isRejected && "text-rose-600 dark:text-rose-400"
@@ -472,7 +467,7 @@ export default function MessageCenter() {
                             {msg.content}
                           </div>
                           
-                          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest px-1.5 flex items-center gap-1.5">
+                          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider px-1.5 flex items-center gap-1.5">
                             {isClinic ? "Clínica" : selectedThread?.ownerName} • {format(new Date(msg.createdAt), "HH:mm")}
                           </span>
                         </div>
@@ -540,7 +535,7 @@ export default function MessageCenter() {
               {/* Grelha de Estatísticas Rápidas */}
               <div className="grid grid-cols-2 gap-4 mt-8 w-full max-w-md">
                 <Card className="border-none bg-slate-50 dark:bg-white/[0.02] ring-1 ring-slate-100 dark:ring-white/5 rounded-2xl p-5 text-left">
-                  <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1">Pedidos Pendentes</span>
+                  <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">Pedidos Pendentes</span>
                   <div className="flex items-center gap-2">
                     <span className="text-3xl font-black text-amber-500 tracking-tighter">
                       {totalPendingRequests}
@@ -552,7 +547,7 @@ export default function MessageCenter() {
                 </Card>
 
                 <Card className="border-none bg-slate-50 dark:bg-white/[0.02] ring-1 ring-slate-100 dark:ring-white/5 rounded-2xl p-5 text-left">
-                  <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1">Conversas Ativas</span>
+                  <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">Conversas Ativas</span>
                   <div className="flex items-center gap-2">
                     <span className="text-3xl font-black text-blue-500 tracking-tighter">
                       {totalActiveChats}

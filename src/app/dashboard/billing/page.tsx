@@ -28,6 +28,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageHeader } from "@/components/PageHeader";
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("pt-PT");
@@ -56,16 +57,7 @@ export default function BillingPage() {
     <div className="max-w-[1600px] mx-auto space-y-6 p-4 md:p-6 animate-premium">
       {/* Painel de Gestão Financeira Unificado */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm ring-1 ring-slate-200/60 dark:ring-white/5 space-y-6">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-1">
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tighter">Faturação & Finanças</h1>
-            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 font-bold text-[11px] tracking-wider">
-               <Receipt size={14} className="text-blue-600" />
-               <span>Controlo Legal via Vendus ERP & Vendas Locais</span>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
+        <PageHeader title="Faturação & Finanças" description="Controlo Legal via Vendus ERP & Vendas Locais">
             <Button 
               variant="outline" 
               className="h-10 rounded-xl px-4 gap-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-bold text-[11px] tracking-wider hover:bg-white transition-all active:scale-95"
@@ -88,8 +80,7 @@ export default function BillingPage() {
               <RefreshCw size={16} className={isRefetching ? "animate-spin" : ""} />
               <span className="text-[11px] tracking-wider">Sincronizar</span>
             </Button>
-          </div>
-        </div>
+        </PageHeader>
 
         {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -131,7 +122,7 @@ export default function BillingPage() {
                   ) : (
                     <p className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">{stat.value}</p>
                   )}
-                  <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-0.5">{stat.sub}</p>
+                  <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">{stat.sub}</p>
                 </div>
               </CardHeader>
             </Card>
@@ -194,7 +185,7 @@ export default function BillingPage() {
                       <h3 className="font-bold text-xl text-slate-900 dark:text-white truncate tracking-tight leading-none group-hover:text-blue-600 transition-colors">
                         {inv.externalId ?? `FT ${inv.id.substring(0, 8).toUpperCase()}`}
                       </h3>
-                      <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 dark:text-slate-600 tracking-wider mt-2">
+                      <p className="text-[11px] font-bold text-slate-400 dark:text-slate-600 tracking-wider mt-2">
                         {date.toLocaleDateString("pt-PT", { day: '2-digit', month: 'short', year: 'numeric' })}
                       </p>
                     </div>
@@ -228,7 +219,7 @@ export default function BillingPage() {
                         {ownerName}
                       </p>
                       {patientName && (
-                        <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 tracking-wider">
+                        <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-wider">
                           Paciente: {patientName}
                         </p>
                       )}

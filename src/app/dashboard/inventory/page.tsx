@@ -12,6 +12,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/PageHeader";
 import {
   Dialog, DialogContent, DialogTitle, DialogTrigger, DialogClose,
 } from "@/components/ui/dialog";
@@ -191,7 +192,7 @@ export default function InventoryPage() {
   };
 
   const ColHeader = ({ label, k, className }: { label: string; k: SortKey; className?: string }) => (
-    <th className={cn("px-4 py-3 text-left text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors whitespace-nowrap", className)} onClick={() => handleSort(k)}>
+    <th className={cn("px-4 py-3 text-left text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors whitespace-nowrap", className)} onClick={() => handleSort(k)}>
       <div className="flex items-center gap-1.5">{label} <SortIcon k={k} /></div>
     </th>
   );
@@ -199,16 +200,16 @@ export default function InventoryPage() {
   const ProductDialog = ({ form, setForm, onSubmit, title, loading }: { form: ProductForm; setForm: (f: ProductForm) => void; onSubmit: () => void; title: string; loading?: boolean }) => (
     <div className="p-8 space-y-5">
       <div className="space-y-2">
-        <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Designação *</Label>
+        <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Designação *</Label>
         <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Ex: Clavaseptin 500mg" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Preço (€) *</Label>
+          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Preço (€) *</Label>
           <Input type="number" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} placeholder="0.00" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
         </div>
         <div className="space-y-2">
-          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">IVA</Label>
+          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">IVA</Label>
           <select value={form.vatRate} onChange={e => setForm({ ...form, vatRate: Number(e.target.value) })} className="h-11 w-full rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-3 text-xs font-bold">
             <option value={23}>23% (Normal)</option>
             <option value={13}>13% (Intermédia)</option>
@@ -218,31 +219,31 @@ export default function InventoryPage() {
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Stock Inicial</Label>
+          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Stock Inicial</Label>
           <Input type="number" value={form.stockQuantity} onChange={e => setForm({ ...form, stockQuantity: e.target.value })} placeholder="0" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
         </div>
         <div className="space-y-2">
-          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Stock Mínimo</Label>
+          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Stock Mínimo</Label>
           <Input type="number" value={form.minStock} onChange={e => setForm({ ...form, minStock: e.target.value })} placeholder="5" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Categoria</Label>
+          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Categoria</Label>
           <Input value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} placeholder="Ex: Medicamentos" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
         </div>
         <div className="space-y-2">
-          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Código de Barras</Label>
+          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Código de Barras</Label>
           <Input value={form.barcode} onChange={e => setForm({ ...form, barcode: e.target.value })} placeholder="Ex: 5601234567890" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Nº Lote</Label>
+          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Nº Lote</Label>
           <Input value={form.batchNumber} onChange={e => setForm({ ...form, batchNumber: e.target.value })} placeholder="Ex: LOTE-2024-001" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
         </div>
         <div className="space-y-2">
-          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Validade</Label>
+          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Validade</Label>
           <Input type="date" value={form.expiryDate} onChange={e => setForm({ ...form, expiryDate: e.target.value })} className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
         </div>
       </div>
@@ -283,7 +284,7 @@ export default function InventoryPage() {
           </p>
           <div className="flex gap-3">
             <div className="flex-1">
-              <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1">Quantidade</label>
+              <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">Quantidade</label>
               <input type="number" min="1" value={adjustQty} onChange={e => setAdjustQty(e.target.value)}
                 className="w-full h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center font-bold text-lg" />
             </div>
@@ -359,54 +360,45 @@ export default function InventoryPage() {
     <div className="max-w-[1600px] mx-auto space-y-5 p-4 md:p-6">
       {/* Header */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm ring-1 ring-slate-200/60 dark:ring-white/5 space-y-5">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tighter">Inventário & Stock</h1>
-            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 font-bold text-[11px] uppercase tracking-wider">
-              <Box size={13} className="text-blue-600" />
-              <span>Controlo de Medicamentos e Consumíveis</span>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" onClick={() => {
-              const a = document.createElement("a");
-              a.href = "/api/reports/annual-inventory";
-              a.click();
-              toast.success("PDF gerado!");
-            }} className="h-9 rounded-xl px-4 gap-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-bold text-[11px] uppercase tracking-widest hover:bg-white transition-all active:scale-95">
-              <Download size={15} strokeWidth={2.5} /> Download PDF
-            </Button>
-            <Button variant="outline" onClick={async () => {
-              const email = prompt("Enviar PDF para o email:");
-              if (!email) return;
-              try {
-                const r = await fetch("/api/reports/annual-inventory/send", {
-                  method: "POST", headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ email }),
-                });
-                if (r.ok) toast.success("PDF enviado para " + email);
-                else toast.error("Erro ao enviar");
-              } catch { toast.error("Erro ao enviar"); }
-            }} className="h-9 rounded-xl px-4 gap-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-bold text-[11px] uppercase tracking-widest hover:bg-white transition-all active:scale-95">
-              <Mail size={15} strokeWidth={2.5} /> Enviar Email
-            </Button>
-            <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-              <DialogTrigger asChild>
-                <Button className="h-9 rounded-xl gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 shadow-sm transition-all active:scale-95">
-                  <Plus size={15} strokeWidth={3} />
-                  <span className="text-[11px] uppercase tracking-widest">Novo Artigo</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px] rounded-2xl border-none shadow-3xl p-0 overflow-hidden bg-white dark:bg-slate-900">
-                <div className="bg-blue-600 p-8 text-white">
-                  <DialogTitle className="text-2xl font-bold tracking-tight">Adicionar ao Catálogo</DialogTitle>
-                  <p className="text-blue-100 text-xs font-bold uppercase tracking-widest mt-1 opacity-80">Registe novos artigos com IVA e Lote.</p>
-                </div>
-                <ProductDialog form={createForm} setForm={setCreateForm} onSubmit={() => createMutation.mutate(createForm)} title="Registar Artigo" loading={createMutation.isPending} />
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
+        <PageHeader title="Inventário & Stock" description="Controlo de Medicamentos e Consumíveis">
+          <Button variant="outline" onClick={() => {
+            const a = document.createElement("a");
+            a.href = "/api/reports/annual-inventory";
+            a.click();
+            toast.success("PDF gerado!");
+          }} className="h-9 rounded-xl px-4 gap-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-bold text-[11px] uppercase tracking-wider hover:bg-white transition-all active:scale-95">
+            <Download size={15} strokeWidth={2.5} /> Download PDF
+          </Button>
+          <Button variant="outline" onClick={async () => {
+            const email = prompt("Enviar PDF para o email:");
+            if (!email) return;
+            try {
+              const r = await fetch("/api/reports/annual-inventory/send", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email }),
+              });
+              if (r.ok) toast.success("PDF enviado para " + email);
+              else toast.error("Erro ao enviar");
+            } catch { toast.error("Erro ao enviar"); }
+          }} className="h-9 rounded-xl px-4 gap-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-bold text-[11px] uppercase tracking-wider hover:bg-white transition-all active:scale-95">
+            <Mail size={15} strokeWidth={2.5} /> Enviar Email
+          </Button>
+          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+            <DialogTrigger asChild>
+              <Button className="h-9 rounded-xl gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 shadow-sm transition-all active:scale-95">
+                <Plus size={15} strokeWidth={3} />
+                <span className="text-[11px] uppercase tracking-wider">Novo Artigo</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px] rounded-2xl border-none shadow-3xl p-0 overflow-hidden bg-white dark:bg-slate-900">
+              <div className="bg-blue-600 p-8 text-white">
+                <DialogTitle className="text-2xl font-bold tracking-tight">Adicionar ao Catálogo</DialogTitle>
+                <p className="text-blue-100 text-xs font-bold uppercase tracking-widest mt-1 opacity-80">Registe novos artigos com IVA e Lote.</p>
+              </div>
+              <ProductDialog form={createForm} setForm={setCreateForm} onSubmit={() => createMutation.mutate(createForm)} title="Registar Artigo" loading={createMutation.isPending} />
+            </DialogContent>
+          </Dialog>
+        </PageHeader>
 
         {/* KPI Strip */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -421,7 +413,7 @@ export default function InventoryPage() {
                 <s.icon size={17} strokeWidth={2.5} />
               </div>
               <div>
-                <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-none">{s.label}</p>
+                <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider leading-none">{s.label}</p>
                 <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight mt-0.5">{s.value}</p>
               </div>
             </div>
@@ -437,7 +429,7 @@ export default function InventoryPage() {
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-10 rounded-xl px-4 gap-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 font-bold text-[11px] uppercase tracking-widest text-slate-600 dark:text-slate-400 hover:bg-white transition-all shrink-0">
+              <Button variant="ghost" className="h-10 rounded-xl px-4 gap-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 font-bold text-[11px] uppercase tracking-wider text-slate-600 dark:text-slate-400 hover:bg-white transition-all shrink-0">
                 <Filter size={14} strokeWidth={2.5} />
                 <span className="max-w-[140px] truncate">{filterCategory === "all" ? "Todas as Categorias" : filterCategory}</span>
               </Button>
@@ -495,8 +487,8 @@ export default function InventoryPage() {
       {/* Table */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm ring-1 ring-slate-200/60 dark:ring-white/5 overflow-hidden">
         <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-          <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{total.toLocaleString("pt-PT")} artigo{total !== 1 ? "s" : ""} encontrado{total !== 1 ? "s" : ""}</p>
-          <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Página {page} / {totalPages}</p>
+          <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{total.toLocaleString("pt-PT")} artigo{total !== 1 ? "s" : ""} encontrado{total !== 1 ? "s" : ""}</p>
+          <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Página {page} / {totalPages}</p>
         </div>
 
         <div className="overflow-x-auto">
@@ -506,10 +498,10 @@ export default function InventoryPage() {
                 <ColHeader label="Designação" k="name" className="pl-5 min-w-[260px]" />
                 <ColHeader label="Categoria" k="category" className="min-w-[120px]" />
                 <ColHeader label="Stock" k="stockQuantity" className="min-w-[100px]" />
-                <th className="px-4 py-3 text-left text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest whitespace-nowrap">Estado</th>
+                <th className="px-4 py-3 text-left text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Estado</th>
                 <ColHeader label="Preço" k="price" className="min-w-[100px]" />
                 <ColHeader label="Validade" k="expiryDate" className="min-w-[110px]" />
-                <th className="px-4 py-3 text-right text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest pr-5">Ações</th>
+                <th className="px-4 py-3 text-right text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider pr-5">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -546,7 +538,7 @@ export default function InventoryPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3.5">
-                        <Badge variant="secondary" className="text-[11px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 uppercase tracking-widest border-none px-2 py-0.5">{p.category || "Geral"}</Badge>
+                        <Badge variant="secondary" className="text-[11px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 uppercase tracking-wider border-none px-2 py-0.5">{p.category || "Geral"}</Badge>
                       </td>
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-2">
@@ -556,11 +548,11 @@ export default function InventoryPage() {
                       </td>
                       <td className="px-4 py-3.5">
                         {expired ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 uppercase tracking-widest bg-rose-50 dark:bg-rose-900/20 px-2 py-1 rounded-lg"><span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" /> Expirado</span>
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 uppercase tracking-wider bg-rose-50 dark:bg-rose-900/20 px-2 py-1 rounded-lg"><span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" /> Expirado</span>
                         ) : low ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 uppercase tracking-widest bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-lg"><span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" /> Crítico</span>
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 uppercase tracking-wider bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-lg"><span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" /> Crítico</span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-lg"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> OK</span>
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 uppercase tracking-wider bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-lg"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> OK</span>
                         )}
                       </td>
                       <td className="px-4 py-3.5">
@@ -602,7 +594,7 @@ export default function InventoryPage() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="px-5 py-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4">
-            <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">A mostrar {Math.min((page - 1) * PAGE_SIZE + 1, total)}–{Math.min(page * PAGE_SIZE, total)} de {total.toLocaleString("pt-PT")}</p>
+            <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">A mostrar {Math.min((page - 1) * PAGE_SIZE + 1, total)}–{Math.min(page * PAGE_SIZE, total)} de {total.toLocaleString("pt-PT")}</p>
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" disabled={page === 1} onClick={() => setPage(p => p - 1)}><ChevronLeft size={15} /></Button>
               {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
