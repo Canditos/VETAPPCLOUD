@@ -22,7 +22,9 @@ import {
   PawPrint,
   Stethoscope,
   ArrowUpRight,
-  DoorOpen
+  DoorOpen,
+  Loader2,
+  X
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,6 +44,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { HospitalizationMap } from "@/components/HospitalizationMap";
+import { useDebounce } from "@/hooks/useDebounce";
 import Link from "next/link";
 
 const TOTAL_BOXES = 8;
@@ -96,16 +99,18 @@ function AdmitDialog({
 }) {
   const queryClient = useQueryClient();
   const [patientSearch, setPatientSearch] = useState("");
+  const debouncedSearch = useDebounce(patientSearch, 250);
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
   const [reason, setReason] = useState("");
 
-  const { data: patients } = useQuery({
-    queryKey: ["patients"],
+  const { data: patients, isLoading: isLoadingPatients } = useQuery({
+    queryKey: ["patients", debouncedSearch],
     queryFn: async () => {
-      const res = await fetch("/api/patients");
-      if (!res.ok) throw new Error("Erro");
+      const res = await fetch(`/api/patients?search=${encodeURIComponent(debouncedSearch)}&limit=30`);
+      if (!res.ok) throw new Error("Erro ao carregar pacientes");
       return res.json();
     },
+    enabled: open && debouncedSearch.trim().length > 0 && !selectedPatient,
   });
 
   const admit = useMutation({
@@ -133,9 +138,7 @@ function AdmitDialog({
     onError: () => toast.error("Erro ao internar paciente"),
   });
 
-  const filteredPatients = (patients?.data ?? []).filter((p: any) =>
-    p.name.toLowerCase().includes(patientSearch.toLowerCase())
-  );
+  const searchResults = (patients?.data ?? []) as any[];
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -151,49 +154,87 @@ function AdmitDialog({
               Paciente
             </Label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 dark:text-slate-500" size={16} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" size={16} />
               <Input
-                className="pl-9 rounded-xl border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
-                placeholder="Procurar paciente..."
+                className="pl-9 pr-8 rounded-xl border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+                placeholder="Procurar paciente pelo nome ou tutor..."
                 value={patientSearch}
                 onChange={(e) => {
                   setPatientSearch(e.target.value);
                   setSelectedPatient(null);
                 }}
               />
+              {isLoadingPatients && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-slate-400" />
+              )}
+              {patientSearch && !isLoadingPatients && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPatientSearch("");
+                    setSelectedPatient(null);
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
-            {patientSearch && !selectedPatient && filteredPatients.length > 0 && (
-              <div className="border-none shadow-2xl rounded-2xl overflow-hidden bg-white dark:bg-slate-950 ring-1 ring-slate-100 dark:ring-white/5 animate-in fade-in zoom-in-95 duration-200">
-                {filteredPatients.slice(0, 5).map((p: any) => (
-                  <button
-                    key={p.id}
-                    className="w-full text-left px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all text-sm border-b border-slate-50 dark:border-white/5 last:border-0 group"
-                    onClick={() => {
-                      setSelectedPatient(p);
-                      setPatientSearch(p.name);
-                    }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-500 dark:text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                        {p.name[0]}
+            {debouncedSearch.trim().length > 0 && !selectedPatient && (
+              <div className="border-none shadow-2xl rounded-2xl overflow-hidden bg-white dark:bg-slate-950 ring-1 ring-slate-100 dark:ring-white/5 animate-in fade-in zoom-in-95 duration-200 max-h-60 overflow-y-auto">
+                {isLoadingPatients ? (
+                  <div className="p-4 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+                    <Loader2 className="h-3 w-3 animate-spin" /> A pesquisar em toda a base de dados...
+                  </div>
+                ) : searchResults.length > 0 ? (
+                  searchResults.map((p: any) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all text-sm border-b border-slate-50 dark:border-white/5 last:border-0 group"
+                      onClick={() => {
+                        setSelectedPatient(p);
+                        setPatientSearch(p.name);
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-500 dark:text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-colors text-xs">
+                          {p.name?.[0] || "?"}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-slate-900 dark:text-slate-200 leading-none mb-1 truncate">{p.name}</p>
+                          <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase truncate">
+                            {p.species} <span className="mx-1 opacity-40">|</span> Tutor: {p.owner?.name || "Sem tutor"}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-bold text-slate-900 dark:text-slate-200 leading-none mb-1">{p.name}</p>
-                        <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase">
-                          {p.species} <span className="mx-1 opacity-20">|</span> {p.owner?.name}
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-xs text-slate-400">
+                    Nenhum paciente encontrado para &quot;{debouncedSearch}&quot;
+                  </div>
+                )}
               </div>
             )}
             {selectedPatient && (
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl px-4 py-3 text-sm">
-                <span className="font-bold text-blue-800 dark:text-blue-400">{selectedPatient.name}</span>
-                <span className="text-blue-500 dark:text-blue-500/70 ml-2 text-xs">
-                  {selectedPatient.species} • {selectedPatient.owner?.name}
-                </span>
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl px-4 py-3 text-sm flex items-center justify-between">
+                <div>
+                  <span className="font-bold text-blue-800 dark:text-blue-400">{selectedPatient.name}</span>
+                  <span className="text-blue-500 dark:text-blue-400/80 ml-2 text-xs">
+                    {selectedPatient.species} • {selectedPatient.owner?.name || "Sem tutor"}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedPatient(null);
+                    setPatientSearch("");
+                  }}
+                  className="text-blue-500 hover:text-blue-700 dark:hover:text-blue-300 p-1"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
             )}
           </div>

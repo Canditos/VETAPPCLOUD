@@ -8,55 +8,54 @@ export const GET = withAuth(async ({ req, tenantPrisma }) => {
   const search = searchParams.get("q") || "";
 
   try {
-    const invoices = await tenantPrisma.invoice.findMany({
-      include: {
-        owner: true,
-        consultation: {
-          include: {
-            patient: true,
-          },
-        },
-        items: true,
-      },
-      orderBy: { createdAt: "desc" },
-      take: 200,
-    });
+    const whereClause: any = search
+      ? {
+          OR: [
+            { owner: { name: { contains: search, mode: "insensitive" } } },
+            { externalId: { contains: search, mode: "insensitive" } },
+            { id: { contains: search, mode: "insensitive" } },
+            { consultation: { patient: { name: { contains: search, mode: "insensitive" } } } },
+          ],
+        }
+      : undefined;
 
-    // Filter by search term (client name or invoice id)
-    const filtered = search
-      ? invoices.filter((inv: any) => {
-          const ownerName = (inv.owner?.name ?? inv.consultation?.patient?.owner?.name ?? "").toLowerCase();
-          const invId = inv.id.toLowerCase();
-          const extId = (inv.externalId ?? "").toLowerCase();
-          const q = search.toLowerCase();
-          return ownerName.includes(q) || invId.includes(q) || extId.includes(q);
-        })
-      : invoices;
-
-    // Compute summary stats
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const todayInvoices = invoices.filter(
-      (inv: any) => new Date(inv.createdAt) >= today
-    );
-    const todayTotal = todayInvoices.reduce(
-      (sum: any, inv: any) => sum + Number(inv.total),
-      0
-    );
-    const pendingInvoices = invoices.filter((inv: any) => inv.status === "DRAFT");
-    const pendingTotal = pendingInvoices.reduce(
-      (sum: any, inv: any) => sum + Number(inv.total),
-      0
-    );
+    const [invoices, todayStats, pendingStats] = await Promise.all([
+      tenantPrisma.invoice.findMany({
+        where: whereClause,
+        include: {
+          owner: true,
+          consultation: {
+            include: {
+              patient: true,
+            },
+          },
+          items: true,
+        },
+        orderBy: { createdAt: "desc" },
+        take: 100,
+      }),
+      tenantPrisma.invoice.aggregate({
+        where: { createdAt: { gte: today } },
+        _sum: { total: true },
+        _count: { id: true },
+      }),
+      tenantPrisma.invoice.aggregate({
+        where: { status: "DRAFT" },
+        _sum: { total: true },
+        _count: { id: true },
+      }),
+    ]);
 
     return NextResponse.json({
-      invoices: filtered,
+      invoices,
       stats: {
-        todayTotal,
-        todayCount: todayInvoices.length,
-        pendingTotal,
-        pendingCount: pendingInvoices.length,
+        todayTotal: Number(todayStats._sum.total ?? 0),
+        todayCount: todayStats._count.id,
+        pendingTotal: Number(pendingStats._sum.total ?? 0),
+        pendingCount: pendingStats._count.id,
       },
     });
   } catch (error) {

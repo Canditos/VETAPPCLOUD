@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Pill, Plus, Trash2, Calendar as CalendarIcon, Search, PawPrint, User as UserIcon, Printer } from "lucide-react";
+import { Pill, Plus, Trash2, Calendar as CalendarIcon, Search, PawPrint, User as UserIcon, Printer, Loader2 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -15,6 +15,7 @@ import { pt } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { PrescriptionDownloadButton } from "@/components/clinical/PrescriptionDownloadButton";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface PrescriptionItem {
   medicineName: string;
@@ -42,26 +43,34 @@ export function PrescriptionForm({ patientId: initialPatientId, consultationId, 
   ]);
 
   const [patientSearch, setPatientSearch] = useState("");
+  const debouncedSearch = useDebounce(patientSearch, 250);
   const [showResults, setShowResults] = useState(false);
+  const [selectedPatientObj, setSelectedPatientObj] = useState<any>(null);
 
-  // Fetch patients
-  const { data: patientsData, isLoading: isLoadingPatients } = useQuery({
-    queryKey: ["patients-list"],
+  // Fetch initial patient if provided
+  const { data: initialPatientData } = useQuery({
+    queryKey: ["patient-detail", initialPatientId],
     queryFn: async () => {
-      const res = await fetch("/api/patients?limit=1000");
+      const res = await fetch(`/api/patients/${initialPatientId}`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!initialPatientId,
+  });
+
+  // Search patients on-demand
+  const { data: searchResultsData, isLoading: isLoadingPatients } = useQuery({
+    queryKey: ["patients-search", debouncedSearch],
+    queryFn: async () => {
+      const res = await fetch(`/api/patients?search=${encodeURIComponent(debouncedSearch)}&limit=30`);
       if (!res.ok) throw new Error("Erro ao carregar pacientes");
       return res.json();
     },
-    enabled: !initialPatientId
+    enabled: !initialPatientId && debouncedSearch.trim().length > 0,
   });
 
-  const patients = patientsData?.data || [];
-  const selectedPatient = patients.find((p: any) => p.id === patientId);
-
-  const filteredPatients = patients.filter((p: any) => 
-    p.name.toLowerCase().includes(patientSearch.toLowerCase()) || 
-    p.owner?.name.toLowerCase().includes(patientSearch.toLowerCase())
-  ).slice(0, 10);
+  const selectedPatient = selectedPatientObj || initialPatientData;
+  const filteredPatients = (searchResultsData?.data || []) as any[];
 
   const { data: clinic } = useQuery({
     queryKey: ["clinic"],
@@ -141,40 +150,51 @@ export function PrescriptionForm({ patientId: initialPatientId, consultationId, 
               <div className="relative group">
                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
                 <input
-                  className="w-full h-16 pl-14 pr-6 rounded-2xl bg-white dark:bg-slate-900 border-none ring-1 ring-slate-200 dark:ring-white/10 font-black text-sm text-slate-900 dark:text-white placeholder:text-slate-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all shadow-sm"
+                  className="w-full h-16 pl-14 pr-12 rounded-2xl bg-white dark:bg-slate-900 border-none ring-1 ring-slate-200 dark:ring-white/10 font-black text-sm text-slate-900 dark:text-white placeholder:text-slate-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all shadow-sm"
                   placeholder="Pesquisar Animal ou Tutor..."
                   value={patientSearch}
                   onFocus={() => setShowResults(true)}
                   onChange={(e) => {
                     setPatientSearch(e.target.value);
                     setPatientId("");
+                    setSelectedPatientObj(null);
                     setShowResults(true);
                   }}
                 />
+                {isLoadingPatients && (
+                  <Loader2 className="absolute right-5 top-1/2 -translate-y-1/2 h-5 w-5 animate-spin text-slate-400" />
+                )}
               </div>
 
-              {showResults && patientSearch.length > 0 && !patientId && (
-                <div className="absolute top-full left-0 right-0 mt-3 bg-white dark:bg-slate-950 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 ring-1 ring-black/5">
-                  {filteredPatients.length > 0 ? filteredPatients.map((p: any) => (
-                    <button key={p.id}
-                      type="button"
-                      className="w-full text-left px-6 py-5 hover:bg-blue-600 group transition-all flex justify-between items-center border-b border-slate-100 dark:border-white/5 last:border-0"
-                      onClick={() => {
-                        setPatientId(p.id);
-                        setPatientSearch(p.name);
-                        setShowResults(false);
-                      }}
-                    >
-                      <div className="flex flex-col">
-                        <span className="font-black text-slate-900 dark:text-white group-hover:text-white">{p.name}</span>
-                        <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 group-hover:text-blue-100 uppercase tracking-widest">{p.species}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 group-hover:text-white uppercase tracking-tighter block">{p.owner?.name}</span>
-                      </div>
-                    </button>
-                  )) : (
-                    <div className="p-8 text-center text-slate-500 font-bold text-sm">Nenhum paciente encontrado</div>
+              {showResults && debouncedSearch.trim().length > 0 && !patientId && (
+                <div className="absolute top-full left-0 right-0 mt-3 bg-white dark:bg-slate-950 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 ring-1 ring-black/5 max-h-72 overflow-y-auto">
+                  {isLoadingPatients ? (
+                    <div className="p-6 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" /> A pesquisar em toda a base de dados...
+                    </div>
+                  ) : filteredPatients.length > 0 ? (
+                    filteredPatients.map((p: any) => (
+                      <button key={p.id}
+                        type="button"
+                        className="w-full text-left px-6 py-4 hover:bg-blue-600 group transition-all flex justify-between items-center border-b border-slate-100 dark:border-white/5 last:border-0"
+                        onClick={() => {
+                          setPatientId(p.id);
+                          setSelectedPatientObj(p);
+                          setPatientSearch(p.name);
+                          setShowResults(false);
+                        }}
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-black text-slate-900 dark:text-white group-hover:text-white">{p.name}</span>
+                          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 group-hover:text-blue-100 uppercase tracking-widest">{p.species}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 group-hover:text-white uppercase tracking-tighter block">{p.owner?.name || "Sem tutor"}</span>
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="p-8 text-center text-slate-500 font-bold text-sm">Nenhum paciente encontrado para &quot;{debouncedSearch}&quot;</div>
                   )}
                 </div>
               )}
@@ -187,12 +207,12 @@ export function PrescriptionForm({ patientId: initialPatientId, consultationId, 
                 </div>
                 <div className="flex flex-col flex-1 overflow-hidden">
                   <span className="text-[11px] font-black text-blue-600/60 dark:text-blue-400/40 uppercase tracking-widest leading-none mb-1">Tutor Associado</span>
-                  <span className="font-black text-slate-900 dark:text-white truncate">{selectedPatient.owner?.name}</span>
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tighter">{selectedPatient.owner?.email || "Sem email"}</span>
+                  <span className="font-black text-slate-900 dark:text-white truncate">{selectedPatient.owner?.name || "Sem tutor"}</span>
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tighter">{selectedPatient.owner?.email || selectedPatient.owner?.phone || "Sem contacto"}</span>
                 </div>
                 <button 
                   type="button"
-                  onClick={() => { setPatientId(""); setPatientSearch(""); }}
+                  onClick={() => { setPatientId(""); setSelectedPatientObj(null); setPatientSearch(""); }}
                   className="p-2 hover:bg-blue-600/10 rounded-xl transition-colors shrink-0"
                 >
                   <Trash2 size={16} className="text-red-400 hover:text-red-600" />
