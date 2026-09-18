@@ -81,7 +81,31 @@ export const POST = withAuth(async ({ req, tenantPrisma }) => {
       );
     }
 
-    // Verificação de sobreposição: O membro da equipa não pode ter outra marcação na mesma hora
+    // Verificação de sobreposição do paciente: O animal não pode estar em duas consultas ao mesmo tempo
+    const patientOverlapping = await tenantPrisma.appointment.findFirst({
+      where: {
+        patientId,
+        status: { not: "CANCELLED" },
+        OR: [
+          {
+            startTime: { lt: end },
+            endTime: { gt: start },
+          }
+        ],
+      },
+      include: {
+        patient: { select: { name: true } },
+      },
+    });
+
+    if (patientOverlapping) {
+      return NextResponse.json(
+        { error: `O animal ${patientOverlapping.patient?.name || "selecionado"} já tem uma marcação agendada para esse horário.` },
+        { status: 400 }
+      );
+    }
+
+    // Verificação de sobreposição do veterinário: O membro da equipa não pode ter outra marcação na mesma hora
     const overlapping = await tenantPrisma.appointment.findFirst({
       where: {
         veterinarianId,

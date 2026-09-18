@@ -47,6 +47,32 @@ export const PATCH = withAuthParams(async ({ req, tenantPrisma, clinicId }, { id
         );
       }
 
+      // Verificação específica: O animal não pode ter outra marcação na mesma hora
+      const patientIdToCheck = existing.patientId;
+      const patientOverlapping = await tenantPrisma.appointment.findFirst({
+        where: {
+          id: { not: id },
+          patientId: patientIdToCheck,
+          status: { not: "CANCELLED" },
+          OR: [
+            {
+              startTime: { lt: newEndTime },
+              endTime: { gt: newStartTime },
+            }
+          ],
+        },
+        include: {
+          patient: { select: { name: true } },
+        },
+      });
+
+      if (patientOverlapping) {
+        return NextResponse.json(
+          { error: `O animal ${patientOverlapping.patient?.name || "selecionado"} já tem outra marcação agendada para esse horário.` },
+          { status: 400 }
+        );
+      }
+
       // Verificação específica: O membro não pode ter outra marcação na mesma hora
       const overlapping = await tenantPrisma.appointment.findFirst({
         where: {
