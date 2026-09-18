@@ -4,6 +4,8 @@ import Sidebar from "@/components/Sidebar";
 import MobileSidebar from "@/components/MobileSidebar";
 import Header from "@/components/Header";
 import { Toaster } from "@/components/ui/sonner";
+import { SidebarProvider } from "@/components/SidebarContext";
+import { DashboardContent } from "@/components/DashboardContent";
 
 export default function DashboardLayout({
   children,
@@ -11,12 +13,14 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <Sidebar />
-      <MobileSidebar />
-      <Header />
-      <main className="md:ml-64">{children}</main>
-      <Toaster />
-    </div>
+    <SidebarProvider>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+        <Sidebar />
+        <MobileSidebar />
+        <Header />
+        <DashboardContent>{children}</DashboardContent>
+        <Toaster />
+      </div>
+    </SidebarProvider>
   );
 }
