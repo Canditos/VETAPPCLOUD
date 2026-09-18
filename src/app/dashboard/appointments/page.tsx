@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback, useEffect, Suspense, useRef } from "rea
 import {
   ChevronLeft, ChevronRight, Clock, Plus, Stethoscope,
   RefreshCw, Activity, Syringe, Scissors, Zap, CalendarDays,
-  User as UserIcon, Search, CheckCircle2, X, MessageSquare, Mail, PawPrint,
+  User as UserIcon, Search, CheckCircle2, X, MessageSquare, Mail, PawPrint, Loader2,
 } from "lucide-react";
 import {
   DndContext, DragOverlay, PointerSensor, useSensor, useSensors,
@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { isFeatureEnabled } from "@/lib/features";
+import { useDebounce } from "@/hooks/useDebounce";
 
 // 30-min slots 08:00 → 23:30
 const halfHours: string[] = [];
@@ -327,27 +328,23 @@ function CalendarContent() {
     return map;
   }, [rawAppointments, selectedVet]);
 
-  const { data: patientsResponse } = useQuery({
-    queryKey: ["patients"],
+  const debouncedSearch = useDebounce(patientSearch.trim(), 250);
+
+  const { data: searchResponse, isLoading: isSearchingPatients } = useQuery({
+    queryKey: ["patients-search", debouncedSearch],
     queryFn: async () => {
-      const res = await fetch("/api/patients?limit=200");
+      if (debouncedSearch.length < 2) return { data: [] };
+      const res = await fetch(`/api/patients?search=${encodeURIComponent(debouncedSearch)}&limit=30`);
       if (!res.ok) return { data: [] };
       return res.json();
     },
-    staleTime: 60000,
+    enabled: debouncedSearch.length >= 2,
+    staleTime: 10000,
   });
 
-  // API returns { data: [], pagination: {} } — extract the array safely
-  const allPatients: any[] = Array.isArray(patientsResponse)
-    ? patientsResponse
-    : (patientsResponse?.data ?? []);
-
-  const filteredPatients = patientSearch.length > 1
-    ? allPatients.filter((p: any) =>
-        p.name?.toLowerCase().includes(patientSearch.toLowerCase()) ||
-        p.owner?.name?.toLowerCase().includes(patientSearch.toLowerCase())
-      ).slice(0, 6)
-    : [];
+  const searchResults: any[] = Array.isArray(searchResponse)
+    ? searchResponse
+    : (searchResponse?.data ?? []);
 
   const createAppointment = useMutation({
     mutationFn: async () => {
@@ -778,28 +775,60 @@ function CalendarContent() {
                 <div className="relative group">
                   <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 dark:text-slate-600 group-focus-within:text-blue-500 transition-colors" size={18} />
                   <input
-                    className="w-full h-14 pl-14 pr-6 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-bold text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
+                    className="w-full h-14 pl-14 pr-12 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-bold text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
                     placeholder="Procurar animal ou tutor..."
                     value={patientSearch}
                     onChange={(e) => { setPatientSearch(e.target.value); setSelectedPatient(null); }}
                   />
-                  
-                  {filteredPatients.length > 0 && !selectedPatient && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden z-[60] animate-in fade-in slide-in-from-top-2 duration-300 ring-1 ring-black/5">
-                      {filteredPatients.map((p: any) => (
-                        <button key={p.id}
-                          className="w-full text-left px-6 py-4 hover:bg-blue-600 group/item transition-all flex justify-between items-center border-b border-slate-100 dark:border-white/5 last:border-0"
-                          onClick={() => { setSelectedPatient(p); setPatientSearch(p.name); }}
-                        >
-                          <div className="flex flex-col">
-                            <span className="font-bold text-slate-900 dark:text-white group-hover/item:text-white">{p.name}</span>
-                            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 group-hover/item:text-blue-100 tracking-widest">{p.species}</span>
-                          </div>
-                          <div className="text-right">
-                            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 group-hover/item:text-white tracking-tighter block">{p.owner?.name}</span>
-                          </div>
-                        </button>
-                      ))}
+                  {isSearchingPatients ? (
+                    <Loader2 className="absolute right-5 top-1/2 -translate-y-1/2 text-blue-500 animate-spin" size={18} />
+                  ) : patientSearch.length > 0 && !selectedPatient ? (
+                    <button
+                      type="button"
+                      onClick={() => setPatientSearch("")}
+                      className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                    >
+                      <X size={16} />
+                    </button>
+                  ) : null}
+
+                  {debouncedSearch.length >= 2 && !selectedPatient && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden z-[60] animate-in fade-in slide-in-from-top-2 duration-300 ring-1 ring-black/5 max-h-72 overflow-y-auto">
+                      {isSearchingPatients ? (
+                        <div className="p-6 text-center text-sm font-bold text-slate-500 dark:text-slate-400 flex items-center justify-center gap-2">
+                          <Loader2 size={16} className="animate-spin text-blue-500" />
+                          A pesquisar na base de dados...
+                        </div>
+                      ) : searchResults.length > 0 ? (
+                        searchResults.map((p: any) => (
+                          <button key={p.id}
+                            type="button"
+                            className="w-full text-left px-6 py-4 hover:bg-blue-600 group/item transition-all flex justify-between items-center border-b border-slate-100 dark:border-white/5 last:border-0"
+                            onClick={() => { setSelectedPatient(p); setPatientSearch(p.name); }}
+                          >
+                            <div className="flex flex-col">
+                              <span className="font-bold text-slate-900 dark:text-white group-hover/item:text-white text-sm">{p.name}</span>
+                              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 group-hover/item:text-blue-100 tracking-wider mt-0.5">
+                                {p.species || "Animal"} {p.breed ? `• ${p.breed}` : ""}
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 group-hover/item:text-white tracking-tight block">
+                                {p.owner?.name || "Sem tutor"}
+                              </span>
+                              {p.owner?.phone && (
+                                <span className="text-[10px] font-bold text-slate-400 group-hover/item:text-blue-100 block mt-0.5">
+                                  {p.owner.phone}
+                                </span>
+                              )}
+                            </div>
+                          </button>
+                        ))
+                      ) : (
+                        <div className="p-6 text-center text-sm font-bold text-slate-500 dark:text-slate-400">
+                          Nenhum paciente ou tutor encontrado para &ldquo;{debouncedSearch}&rdquo;
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
