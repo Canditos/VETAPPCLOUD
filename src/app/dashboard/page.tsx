@@ -47,7 +47,8 @@ export default function DashboardPage() {
   const { data, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const res = await fetch("/api/dashboard/stats");
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Lisbon";
+      const res = await fetch(`/api/dashboard/stats?tz=${encodeURIComponent(tz)}`);
       if (!res.ok) throw new Error("Erro ao carregar dados");
       return res.json();
     },

@@ -2,8 +2,8 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { withAuth } from "@/lib/api-wrapper";
-import { startOfDay, endOfDay, subDays, addDays, eachDayOfInterval, format } from "date-fns";
-import { pt } from "date-fns/locale";
+import { subDays, addDays } from "date-fns";
+import { getTimezoneDayBounds, getTimezoneDaysInterval } from "@/lib/date-utils";
 
 // Safe query wrapper — if a query fails, return fallback instead of crashing
 async function safe<T>(label: string, fn: () => Promise<T>, fallback: T): Promise<T> {
@@ -15,17 +15,21 @@ async function safe<T>(label: string, fn: () => Promise<T>, fallback: T): Promis
   }
 }
 
-export const GET = withAuth(async ({ clinicId, session }) => {
+export const GET = withAuth(async ({ req, clinicId, session }) => {
   try {
     const user = {
       name: (session.user as any)?.name || "",
       role: (session.user as any)?.role,
     };
+    const { searchParams } = new URL(req.url);
+    const clientTz = searchParams.get("tz") || "Europe/Lisbon";
     const today = new Date();
-    const startToday = startOfDay(today);
-    const endToday = endOfDay(today);
+    const bounds = getTimezoneDayBounds(today, clientTz);
+    const startToday = bounds.startOfDayUtc;
+    const endToday = bounds.endOfDayUtc;
     const thirtyDaysAgo = subDays(today, 30);
     const in7Days = addDays(today, 7);
+    const in30Days = addDays(today, 30);
 
     // Run all queries in parallel — each one is safe and won't crash the others
     const [
@@ -44,11 +48,26 @@ export const GET = withAuth(async ({ clinicId, session }) => {
       expiringProducts,
     ] = await Promise.all([
 
-      // 1. Consultas hoje
-      safe("consultationsToday", () =>
-        prisma.consultation.count({
-          where: { clinicId, date: { gte: startToday, lte: endToday } },
-        }), 0),
+      // 1. Consultas hoje: Total de marcações para hoje + consultas diretas (walk-in)
+      safe("consultationsToday", async () => {
+        const [apptsCount, walkInsCount] = await Promise.all([
+          prisma.appointment.count({
+            where: {
+              clinicId,
+              startTime: { gte: startToday, lte: endToday },
+              status: { not: "CANCELLED" },
+            },
+          }),
+          prisma.consultation.count({
+            where: {
+              clinicId,
+              date: { gte: startToday, lte: endToday },
+              appointmentId: null,
+            },
+          }),
+        ]);
+        return apptsCount + walkInsCount;
+      }, 0),
 
       // 2. Novos pacientes (30 dias)
       safe("newPatients", () =>
@@ -145,19 +164,17 @@ export const GET = withAuth(async ({ clinicId, session }) => {
 
       // 11. Faturação últimos 14 dias (tendência)
       safe("revenueTrend", () => {
-        const days = eachDayOfInterval({ start: subDays(today, 13), end: today });
+        const days = getTimezoneDaysInterval(14, clientTz, today);
         return Promise.all(
           days.map((day) => {
-            const start = startOfDay(day);
-            const end = endOfDay(day);
             return prisma.payment.aggregate({
               where: {
                 clinicId,
-                paidAt: { gte: start, lte: end },
+                paidAt: { gte: day.start, lte: day.end },
               },
               _sum: { amount: true },
             }).then((res) => ({
-              date: format(day, "dd MMM", { locale: pt }),
+              date: day.label,
               value: Number(res._sum.amount ?? 0),
             }));
           })
@@ -166,19 +183,17 @@ export const GET = withAuth(async ({ clinicId, session }) => {
 
       // 12. Marcações últimos 14 dias (tendência)
       safe("appointmentTrend", () => {
-        const days = eachDayOfInterval({ start: subDays(today, 13), end: today });
+        const days = getTimezoneDaysInterval(14, clientTz, today);
         return Promise.all(
           days.map((day) => {
-            const start = startOfDay(day);
-            const end = endOfDay(day);
             return prisma.appointment.count({
               where: {
                 clinicId,
-                startTime: { gte: start, lte: end },
+                startTime: { gte: day.start, lte: day.end },
                 status: { not: "CANCELLED" },
               },
             }).then((count) => ({
-              date: format(day, "dd MMM", { locale: pt }),
+              date: day.label,
               value: count,
             }));
           })
