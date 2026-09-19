@@ -38,6 +38,7 @@ const ConsultationSchema = z.object({
     chiefComplaint: z.string().optional(),
     pastHistory: z.string().optional(),
     physicalExam: z.string().optional(),
+    complementaryExams: z.string().optional(),
     diagnostics: z.string().optional(),
     treatment: z.string().optional(),
     reassessmentDate: z.string().optional(),
@@ -97,7 +98,12 @@ export const POST = withAuth(async ({ req, session, tenantPrisma, clinicId, user
         ].filter(Boolean).join("\n\n")
       : notes?.subjective || "";
 
-    const objective = clinicalFields?.physicalExam || notes?.objective || "";
+    const objective = (clinicalFields?.physicalExam || clinicalFields?.complementaryExams)
+      ? [
+          clinicalFields.physicalExam ? `Exame Físico:\n${clinicalFields.physicalExam}` : null,
+          clinicalFields.complementaryExams ? `Exames Complementares:\n${clinicalFields.complementaryExams}` : null,
+        ].filter(Boolean).join("\n\n")
+      : notes?.objective || "";
     const assessment = clinicalFields?.diagnostics || notes?.assessment || "";
     const plan = (clinicalFields?.treatment || clinicalFields?.reassessmentDate)
       ? [

@@ -52,6 +52,7 @@ function ConsultationContent() {
   const [chiefComplaint, setChiefComplaint] = useState("");
   const [pastHistory, setPastHistory] = useState("");
   const [physicalExam, setPhysicalExam] = useState("");
+  const [examNotes, setExamNotes] = useState("");
   const [diagnosticsNotes, setDiagnosticsNotes] = useState("");
   const [treatment, setTreatment] = useState("");
   const [reassessmentDate, setReassessmentDate] = useState("");
@@ -242,7 +243,7 @@ function ConsultationContent() {
   };
 
   const handleSave = async () => {
-    const hasNotes = chiefComplaint || pastHistory || physicalExam || diagnosticsNotes || treatment;
+    const hasNotes = chiefComplaint || pastHistory || physicalExam || examNotes || diagnosticsNotes || treatment;
     if (billingItems.length === 0 && !hasNotes) {
       toast.error("Adicione notas clínicas ou itens para faturar.");
       return;
@@ -257,13 +258,14 @@ function ConsultationContent() {
             chiefComplaint,
             pastHistory,
             physicalExam,
+            complementaryExams: examNotes,
             diagnostics: diagnosticsNotes,
             treatment,
             reassessmentDate,
           },
           notes: {
             subjective: [chiefComplaint && `Motivo: ${chiefComplaint}`, pastHistory && `História: ${pastHistory}`].filter(Boolean).join("\n\n"),
-            objective: physicalExam,
+            objective: [physicalExam && `Exame Físico:\n${physicalExam}`, examNotes && `Exames Complementares:\n${examNotes}`].filter(Boolean).join("\n\n"),
             assessment: diagnosticsNotes,
             plan: [treatment && `Tratamento: ${treatment}`, reassessmentDate && `Reavaliação: ${reassessmentDate}`].filter(Boolean).join("\n\n"),
           },
@@ -707,7 +709,7 @@ function ConsultationContent() {
                     </div>
 
                     {/* 4. Exames Complementares de Diagnóstico (Botão para resultados) */}
-                    <div className="p-4 sm:p-5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/30 border border-slate-200/80 dark:border-white/10">
+                    <div className="p-4 sm:p-5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/30 border border-slate-200/80 dark:border-white/10 space-y-3">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="flex items-center gap-2.5">
                           <span className="w-6 h-6 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-black flex items-center justify-center">4</span>
@@ -734,6 +736,13 @@ function ConsultationContent() {
                           </Button>
                         </div>
                       </div>
+
+                      <Textarea
+                        value={examNotes}
+                        onChange={(e) => setExamNotes(e.target.value)}
+                        placeholder="Resultados e observações dos exames complementares (inseridos pelo visualizador de exames ou manualmente)..."
+                        className="min-h-[105px] rounded-2xl bg-white dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-emerald-500/20 resize-none"
+                      />
                     </div>
 
                     {/* 5. Diagnósticos Diferenciais / Definitivo */}
@@ -953,7 +962,7 @@ function ConsultationContent() {
           sessionExamIds={sessionExamIds}
           onRequestExam={handleRequestExam}
           onInsertToNotes={(note) => {
-            setDiagnosticsNotes((prev) => (prev ? `${prev}\n\n${note}` : note));
+            setExamNotes((prev) => (prev ? `${prev}\n\n${note}` : note));
           }}
         />
 
