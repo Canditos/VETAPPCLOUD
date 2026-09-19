@@ -2,14 +2,13 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { withAuthParams } from "@/lib/api-wrapper";
 
-export const GET = withAuthParams(async ({ params, tenantPrisma }) => {
+export const GET = withAuthParams<{ barcode: string }>(async (ctx, { barcode }) => {
   try {
-    const barcode = (await params).barcode;
     if (!barcode || barcode.length < 3) {
       return NextResponse.json({ error: "Barcode too short" }, { status: 400 });
     }
 
-    const product = await tenantPrisma.product.findFirst({
+    const product = await ctx.tenantPrisma.product.findFirst({
       where: { barcode },
     });
 

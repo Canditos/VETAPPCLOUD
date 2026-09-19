@@ -1,0 +1,84 @@
+﻿{
+  "$schema": "https://raw.githubusercontent.com/sickn33/agentic-awesome-skills/main/schemas/aas-v1/stack.schema.json",
+  "name": "vet-ecosystem-stack",
+  "version": "1.0.0",
+  "description": "Curated AAS Core skill stack for Veterinary Cloud SaaS, Fuji Hardware Bridge, Clinical Reports and Invoicing",
+  "target": "antigravity",
+  "skills": [
+    {
+      "id": "nextjs-best-practices",
+      "category": "frontend",
+      "role": "Next.js 15 App Router, Server Actions & streaming performance"
+    },
+    {
+      "id": "react-patterns",
+      "category": "frontend",
+      "role": "Modern React patterns, custom hooks & state composition"
+    },
+    {
+      "id": "tailwind-patterns",
+      "category": "frontend",
+      "role": "Tailwind CSS design token architecture & responsive layouts"
+    },
+    {
+      "id": "shadcn",
+      "category": "frontend",
+      "role": "Radix UI & Shadcn component design system"
+    },
+    {
+      "id": "prisma-expert",
+      "category": "database",
+      "role": "Prisma ORM schema modeling, queries & Accelerate connection pooling"
+    },
+    {
+      "id": "database-design",
+      "category": "database",
+      "role": "PostgreSQL schema architecture, relational constraints & indexing"
+    },
+    {
+      "id": "api-patterns",
+      "category": "backend",
+      "role": "Robust REST API design, contracts, error handling & pagination"
+    },
+    {
+      "id": "systematic-debugging",
+      "category": "testing",
+      "role": "Root-cause diagnostics for IoT/hardware bridge, network & clinical data errors"
+    },
+    {
+      "id": "bash-linux",
+      "category": "devops",
+      "role": "Raspberry Pi systemd, shell automation & network daemon management"
+    },
+    {
+      "id": "pdf-official",
+      "category": "documents",
+      "role": "Clinical laboratory reports & invoice PDF generation with @react-pdf/renderer"
+    },
+    {
+      "id": "auth-implementation-patterns",
+      "category": "security",
+      "role": "NextAuth, JWT & role-based access control for medical records"
+    },
+    {
+      "id": "code-reviewer",
+      "category": "qa",
+      "role": "Strict code review, PR audits & regression prevention"
+    },
+    {
+      "id": "e2e-testing",
+      "category": "testing",
+      "role": "Playwright end-to-end browser automation & test workflows"
+    },
+    {
+      "id": "mobile-design",
+      "category": "mobile",
+      "role": "Mobile-first patterns for the mobile/ React Native application"
+    },
+    {
+      "id": "brainstorming",
+      "category": "planning",
+      "role": "Exploration & structured feature planning before implementation"
+    }
+  ]
+}
