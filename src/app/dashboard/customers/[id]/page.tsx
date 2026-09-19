@@ -612,7 +612,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm ring-1 ring-slate-200/60 dark:ring-white/5 overflow-hidden">
               <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                  {patients.length} animal{patients.length !== 1 ? "is" : ""}
+                  {patients.length} {patients.length === 1 ? "animal" : "animais"}
                 </p>
                 <Link href={`/dashboard/patients?new=true&ownerId=${id}`}>
                   <Button className="h-8 rounded-xl gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] uppercase tracking-widest px-3">
