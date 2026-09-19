@@ -106,8 +106,9 @@ export const GET = withAuthParams(async ({ tenantPrisma }, { id: patientId }) =>
   if (patient.allergies) {
     safetyAlerts.push(`Alérgico a: ${patient.allergies}`);
   }
-  if (patient.aggressionLevel && patient.aggressionLevel.toLowerCase() !== "nenhuma") {
-    safetyAlerts.push(`Temperamento: ${patient.aggressionLevel}`);
+  const rawAgg = (patient.aggressionLevel || "").toLowerCase();
+  if (rawAgg && !rawAgg.includes("dócil") && !rawAgg.includes("docil") && !rawAgg.includes("nenhuma") && !rawAgg.includes("baixo")) {
+    safetyAlerts.push(`Cuidado no manuseio: ${patient.aggressionLevel}`);
   }
 
   const summary = {

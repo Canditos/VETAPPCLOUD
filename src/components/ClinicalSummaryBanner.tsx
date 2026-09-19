@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Sparkles, AlertCircle, Venus, Mars } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { useClinicalSummary } from "@/hooks/useClinicalSummary";
 import { useAISummary } from "@/hooks/useAISummary";
 import { cn } from "@/lib/utils";
@@ -43,7 +43,6 @@ export function ClinicalSummaryBanner({ patientId, fallbackGender, className }: 
 
   const resolvedGender = summary.rawGender || fallbackGender || (summary.gender?.toLowerCase().startsWith("f") ? "F" : "M");
   const isFemale = resolvedGender === "F" || summary.gender?.toLowerCase().includes("fêm") || summary.gender?.toLowerCase().includes("fem");
-  const GenderIcon = isFemale ? Venus : Mars;
 
   const hasAlerts = summary.safetyAlerts.length > 0 || summary.vaccines.expired.length > 0 || summary.deworming.overdue;
   const isLoadingAI = aiEnabled && isAILoading;
@@ -57,12 +56,6 @@ export function ClinicalSummaryBanner({ patientId, fallbackGender, className }: 
       ? "bg-gradient-to-r from-blue-700 via-indigo-700 to-indigo-800 shadow-blue-500/15"
       : "bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 shadow-blue-500/10";
 
-  // Temperament styling
-  const rawTemp = (summary.temperament || "").toLowerCase();
-  const isDocil = rawTemp.includes("dócil") || rawTemp.includes("docil") || rawTemp.includes("baixo");
-  const isNervoso = rawTemp.includes("nervoso") || rawTemp.includes("médio") || rawTemp.includes("medio");
-  const isAgressivo = rawTemp.includes("agressivo") || rawTemp.includes("alto");
-
   return (
     <div className={cn("relative overflow-hidden rounded-3xl p-8 shadow-xl text-white group", bgGradient, className)}>
       <div className={cn(
@@ -73,29 +66,9 @@ export function ClinicalSummaryBanner({ patientId, fallbackGender, className }: 
       <div className="relative z-10 flex flex-col lg:flex-row lg:items-start justify-between gap-8">
         <div className="space-y-4 max-w-2xl">
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="bg-white/20 p-2 rounded-xl text-white">
-              <Sparkles size={18} />
-            </div>
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <h3 className="text-lg font-bold text-white">
               Resumo Clínico
-              <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-sm">
-                <GenderIcon size={14} className={isFemale ? "text-pink-200" : "text-blue-200"} strokeWidth={2.5} />
-                {isFemale ? "Fêmea" : "Macho"}
-              </span>
             </h3>
-
-            {/* Temperament badge in banner if available */}
-            {summary.temperament && (
-              <span className={cn(
-                "text-xs font-bold px-3 py-0.5 rounded-full ring-1 ring-white/30 backdrop-blur-sm tracking-wide uppercase",
-                isDocil && "bg-emerald-500/90 text-white shadow-sm shadow-emerald-500/30",
-                isNervoso && "bg-amber-400 text-slate-950 font-black shadow-sm shadow-amber-500/30",
-                isAgressivo && "bg-rose-600 text-white font-black shadow-sm shadow-rose-600/30",
-                !isDocil && !isNervoso && !isAgressivo && "bg-white/20 text-white"
-              )}>
-                🐾 {summary.temperament}
-              </span>
-            )}
 
             <span className={cn("text-[11px] font-medium px-2 py-0.5 rounded-full",
               aiEnabled ? "bg-purple-400/30 text-purple-100" : "bg-white/10 text-white/70"
