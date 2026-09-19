@@ -21,10 +21,10 @@ import {
   Microscope,
   Stethoscope,
 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
+import { Dialog as DialogPrimitive } from "radix-ui";
+// Use Radix directly so we bypass shadcn's hardcoded sm:max-w-sm on DialogContent
+const Dialog = DialogPrimitive.Root;
+const DialogPortal = DialogPrimitive.Portal;
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -161,14 +161,25 @@ export function ExamVisualizerModal({
   ════════════════════════════════════════════════════════════════════ */
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="
-        max-w-none w-[98vw] h-[95vh] max-h-[95vh]
-        rounded-2xl border border-white/10
-        bg-slate-950
-        shadow-2xl shadow-black/60
-        p-0 overflow-hidden flex flex-col
-        [&>button]:hidden
-      ">
+      <DialogPortal>
+        {/* Overlay */}
+        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        {/* Content — full screen, bypassing shadcn's sm:max-w-sm */}
+        <DialogPrimitive.Content
+          className="
+            fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2
+            z-50
+            w-[98vw] h-[95vh]
+            rounded-2xl border border-white/10
+            bg-slate-950
+            shadow-2xl shadow-black/60
+            p-0 overflow-hidden flex flex-col
+            outline-none
+            data-[state=open]:animate-in data-[state=closed]:animate-out
+            data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0
+            data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95
+          "
+        >
 
         {/* ══════════════════════ TOP BAR ══════════════════════ */}
         <div className="flex items-center justify-between px-5 py-3 bg-slate-900 border-b border-white/8 shrink-0 gap-4">
@@ -666,7 +677,8 @@ export function ExamVisualizerModal({
             {currentConsultationDiagnostics.length} nesta consulta · {patientDiagnostics.length} no total do animal
           </p>
         </div>
-      </DialogContent>
+        </DialogPrimitive.Content>
+      </DialogPortal>
     </Dialog>
   );
 }

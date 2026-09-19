@@ -123,16 +123,8 @@ export function ClinicalSummaryBanner({ patientId, fallbackGender, className }: 
                   : " Sem consultas registadas."}
               </p>
 
-              {/* Safety Alerts */}
-              {summary.safetyAlerts.length > 0 && (
-                <div className="space-y-1">
-                  {summary.safetyAlerts.map((alert, i) => (
-                    <div key={i} className="flex items-center gap-2 text-white/95 text-sm font-semibold">
-                      <AlertCircle size={14} /> {alert}
-                    </div>
-                  ))}
-                </div>
-              )}
+
+
 
               {/* Vaccine Status */}
               {summary.vaccines.expired.length > 0 && (
