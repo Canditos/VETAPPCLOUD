@@ -263,6 +263,11 @@ export interface DiagnosticResult {
   source: string;
   status: "COMPLETED" | "PENDING" | "ALERT";
   createdAt: string;
+  dataJson?: any;
+  metadataJson?: any;
+  dicomUrl?: string;
+  appointmentId?: string;
+  consultationId?: string;
 }
 
 // =============================================================================

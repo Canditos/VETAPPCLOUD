@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense, useEffect } from "react";
+import { useState, Suspense, useEffect, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   Save, FileText, Activity, ClipboardCheck, Receipt, FlaskConical,
@@ -31,6 +31,7 @@ import {
   DialogDescription,
   DialogFooter
 } from "@/components/ui/dialog";
+import { ExamVisualizerModal } from "@/components/consultations/ExamVisualizerModal";
 import { useIntegrationHealth } from "@/hooks/useIntegrationHealth";
 import type { BillingItem, DiagnosticResult } from "@/types";
 import { cn } from "@/lib/utils";
@@ -119,18 +120,42 @@ function ConsultationContent() {
     }
   });
 
-  const { data: diagnostics = [] } = useQuery({
+  const [sessionExamIds, setSessionExamIds] = useState<string[]>([]);
+
+  const { data: diagnostics = [], refetch: refetchDiagnostics } = useQuery({
     queryKey: ["patient-diagnostics", patientId],
     queryFn: async () => {
+      if (!patientId) return [];
       const res = await fetch(`/api/diagnostics?patientId=${patientId}`);
       if (!res.ok) return [];
       const json = await res.json().catch(() => []);
       return Array.isArray(json) ? json : [];
     },
     enabled: !!patientId,
+    refetchInterval: isExamsModalOpen ? 5000 : false,
   });
 
   const safeDiagnostics: DiagnosticResult[] = Array.isArray(diagnostics) ? diagnostics : [];
+
+  // Exames da consulta em questão e deste animal
+  const currentConsultationDiagnostics = useMemo(() => {
+    return safeDiagnostics.filter((dx) => {
+      if (sessionExamIds.includes(dx.id)) return true;
+      if (appointmentId && (dx.appointmentId === appointmentId || dx.dataJson?.appointmentId === appointmentId || dx.metadataJson?.appointmentId === appointmentId)) return true;
+      try {
+        const examDate = new Date(dx.createdAt);
+        const today = new Date();
+        const isSameDay =
+          examDate.getFullYear() === today.getFullYear() &&
+          examDate.getMonth() === today.getMonth() &&
+          examDate.getDate() === today.getDate();
+        if (isSameDay) return true;
+      } catch {
+        // ignore
+      }
+      return false;
+    });
+  }, [safeDiagnostics, sessionExamIds, appointmentId]);
 
   const safeFormatDistance = (dateStr?: string | Date | null) => {
     if (!dateStr) return "—";
@@ -150,11 +175,22 @@ function ConsultationContent() {
 
     const registerPromise = fetch("/api/diagnostics/request", {
       method: "POST",
-      body: JSON.stringify({ patientId, type, source, testName }),
+      body: JSON.stringify({
+        patientId,
+        appointmentId,
+        type,
+        source,
+        testName
+      }),
       headers: { "Content-Type": "application/json" },
     }).then(async (res) => {
       if (!res.ok) throw new Error((await res.json()).error || "Erro ao registar exame");
-      return res.json();
+      const data = await res.json();
+      if (data.id) {
+        setSessionExamIds((prev) => [...prev, data.id]);
+      }
+      refetchDiagnostics();
+      return data;
     });
 
     if (!isRxExam) {
@@ -163,11 +199,11 @@ function ConsultationContent() {
         success: (data) => data.message,
         error: "Erro ao registar exame.",
       });
-      return;
+      return registerPromise;
     }
 
     // RX exam: register + push GDT in one flow
-    toast.promise(
+    return toast.promise(
       registerPromise.then(async (regResult) => {
         const gdtRes = await fetch("/api/gdt/fazer-rx", {
           method: "POST",
@@ -686,12 +722,12 @@ function ConsultationContent() {
                             onClick={() => setIsExamsModalOpen(true)}
                             className="h-10 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md shadow-purple-500/20 gap-2 transition-transform active:scale-95"
                           >
-                            <FlaskConical size={15} /> Ver Resultados dos Exames ({safeDiagnostics.length})
+                            <FlaskConical size={15} /> Ver Resultados dos Exames ({currentConsultationDiagnostics.length})
                           </Button>
                           <Button
                             type="button"
                             variant="outline"
-                            onClick={() => updateTab("exams")}
+                            onClick={() => setIsExamsModalOpen(true)}
                             className="h-10 px-3 rounded-xl border-slate-200 dark:border-white/10 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 gap-1.5"
                           >
                             <Plus size={13} /> Requisitar Exame
@@ -879,7 +915,13 @@ function ConsultationContent() {
                                       dx.status === "ALERT" ? "bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400" :
                                       "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
                                    )}>{dx.status === "COMPLETED" ? "Recebido" : dx.status === "ALERT" ? "Alerta" : "Pendente"}</Badge>
-                                   <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-500 dark:text-slate-400 group-hover:text-blue-600 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-all">
+                                   <Button
+                                     variant="ghost"
+                                     size="icon"
+                                     onClick={() => setIsExamsModalOpen(true)}
+                                     title="Visualizar Exame"
+                                     className="h-8 w-8 rounded-lg text-slate-500 dark:text-slate-400 group-hover:text-blue-600 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-all"
+                                   >
                                       <Eye size={14} />
                                    </Button>
                                 </div>
@@ -900,84 +942,20 @@ function ConsultationContent() {
          </TabsContent>
        </Tabs>
 
-        {/* Modal de Resultados dos Exames Complementares de Diagnóstico */}
-        <Dialog open={isExamsModalOpen} onOpenChange={setIsExamsModalOpen}>
-          <DialogContent className="max-w-2xl rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-2xl p-6">
-            <DialogHeader>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center">
-                  <FlaskConical size={20} strokeWidth={2.5} />
-                </div>
-                <div>
-                  <DialogTitle className="text-xl font-black text-slate-900 dark:text-white">
-                    Exames Complementares de Diagnóstico
-                  </DialogTitle>
-                  <DialogDescription className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                    Resultados das análises laboratoriais e meios complementares de imagiologia
-                  </DialogDescription>
-                </div>
-              </div>
-            </DialogHeader>
-
-            <div className="max-h-[380px] overflow-y-auto space-y-3 py-2 pr-1">
-              {safeDiagnostics.length === 0 ? (
-                <div className="py-10 text-center bg-slate-50 dark:bg-white/5 rounded-2xl border-2 border-dashed border-slate-200 dark:border-white/10">
-                  <FlaskConical size={32} className="mx-auto text-slate-300 dark:text-slate-600 mb-2" />
-                  <p className="text-slate-700 dark:text-slate-300 font-bold text-sm">Sem exames registados para este paciente</p>
-                  <p className="text-slate-400 text-xs mt-1">Pode requisitar análises laboratoriais ou imagiologia na tab &ldquo;Meios Complementares&rdquo;.</p>
-                </div>
-              ) : (
-                safeDiagnostics.map((dx: DiagnosticResult) => (
-                  <div key={dx.id} className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200/80 dark:border-white/10 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
-                        dx.type === 'LAB' ? "bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400" : "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400"
-                      )}>
-                        {dx.type === 'LAB' ? <FlaskConical size={18} /> : <ImageIcon size={18} />}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-bold text-sm text-slate-900 dark:text-white truncate">{dx.summary ?? dx.testName ?? "Exame"}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                          {dx.source || "Dispositivo"} • {safeFormatDistance(dx.createdAt)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Badge className={cn("text-[10px] font-bold border-none",
-                        dx.status === "COMPLETED" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
-                        dx.status === "ALERT" ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" :
-                        "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                      )}>
-                        {dx.status === "COMPLETED" ? "Recebido" : dx.status === "ALERT" ? "Alerta" : "Pendente"}
-                      </Badge>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            <DialogFooter className="flex items-center justify-between sm:justify-between pt-3 border-t border-slate-100 dark:border-white/5">
-              <Button
-                variant="outline"
-                size="sm"
-                className="rounded-xl border-slate-200 dark:border-white/10 text-xs font-semibold"
-                onClick={() => setIsExamsModalOpen(false)}
-              >
-                Fechar
-              </Button>
-              <Button
-                size="sm"
-                className="rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold gap-1.5"
-                onClick={() => {
-                  setIsExamsModalOpen(false);
-                  updateTab("exams");
-                }}
-              >
-                <Plus size={14} /> Requisitar / Gerir Exames
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        {/* Modal de Visualização dos Exames da Consulta e Paciente */}
+        <ExamVisualizerModal
+          isOpen={isExamsModalOpen}
+          onClose={() => setIsExamsModalOpen(false)}
+          patient={patient}
+          appointmentId={appointmentId}
+          consultationId={null}
+          diagnostics={safeDiagnostics}
+          sessionExamIds={sessionExamIds}
+          onRequestExam={handleRequestExam}
+          onInsertToNotes={(note) => {
+            setDiagnosticsNotes((prev) => (prev ? `${prev}\n\n${note}` : note));
+          }}
+        />
 
         {/* Pop-up de Aviso de Reavaliação Pós-Pagamento */}
         <Dialog
