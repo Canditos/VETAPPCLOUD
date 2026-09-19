@@ -965,8 +965,8 @@ function ConsultationContent() {
 
         {/* BILLING TAB */}
         <TabsContent value="billing" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-           <div className="max-w-5xl mx-auto">
-               <PremiumCard padding="lg">
+           <div className="flex flex-col min-h-[calc(100vh-20rem)]">
+               <PremiumCard padding="lg" className="flex-1 flex flex-col">
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 mb-6">
                      <div>
                         <Badge className={
@@ -980,7 +980,9 @@ function ConsultationContent() {
                         <p className="text-slate-500 dark:text-slate-400 font-medium mt-1 text-sm">Registe consumíveis, medicamentos e atos clínicos.</p>
                      </div>
                   </div>
-                  <ConsultationBilling onItemsChange={setBillingItems} />
+                  <div className="flex-1">
+                    <ConsultationBilling onItemsChange={setBillingItems} />
+                  </div>
                </PremiumCard>
            </div>
         </TabsContent>
