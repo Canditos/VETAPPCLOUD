@@ -425,14 +425,55 @@ function ConsultationContent() {
   const allergies = patient?.allergies;
   const lastVitals = history?.find((h: { type: string; data?: { weight?: number } }) => h.type === "VITALS")?.data;
 
+  const isFeline = (patient?.species || "").toLowerCase().includes("gato") || (patient?.species || "").toLowerCase().includes("felin");
+
+  const getVitalFeedback = (key: string, valueStr: string) => {
+    if (!valueStr) return null;
+    const val = parseFloat(valueStr);
+    if (isNaN(val)) return null;
+
+    if (key === "temperature") {
+      if (val < 37.5) return { label: "Hipotermia", color: "text-blue-600 bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-900" };
+      if (val < 38.0) return { label: "Subnormal", color: "text-sky-600 bg-sky-50 dark:bg-sky-950/40 border-sky-200 dark:border-sky-900" };
+      if (val > 39.5) return { label: "Febre", color: "text-rose-600 bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900" };
+      if (val > 39.2) return { label: "Alta", color: "text-amber-600 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900" };
+      return { label: "Normal", color: "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900" };
+    }
+
+    if (key === "heartRate") {
+      const min = isFeline ? 140 : 70;
+      const max = isFeline ? 220 : 140;
+      if (val < min) return { label: "Bradicardia", color: "text-blue-600 bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-900" };
+      if (val > max) return { label: "Taquicardia", color: "text-amber-600 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900" };
+      return { label: "Normal", color: "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900" };
+    }
+
+    if (key === "respiratoryRate") {
+      const min = isFeline ? 20 : 15;
+      const max = isFeline ? 30 : 30;
+      if (val < min) return { label: "Bradipneia", color: "text-blue-600 bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-900" };
+      if (val > 40) return { label: "Taquipneia ++", color: "text-rose-600 bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900" };
+      if (val > max) return { label: "Taquipneia", color: "text-amber-600 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900" };
+      return { label: "Normal", color: "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900" };
+    }
+
+    return null;
+  };
+
   return (
     <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-[1600px] mx-auto px-4 sm:px-0">
       
       {/* Header Context Bar */}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-white dark:bg-slate-900 p-6 rounded-3xl ring-1 ring-slate-100 dark:ring-white/5 shadow-sm">
         <div className="flex items-center gap-6">
-          <div className="w-20 h-20 bg-slate-900 dark:bg-white rounded-2xl flex items-center justify-center text-white dark:text-slate-900 font-bold text-3xl shadow-lg transition-transform hover:rotate-3 shrink-0">
-            {patient?.name?.[0] || "?"}
+          <div className={cn(
+            "w-20 h-20 rounded-3xl flex items-center justify-center font-black text-3xl shadow-xl transition-all duration-300 hover:scale-105 hover:rotate-2 shrink-0 ring-4 ring-slate-100 dark:ring-white/10 relative overflow-hidden",
+            (patient?.gender === "F" || patient?.gender === "Fêmea")
+              ? "bg-gradient-to-br from-pink-500 via-rose-500 to-purple-600 text-white shadow-pink-500/25"
+              : "bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-600 text-white shadow-blue-500/25"
+          )}>
+            <span>{patient?.name?.[0]?.toUpperCase() || "?"}</span>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
           </div>
           <div>
             <div className="flex flex-wrap items-center gap-3 mb-2">
@@ -548,22 +589,74 @@ function ConsultationContent() {
                     <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Sinais Vitais</p>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       {[
-                        { label: "Peso", icon: Weight, unit: "kg", color: "text-blue-500", placeholder: "12.45", key: "weight" },
-                        { label: "Temp.", icon: Thermometer, unit: "ºC", color: "text-orange-500", placeholder: "38.6", key: "temperature" },
-                        { label: "FC", icon: Clock, unit: "bpm", color: "text-purple-500", placeholder: "100", key: "heartRate" },
-                        { label: "FR", icon: Activity, unit: "mpm", color: "text-rose-500", placeholder: "24", key: "respiratoryRate" }
-                      ].map((vital, i) => (
-                        <div key={i} className="flex flex-col gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm ring-1 ring-slate-100 dark:ring-white/5 transition-all hover:ring-blue-500/30">
-                          <div className="flex items-center gap-2">
-                             <vital.icon size={14} className={vital.color} strokeWidth={3} />
-                             <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{vital.label}</span>
+                        { 
+                          label: "Peso", 
+                          icon: Weight, 
+                          unit: "kg", 
+                          color: "text-blue-600 dark:text-blue-400", 
+                          bg: "bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400", 
+                          placeholder: "12.45", 
+                          key: "weight",
+                          refText: lastVitals?.weight ? `Ant: ${lastVitals.weight}kg` : "Triagem",
+                        },
+                        { 
+                          label: "Temp.", 
+                          icon: Thermometer, 
+                          unit: "ºC", 
+                          color: "text-orange-600 dark:text-orange-400", 
+                          bg: "bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400", 
+                          placeholder: "38.6", 
+                          key: "temperature",
+                          refText: "Ref: 38.0–39.2 ºC",
+                        },
+                        { 
+                          label: "FC", 
+                          icon: Clock, 
+                          unit: "bpm", 
+                          color: "text-purple-600 dark:text-purple-400", 
+                          bg: "bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400", 
+                          placeholder: "100", 
+                          key: "heartRate",
+                          refText: isFeline ? "Ref: 140–220" : "Ref: 60–140",
+                        },
+                        { 
+                          label: "FR", 
+                          icon: Activity, 
+                          unit: "mpm", 
+                          color: "text-rose-600 dark:text-rose-400", 
+                          bg: "bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400", 
+                          placeholder: "24", 
+                          key: "respiratoryRate",
+                          refText: isFeline ? "Ref: 20–30" : "Ref: 15–30",
+                        }
+                      ].map((vital, i) => {
+                        const feedback = getVitalFeedback(vital.key, (vitals as any)[vital.key]);
+                        return (
+                          <div key={i} className="flex flex-col justify-between p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm ring-1 ring-slate-200/60 dark:ring-white/10 transition-all duration-200 hover:ring-blue-500/40 hover:shadow-md focus-within:ring-2 focus-within:ring-blue-500/40 focus-within:shadow-md group">
+                            <div className="flex items-center justify-between gap-1">
+                              <div className="flex items-center gap-2">
+                                <div className={cn("w-7 h-7 rounded-xl flex items-center justify-center shrink-0 transition-transform group-focus-within:scale-110", vital.bg)}>
+                                  <vital.icon size={14} strokeWidth={2.5} />
+                                </div>
+                                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">{vital.label}</span>
+                              </div>
+                              {feedback ? (
+                                <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-md border", feedback.color)}>
+                                  {feedback.label}
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 truncate max-w-[90px]">
+                                  {vital.refText}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-baseline gap-2 mt-2">
+                               <Input type="number" step="0.1" className="border-none bg-transparent p-0 h-auto text-2xl font-black text-slate-900 dark:text-white placeholder:text-slate-200 dark:placeholder:text-slate-700 focus-visible:ring-0" placeholder={vital.placeholder} value={(vitals as any)[vital.key]} onChange={(e) => setVitals({ ...vitals, [vital.key]: e.target.value })} />
+                               <span className="text-xs font-bold text-slate-400 dark:text-slate-500">{vital.unit}</span>
+                            </div>
                           </div>
-                          <div className="flex items-baseline gap-2 mt-1">
-                             <Input type="number" step="0.1" className="border-none bg-transparent p-0 h-auto text-2xl font-bold text-slate-900 dark:text-white placeholder:text-slate-200 dark:placeholder:text-slate-700 focus-visible:ring-0" placeholder={vital.placeholder} value={(vitals as any)[vital.key]} onChange={(e) => setVitals({ ...vitals, [vital.key]: e.target.value })} />
-                             <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{vital.unit}</span>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
                     {/* Body Condition Score 1–9 */}
@@ -667,54 +760,80 @@ function ConsultationContent() {
                   {/* Campos Clínicos Estruturados */}
                   <div className="space-y-6 pt-2">
                     {/* 1. Motivo de Consulta (campo mais pequeno) */}
-                    <div className="space-y-2">
+                    <div className="space-y-2 group/field transition-all">
                       <div className="flex items-center gap-2 ml-0.5">
-                        <span className="w-6 h-6 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-black flex items-center justify-center">1</span>
+                        <span className="w-6 h-6 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-black flex items-center justify-center transition-transform group-focus-within/field:scale-110 group-focus-within/field:shadow-sm">1</span>
                         <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Motivo de Consulta</Label>
+                        {chiefComplaint && (
+                          <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 ml-auto animate-in fade-in duration-200">
+                            <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
+                            Preenchido
+                          </span>
+                        )}
                       </div>
                       <Input
                         value={chiefComplaint}
                         onChange={(e) => setChiefComplaint(e.target.value)}
                         placeholder="Ex: Vacinação anual, tosse e espirros, vómitos frequentes, claudicação da pata posterior..."
-                        className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm font-medium focus-visible:ring-blue-500/20"
+                        className="h-11 rounded-xl bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm font-medium focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500/40 transition-all duration-200"
                       />
                     </div>
 
                     {/* 2. História Pregressa */}
-                    <div className="space-y-2">
+                    <div className="space-y-2 group/field transition-all">
                       <div className="flex items-center gap-2 ml-0.5">
-                        <span className="w-6 h-6 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-black flex items-center justify-center">2</span>
+                        <span className="w-6 h-6 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-black flex items-center justify-center transition-transform group-focus-within/field:scale-110 group-focus-within/field:shadow-sm">2</span>
                         <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">História Pregressa</Label>
+                        {pastHistory && (
+                          <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 ml-auto animate-in fade-in duration-200">
+                            <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
+                            {pastHistory.trim().split(/\s+/).filter(Boolean).length} {pastHistory.trim().split(/\s+/).filter(Boolean).length === 1 ? "palavra" : "palavras"}
+                          </span>
+                        )}
                       </div>
                       <Textarea
                         value={pastHistory}
                         onChange={(e) => setPastHistory(e.target.value)}
                         placeholder="Início e evolução dos sinais clínicos, medicação em curso, doenças prévias, cirurgias anteriores, alimentação e ambiente..."
-                        className="min-h-[105px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-blue-500/20 resize-none"
+                        className="min-h-[105px] rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500/40 transition-all duration-200 resize-none"
                       />
                     </div>
 
                     {/* 3. Exame Físico */}
-                    <div className="space-y-2">
+                    <div className="space-y-2 group/field transition-all">
                       <div className="flex items-center gap-2 ml-0.5">
-                        <span className="w-6 h-6 bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 rounded-lg text-xs font-black flex items-center justify-center">3</span>
+                        <span className="w-6 h-6 bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 rounded-lg text-xs font-black flex items-center justify-center transition-transform group-focus-within/field:scale-110 group-focus-within/field:shadow-sm">3</span>
                         <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Exame Físico</Label>
+                        {physicalExam && (
+                          <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 ml-auto animate-in fade-in duration-200">
+                            <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
+                            {physicalExam.trim().split(/\s+/).filter(Boolean).length} {physicalExam.trim().split(/\s+/).filter(Boolean).length === 1 ? "palavra" : "palavras"}
+                          </span>
+                        )}
                       </div>
                       <Textarea
                         value={physicalExam}
                         onChange={(e) => setPhysicalExam(e.target.value)}
                         placeholder="Alerta mental, mucosas, TRC, hidratação, auscultação cardiopulmonar, palpação abdominal, linfonodos, ouvidos, olhos, cavidade oral, pele e anexos..."
-                        className="min-h-[105px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-blue-500/20 resize-none"
+                        className="min-h-[105px] rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500/40 transition-all duration-200 resize-none"
                       />
                     </div>
 
                     {/* 4. Exames Complementares de Diagnóstico */}
-                    <div className="space-y-2">
+                    <div className="space-y-2 group/field transition-all">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 ml-0.5">
                         <div className="flex items-center gap-2">
-                          <span className="w-6 h-6 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-black flex items-center justify-center">4</span>
+                          <span className="w-6 h-6 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-black flex items-center justify-center transition-transform group-focus-within/field:scale-110 group-focus-within/field:shadow-sm">4</span>
                           <div>
-                            <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Exames Complementares de Diagnóstico</Label>
+                            <div className="flex items-center gap-2">
+                              <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Exames Complementares de Diagnóstico</Label>
+                              {examNotes && (
+                                <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 animate-in fade-in duration-200">
+                                  <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
+                                  {examNotes.trim().split(/\s+/).filter(Boolean).length} {examNotes.trim().split(/\s+/).filter(Boolean).length === 1 ? "palavra" : "palavras"}
+                                </span>
+                              )}
+                            </div>
                             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Resultados laboratoriais, radiografias e ecografias deste atendimento</p>
                           </div>
                         </div>
@@ -741,35 +860,47 @@ function ConsultationContent() {
                         value={examNotes}
                         onChange={(e) => setExamNotes(e.target.value)}
                         placeholder="Resultados e observações dos exames complementares (inseridos pelo visualizador de exames ou manualmente)..."
-                        className="min-h-[105px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-blue-500/20 resize-none"
+                        className="min-h-[105px] rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500/40 transition-all duration-200 resize-none"
                       />
                     </div>
 
                     {/* 5. Diagnósticos Diferenciais / Definitivo */}
-                    <div className="space-y-2">
+                    <div className="space-y-2 group/field transition-all">
                       <div className="flex items-center gap-2 ml-0.5">
-                        <span className="w-6 h-6 bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 rounded-lg text-xs font-black flex items-center justify-center">5</span>
+                        <span className="w-6 h-6 bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 rounded-lg text-xs font-black flex items-center justify-center transition-transform group-focus-within/field:scale-110 group-focus-within/field:shadow-sm">5</span>
                         <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Diagnósticos Diferenciais / Definitivo</Label>
+                        {diagnosticsNotes && (
+                          <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 ml-auto animate-in fade-in duration-200">
+                            <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
+                            {diagnosticsNotes.trim().split(/\s+/).filter(Boolean).length} {diagnosticsNotes.trim().split(/\s+/).filter(Boolean).length === 1 ? "palavra" : "palavras"}
+                          </span>
+                        )}
                       </div>
                       <Textarea
                         value={diagnosticsNotes}
                         onChange={(e) => setDiagnosticsNotes(e.target.value)}
                         placeholder="Lista de hipóteses diagnósticas, diferenciais considerados e diagnóstico definitivo..."
-                        className="min-h-[105px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-blue-500/20 resize-none"
+                        className="min-h-[105px] rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500/40 transition-all duration-200 resize-none"
                       />
                     </div>
 
                     {/* 6. Tratamento */}
-                    <div className="space-y-2">
+                    <div className="space-y-2 group/field transition-all">
                       <div className="flex items-center gap-2 ml-0.5">
-                        <span className="w-6 h-6 bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 rounded-lg text-xs font-black flex items-center justify-center">6</span>
+                        <span className="w-6 h-6 bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 rounded-lg text-xs font-black flex items-center justify-center transition-transform group-focus-within/field:scale-110 group-focus-within/field:shadow-sm">6</span>
                         <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Tratamento</Label>
+                        {treatment && (
+                          <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 ml-auto animate-in fade-in duration-200">
+                            <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
+                            {treatment.trim().split(/\s+/).filter(Boolean).length} {treatment.trim().split(/\s+/).filter(Boolean).length === 1 ? "palavra" : "palavras"}
+                          </span>
+                        )}
                       </div>
                       <Textarea
                         value={treatment}
                         onChange={(e) => setTreatment(e.target.value)}
                         placeholder="Protocolo medicamentoso (fármacos, posologia, frequência, duração), fluidoterapia, procedimentos realizados e instruções ao tutor..."
-                        className="min-h-[110px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-blue-500/20 resize-none"
+                        className="min-h-[110px] rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500/40 transition-all duration-200 resize-none"
                       />
                     </div>
 
