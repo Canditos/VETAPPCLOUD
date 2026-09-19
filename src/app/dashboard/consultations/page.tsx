@@ -32,6 +32,7 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { ExamVisualizerModal } from "@/components/consultations/ExamVisualizerModal";
+import { PetLink } from "@/components/PetLink";
 import { useIntegrationHealth } from "@/hooks/useIntegrationHealth";
 import type { BillingItem, DiagnosticResult } from "@/types";
 import { cn } from "@/lib/utils";
@@ -466,18 +467,22 @@ function ConsultationContent() {
       {/* Header Context Bar */}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-white dark:bg-slate-900 p-6 rounded-3xl ring-1 ring-slate-100 dark:ring-white/5 shadow-sm">
         <div className="flex items-center gap-6">
-          <div className={cn(
-            "w-20 h-20 rounded-3xl flex items-center justify-center font-black text-3xl shadow-xl transition-all duration-300 hover:scale-105 hover:rotate-2 shrink-0 ring-4 ring-slate-100 dark:ring-white/10 relative overflow-hidden",
-            (patient?.gender === "F" || patient?.gender === "Fêmea")
-              ? "bg-gradient-to-br from-pink-500 via-rose-500 to-purple-600 text-white shadow-pink-500/25"
-              : "bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-600 text-white shadow-blue-500/25"
-          )}>
-            <span>{patient?.name?.[0]?.toUpperCase() || "?"}</span>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
-          </div>
+          <PetLink petId={patientId} className="no-underline" stopPropagation={false}>
+            <div className={cn(
+              "w-20 h-20 rounded-3xl flex items-center justify-center font-black text-3xl shadow-xl transition-all duration-300 hover:scale-105 hover:rotate-2 shrink-0 ring-4 ring-slate-100 dark:ring-white/10 relative overflow-hidden",
+              (patient?.gender === "F" || patient?.gender === "Fêmea")
+                ? "bg-gradient-to-br from-pink-500 via-rose-500 to-purple-600 text-white shadow-pink-500/25"
+                : "bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-600 text-white shadow-blue-500/25"
+            )}>
+              <span>{patient?.name?.[0]?.toUpperCase() || "?"}</span>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+            </div>
+          </PetLink>
           <div>
             <div className="flex flex-wrap items-center gap-3 mb-2">
-              <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">{patient?.name}</h1>
+              <PetLink petId={patientId}>
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-none hover:text-blue-600 dark:hover:text-blue-400 transition-colors">{patient?.name}</h1>
+              </PetLink>
               <Badge className="bg-blue-600 text-white border-none font-semibold text-xs px-3 py-1 rounded-lg">{patient?.species}</Badge>
 
               {/* Gender Badge */}

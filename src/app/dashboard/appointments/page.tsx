@@ -28,6 +28,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { isFeatureEnabled } from "@/lib/features";
 import { useDebounce } from "@/hooks/useDebounce";
+import { PetLink } from "@/components/PetLink";
 
 // 30-min slots 08:00 → 23:30
 const halfHours: string[] = [];
@@ -156,7 +157,9 @@ function AppCard({ app, config, onClick, isOverlay, topPx, heightPx, leftPct = 0
         {vetColor && (
           <div className="w-1.5 h-1.5 rounded-full shrink-0 shadow-[0_0_4px_rgba(0,0,0,0.15)]" style={{ backgroundColor: vetColor }} title="Veterinário" />
         )}
-        <span className="font-bold text-[11px] truncate dark:text-white text-slate-800 leading-none flex-1">{app.patient?.name}</span>
+        <PetLink petId={app.patient?.id} className="font-bold text-[11px] truncate dark:text-white text-slate-800 leading-none flex-1">
+          {app.patient?.name}
+        </PetLink>
         <span className="text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500 shrink-0 tabular-nums">{format(new Date(app.startTime),'HH:mm')}</span>
       </div>
       {!compact && app.reason && <span className="text-[11px] text-slate-600 dark:text-slate-300 truncate font-medium">{app.reason}</span>}
@@ -948,7 +951,9 @@ function CalendarContent() {
                         <Badge className="font-bold text-[11px] px-3 py-1 rounded-full tracking-widest shadow-sm" style={{ backgroundColor: config.color, color: "#fff" }}>
                           {selectedApp.type ?? "Geral"}
                         </Badge>
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tighter">{selectedApp.patient?.name}</h2>
+                        <PetLink petId={selectedApp.patient?.id}>
+                          <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tighter hover:text-blue-600 dark:hover:text-blue-400 transition-colors">{selectedApp.patient?.name}</h2>
+                        </PetLink>
                         {selectedApp.reason && (
                           <p className="text-slate-600 dark:text-slate-300 font-medium text-sm mt-1">{selectedApp.reason}</p>
                         )}

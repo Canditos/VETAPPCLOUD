@@ -143,7 +143,7 @@ export default function PrescricoesPage() {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 flex-wrap mb-1">
-                      <p className="font-bold text-slate-900 dark:text-white">{rx.patient?.name ?? "—"}</p>
+                      <p className="font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">{rx.patient?.name ?? "—"}</p>
                       <StatusBadge validUntil={rx.validUntil} />
                     </div>
                     <div className="flex flex-wrap gap-1 mb-2">

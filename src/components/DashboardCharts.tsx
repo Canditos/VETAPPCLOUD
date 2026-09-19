@@ -18,6 +18,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { AlertTriangle, ChevronRight } from "lucide-react";
+import { PetLink } from "@/components/PetLink";
 import { format, isAfter } from "date-fns";
 import { getChartTheme } from "@/lib/chart-theme";
 
@@ -266,7 +267,9 @@ export function AppointmentRow({ appt, now }: { appt: any; now: Date }) {
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <p className="font-bold text-slate-900 dark:text-white text-sm truncate">{appt.patient?.name}</p>
+            <PetLink petId={appt.patient?.id} className="font-bold text-slate-900 dark:text-white text-sm truncate hover:text-blue-600 dark:hover:text-blue-400">
+              {appt.patient?.name}
+            </PetLink>
             {isNext && <span className="bg-blue-600 text-white text-[11px] font-bold px-2 py-0 rounded-full">A seguir</span>}
             {isPast && <span className="text-slate-500 dark:text-slate-400 text-[11px] font-bold border border-slate-200 px-2 py-0 rounded-full">Passou</span>}
           </div>
