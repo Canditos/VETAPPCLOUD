@@ -94,6 +94,12 @@ function ConsultationContent() {
     enabled: !!patientId
   });
 
+  useEffect(() => {
+    if (patient?.aggressionLevel && !temperament) {
+      setTemperament(patient.aggressionLevel);
+    }
+  }, [patient?.aggressionLevel, temperament]);
+
   const { data: history, isLoading: isHistoryLoading } = useQuery({
     queryKey: ["patient-history", patientId],
     queryFn: async () => {
@@ -113,15 +119,29 @@ function ConsultationContent() {
     }
   });
 
-  const { data: diagnostics } = useQuery({
+  const { data: diagnostics = [] } = useQuery({
     queryKey: ["patient-diagnostics", patientId],
     queryFn: async () => {
       const res = await fetch(`/api/diagnostics?patientId=${patientId}`);
       if (!res.ok) return [];
-      return res.json();
+      const json = await res.json().catch(() => []);
+      return Array.isArray(json) ? json : [];
     },
     enabled: !!patientId,
   });
+
+  const safeDiagnostics: DiagnosticResult[] = Array.isArray(diagnostics) ? diagnostics : [];
+
+  const safeFormatDistance = (dateStr?: string | Date | null) => {
+    if (!dateStr) return "—";
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return "—";
+      return formatDistanceToNow(d, { addSuffix: true, locale: pt });
+    } catch {
+      return "—";
+    }
+  };
 
   const { data: health } = useIntegrationHealth();
 
@@ -371,74 +391,79 @@ function ConsultationContent() {
     <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-[1600px] mx-auto px-4 sm:px-0">
       
       {/* Header Context Bar */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-white dark:bg-slate-900 p-6 rounded-3xl ring-1 ring-slate-100 dark:ring-white/5 shadow-sm">
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-white dark:bg-slate-900 p-6 rounded-3xl ring-1 ring-slate-100 dark:ring-white/5 shadow-sm">
         <div className="flex items-center gap-6">
-          <div className="w-20 h-20 bg-slate-900 dark:bg-white rounded-2xl flex items-center justify-center text-white dark:text-slate-900 font-bold text-3xl shadow-lg transition-transform hover:rotate-3">
+          <div className="w-20 h-20 bg-slate-900 dark:bg-white rounded-2xl flex items-center justify-center text-white dark:text-slate-900 font-bold text-3xl shadow-lg transition-transform hover:rotate-3 shrink-0">
             {patient?.name?.[0] || "?"}
           </div>
           <div>
             <div className="flex flex-wrap items-center gap-3 mb-2">
               <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">{patient?.name}</h1>
-               <Badge className="bg-blue-600 text-white border-none font-semibold text-xs px-3 py-1 rounded-lg">{patient?.species}</Badge>
+              <Badge className="bg-blue-600 text-white border-none font-semibold text-xs px-3 py-1 rounded-lg">{patient?.species}</Badge>
 
-               {/* Gender Badge */}
-               {patient?.gender && (
-                 <Badge variant="outline" className={cn("text-xs font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1",
-                   patient.gender === "F" || patient.gender === "Fêmea"
-                     ? "border-pink-300 text-pink-700 bg-pink-50 dark:bg-pink-950/30 dark:border-pink-800 dark:text-pink-300"
-                     : "border-blue-300 text-blue-700 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800 dark:text-blue-300"
-                 )}>
-                   {patient.gender === "F" || patient.gender === "Fêmea" ? <Venus size={12} strokeWidth={2.5} /> : <Mars size={12} strokeWidth={2.5} />}
-                   {patient.gender === "F" || patient.gender === "Fêmea" ? "Fêmea" : "Macho"}
-                 </Badge>
-               )}
+              {/* Gender Badge */}
+              {patient?.gender && (
+                <Badge variant="outline" className={cn("text-xs font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1",
+                  patient.gender === "F" || patient.gender === "Fêmea"
+                    ? "border-pink-300 text-pink-700 bg-pink-50 dark:bg-pink-950/30 dark:border-pink-800 dark:text-pink-300"
+                    : "border-blue-300 text-blue-700 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800 dark:text-blue-300"
+                )}>
+                  {patient.gender === "F" || patient.gender === "Fêmea" ? <Venus size={12} strokeWidth={2.5} /> : <Mars size={12} strokeWidth={2.5} />}
+                  {patient.gender === "F" || patient.gender === "Fêmea" ? "Fêmea" : "Macho"}
+                </Badge>
+              )}
 
-               {/* Temperament Badge */}
-               {temperament && (
-                 <Badge className={cn("text-xs font-bold px-2.5 py-1 rounded-lg border-none flex items-center gap-1 shadow-sm",
-                   temperament === "Dócil" ? "bg-emerald-600 text-white" :
-                   temperament === "Nervoso" ? "bg-amber-500 text-white" :
-                   "bg-rose-600 text-white"
-                 )}>
-                   {temperament === "Dócil" ? <ShieldCheck size={12} strokeWidth={2.5} /> :
-                    temperament === "Nervoso" ? <Zap size={12} strokeWidth={2.5} /> :
-                    <ShieldAlert size={12} strokeWidth={2.5} />}
-                   {temperament}
-                 </Badge>
-               )}
+              {/* Temperament Badge */}
+              {(temperament || patient?.aggressionLevel) && (
+                <Badge className={cn("text-xs font-bold px-2.5 py-1 rounded-lg border-none flex items-center gap-1 shadow-sm",
+                  (temperament || patient?.aggressionLevel) === "Dócil" ? "bg-emerald-600 text-white shadow-emerald-500/20" :
+                  (temperament || patient?.aggressionLevel) === "Nervoso" ? "bg-amber-500 text-slate-950 font-black shadow-amber-500/20" :
+                  "bg-rose-600 text-white shadow-rose-500/20"
+                )}>
+                  {(temperament || patient?.aggressionLevel) === "Dócil" ? <ShieldCheck size={12} strokeWidth={2.5} /> :
+                   (temperament || patient?.aggressionLevel) === "Nervoso" ? <Zap size={12} strokeWidth={2.5} /> :
+                   <ShieldAlert size={12} strokeWidth={2.5} />}
+                  {temperament || patient?.aggressionLevel}
+                </Badge>
+              )}
 
-               {!appointmentId && (
-                 <Badge variant="outline" className="border-amber-200 dark:border-amber-900/30 text-amber-600 dark:text-amber-400 font-medium text-[11px] px-3 py-1 rounded-lg animate-pulse">Walk-in</Badge>
-               )}
+              {!appointmentId && (
+                <Badge variant="outline" className="border-amber-200 dark:border-amber-900/30 text-amber-600 dark:text-amber-400 font-medium text-[11px] px-3 py-1 rounded-lg animate-pulse">Walk-in</Badge>
+              )}
             </div>
-            <div className="flex flex-wrap items-center gap-4 text-sm">
-              <p className="text-slate-500 dark:text-slate-400 font-medium">{patient?.breed} <span className="mx-2 opacity-10">|</span> {patient?.owner?.name}</p>
-               {allergies && (
-                  <div className="flex items-center gap-4 p-4 bg-rose-600 text-white rounded-2xl ring-2 ring-rose-400 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 shadow-lg shadow-rose-500/30 animate-in fade-in slide-in-from-top-2 duration-500">
-                    <div className="flex-shrink-0 w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                      <AlertTriangle size={22} strokeWidth={3} className="animate-pulse" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-extrabold text-sm tracking-wide uppercase">⚠ ALERTA DE ALERGIAS</p>
-                      <p className="text-rose-100 text-sm font-semibold mt-0.5 truncate">{allergies}</p>
-                    </div>
-                    <Badge className="bg-white/20 text-white border-none font-bold text-[11px] px-3 py-1.5 shrink-0">ATENÇÃO MÉDICA</Badge>
-                  </div>
-                )}
-               {lastVitals && (
-                 <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 font-medium text-[11px]">
-                   <Weight size={12} /> {lastVitals.weight}kg
-                 </span>
-               )}
+
+            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 dark:text-slate-400 font-medium">
+              <p>{patient?.breed || "Sem raça definida"} <span className="mx-2 opacity-20">|</span> {patient?.owner?.name || "Sem tutor"}</p>
+              {lastVitals && (
+                <span className="flex items-center gap-1.5 text-[11px] font-semibold bg-slate-100 dark:bg-white/5 px-2.5 py-0.5 rounded-md text-slate-600 dark:text-slate-300">
+                  <Weight size={12} /> {lastVitals.weight}kg
+                </span>
+              )}
             </div>
           </div>
         </div>
+
+        {/* Allergy Alert — Enquadrado com elegância no cabeçalho */}
+        {allergies && (
+          <div className="flex items-center gap-3.5 px-4 py-3 bg-gradient-to-r from-rose-600 to-rose-700 text-white rounded-2xl shadow-lg shadow-rose-600/20 ring-1 ring-rose-400/40 max-w-md w-full xl:w-auto">
+            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+              <AlertTriangle size={20} strokeWidth={2.5} className="animate-pulse text-white" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider bg-white/20 px-1.5 py-0.5 rounded text-white">Alerta de Alergias</span>
+                <span className="text-[10px] font-bold text-rose-200 uppercase">Atenção Médica</span>
+              </div>
+              <p className="text-xs font-bold text-rose-100 truncate mt-0.5" title={allergies}>{allergies}</p>
+            </div>
+          </div>
+        )}
         
-        <div className="flex gap-3 w-full lg:w-auto">
-           <Button variant="outline" className="h-12 px-6 rounded-2xl border-slate-200 dark:border-white/10 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-all flex-1 lg:flex-none" onClick={() => router.back()}>
+        <div className="flex gap-3 w-full xl:w-auto shrink-0">
+           <Button variant="outline" className="h-12 px-6 rounded-2xl border-slate-200 dark:border-white/10 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-all flex-1 xl:flex-none" onClick={() => router.back()}>
              <ChevronLeft className="w-4 h-4 mr-2" strokeWidth={3} /> Cancelar
            </Button>
-           <Button onClick={handleSave} className="h-12 px-8 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-semibold text-sm shadow-lg shadow-blue-500/20 transition-all active:scale-95 flex-1 lg:flex-none">
+           <Button onClick={handleSave} className="h-12 px-8 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-semibold text-sm shadow-lg shadow-blue-500/20 transition-all active:scale-95 flex-1 xl:flex-none">
              <Save className="w-4 h-4 mr-2" strokeWidth={3} /> Finalizar Visita
            </Button>
         </div>
@@ -503,13 +528,6 @@ function ConsultationContent() {
                       ))}
                     </div>
 
-                    {/* Pain Assessment — Glasgow CMPS-SF (cães) / Grimace Scale (gatos) */}
-                    <PainAssessmentForm
-                      species={patient?.species || ""}
-                      value={vitals.painScale}
-                      onChange={(normalized) => setVitals({ ...vitals, painScale: normalized })}
-                    />
-
                     {/* Body Condition Score 1–9 */}
                     <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-white/5">
                       <div className="flex items-center justify-between">
@@ -561,49 +579,51 @@ function ConsultationContent() {
                       </div>
                     </div>
 
-                    {/* Temperamento do Paciente */}
-                    <div className="space-y-2 pt-3 border-t border-slate-100 dark:border-white/5">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Temperamento da Consulta</p>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Comportamento observado na abordagem clínica</p>
+                    {/* Temperamento do Paciente — Só aparece se ainda NÃO estiver definido no cadastro */}
+                    {!patient?.aggressionLevel && (
+                      <div className="space-y-2 pt-3 border-t border-slate-100 dark:border-white/5">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Temperamento do Paciente</p>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Definir temperamento inicial (após gravado, apenas editável na Ficha do Paciente)</p>
+                          </div>
+                          {temperament && (
+                            <span className={cn("text-xs font-bold px-2.5 py-0.5 rounded-lg text-white",
+                              temperament === "Dócil" ? "bg-emerald-600" :
+                              temperament === "Nervoso" ? "bg-amber-500" :
+                              "bg-rose-600"
+                            )}>
+                              {temperament}
+                            </span>
+                          )}
                         </div>
-                        {temperament && (
-                          <span className={cn("text-xs font-bold px-2.5 py-0.5 rounded-lg text-white",
-                            temperament === "Dócil" ? "bg-emerald-600" :
-                            temperament === "Nervoso" ? "bg-amber-500" :
-                            "bg-rose-600"
-                          )}>
-                            {temperament}
-                          </span>
-                        )}
+                        <div className="grid grid-cols-3 gap-2.5">
+                          {[
+                            { label: "Dócil", desc: "Calmo e cooperante", activeClass: "border-emerald-500 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 ring-2 ring-emerald-400 shadow-sm", dotClass: "bg-emerald-500" },
+                            { label: "Nervoso", desc: "Ansioso / Medroso", activeClass: "border-amber-500 bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 ring-2 ring-amber-400 shadow-sm", dotClass: "bg-amber-500" },
+                            { label: "Agressivo", desc: "Cuidado na manipulação", activeClass: "border-rose-500 bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 ring-2 ring-rose-400 shadow-sm", dotClass: "bg-rose-500" }
+                          ].map(t => (
+                            <button
+                              key={t.label}
+                              type="button"
+                              onClick={() => setTemperament(temperament === t.label ? "" : t.label)}
+                              className={cn(
+                                "flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all cursor-pointer select-none",
+                                temperament === t.label
+                                  ? t.activeClass
+                                  : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 hover:border-slate-300 text-slate-700 dark:text-slate-300"
+                              )}
+                            >
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <span className={cn("w-2.5 h-2.5 rounded-full", t.dotClass)} />
+                                <span className="font-bold text-xs">{t.label}</span>
+                              </div>
+                              <span className="text-[10px] text-slate-400 font-medium">{t.desc}</span>
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                      <div className="grid grid-cols-3 gap-2.5">
-                        {[
-                          { label: "Dócil", desc: "Calmo e cooperante", activeClass: "border-emerald-500 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 ring-2 ring-emerald-400 shadow-sm", dotClass: "bg-emerald-500" },
-                          { label: "Nervoso", desc: "Ansioso / Medroso", activeClass: "border-amber-500 bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 ring-2 ring-amber-400 shadow-sm", dotClass: "bg-amber-500" },
-                          { label: "Agressivo", desc: "Cuidado na manipulação", activeClass: "border-rose-500 bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 ring-2 ring-rose-400 shadow-sm", dotClass: "bg-rose-500" }
-                        ].map(t => (
-                          <button
-                            key={t.label}
-                            type="button"
-                            onClick={() => setTemperament(temperament === t.label ? null : t.label)}
-                            className={cn(
-                              "flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all cursor-pointer select-none",
-                              temperament === t.label
-                                ? t.activeClass
-                                : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 hover:border-slate-300 text-slate-700 dark:text-slate-300"
-                            )}
-                          >
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <span className={cn("w-2.5 h-2.5 rounded-full", t.dotClass)} />
-                              <span className="font-bold text-xs">{t.label}</span>
-                            </div>
-                            <span className="text-[10px] text-slate-400 font-medium">{t.desc}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                    )}
                   </div>
 
                   {/* Campos Clínicos Estruturados */}
@@ -666,7 +686,7 @@ function ConsultationContent() {
                             onClick={() => setIsExamsModalOpen(true)}
                             className="h-10 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md shadow-purple-500/20 gap-2 transition-transform active:scale-95"
                           >
-                            <FlaskConical size={15} /> Ver Resultados dos Exames ({diagnostics?.length || 0})
+                            <FlaskConical size={15} /> Ver Resultados dos Exames ({safeDiagnostics.length})
                           </Button>
                           <Button
                             type="button"
@@ -833,7 +853,7 @@ function ConsultationContent() {
                      <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2"><TrendingUp size={14} className="text-blue-600" /> Resultados Recebidos</h3>
                   </div>
                   <div className="p-6">
-                     {!diagnostics || diagnostics.length === 0 ? (
+                     {safeDiagnostics.length === 0 ? (
                        <div className="py-12 text-center bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-100 dark:border-white/5">
                           <FlaskConical size={32} className="mx-auto text-slate-200 dark:text-slate-700 mb-3" />
                           <p className="text-slate-500 dark:text-slate-400 font-bold text-sm">Sem resultados para este paciente</p>
@@ -841,7 +861,7 @@ function ConsultationContent() {
                        </div>
                     ) : (
                        <div className="space-y-3">
-                           {diagnostics.map((dx: DiagnosticResult) => (
+                           {safeDiagnostics.map((dx: DiagnosticResult) => (
                              <div key={dx.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 hover:border-blue-200 dark:hover:border-blue-900/30 transition-all group">
                                 <div className="flex items-center gap-4">
                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${dx.type === 'LAB' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600' : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600'}`}>
@@ -849,7 +869,7 @@ function ConsultationContent() {
                                    </div>
                                    <div>
                                       <p className="font-bold text-sm text-slate-900 dark:text-white">{dx.summary ?? dx.testName ?? "—"}</p>
-                                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold">{dx.source} • {dx.createdAt ? formatDistanceToNow(new Date(dx.createdAt), { addSuffix: true, locale: pt }) : "—"}</p>
+                                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold">{dx.source} • {safeFormatDistance(dx.createdAt)}</p>
                                    </div>
                                 </div>
                                 <div className="flex items-center gap-3">
@@ -900,14 +920,14 @@ function ConsultationContent() {
             </DialogHeader>
 
             <div className="max-h-[380px] overflow-y-auto space-y-3 py-2 pr-1">
-              {!diagnostics || diagnostics.length === 0 ? (
+              {safeDiagnostics.length === 0 ? (
                 <div className="py-10 text-center bg-slate-50 dark:bg-white/5 rounded-2xl border-2 border-dashed border-slate-200 dark:border-white/10">
                   <FlaskConical size={32} className="mx-auto text-slate-300 dark:text-slate-600 mb-2" />
                   <p className="text-slate-700 dark:text-slate-300 font-bold text-sm">Sem exames registados para este paciente</p>
                   <p className="text-slate-400 text-xs mt-1">Pode requisitar análises laboratoriais ou imagiologia na tab &ldquo;Meios Complementares&rdquo;.</p>
                 </div>
               ) : (
-                diagnostics.map((dx: DiagnosticResult) => (
+                safeDiagnostics.map((dx: DiagnosticResult) => (
                   <div key={dx.id} className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200/80 dark:border-white/10 flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
@@ -918,7 +938,7 @@ function ConsultationContent() {
                       <div className="min-w-0">
                         <p className="font-bold text-sm text-slate-900 dark:text-white truncate">{dx.summary ?? dx.testName ?? "Exame"}</p>
                         <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                          {dx.source || "Dispositivo"} • {dx.createdAt ? formatDistanceToNow(new Date(dx.createdAt), { addSuffix: true, locale: pt }) : ""}
+                          {dx.source || "Dispositivo"} • {safeFormatDistance(dx.createdAt)}
                         </p>
                       </div>
                     </div>

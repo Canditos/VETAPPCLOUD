@@ -309,8 +309,12 @@ export default function PatientDetailPage() {
                 <span className="font-semibold text-xs">{isFemale ? "Fêmea" : "Macho"}</span>
               </div>
               {patient.aggressionLevel && (
-                <div className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-lg shadow-sm ring-1 text-xs font-bold uppercase tracking-wider", tempDisplay.badge)}>
-                  <tempDisplay.icon size={13} className={tempDisplay.color} strokeWidth={2.5} />
+                <div className={cn("flex items-center gap-1.5 px-3 py-1 rounded-lg shadow-sm font-bold text-xs uppercase tracking-wider text-white",
+                  isDocil ? "bg-emerald-600 shadow-emerald-500/20" :
+                  isNervoso ? "bg-amber-500 shadow-amber-500/20 text-slate-950 font-black" :
+                  "bg-rose-600 shadow-rose-500/20"
+                )}>
+                  <tempDisplay.icon size={13} className={isNervoso ? "text-slate-950" : "text-white"} strokeWidth={2.5} />
                   <span>{tempDisplay.label}</span>
                 </div>
               )}
@@ -415,12 +419,22 @@ export default function PatientDetailPage() {
 
               {/* Temperamento */}
               <div className="flex items-center gap-4 pt-1">
-                <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-all", tempDisplay.bg)}>
-                  <tempDisplay.icon size={20} className={tempDisplay.color} strokeWidth={2.5} />
+                <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-all",
+                  isDocil ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/20" :
+                  isNervoso ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20" :
+                  isAgressivo ? "bg-rose-600 text-white shadow-md shadow-rose-500/20" :
+                  "bg-slate-500/10 text-slate-400"
+                )}>
+                  <tempDisplay.icon size={20} strokeWidth={2.5} />
                 </div>
                 <div>
                   <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-0.5">Temperamento</p>
-                  <span className={cn("inline-flex items-center text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider", tempDisplay.badge)}>
+                  <span className={cn("inline-flex items-center text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider",
+                    isDocil ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900/40" :
+                    isNervoso ? "bg-amber-50 text-amber-800 ring-1 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900/40" :
+                    isAgressivo ? "bg-rose-50 text-rose-700 ring-1 ring-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900/40" :
+                    "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                  )}>
                     {tempDisplay.label}
                   </span>
                 </div>
@@ -904,19 +918,41 @@ export default function PatientDetailPage() {
                 type="button"
                 onClick={async () => {
                   setIsSaving(true);
-                  try {
-                    const res = await fetch(`/api/patients/${patientId}`, {
-                      method: "PATCH",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify(editForm),
-                    });
-                    if (res.ok) {
+                  const sanitizedPayload = {
+                    ...editForm,
+                    microchip: editForm.microchip?.trim() || null,
+                    allergies: editForm.allergies?.trim() || null,
+                    aggressionLevel: editForm.aggressionLevel?.trim() || null,
+                    birthDate: editForm.birthDate ? editForm.birthDate : null,
+                  };
+
+                  const savePromise = fetch(`/api/patients/${patientId}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(sanitizedPayload),
+                  }).then(async (res) => {
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok) {
+                      throw new Error(data.error || "Erro ao guardar alterações");
+                    }
+                    return data;
+                  });
+
+                  toast.promise(savePromise, {
+                    loading: "A guardar alterações da ficha...",
+                    success: () => {
                       queryClient.invalidateQueries({ queryKey: ["patient", patientId] });
                       queryClient.invalidateQueries({ queryKey: ["clinical-summary", patientId] });
                       setDialog(null);
-                    }
+                      return "Ficha do paciente atualizada com sucesso!";
+                    },
+                    error: (err: any) => err?.message || "Não foi possível guardar as alterações",
+                  });
+
+                  try {
+                    await savePromise;
                   } catch (err) {
-                    console.error(err);
+                    console.error("[PATIENT_SAVE_ERROR]", err);
                   } finally {
                     setIsSaving(false);
                   }

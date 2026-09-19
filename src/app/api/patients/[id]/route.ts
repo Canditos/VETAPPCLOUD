@@ -47,31 +47,56 @@ export const PATCH = withAuthParams(async ({ req, tenantPrisma, clinicId, userId
       aggressionLevel,
       coatColor,
       allergies,
+      status,
     } = body;
+
+    const sanitizedMicrochip = microchip !== undefined 
+      ? (typeof microchip === "string" && microchip.trim() ? microchip.trim() : null)
+      : undefined;
+
+    const sanitizedBirthDate = birthDate !== undefined
+      ? (birthDate ? new Date(birthDate) : null)
+      : undefined;
+
+    const sanitizedWeight = weight !== undefined
+      ? (weight !== null && weight !== "" && !isNaN(Number(weight)) ? parseFloat(weight.toString()) : null)
+      : undefined;
+
+    const sanitizedAggression = aggressionLevel !== undefined
+      ? (typeof aggressionLevel === "string" && aggressionLevel.trim() ? aggressionLevel.trim() : null)
+      : undefined;
+
+    const sanitizedAllergies = allergies !== undefined
+      ? (typeof allergies === "string" && allergies.trim() ? allergies.trim() : null)
+      : undefined;
 
     const patient = await tenantPrisma.patient.update({
       where: { id },
       data: {
-        ...(name !== undefined && { name }),
-        ...(species !== undefined && { species }),
-        ...(breed !== undefined && { breed }),
+        ...(name !== undefined && { name: name.trim() }),
+        ...(species !== undefined && { species: species.trim() }),
+        ...(breed !== undefined && { breed: breed?.trim() || null }),
         ...(gender !== undefined && { gender }),
-        ...(birthDate !== undefined && { birthDate: birthDate ? new Date(birthDate) : null }),
-        ...(weight !== undefined && { weight: weight !== null ? parseFloat(weight.toString()) : null }),
-        ...(microchip !== undefined && { microchip }),
+        ...(sanitizedBirthDate !== undefined && { birthDate: sanitizedBirthDate }),
+        ...(sanitizedWeight !== undefined && { weight: sanitizedWeight }),
+        ...(sanitizedMicrochip !== undefined && { microchip: sanitizedMicrochip }),
         ...(reproductiveStatus !== undefined && { reproductiveStatus }),
-        ...(aggressionLevel !== undefined && { aggressionLevel }),
-        ...(coatColor !== undefined && { coatColor }),
-        ...(allergies !== undefined && { allergies }),
+        ...(sanitizedAggression !== undefined && { aggressionLevel: sanitizedAggression }),
+        ...(coatColor !== undefined && { coatColor: coatColor?.trim() || null }),
+        ...(sanitizedAllergies !== undefined && { allergies: sanitizedAllergies }),
+        ...(status !== undefined && { status }),
       },
     });
 
     await audit({ clinicId, userId, userName: session?.user?.name ?? null, action: "UPDATE", entity: "Patient", entityId: id });
 
     return NextResponse.json(patient);
-  } catch (error) {
+  } catch (error: any) {
     console.error("[PATIENT_PATCH]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    if (error?.code === "P2002") {
+      return NextResponse.json({ error: "Já existe outro paciente registado com este microchip." }, { status: 400 });
+    }
+    return NextResponse.json({ error: error?.message || "Erro interno ao atualizar paciente" }, { status: 500 });
   }
 });
 
