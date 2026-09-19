@@ -1,13 +1,18 @@
-﻿"use client";
+"use client";
 
 import { useSidebar } from "@/components/SidebarContext";
 import { cn } from "@/lib/utils";
 
 export function DashboardContent({ children }: { children: React.ReactNode }) {
-  const { isPinned } = useSidebar();
+  const { isPinned, isExpanded, collapseSidebar } = useSidebar();
 
   return (
     <main
+      onClick={() => {
+        if (isExpanded && !isPinned) {
+          collapseSidebar();
+        }
+      }}
       className={cn(
         "min-h-screen transition-all duration-300 ease-in-out",
         isPinned ? "md:ml-64" : "md:ml-20"

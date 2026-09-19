@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -26,7 +26,7 @@ export default function Sidebar() {
   const visible = getVisibleMenuItems(role);
   const visibleNames = new Set(visible.map((m) => m.name));
 
-  const { isPinned, setIsPinned, setIsHovered, isExpanded } = useSidebar();
+  const { isPinned, setIsPinned, setIsHovered, isExpanded, collapseSidebar, toggleSidebar } = useSidebar();
 
   return (
     <aside
@@ -44,6 +44,12 @@ export default function Sidebar() {
       <div className="h-20 px-4 flex items-center justify-between border-b border-slate-200/50 dark:border-white/5">
         <Link
           href="/dashboard"
+          onClick={(e) => {
+            if (pathname === "/dashboard") {
+              e.preventDefault();
+              toggleSidebar();
+            }
+          }}
           className="flex items-center gap-3 overflow-hidden cursor-pointer group"
           title="VetConnect"
         >
@@ -105,15 +111,25 @@ export default function Sidebar() {
                 {groupItems.map((name) => {
                   const item = visible.find((m) => m.name === name)!;
                   const Icon = MENU_ICONS[name] || LayoutDashboard;
-                  const isActive = pathname === item.href;
+                  const isActive = item.href === "/dashboard"
+                    ? pathname === "/dashboard"
+                    : pathname === item.href || pathname.startsWith(item.href + "/");
 
                   return (
                     <Link
                       key={item.name}
                       href={item.href}
+                      onClick={(e) => {
+                        if (isActive) {
+                          e.preventDefault();
+                          toggleSidebar();
+                        } else if (!isPinned) {
+                          collapseSidebar();
+                        }
+                      }}
                       title={!isExpanded ? item.name : undefined}
                       className={cn(
-                        "flex items-center rounded-2xl transition-all duration-200 group relative",
+                        "flex items-center rounded-2xl transition-all duration-200 group relative cursor-pointer",
                         isExpanded ? "px-3.5 py-3 justify-between" : "p-3 justify-center",
                         isActive
                           ? "bg-white dark:bg-card text-blue-600 dark:text-blue-400 shadow-sm ring-1 ring-slate-200/60 dark:ring-white/10"

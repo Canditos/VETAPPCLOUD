@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 
@@ -8,6 +8,9 @@ interface SidebarContextType {
   isHovered: boolean;
   setIsHovered: (hovered: boolean) => void;
   isExpanded: boolean;
+  collapseSidebar: () => void;
+  expandSidebar: () => void;
+  toggleSidebar: () => void;
 }
 
 const SidebarContext = createContext<SidebarContextType>({
@@ -16,11 +19,15 @@ const SidebarContext = createContext<SidebarContextType>({
   isHovered: false,
   setIsHovered: () => {},
   isExpanded: false,
+  collapseSidebar: () => {},
+  expandSidebar: () => {},
+  toggleSidebar: () => {},
 });
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [isPinned, setIsPinnedState] = useState<boolean>(false);
-  const [isHovered, setIsHovered] = useState<boolean>(false);
+  const [isHovered, setIsHoveredState] = useState<boolean>(false);
+  const [isManuallyClosed, setIsManuallyClosed] = useState<boolean>(false);
   const [mounted, setMounted] = useState<boolean>(false);
 
   useEffect(() => {
@@ -47,7 +54,40 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const isExpanded = mounted ? (isPinned || isHovered) : false;
+  const setIsHovered = (hovered: boolean) => {
+    setIsHoveredState(hovered);
+    if (!hovered) {
+      // Quando o rato sai da sidebar, limpa o estado de fecho manual
+      setIsManuallyClosed(false);
+    }
+  };
+
+  const collapseSidebar = () => {
+    setIsPinnedState(false);
+    try {
+      localStorage.setItem("vet_sidebar_pinned", "false");
+    } catch {
+      // Ignore
+    }
+    setIsHoveredState(false);
+    setIsManuallyClosed(true);
+  };
+
+  const expandSidebar = () => {
+    setIsManuallyClosed(false);
+    setIsHoveredState(true);
+  };
+
+  const toggleSidebar = () => {
+    const currentExpanded = mounted ? ((isPinned || isHovered) && !isManuallyClosed) : false;
+    if (currentExpanded) {
+      collapseSidebar();
+    } else {
+      expandSidebar();
+    }
+  };
+
+  const isExpanded = mounted ? ((isPinned || isHovered) && !isManuallyClosed) : false;
 
   return (
     <SidebarContext.Provider
@@ -57,6 +97,9 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
         isHovered,
         setIsHovered,
         isExpanded,
+        collapseSidebar,
+        expandSidebar,
+        toggleSidebar,
       }}
     >
       {children}

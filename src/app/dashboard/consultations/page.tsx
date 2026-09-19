@@ -708,13 +708,13 @@ function ConsultationContent() {
                       />
                     </div>
 
-                    {/* 4. Exames Complementares de Diagnóstico (Botão para resultados) */}
-                    <div className="p-4 sm:p-5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/30 border border-slate-200/80 dark:border-white/10 space-y-3">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="flex items-center gap-2.5">
+                    {/* 4. Exames Complementares de Diagnóstico */}
+                    <div className="space-y-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 ml-0.5">
+                        <div className="flex items-center gap-2">
                           <span className="w-6 h-6 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-black flex items-center justify-center">4</span>
                           <div>
-                            <Label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Exames Complementares de Diagnóstico</Label>
+                            <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Exames Complementares de Diagnóstico</Label>
                             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Resultados laboratoriais, radiografias e ecografias deste atendimento</p>
                           </div>
                         </div>
@@ -722,15 +722,15 @@ function ConsultationContent() {
                           <Button
                             type="button"
                             onClick={() => setIsExamsModalOpen(true)}
-                            className="h-10 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md shadow-purple-500/20 gap-2 transition-transform active:scale-95"
+                            className="h-9 px-3.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md shadow-purple-500/20 gap-2 transition-transform active:scale-95"
                           >
-                            <FlaskConical size={15} /> Ver Resultados dos Exames ({currentConsultationDiagnostics.length})
+                            <FlaskConical size={14} /> Ver Resultados dos Exames ({currentConsultationDiagnostics.length})
                           </Button>
                           <Button
                             type="button"
                             variant="outline"
                             onClick={() => setIsExamsModalOpen(true)}
-                            className="h-10 px-3 rounded-xl border-slate-200 dark:border-white/10 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 gap-1.5"
+                            className="h-9 px-3 rounded-xl border-slate-200 dark:border-white/10 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 gap-1.5"
                           >
                             <Plus size={13} /> Requisitar Exame
                           </Button>
@@ -741,7 +741,7 @@ function ConsultationContent() {
                         value={examNotes}
                         onChange={(e) => setExamNotes(e.target.value)}
                         placeholder="Resultados e observações dos exames complementares (inseridos pelo visualizador de exames ou manualmente)..."
-                        className="min-h-[105px] rounded-2xl bg-white dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-emerald-500/20 resize-none"
+                        className="min-h-[105px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-blue-500/20 resize-none"
                       />
                     </div>
 
