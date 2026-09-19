@@ -6,6 +6,8 @@ export interface ClinicalSummary {
   patientName: string;
   species: string;
   gender: string;
+  rawGender?: string | null;
+  temperament?: string | null;
   breed: string;
   ageText: string;
   ownerName: string;

@@ -107,13 +107,15 @@ export const GET = withAuthParams(async ({ tenantPrisma }, { id: patientId }) =>
     safetyAlerts.push(`Alérgico a: ${patient.allergies}`);
   }
   if (patient.aggressionLevel && patient.aggressionLevel.toLowerCase() !== "nenhuma") {
-    safetyAlerts.push(`Nível de agressão: ${patient.aggressionLevel}`);
+    safetyAlerts.push(`Temperamento: ${patient.aggressionLevel}`);
   }
 
   const summary = {
     patientName: patient.name,
     species: patient.species,
-    gender: patient.gender === "M" ? "Macho" : patient.gender === "F" ? "Fêmea" : "Indeterminado",
+    gender: patient.gender === "M" ? "Macho" : patient.gender === "F" ? "Fêmea" : (patient.gender || "Indeterminado"),
+    rawGender: patient.gender || null,
+    temperament: patient.aggressionLevel || null,
     breed: patient.breed || "Raça indeterminada",
     ageText,
     ownerName: patient.owner?.name ?? "—",

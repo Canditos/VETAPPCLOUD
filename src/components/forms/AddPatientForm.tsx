@@ -258,14 +258,25 @@ export function AddPatientForm({ onSuccess, defaultOwnerId }: { onSuccess?: () =
                     ))}
                   </div>
                 </div>
-                <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/30 space-y-2">
-                  <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
-                    <ShieldAlert size={14} />
-                    <span className="text-[11px] font-bold uppercase">Agressividade</span>
+                <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 space-y-2">
+                  <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                    <ShieldAlert size={14} className="text-amber-500" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider">Temperamento</span>
                   </div>
-                  <div className="flex gap-1">
-                    {["Baixo", "Médio", "Alto"].map((lvl) => (
-                      <button key={lvl} type="button" onClick={() => setValue("aggressionLevel", lvl)} className={cn("flex-1 py-1.5 rounded text-[11px] font-medium transition-all", watch("aggressionLevel") === lvl ? (lvl === "Alto" ? "bg-rose-600" : "bg-amber-600") + " text-white" : "bg-white dark:bg-slate-800 text-amber-400 border border-amber-100 dark:border-amber-800")}>{lvl}</button>
+                  <div className="flex gap-1.5">
+                    {[
+                      { val: "Dócil", active: "bg-emerald-600 text-white shadow-sm shadow-emerald-500/20", inactive: "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50" },
+                      { val: "Nervoso", active: "bg-amber-500 text-slate-950 font-bold shadow-sm shadow-amber-500/20", inactive: "bg-white dark:bg-slate-800 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50" },
+                      { val: "Agressivo", active: "bg-rose-600 text-white shadow-sm shadow-rose-500/20", inactive: "bg-white dark:bg-slate-800 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50" },
+                    ].map(({ val, active, inactive }) => (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => setValue("aggressionLevel", watch("aggressionLevel") === val ? "" : val)}
+                        className={cn("flex-1 py-1.5 rounded-md text-[11px] font-bold transition-all", watch("aggressionLevel") === val ? active : inactive)}
+                      >
+                        {val}
+                      </button>
                     ))}
                   </div>
                 </div>

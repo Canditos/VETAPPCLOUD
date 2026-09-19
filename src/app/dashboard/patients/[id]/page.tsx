@@ -8,7 +8,7 @@ import {
   Stethoscope, Syringe, AlertCircle, Dog, Cat, FileText, Heart,
   Thermometer, Weight, Plus, Pill, Shield, TrendingUp, Info, Clock, 
   Sparkles, ChevronRight, Microscope, Edit3, Radio, ScanLine, Loader2,
-  CheckCircle2, WifiOff
+  CheckCircle2, WifiOff, Venus, Mars, ShieldAlert, ShieldCheck, Zap
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -24,8 +24,7 @@ import { LabChartsViewer } from "@/components/patients/LabChartsViewer";
 import { format, isPast, differenceInDays, differenceInYears, differenceInMonths } from "date-fns";
 import { pt } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { useClinicalSummary } from "@/hooks/useClinicalSummary";
-import { useAISummary } from "@/hooks/useAISummary";
+import { ClinicalSummaryBanner } from "@/components/ClinicalSummaryBanner";
 import { PremiumCard } from "@/components/PremiumCard";
 import { isFeatureEnabled } from "@/lib/features";
 import { toast } from "sonner";
@@ -138,167 +137,6 @@ function ClinicalTimeline({ events }: { events: TimelineEvent[] }) {
   );
 }
 
-// ── Clinical Summary Banner Component ─────────────────────────────────────
-function ClinicalSummaryBanner({ patientId }: { patientId: string }) {
-  const { data: summary, isLoading: isLocalLoading, error, isError } = useClinicalSummary(patientId);
-  const [aiEnabled, setAiEnabled] = React.useState(false);
-  const { data: aiSummary, isLoading: isAILoading } = useAISummary(patientId, aiEnabled);
-
-  if (isLocalLoading) {
-    return (
-      <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl p-8 shadow-xl shadow-blue-500/10 animate-pulse">
-        <div className="h-24 bg-white/10 rounded-2xl" />
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="relative overflow-hidden bg-red-500/10 border border-red-500/20 rounded-3xl p-8 shadow-sm">
-        <div className="flex items-center gap-3">
-          <AlertCircle size={20} className="text-red-500" />
-          <h3 className="text-lg font-bold text-red-700 dark:text-red-400">Erro ao carregar o Resumo Clínico</h3>
-        </div>
-        <p className="text-red-600/80 dark:text-red-400/80 text-sm mt-2 font-medium">
-          {error instanceof Error ? error.message : "Ocorreu um erro desconhecido na API do resumo."}
-        </p>
-      </div>
-    );
-  }
-
-  if (!summary) return null;
-
-  const hasAlerts = summary.safetyAlerts.length > 0 || summary.vaccines.expired.length > 0 || summary.deworming.overdue;
-  const isLoadingAI = aiEnabled && isAILoading;
-
-  return (
-    <div className={`relative overflow-hidden rounded-3xl p-8 shadow-xl shadow-blue-500/10 group ${
-      hasAlerts ? "bg-gradient-to-r from-blue-700 to-indigo-800" : "bg-gradient-to-r from-blue-600 to-indigo-700"
-    }`}>
-      <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-32 translate-x-32 group-hover:bg-white/20 transition-all duration-700" />
-      <div className="relative z-10 flex flex-col lg:flex-row lg:items-start justify-between gap-8">
-        <div className="space-y-4 max-w-2xl">
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="bg-white/20 p-2 rounded-xl text-white"><Sparkles size={18} /></div>
-            <h3 className="text-lg font-bold text-white">Resumo Clínico</h3>
-            <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
-              aiEnabled
-                ? "bg-purple-400/30 text-purple-100"
-                : "bg-white/10 text-white/70"
-            }`}>
-              {aiEnabled ? "IA Groq (Anonimizado)" : "Local — 100% privado"}
-            </span>
-            <button
-              onClick={() => setAiEnabled(!aiEnabled)}
-              className="text-[11px] font-medium text-white/80 bg-white/10 hover:bg-white/20 px-2 py-0.5 rounded-full transition-colors"
-            >
-              {aiEnabled ? "↩ Voltar Local" : "✨ Analisar com IA"}
-            </button>
-          </div>
-
-          {isLoadingAI ? (
-            <div className="space-y-2 animate-pulse">
-              <div className="h-4 bg-white/20 rounded w-3/4" />
-              <div className="h-4 bg-white/20 rounded w-1/2" />
-            </div>
-          ) : aiEnabled && aiSummary ? (
-            <>
-              <p className="text-blue-50 text-base font-medium leading-relaxed">
-                {aiSummary.summary}
-              </p>
-              {aiSummary.alerts.length > 0 && (
-                <div className="space-y-1">
-                  {aiSummary.alerts.map((alert, i) => (
-                    <div key={i} className="flex items-center gap-2 text-blue-100 text-sm font-semibold">
-                      <AlertCircle size={14} /> {alert}
-                    </div>
-                  ))}
-                </div>
-              )}
-              {aiSummary.recommendations.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {aiSummary.recommendations.map((rec, i) => (
-                    <span key={i} className="text-xs font-medium text-white bg-white/20 px-3 py-1 rounded-full">
-                      💡 {rec}
-                    </span>
-                  ))}
-                </div>
-              )}
-              <p className="text-[11px] text-white/50">{aiSummary.disclaimer}</p>
-            </>
-          ) : (
-            <>
-              <p className="text-blue-50 text-base font-medium leading-relaxed">
-                {summary.patientName} é um {summary.species.toLowerCase()} {summary.gender.toLowerCase()} de {summary.breed}, {summary.ageText}.
-                {summary.lastConsultation
-                  ? ` Última consulta há ${summary.lastConsultation.daysAgo} dias com ${summary.lastConsultation.veterinarian}.`
-                  : " Sem consultas registadas."}
-              </p>
-
-              {/* Safety Alerts */}
-              {summary.safetyAlerts.length > 0 && (
-                <div className="space-y-1">
-                  {summary.safetyAlerts.map((alert, i) => (
-                    <div key={i} className="flex items-center gap-2 text-blue-100 text-sm font-semibold">
-                      <AlertCircle size={14} /> {alert}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Vaccine Status */}
-              {summary.vaccines.expired.length > 0 && (
-                <p className="text-amber-100 text-sm font-semibold">
-                  ⚠️ {summary.vaccines.expired.length} vacina(s) expirada(s): {summary.vaccines.expired.join(", ")}
-                </p>
-              )}
-              {summary.vaccines.upcoming.length > 0 && (
-                <p className="text-blue-100 text-sm">
-                  📅 {summary.vaccines.upcoming.map(v => `${v.name} (em ${v.daysLeft}d)`).join(", ")}
-                </p>
-              )}
-
-              {/* Recommendations */}
-              {summary.recommendations.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {summary.recommendations.map((rec, i) => (
-                    <span key={i} className="text-xs font-medium text-white bg-white/20 px-3 py-1 rounded-full">
-                      💡 {rec}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
-        <div className="flex flex-wrap gap-4">
-          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 min-w-[100px]">
-            <p className="text-[11px] font-semibold text-blue-200 mb-1">Peso</p>
-            <p className="text-2xl font-bold text-white">{summary.weight ?? "—"}</p>
-            {summary.weightTrend && (
-              <p className={`text-xs font-medium mt-1 ${summary.weightTrend.startsWith("+") ? "text-blue-200" : "text-emerald-200"}`}>
-                {summary.weightTrend}
-              </p>
-            )}
-          </div>
-          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 min-w-[100px]">
-            <p className="text-[11px] font-semibold text-blue-200 mb-1">Idade</p>
-            <p className="text-2xl font-bold text-white">{summary.ageText}</p>
-          </div>
-          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 min-w-[100px]">
-            <p className="text-[11px] font-semibold text-blue-200 mb-1">Vacinas</p>
-            <p className="text-2xl font-bold text-white">{summary.vaccines.total}</p>
-            {summary.vaccines.expired.length > 0 && (
-              <p className="text-xs text-blue-200 mt-1">{summary.vaccines.expired.length} exp.</p>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function PatientDetailPage() {
   const params = useParams();
@@ -340,6 +178,7 @@ export default function PatientDetailPage() {
     microchip: "",
     status: "ACTIVE",
     allergies: "",
+    aggressionLevel: "",
   });
   const [isSaving, setIsSaving] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
@@ -411,6 +250,22 @@ export default function PatientDetailPage() {
   const SpeciesIcon = isDog ? Dog : isCat ? Cat : PawPrint;
   const lastVital = vitals[0];
 
+  const isFemale = patient.gender === "F" || patient.gender?.toLowerCase().includes("fêm") || patient.gender?.toLowerCase().includes("fem");
+  const GenderIcon = isFemale ? Venus : Mars;
+
+  const rawTemp = (patient.aggressionLevel || "").toLowerCase();
+  const isDocil = rawTemp.includes("dócil") || rawTemp.includes("docil") || rawTemp.includes("baixo");
+  const isNervoso = rawTemp.includes("nervoso") || rawTemp.includes("médio") || rawTemp.includes("medio");
+  const isAgressivo = rawTemp.includes("agressivo") || rawTemp.includes("alto");
+
+  const tempDisplay = isDocil
+    ? { label: "Dócil", color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/15 ring-1 ring-emerald-500/30", badge: "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 ring-emerald-200 dark:ring-emerald-900/40", icon: ShieldCheck }
+    : isNervoso
+    ? { label: "Nervoso", color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500/15 ring-1 ring-amber-500/30", badge: "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 ring-amber-200 dark:ring-amber-900/40", icon: Zap }
+    : isAgressivo
+    ? { label: "Agressivo", color: "text-rose-600 dark:text-rose-400", bg: "bg-rose-500/15 ring-1 ring-rose-500/30", badge: "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 ring-rose-200 dark:ring-rose-900/40", icon: ShieldAlert }
+    : { label: "Não definido", color: "text-slate-400", bg: "bg-slate-500/10", badge: "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 ring-slate-200 dark:ring-slate-700", icon: Activity };
+
   return (
     <div className="w-full min-h-screen bg-slate-50/50 dark:bg-slate-950 p-4 md:p-8 lg:p-10 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
@@ -435,7 +290,7 @@ export default function PatientDetailPage() {
                 {patient.status === "ACTIVE" ? "Ativo" : "Inativo"}
               </Badge>
             </div>
-            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 font-medium text-base">
+            <div className="flex flex-wrap items-center gap-2 text-slate-500 dark:text-slate-400 font-medium text-base">
               <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-slate-900 rounded-lg shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
                 <SpeciesIcon size={16} className="text-blue-500" />
                 <span className="capitalize">{patient.species}</span>
@@ -443,6 +298,20 @@ export default function PatientDetailPage() {
               {patient.breed && (
                 <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-slate-900 rounded-lg shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
                   <span>{patient.breed}</span>
+                </div>
+              )}
+              <div className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-lg shadow-sm ring-1",
+                isFemale
+                  ? "bg-pink-50 dark:bg-pink-950/40 text-pink-700 dark:text-pink-300 ring-pink-200 dark:ring-pink-900/40"
+                  : "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 ring-blue-200 dark:ring-blue-900/40"
+              )}>
+                <GenderIcon size={15} className={isFemale ? "text-pink-500" : "text-blue-500"} strokeWidth={2.5} />
+                <span className="font-semibold text-xs">{isFemale ? "Fêmea" : "Macho"}</span>
+              </div>
+              {patient.aggressionLevel && (
+                <div className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-lg shadow-sm ring-1 text-xs font-bold uppercase tracking-wider", tempDisplay.badge)}>
+                  <tempDisplay.icon size={13} className={tempDisplay.color} strokeWidth={2.5} />
+                  <span>{tempDisplay.label}</span>
                 </div>
               )}
             </div>
@@ -461,6 +330,7 @@ export default function PatientDetailPage() {
                 microchip: patient.microchip || "",
                 status: patient.status || "ACTIVE",
                 allergies: patient.allergies || "",
+                aggressionLevel: patient.aggressionLevel || "",
               });
               setDialog("edit");
             }}
@@ -507,7 +377,7 @@ export default function PatientDetailPage() {
 
       {/* ── Clinical Summary Banner ── */}
       <div className="max-w-[1600px] mx-auto">
-        <ClinicalSummaryBanner patientId={patientId} />
+        <ClinicalSummaryBanner patientId={patientId} fallbackGender={patient.gender} />
       </div>
 
       {/* ── Main Layout ── */}
@@ -542,6 +412,19 @@ export default function PatientDetailPage() {
                   </div>
                 </div>
               ))}
+
+              {/* Temperamento */}
+              <div className="flex items-center gap-4 pt-1">
+                <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-all", tempDisplay.bg)}>
+                  <tempDisplay.icon size={20} className={tempDisplay.color} strokeWidth={2.5} />
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-0.5">Temperamento</p>
+                  <span className={cn("inline-flex items-center text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider", tempDisplay.badge)}>
+                    {tempDisplay.label}
+                  </span>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
@@ -568,6 +451,7 @@ export default function PatientDetailPage() {
                     microchip: patient.microchip || "",
                     status: patient.status || "ACTIVE",
                     allergies: patient.allergies || "",
+                    aggressionLevel: patient.aggressionLevel || "",
                   });
                   setDialog("edit");
                 }}
@@ -936,6 +820,32 @@ export default function PatientDetailPage() {
                   <option value="ACTIVE">Ativo</option>
                   <option value="INACTIVE">Inativo</option>
                 </select>
+              </div>
+
+              <div className="space-y-1.5 col-span-2">
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Temperamento</label>
+                <div className="grid grid-cols-3 gap-2.5">
+                  {[
+                    { val: "Dócil", active: "bg-emerald-600 text-white shadow-md shadow-emerald-500/20 ring-2 ring-emerald-500", inactive: "bg-slate-50 dark:bg-slate-950 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-50/50" },
+                    { val: "Nervoso", active: "bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/20 ring-2 ring-amber-400", inactive: "bg-slate-50 dark:bg-slate-950 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 hover:bg-amber-50/50" },
+                    { val: "Agressivo", active: "bg-rose-600 text-white shadow-md shadow-rose-500/20 ring-2 ring-rose-500", inactive: "bg-slate-50 dark:bg-slate-950 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60 hover:bg-rose-50/50" },
+                  ].map(({ val, active, inactive }) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => setEditForm({ ...editForm, aggressionLevel: editForm.aggressionLevel === val ? "" : val })}
+                      className={cn(
+                        "h-11 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2",
+                        editForm.aggressionLevel === val ? active : inactive
+                      )}
+                    >
+                      <span className={cn("w-2 h-2 rounded-full",
+                        val === "Dócil" ? "bg-emerald-400" : val === "Nervoso" ? "bg-amber-400" : "bg-rose-400"
+                      )} />
+                      {val}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="space-y-1.5 col-span-2">

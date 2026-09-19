@@ -49,6 +49,7 @@ const ConsultationSchema = z.object({
     price: z.number().nonnegative(),
     vatRate: z.number().nonnegative(),
   })).optional(),
+  temperament: z.string().optional().nullable(),
   billNow: z.boolean().optional(),
   paymentMethod: z.string().optional(),
 });
@@ -74,6 +75,7 @@ export const POST = withAuth(async ({ req, session, tenantPrisma, clinicId, user
     appointmentId, 
     notes, 
     vitals,
+    temperament,
     items, 
     billNow 
   } = validation.data;
@@ -98,6 +100,21 @@ export const POST = withAuth(async ({ req, session, tenantPrisma, clinicId, user
     });
 
     await audit({ clinicId, userId, action: "CREATE", entity: "Consultation", entityId: consultation.id });
+
+    // Update patient temperament and/or weight if provided
+    if (temperament || vitals?.weight) {
+      try {
+        await tenantPrisma.patient.update({
+          where: { id: patientId },
+          data: {
+            ...(temperament ? { aggressionLevel: temperament } : {}),
+            ...(vitals?.weight ? { weight: vitals.weight } : {}),
+          }
+        });
+      } catch (pErr) {
+        console.error("[PATIENT_UPDATE_IN_CONSULTATION]", pErr);
+      }
+    }
 
     // 1.1. Create Vital Signs if provided
     if (vitals && (vitals.weight || vitals.temperature || vitals.heartRate || vitals.respiratoryRate || vitals.painScale != null || vitals.bodyConditionScore != null)) {

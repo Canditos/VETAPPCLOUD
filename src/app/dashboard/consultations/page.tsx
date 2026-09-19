@@ -6,7 +6,8 @@ import {
   Save, FileText, Activity, ClipboardCheck, Receipt, FlaskConical,
   ChevronLeft, Stethoscope, Image as ImageIcon, Thermometer, Weight,
   Clock, Plus, ShieldAlert, Search, History, Syringe, AlertCircle,
-  AlertTriangle, Sparkles, Eye, TrendingUp, CheckCircle2, Pill
+  AlertTriangle, Sparkles, Eye, TrendingUp, CheckCircle2, Pill,
+  Venus, Mars, ShieldCheck, Zap
 } from "lucide-react";
 import { PainAssessmentForm } from "@/components/forms/PainAssessmentForm";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,11 +19,9 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ClinicalTimeline } from "@/components/ClinicalTimeline";
 import { ConsultationBilling } from "@/components/ConsultationBilling";
-import { ClinicalVaccines } from "@/components/ClinicalVaccines";
 import { PrescriptionForm } from "@/components/forms/PrescriptionForm";
-import { SmartAlertsFetcher } from "@/components/SmartAlertsFetcher";
+import { ClinicalSummaryBanner } from "@/components/ClinicalSummaryBanner";
 import { PremiumCard } from "@/components/PremiumCard";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -43,6 +42,7 @@ function ConsultationContent() {
   const [billingItems, setBillingItems] = useState<BillingItem[]>([]);
   const [notes, setNotes] = useState({ subjective: "", objective: "", assessment: "", plan: "" });
   const [vitals, setVitals] = useState({ weight: "", temperature: "", heartRate: "", respiratoryRate: "", painScale: -1, bodyConditionScore: -1 });
+  const [temperament, setTemperament] = useState<string>("");
   const [patientSearch, setPatientSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
@@ -181,6 +181,7 @@ function ConsultationContent() {
           patientId,
           appointmentId: appointmentId || "walk-in-" + Date.now(),
           notes,
+          temperament: temperament || null,
           vitals: {
             weight: vitals.weight ? parseFloat(vitals.weight) : null,
             temperature: vitals.temperature ? parseFloat(vitals.temperature) : null,
@@ -343,6 +344,33 @@ function ConsultationContent() {
             <div className="flex flex-wrap items-center gap-3 mb-2">
               <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">{patient?.name}</h1>
                <Badge className="bg-blue-600 text-white border-none font-semibold text-xs px-3 py-1 rounded-lg">{patient?.species}</Badge>
+
+               {/* Gender Badge */}
+               {patient?.gender && (
+                 <Badge variant="outline" className={cn("text-xs font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1",
+                   patient.gender === "F" || patient.gender === "Fêmea"
+                     ? "border-pink-300 text-pink-700 bg-pink-50 dark:bg-pink-950/30 dark:border-pink-800 dark:text-pink-300"
+                     : "border-blue-300 text-blue-700 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800 dark:text-blue-300"
+                 )}>
+                   {patient.gender === "F" || patient.gender === "Fêmea" ? <Venus size={12} strokeWidth={2.5} /> : <Mars size={12} strokeWidth={2.5} />}
+                   {patient.gender === "F" || patient.gender === "Fêmea" ? "Fêmea" : "Macho"}
+                 </Badge>
+               )}
+
+               {/* Temperament Badge */}
+               {temperament && (
+                 <Badge className={cn("text-xs font-bold px-2.5 py-1 rounded-lg border-none flex items-center gap-1 shadow-sm",
+                   temperament === "Dócil" ? "bg-emerald-600 text-white" :
+                   temperament === "Nervoso" ? "bg-amber-500 text-white" :
+                   "bg-rose-600 text-white"
+                 )}>
+                   {temperament === "Dócil" ? <ShieldCheck size={12} strokeWidth={2.5} /> :
+                    temperament === "Nervoso" ? <Zap size={12} strokeWidth={2.5} /> :
+                    <ShieldAlert size={12} strokeWidth={2.5} />}
+                   {temperament}
+                 </Badge>
+               )}
+
                {!appointmentId && (
                  <Badge variant="outline" className="border-amber-200 dark:border-amber-900/30 text-amber-600 dark:text-amber-400 font-medium text-[11px] px-3 py-1 rounded-lg animate-pulse">Walk-in</Badge>
                )}
@@ -380,16 +408,18 @@ function ConsultationContent() {
         </div>
       </div>
 
-      {/* Smart Alerts */}
-      <SmartAlertsFetcher patientId={patientId!} />
+      {/* Resumo Clínico Inteligente (Gender-adaptive Design) */}
+      <ClinicalSummaryBanner
+        patientId={patientId!}
+        fallbackGender={patient?.gender}
+      />
 
       {/* Main Clinical Navigation */}
       <Tabs value={activeTab} onValueChange={updateTab} className="w-full">
         <div className="mb-10 overflow-x-auto -mx-4 px-4 md:-mx-8 md:px-8 no-scrollbar w-full">
           <TabsList className="flex w-full bg-slate-100/50 dark:bg-slate-900/50 p-1.5 rounded-2xl ring-1 ring-slate-200/50 dark:ring-white/5 gap-1">
             {[
-              { val: "clinical", label: "Histórico & SOAP", icon: ClipboardCheck },
-              { val: "vaccines", label: "Vacinação & Prevenção", icon: Syringe },
+              { val: "clinical", label: "Atendimento Clínico & SOAP", icon: ClipboardCheck },
               { val: "prescriptions", label: "Prescrições", icon: Pill },
               { val: "exams", label: "Meios Complementares", icon: FlaskConical },
               { val: "billing", label: "Farmácia & Faturação", icon: Receipt }
@@ -404,8 +434,8 @@ function ConsultationContent() {
 
         {/* CLINICAL / SOAP TAB */}
         <TabsContent value="clinical" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-8 space-y-6">
+          <div className="w-full space-y-6">
+            <div>
               <PremiumCard padding="none">
                 <div className="px-6 py-6 pb-4 border-b border-slate-50 dark:border-white/5 bg-slate-50/30 dark:bg-white/5">
                   <div className="flex justify-between items-center">
@@ -495,6 +525,50 @@ function ConsultationContent() {
                         <span className="text-rose-500">Obeso →</span>
                       </div>
                     </div>
+
+                    {/* Temperamento do Paciente */}
+                    <div className="space-y-2 pt-3 border-t border-slate-100 dark:border-white/5">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Temperamento da Consulta</p>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Comportamento observado na abordagem clínica</p>
+                        </div>
+                        {temperament && (
+                          <span className={cn("text-xs font-bold px-2.5 py-0.5 rounded-lg text-white",
+                            temperament === "Dócil" ? "bg-emerald-600" :
+                            temperament === "Nervoso" ? "bg-amber-500" :
+                            "bg-rose-600"
+                          )}>
+                            {temperament}
+                          </span>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-3 gap-2.5">
+                        {[
+                          { label: "Dócil", desc: "Calmo e cooperante", activeClass: "border-emerald-500 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 ring-2 ring-emerald-400 shadow-sm", dotClass: "bg-emerald-500" },
+                          { label: "Nervoso", desc: "Ansioso / Medroso", activeClass: "border-amber-500 bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 ring-2 ring-amber-400 shadow-sm", dotClass: "bg-amber-500" },
+                          { label: "Agressivo", desc: "Cuidado na manipulação", activeClass: "border-rose-500 bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 ring-2 ring-rose-400 shadow-sm", dotClass: "bg-rose-500" }
+                        ].map(t => (
+                          <button
+                            key={t.label}
+                            type="button"
+                            onClick={() => setTemperament(temperament === t.label ? null : t.label)}
+                            className={cn(
+                              "flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all cursor-pointer select-none",
+                              temperament === t.label
+                                ? t.activeClass
+                                : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 hover:border-slate-300 text-slate-700 dark:text-slate-300"
+                            )}
+                          >
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className={cn("w-2.5 h-2.5 rounded-full", t.dotClass)} />
+                              <span className="font-bold text-xs">{t.label}</span>
+                            </div>
+                            <span className="text-[10px] text-slate-400 font-medium">{t.desc}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
 
                   {/* SOAP — Veterinary Medicine Protocol */}
@@ -536,66 +610,8 @@ function ConsultationContent() {
                  </div>
                 </PremiumCard>
               </div>
-
-             <div className="lg:col-span-4 space-y-6">
-               {/* Vaccination Booklet Mini-Card */}
-               {(() => {
-                const vaccEvents = history?.filter((h: { type: string }) => h.type === "VACCINATION") ?? [];
-                const now = new Date();
-                return (
-                  <PremiumCard padding="none">
-                    <div className="px-6 py-4 bg-emerald-50/50 dark:bg-emerald-900/10 border-b border-emerald-100 dark:border-emerald-900/20">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2"><Syringe size={14} className="text-emerald-600" /> Boletim Vacinal</h3>
-                        <Button variant="ghost" size="sm" className="h-7 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 gap-1.5" onClick={() => updateTab("vaccines")}>
-                          Ver completo <ChevronLeft className="rotate-180" size={10} />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="p-4 space-y-2">
-                      {vaccEvents.length === 0 ? (
-                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium text-center py-4">Sem vacinas registadas</p>
-                      ) : vaccEvents.slice(0, 4).map((v: { id: string; title: string; date: string; data?: { expiresAt?: string } }) => {
-                        const expiresAt = v.data?.expiresAt ? new Date(v.data.expiresAt) : null;
-                        const isExpired = expiresAt && expiresAt < now;
-                        const isDueSoon = expiresAt && !isExpired && (expiresAt.getTime() - now.getTime()) < 30 * 24 * 60 * 60 * 1000;
-                        return (
-                          <div key={v.id} className="flex items-center justify-between gap-2 p-2.5 bg-slate-50 dark:bg-white/5 rounded-xl">
-                            <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate flex-1">{v.title}</p>
-                            <Badge className={cn("border-none text-[11px] font-bold shrink-0",
-                              isExpired ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" :
-                              isDueSoon ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
-                              "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                            )}>
-                              {isExpired ? "Vencida" : isDueSoon ? "Próxima" : "Válida"}
-                            </Badge>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </PremiumCard>
-                );
-              })()}
-
-               <PremiumCard padding="none" className="h-full flex flex-col">
-                <div className="px-6 py-4 bg-slate-50/50 dark:bg-white/5 border-b border-slate-100 dark:border-white/5">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2"><History size={14} className="text-blue-600" /> Histórico</h3>
-                    <Badge variant="ghost" className="text-[11px] font-medium text-slate-500 dark:text-slate-400">{history?.length || 0} Eventos</Badge>
-                  </div>
-                </div>
-                <div className="flex-1 overflow-y-auto max-h-[700px] p-6 no-scrollbar">
-                   <ClinicalTimeline history={history} isLoading={isHistoryLoading} />
-                 </div>
-               </PremiumCard>
-             </div>
-           </div>
-         </TabsContent>
-
-        {/* VACCINES TAB */}
-        <TabsContent value="vaccines" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-           {patientId && <ClinicalVaccines patientId={patientId} />}
-        </TabsContent>
+            </div>
+          </TabsContent>
 
         {/* PRESCRIPTIONS TAB */}
         <TabsContent value="prescriptions" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
