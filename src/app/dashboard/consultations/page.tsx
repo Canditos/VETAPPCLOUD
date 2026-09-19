@@ -7,9 +7,8 @@ import {
   ChevronLeft, Stethoscope, Image as ImageIcon, Thermometer, Weight,
   Clock, Plus, ShieldAlert, Search, History, Syringe, AlertCircle,
   AlertTriangle, Sparkles, Eye, TrendingUp, CheckCircle2, Pill,
-  Venus, Mars, ShieldCheck, Zap
+  Venus, Mars, ShieldCheck, Zap, Calendar, CalendarCheck
 } from "lucide-react";
-import { PainAssessmentForm } from "@/components/forms/PainAssessmentForm";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -20,11 +19,18 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConsultationBilling } from "@/components/ConsultationBilling";
-import { PrescriptionForm } from "@/components/forms/PrescriptionForm";
 import { ClinicalSummaryBanner } from "@/components/ClinicalSummaryBanner";
 import { PremiumCard } from "@/components/PremiumCard";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from "@/components/ui/dialog";
 import { useIntegrationHealth } from "@/hooks/useIntegrationHealth";
 import type { BillingItem, DiagnosticResult } from "@/types";
 import { cn } from "@/lib/utils";
@@ -40,9 +46,19 @@ function ConsultationContent() {
   
   const [activeTab, setActiveTab] = useState(urlTab);
   const [billingItems, setBillingItems] = useState<BillingItem[]>([]);
-  const [notes, setNotes] = useState({ subjective: "", objective: "", assessment: "", plan: "" });
-  const [vitals, setVitals] = useState({ weight: "", temperature: "", heartRate: "", respiratoryRate: "", painScale: -1, bodyConditionScore: -1 });
+  
+  // Clinical structured fields
+  const [chiefComplaint, setChiefComplaint] = useState("");
+  const [pastHistory, setPastHistory] = useState("");
+  const [physicalExam, setPhysicalExam] = useState("");
+  const [diagnosticsNotes, setDiagnosticsNotes] = useState("");
+  const [treatment, setTreatment] = useState("");
+  const [reassessmentDate, setReassessmentDate] = useState("");
+
+  const [vitals, setVitals] = useState({ weight: "", temperature: "", heartRate: "", respiratoryRate: "", bodyConditionScore: -1 });
   const [temperament, setTemperament] = useState<string>("");
+  const [isExamsModalOpen, setIsExamsModalOpen] = useState(false);
+  const [reassessmentPopup, setReassessmentPopup] = useState<{ open: boolean; date: string } | null>(null);
   const [patientSearch, setPatientSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
@@ -170,7 +186,8 @@ function ConsultationContent() {
   };
 
   const handleSave = async () => {
-    if (billingItems.length === 0 && !notes.plan) {
+    const hasNotes = chiefComplaint || pastHistory || physicalExam || diagnosticsNotes || treatment;
+    if (billingItems.length === 0 && !hasNotes) {
       toast.error("Adicione notas clínicas ou itens para faturar.");
       return;
     }
@@ -180,14 +197,26 @@ function ConsultationContent() {
         body: JSON.stringify({
           patientId,
           appointmentId: appointmentId || "walk-in-" + Date.now(),
-          notes,
+          clinicalFields: {
+            chiefComplaint,
+            pastHistory,
+            physicalExam,
+            diagnostics: diagnosticsNotes,
+            treatment,
+            reassessmentDate,
+          },
+          notes: {
+            subjective: [chiefComplaint && `Motivo: ${chiefComplaint}`, pastHistory && `História: ${pastHistory}`].filter(Boolean).join("\n\n"),
+            objective: physicalExam,
+            assessment: diagnosticsNotes,
+            plan: [treatment && `Tratamento: ${treatment}`, reassessmentDate && `Reavaliação: ${reassessmentDate}`].filter(Boolean).join("\n\n"),
+          },
           temperament: temperament || null,
           vitals: {
             weight: vitals.weight ? parseFloat(vitals.weight) : null,
             temperature: vitals.temperature ? parseFloat(vitals.temperature) : null,
             heartRate: vitals.heartRate ? parseFloat(vitals.heartRate) : null,
             respiratoryRate: vitals.respiratoryRate ? parseFloat(vitals.respiratoryRate) : null,
-            painScale: vitals.painScale >= 0 ? vitals.painScale : null,
             bodyConditionScore: vitals.bodyConditionScore >= 1 ? vitals.bodyConditionScore : null,
           },
           items: billingItems,
@@ -200,7 +229,14 @@ function ConsultationContent() {
       }),
       {
         loading: 'A gravar consulta e a sincronizar faturamento...',
-        success: () => { router.push(`/dashboard/patients/${patientId}`); return "Consulta finalizada com sucesso!"; },
+        success: () => {
+          if (reassessmentDate) {
+            setReassessmentPopup({ open: true, date: reassessmentDate });
+            return "Consulta finalizada com sucesso!";
+          }
+          router.push(`/dashboard/patients/${patientId}`);
+          return "Consulta finalizada com sucesso!";
+        },
         error: 'Erro ao gravar a consulta.',
       }
     );
@@ -419,8 +455,7 @@ function ConsultationContent() {
         <div className="mb-10 overflow-x-auto -mx-4 px-4 md:-mx-8 md:px-8 no-scrollbar w-full">
           <TabsList className="flex w-full bg-slate-100/50 dark:bg-slate-900/50 p-1.5 rounded-2xl ring-1 ring-slate-200/50 dark:ring-white/5 gap-1">
             {[
-              { val: "clinical", label: "Atendimento Clínico & SOAP", icon: ClipboardCheck },
-              { val: "prescriptions", label: "Prescrições", icon: Pill },
+              { val: "clinical", label: "Atendimento Clínico", icon: ClipboardCheck },
               { val: "exams", label: "Meios Complementares", icon: FlaskConical },
               { val: "billing", label: "Farmácia & Faturação", icon: Receipt }
             ].map(t => (
@@ -571,40 +606,159 @@ function ConsultationContent() {
                     </div>
                   </div>
 
-                  {/* SOAP — Veterinary Medicine Protocol */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 ml-1">
-                        <span className="w-5 h-5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-md text-[11px] font-black flex items-center justify-center">S</span>
-                        <Label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Anamnese (Subjetivo)</Label>
+                  {/* Campos Clínicos Estruturados */}
+                  <div className="space-y-6 pt-2">
+                    {/* 1. Motivo de Consulta (campo mais pequeno) */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 ml-0.5">
+                        <span className="w-6 h-6 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-black flex items-center justify-center">1</span>
+                        <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Motivo de Consulta</Label>
                       </div>
-                      <Textarea className="min-h-[140px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-100 dark:border-white/5 focus-visible:ring-blue-500/20 resize-none text-sm" value={notes.subjective} onChange={(e) => setNotes({ ...notes, subjective: e.target.value })} placeholder="Queixa principal, história clínica, evolução, alimentação, ambiente, medicação em curso, vacinações anteriores..." />
+                      <Input
+                        value={chiefComplaint}
+                        onChange={(e) => setChiefComplaint(e.target.value)}
+                        placeholder="Ex: Vacinação anual, tosse e espirros, vómitos frequentes, claudicação da pata posterior..."
+                        className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm font-medium focus-visible:ring-blue-500/20"
+                      />
                     </div>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 ml-1">
-                        <span className="w-5 h-5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-md text-[11px] font-black flex items-center justify-center">O</span>
-                        <Label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Exame Físico (Objetivo)</Label>
+
+                    {/* 2. História Pregressa */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 ml-0.5">
+                        <span className="w-6 h-6 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-black flex items-center justify-center">2</span>
+                        <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">História Pregressa</Label>
                       </div>
-                      <Textarea className="min-h-[140px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-100 dark:border-white/5 focus-visible:ring-blue-500/20 resize-none text-sm" value={notes.objective} onChange={(e) => setNotes({ ...notes, objective: e.target.value })} placeholder="Alerta mental, mucosas (cor, TRC, hidratação), auscultação cardiopulmonar, palpação abdominal, linfonodos, olhos, ouvidos, pele/pelo..." />
+                      <Textarea
+                        value={pastHistory}
+                        onChange={(e) => setPastHistory(e.target.value)}
+                        placeholder="Início e evolução dos sinais clínicos, medicação em curso, doenças prévias, cirurgias anteriores, alimentação e ambiente..."
+                        className="min-h-[105px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-blue-500/20 resize-none"
+                      />
                     </div>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 ml-1">
-                        <span className="w-5 h-5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-md text-[11px] font-black flex items-center justify-center">A</span>
-                        <Label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Diagnóstico (Avaliação)</Label>
+
+                    {/* 3. Exame Físico */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 ml-0.5">
+                        <span className="w-6 h-6 bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 rounded-lg text-xs font-black flex items-center justify-center">3</span>
+                        <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Exame Físico</Label>
                       </div>
-                      <Textarea className="min-h-[140px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-100 dark:border-white/5 focus-visible:ring-blue-500/20 resize-none text-sm" value={notes.assessment} onChange={(e) => setNotes({ ...notes, assessment: e.target.value })} placeholder="Lista de problemas, diagnóstico presuntivo, diagnósticos diferenciais, prognóstico..." />
+                      <Textarea
+                        value={physicalExam}
+                        onChange={(e) => setPhysicalExam(e.target.value)}
+                        placeholder="Alerta mental, mucosas, TRC, hidratação, auscultação cardiopulmonar, palpação abdominal, linfonodos, ouvidos, olhos, cavidade oral, pele e anexos..."
+                        className="min-h-[105px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-blue-500/20 resize-none"
+                      />
                     </div>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between ml-1">
-                        <div className="flex items-center gap-2">
-                          <span className="w-5 h-5 bg-blue-600 text-white rounded-md text-[11px] font-black flex items-center justify-center">P</span>
-                          <Label className="text-xs font-semibold text-blue-600 dark:text-blue-400">Plano Terapêutico</Label>
+
+                    {/* 4. Exames Complementares de Diagnóstico (Botão para resultados) */}
+                    <div className="p-4 sm:p-5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/30 border border-slate-200/80 dark:border-white/10">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5">
+                          <span className="w-6 h-6 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-black flex items-center justify-center">4</span>
+                          <div>
+                            <Label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Exames Complementares de Diagnóstico</Label>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Resultados laboratoriais, radiografias e ecografias deste atendimento</p>
+                          </div>
                         </div>
-                        <Button variant="ghost" size="sm" className="h-7 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 gap-2" onClick={() => { if (!notes.plan) { toast.error("Escreva o plano primeiro!"); return; } updateTab("prescriptions"); toast.success("Plano transferido!"); }}>
-                          <Sparkles size={12} strokeWidth={3} /> Gerar Prescrição
-                        </Button>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Button
+                            type="button"
+                            onClick={() => setIsExamsModalOpen(true)}
+                            className="h-10 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md shadow-purple-500/20 gap-2 transition-transform active:scale-95"
+                          >
+                            <FlaskConical size={15} /> Ver Resultados dos Exames ({diagnostics?.length || 0})
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => updateTab("exams")}
+                            className="h-10 px-3 rounded-xl border-slate-200 dark:border-white/10 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 gap-1.5"
+                          >
+                            <Plus size={13} /> Requisitar Exame
+                          </Button>
+                        </div>
                       </div>
-                      <Textarea className="min-h-[140px] rounded-2xl bg-blue-50/30 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/20 focus-visible:ring-blue-500/20 resize-none text-sm" value={notes.plan} onChange={(e) => setNotes({ ...notes, plan: e.target.value })} placeholder="Protocolo medicamentoso (fármacos, doses, frequência, duração), exames complementares solicitados, reavaliação em, instruções ao tutor..." />
+                    </div>
+
+                    {/* 5. Diagnósticos Diferenciais / Definitivo */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 ml-0.5">
+                        <span className="w-6 h-6 bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 rounded-lg text-xs font-black flex items-center justify-center">5</span>
+                        <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Diagnósticos Diferenciais / Definitivo</Label>
+                      </div>
+                      <Textarea
+                        value={diagnosticsNotes}
+                        onChange={(e) => setDiagnosticsNotes(e.target.value)}
+                        placeholder="Lista de hipóteses diagnósticas, diferenciais considerados e diagnóstico definitivo..."
+                        className="min-h-[105px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-blue-500/20 resize-none"
+                      />
+                    </div>
+
+                    {/* 6. Tratamento */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 ml-0.5">
+                        <span className="w-6 h-6 bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 rounded-lg text-xs font-black flex items-center justify-center">6</span>
+                        <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Tratamento</Label>
+                      </div>
+                      <Textarea
+                        value={treatment}
+                        onChange={(e) => setTreatment(e.target.value)}
+                        placeholder="Protocolo medicamentoso (fármacos, posologia, frequência, duração), fluidoterapia, procedimentos realizados e instruções ao tutor..."
+                        className="min-h-[110px] rounded-2xl bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-blue-500/20 resize-none"
+                      />
+                    </div>
+
+                    {/* 7. Data de Reavaliação */}
+                    <div className="p-4 sm:p-5 rounded-2xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 space-y-3">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5">
+                          <span className="w-6 h-6 bg-blue-600 text-white rounded-lg text-xs font-black flex items-center justify-center">7</span>
+                          <div>
+                            <Label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Data de Reavaliação</Label>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Apresenta aviso em pop-up quando a fatura for liquidada</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Input
+                            type="date"
+                            value={reassessmentDate}
+                            onChange={(e) => setReassessmentDate(e.target.value)}
+                            className="h-10 w-44 rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-xs font-bold text-slate-900 dark:text-white shadow-sm"
+                          />
+                          {[
+                            { label: "+3d", days: 3 },
+                            { label: "+7d", days: 7 },
+                            { label: "+15d", days: 15 },
+                            { label: "+30d", days: 30 }
+                          ].map(q => (
+                            <Button
+                              key={q.label}
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const d = new Date();
+                                d.setDate(d.getDate() + q.days);
+                                setReassessmentDate(d.toISOString().split("T")[0]);
+                              }}
+                              className="h-9 px-2.5 rounded-lg border-blue-200 dark:border-blue-900/40 text-blue-700 dark:text-blue-300 bg-white dark:bg-slate-900 text-xs font-bold hover:bg-blue-50"
+                            >
+                              {q.label}
+                            </Button>
+                          ))}
+                          {reassessmentDate && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setReassessmentDate("")}
+                              className="h-9 px-2 text-xs font-semibold text-slate-400 hover:text-slate-600"
+                            >
+                              Limpar
+                            </Button>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                  </div>
@@ -612,34 +766,6 @@ function ConsultationContent() {
               </div>
             </div>
           </TabsContent>
-
-        {/* PRESCRIPTIONS TAB */}
-        <TabsContent value="prescriptions" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-6">
-                  <PremiumCard padding="lg">
-                     <div className="mb-6">
-                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Emissão de Prescrição</h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-1">Registo de medicamentos e protocolos de tratamento.</p>
-                     </div>
-                     {patientId && <PrescriptionForm patientId={patientId} consultationId={appointmentId || undefined} />}
-                  </PremiumCard>
-               </div>
-               <div className="space-y-6">
-                  <PremiumCard variant="purple" className="!bg-slate-900 dark:!bg-slate-800 text-white overflow-hidden relative">
-                     <div className="absolute top-0 right-0 p-6 opacity-10"><Pill size={80} /></div>
-                     <div className="relative z-10">
-                        <h3 className="text-base font-bold mb-4">Notas Legais</h3>
-                        <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-6">Prescrições de antibióticos requerem todos os campos para conformidade legal.</p>
-                        <div className="space-y-3">
-                           <div className="flex items-start gap-3"><div className="mt-1 w-2 h-2 rounded-full bg-blue-500 shrink-0" /><p className="text-xs text-slate-300">Válido por 30 dias por defeito.</p></div>
-                           <div className="flex items-start gap-3"><div className="mt-1 w-2 h-2 rounded-full bg-blue-500 shrink-0" /><p className="text-xs text-slate-300">Gera PDF assinado digitalmente.</p></div>
-                        </div>
-                     </div>
-                  </PremiumCard>
-              </div>
-           </div>
-        </TabsContent>
 
         {/* BILLING TAB */}
         <TabsContent value="billing" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -753,6 +879,152 @@ function ConsultationContent() {
             </div>
          </TabsContent>
        </Tabs>
+
+        {/* Modal de Resultados dos Exames Complementares de Diagnóstico */}
+        <Dialog open={isExamsModalOpen} onOpenChange={setIsExamsModalOpen}>
+          <DialogContent className="max-w-2xl rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-2xl p-6">
+            <DialogHeader>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                  <FlaskConical size={20} strokeWidth={2.5} />
+                </div>
+                <div>
+                  <DialogTitle className="text-xl font-black text-slate-900 dark:text-white">
+                    Exames Complementares de Diagnóstico
+                  </DialogTitle>
+                  <DialogDescription className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    Resultados das análises laboratoriais e meios complementares de imagiologia
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+
+            <div className="max-h-[380px] overflow-y-auto space-y-3 py-2 pr-1">
+              {!diagnostics || diagnostics.length === 0 ? (
+                <div className="py-10 text-center bg-slate-50 dark:bg-white/5 rounded-2xl border-2 border-dashed border-slate-200 dark:border-white/10">
+                  <FlaskConical size={32} className="mx-auto text-slate-300 dark:text-slate-600 mb-2" />
+                  <p className="text-slate-700 dark:text-slate-300 font-bold text-sm">Sem exames registados para este paciente</p>
+                  <p className="text-slate-400 text-xs mt-1">Pode requisitar análises laboratoriais ou imagiologia na tab &ldquo;Meios Complementares&rdquo;.</p>
+                </div>
+              ) : (
+                diagnostics.map((dx: DiagnosticResult) => (
+                  <div key={dx.id} className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200/80 dark:border-white/10 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+                        dx.type === 'LAB' ? "bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400" : "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400"
+                      )}>
+                        {dx.type === 'LAB' ? <FlaskConical size={18} /> : <ImageIcon size={18} />}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-sm text-slate-900 dark:text-white truncate">{dx.summary ?? dx.testName ?? "Exame"}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                          {dx.source || "Dispositivo"} • {dx.createdAt ? formatDistanceToNow(new Date(dx.createdAt), { addSuffix: true, locale: pt }) : ""}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Badge className={cn("text-[10px] font-bold border-none",
+                        dx.status === "COMPLETED" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
+                        dx.status === "ALERT" ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" :
+                        "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                      )}>
+                        {dx.status === "COMPLETED" ? "Recebido" : dx.status === "ALERT" ? "Alerta" : "Pendente"}
+                      </Badge>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <DialogFooter className="flex items-center justify-between sm:justify-between pt-3 border-t border-slate-100 dark:border-white/5">
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-xl border-slate-200 dark:border-white/10 text-xs font-semibold"
+                onClick={() => setIsExamsModalOpen(false)}
+              >
+                Fechar
+              </Button>
+              <Button
+                size="sm"
+                className="rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold gap-1.5"
+                onClick={() => {
+                  setIsExamsModalOpen(false);
+                  updateTab("exams");
+                }}
+              >
+                <Plus size={14} /> Requisitar / Gerir Exames
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Pop-up de Aviso de Reavaliação Pós-Pagamento */}
+        <Dialog
+          open={!!reassessmentPopup?.open}
+          onOpenChange={(open) => {
+            if (!open) {
+              setReassessmentPopup(null);
+              router.push(`/dashboard/patients/${patientId}`);
+            }
+          }}
+        >
+          <DialogContent className="sm:max-w-md rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-2xl p-6">
+            <DialogHeader className="text-center sm:text-center space-y-3">
+              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center mx-auto shadow-md">
+                <CalendarCheck size={32} strokeWidth={2.5} />
+              </div>
+              <DialogTitle className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                Fatura Paga & Consulta Concluída
+              </DialogTitle>
+              <DialogDescription className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                A fatura da consulta foi processada e liquidada com sucesso.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="my-4 p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 text-amber-950 dark:text-amber-200 text-center space-y-1">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">Aviso Clínico</p>
+              <p className="text-lg font-black leading-snug">
+                O paciente tem reavaliação a marcar no dia{" "}
+                <span className="text-amber-700 dark:text-amber-300 underline decoration-2 font-black">
+                  {(() => {
+                    try {
+                      if (!reassessmentPopup?.date) return "";
+                      const parts = reassessmentPopup.date.split("-");
+                      if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                      return reassessmentPopup.date;
+                    } catch {
+                      return reassessmentPopup?.date || "";
+                    }
+                  })()}
+                </span>
+              </p>
+            </div>
+
+            <DialogFooter className="flex flex-col sm:flex-row gap-2 pt-2">
+              <Button
+                variant="outline"
+                className="rounded-xl h-11 border-slate-200 dark:border-white/10 font-bold text-xs flex-1"
+                onClick={() => {
+                  setReassessmentPopup(null);
+                  router.push(`/dashboard/patients/${patientId}`);
+                }}
+              >
+                Concluir & Ir para Ficha
+              </Button>
+              <Button
+                className="rounded-xl h-11 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-lg shadow-blue-500/20 flex-1 gap-1.5"
+                onClick={() => {
+                  const targetDate = reassessmentPopup?.date;
+                  setReassessmentPopup(null);
+                  router.push(`/dashboard/appointments?patientId=${patientId}${targetDate ? `&date=${targetDate}` : ""}`);
+                }}
+              >
+                <Calendar size={15} /> Agendar na Agenda
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
      </div>
    );
  }

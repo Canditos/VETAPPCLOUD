@@ -33,7 +33,15 @@ const ConsultationSchema = z.object({
     objective: z.string().optional(),
     assessment: z.string().optional(),
     plan: z.string().optional(),
-  }),
+  }).optional().default({}),
+  clinicalFields: z.object({
+    chiefComplaint: z.string().optional(),
+    pastHistory: z.string().optional(),
+    physicalExam: z.string().optional(),
+    diagnostics: z.string().optional(),
+    treatment: z.string().optional(),
+    reassessmentDate: z.string().optional(),
+  }).optional(),
   vitals: z.object({
     weight: z.number().optional().nullable(),
     temperature: z.number().optional().nullable(),
@@ -73,7 +81,8 @@ export const POST = withAuth(async ({ req, session, tenantPrisma, clinicId, user
   const { 
     patientId, 
     appointmentId, 
-    notes, 
+    notes,
+    clinicalFields,
     vitals,
     temperament,
     items, 
@@ -81,6 +90,22 @@ export const POST = withAuth(async ({ req, session, tenantPrisma, clinicId, user
   } = validation.data;
 
   try {
+    const subjective = (clinicalFields?.chiefComplaint || clinicalFields?.pastHistory)
+      ? [
+          clinicalFields.chiefComplaint ? `Motivo de Consulta: ${clinicalFields.chiefComplaint}` : null,
+          clinicalFields.pastHistory ? `História Pregressa: ${clinicalFields.pastHistory}` : null,
+        ].filter(Boolean).join("\n\n")
+      : notes?.subjective || "";
+
+    const objective = clinicalFields?.physicalExam || notes?.objective || "";
+    const assessment = clinicalFields?.diagnostics || notes?.assessment || "";
+    const plan = (clinicalFields?.treatment || clinicalFields?.reassessmentDate)
+      ? [
+          clinicalFields.treatment ? `Tratamento: ${clinicalFields.treatment}` : null,
+          clinicalFields.reassessmentDate ? `Data de Reavaliação: ${clinicalFields.reassessmentDate}` : null,
+        ].filter(Boolean).join("\n\n")
+      : notes?.plan || "";
+
     // 1. Create Consultation in DB
     const consultation = await tenantPrisma.consultation.create({
       data: {
@@ -90,10 +115,10 @@ export const POST = withAuth(async ({ req, session, tenantPrisma, clinicId, user
         status: "COMPLETED",
         notes: {
           create: {
-            subjective: notes.subjective,
-            objective: notes.objective,
-            assessment: notes.assessment,
-            plan: notes.plan,
+            subjective,
+            objective,
+            assessment,
+            plan,
           }
         }
       },
