@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -8,7 +9,8 @@ import {
   Stethoscope, Syringe, AlertCircle, Dog, Cat, FileText, Heart,
   Thermometer, Weight, Plus, Pill, Shield, TrendingUp, Info, Clock, 
   Sparkles, ChevronRight, Microscope, Edit3, Radio, ScanLine, Loader2,
-  CheckCircle2, WifiOff, Venus, Mars, ShieldAlert, ShieldCheck, Zap
+  CheckCircle2, WifiOff, Venus, Mars, ShieldAlert, ShieldCheck, Zap,
+  ArrowUpRight
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -318,6 +320,19 @@ export default function PatientDetailPage() {
                   <span>{tempDisplay.label}</span>
                 </div>
               )}
+              {patient.owner?.name && (
+                <Link
+                  href={`/dashboard/customers/${patient.owner?.id || patient.ownerId}`}
+                  className="flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-slate-900 rounded-lg shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 hover:ring-blue-400 dark:hover:ring-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-all group"
+                  title="Ver perfil do tutor"
+                >
+                  <User size={14} className="text-purple-500 group-hover:text-blue-600 transition-colors" />
+                  <span className="font-semibold text-xs text-slate-700 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                    {patient.owner.name}
+                  </span>
+                  <ArrowUpRight size={13} className="text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -489,30 +504,64 @@ export default function PatientDetailPage() {
 
           {/* Responsável */}
           <Card className="border-none shadow-lg bg-white dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl ring-1 ring-slate-200/60 dark:ring-slate-800 overflow-hidden">
-            <CardHeader className="px-6 py-5 border-b border-slate-100 dark:border-slate-800/60">
+            <CardHeader className="px-6 py-5 border-b border-slate-100 dark:border-slate-800/60 flex flex-row items-center justify-between space-y-0">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500">
                   <User size={14} strokeWidth={2.5} />
                 </div>
                 <CardTitle className="text-sm font-bold text-slate-500 uppercase tracking-wider">Responsável</CardTitle>
               </div>
+              {(patient.owner?.id || patient.ownerId) && (
+                <Link
+                  href={`/dashboard/customers/${patient.owner?.id || patient.ownerId}`}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:underline transition-colors"
+                >
+                  Ver tutor
+                  <ArrowUpRight size={14} />
+                </Link>
+              )}
             </CardHeader>
             <CardContent className="p-6 space-y-5">
                <div>
-                  <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-0.5">Nome Completo</p>
-                  <p className="text-base font-bold text-slate-900 dark:text-white">{patient.owner?.name || "—"}</p>
+                  <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Nome Completo</p>
+                  {(patient.owner?.id || patient.ownerId) ? (
+                    <Link
+                      href={`/dashboard/customers/${patient.owner?.id || patient.ownerId}`}
+                      className="group inline-flex items-center gap-1.5 hover:text-blue-600 transition-colors"
+                      title="Ver ficha do responsável"
+                    >
+                      <span className="text-base font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:underline underline-offset-2 transition-colors">
+                        {patient.owner?.name || "—"}
+                      </span>
+                      <ArrowUpRight size={15} className="text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                    </Link>
+                  ) : (
+                    <p className="text-base font-bold text-slate-900 dark:text-white">{patient.owner?.name || "—"}</p>
+                  )}
                </div>
                <div className="flex items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-800/50">
                   <div className="w-9 h-9 rounded-lg bg-green-100/60 text-green-600 flex items-center justify-center shrink-0">
                     <Phone size={16} />
                   </div>
-                  <p className="text-sm font-bold">{patient.owner?.phone || "—"}</p>
+                  {patient.owner?.phone ? (
+                    <a href={`tel:${patient.owner.phone}`} className="text-sm font-bold text-slate-900 dark:text-white hover:text-blue-600 hover:underline transition-colors">
+                      {patient.owner.phone}
+                    </a>
+                  ) : (
+                    <p className="text-sm font-bold text-slate-500">—</p>
+                  )}
                </div>
                <div className="flex items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-800/50">
                   <div className="w-9 h-9 rounded-lg bg-indigo-100/60 text-indigo-600 flex items-center justify-center shrink-0">
                     <Mail size={16} />
                   </div>
-                  <p className="text-sm font-bold truncate">{patient.owner?.email || "—"}</p>
+                  {patient.owner?.email ? (
+                    <a href={`mailto:${patient.owner.email}`} className="text-sm font-bold text-slate-900 dark:text-white truncate hover:text-blue-600 hover:underline transition-colors">
+                      {patient.owner.email}
+                    </a>
+                  ) : (
+                    <p className="text-sm font-bold text-slate-500 truncate">—</p>
+                  )}
                </div>
             </CardContent>
           </Card>
