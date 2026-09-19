@@ -49,9 +49,7 @@ export function ClinicalSummaryBanner({ patientId, fallbackGender, className }: 
 
   // Background styling according to gender
   const bgGradient = isFemale
-    ? hasAlerts
-      ? "bg-gradient-to-r from-pink-600 via-rose-600 to-rose-700 shadow-rose-500/15"
-      : "bg-gradient-to-r from-pink-500 via-rose-500 to-rose-600 shadow-rose-500/10"
+    ? "bg-gradient-to-r from-pink-500 via-pink-400 to-rose-300 shadow-pink-400/25"
     : hasAlerts
       ? "bg-gradient-to-r from-blue-700 via-indigo-700 to-indigo-800 shadow-blue-500/15"
       : "bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 shadow-blue-500/10";
