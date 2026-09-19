@@ -537,7 +537,7 @@ function ConsultationContent() {
               <PremiumCard padding="none">
                 <div className="px-6 py-6 pb-4 border-b border-slate-50 dark:border-white/5 bg-slate-50/30 dark:bg-white/5">
                   <div className="flex justify-between items-center">
-                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">Protocolo Clínico SOAP</h2>
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">Consulta</h2>
                     <Badge className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[11px] font-medium px-3 py-1 rounded-lg">Standard Workflow</Badge>
                   </div>
                 </div>
