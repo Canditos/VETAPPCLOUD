@@ -62,7 +62,7 @@ export const GET = withAuth(async ({ req, clinicId, session }) => {
             where: {
               clinicId,
               date: { gte: startToday, lte: endToday },
-              appointmentId: null,
+              appointment: null,
             },
           }),
         ]);
