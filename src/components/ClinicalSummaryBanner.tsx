@@ -52,9 +52,9 @@ export function ClinicalSummaryBanner({ patientId, fallbackGender, className }: 
   const hasCriticalAlerts = summary.safetyAlerts.length > 0;
   const isLoadingAI = aiEnabled && isAILoading;
 
-  // Background styling according to gender
+  // Background styling according to gender — subtle and elegant
   const bgGradient = isFemale
-    ? "bg-gradient-to-r from-rose-500 via-pink-600 to-purple-700 shadow-pink-500/20"
+    ? "bg-gradient-to-r from-pink-400 via-rose-300 to-fuchsia-400 shadow-pink-300/30"
     : "bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-700 shadow-blue-500/20";
 
   return (
