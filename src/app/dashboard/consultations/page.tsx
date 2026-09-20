@@ -9,7 +9,7 @@ import {
   Clock, Plus, ShieldAlert, Search, History, Syringe, AlertCircle,
   AlertTriangle, Sparkles, Eye, TrendingUp, CheckCircle2, Pill,
   Venus, Mars, ShieldCheck, Zap, Calendar, CalendarCheck,
-  Phone, Mail, User, X
+  Phone, Mail, User, X, Dog, Cat, PawPrint
 } from "lucide-react";
 import { LungsIcon } from "@/components/icons/LungsIcon";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -526,7 +526,10 @@ function ConsultationContent() {
   const allergies = patient?.allergies;
   const lastVitals = history?.find((h: { type: string; data?: { weight?: number } }) => h.type === "VITALS")?.data;
 
-  const isFeline = (patient?.species || "").toLowerCase().includes("gato") || (patient?.species || "").toLowerCase().includes("felin");
+  const speciesLower = (patient?.species || "").toLowerCase();
+  const isFeline = speciesLower.includes("gato") || speciesLower.includes("felin");
+  const isDog = speciesLower.includes("cão") || speciesLower.includes("can");
+  const SpeciesIcon = isDog ? Dog : isFeline ? Cat : PawPrint;
 
   const getVitalFeedback = (key: string, valueStr: string) => {
     if (!valueStr) return null;
@@ -565,14 +568,29 @@ function ConsultationContent() {
     <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700 w-full px-4 md:px-8">
       
       {/* Header Context Bar */}
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-white dark:bg-slate-900 p-6 rounded-3xl ring-1 ring-slate-100 dark:ring-white/5 shadow-sm">
-        <div className="flex items-center gap-6">
+      <div className={cn(
+        "flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 p-6 rounded-3xl ring-1 shadow-md w-full relative overflow-hidden",
+        isFeline ? "bg-gradient-to-br from-indigo-100/80 via-white to-purple-50/50 dark:from-indigo-900/40 dark:via-slate-900 dark:to-purple-900/20 ring-indigo-200 dark:ring-indigo-800/50" : 
+        isDog ? "bg-gradient-to-br from-sky-100/80 via-white to-blue-50/50 dark:from-sky-900/40 dark:via-slate-900 dark:to-blue-900/20 ring-sky-200 dark:ring-sky-800/50" :
+        "bg-gradient-to-br from-emerald-100/80 via-white to-teal-50/50 dark:from-emerald-900/40 dark:via-slate-900 dark:to-teal-900/20 ring-emerald-200 dark:ring-emerald-800/50"
+      )}>
+        {/* Subtle background icon */}
+        <div className={cn(
+           "absolute -right-8 -bottom-12 opacity-10 dark:opacity-[0.08] pointer-events-none rotate-12",
+           isFeline ? "text-indigo-600 dark:text-indigo-400" : isDog ? "text-sky-600 dark:text-sky-400" : "text-emerald-600 dark:text-emerald-400"
+        )}>
+          <SpeciesIcon size={280} />
+        </div>
+
+        <div className="flex items-center gap-6 relative z-10">
           <PetLink petId={patientId} className="no-underline" stopPropagation={false}>
             <div className={cn(
-              "w-20 h-20 rounded-3xl flex items-center justify-center font-black text-3xl shadow-xl transition-all duration-300 hover:scale-105 hover:rotate-2 shrink-0 ring-4 ring-slate-100 dark:ring-white/10 relative overflow-hidden",
-              (patient?.gender === "F" || patient?.gender === "Fêmea")
-                ? "bg-gradient-to-br from-pink-500 via-rose-500 to-purple-600 text-white shadow-pink-500/25"
-                : "bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-600 text-white shadow-blue-500/25"
+              "w-20 h-20 rounded-3xl flex items-center justify-center font-black text-3xl shadow-xl transition-all duration-300 hover:scale-105 hover:rotate-2 shrink-0 ring-4 ring-white/80 dark:ring-white/10 relative overflow-hidden backdrop-blur-sm",
+              isFeline
+                ? "bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 text-white shadow-indigo-500/25"
+                : isDog
+                ? "bg-gradient-to-br from-sky-500 via-blue-500 to-indigo-600 text-white shadow-blue-500/25"
+                : "bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 text-white shadow-emerald-500/25"
             )}>
               <span>{patient?.name?.[0]?.toUpperCase() || "?"}</span>
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />

@@ -399,7 +399,7 @@ export function DiagnosticProfilesModal({
                               onClose();
                             }}
                           >
-                            <Plus size={13} /> Abrir Perfil
+                            <Plus size={13} /> Ativar Perfil
                           </Button>
                         )}
                       </div>
