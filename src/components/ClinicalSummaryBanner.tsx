@@ -44,15 +44,21 @@ export function ClinicalSummaryBanner({ patientId, fallbackGender, className }: 
   const resolvedGender = summary.rawGender || fallbackGender || (summary.gender?.toLowerCase().startsWith("f") ? "F" : "M");
   const isFemale = resolvedGender === "F" || summary.gender?.toLowerCase().includes("fêm") || summary.gender?.toLowerCase().includes("fem");
 
+  const speciesLower = summary.species?.toLowerCase() || "";
+  const isDog = speciesLower.includes("cão") || speciesLower.includes("can");
+  const isCat = speciesLower.includes("gato") || speciesLower.includes("fel");
+
   const hasAlerts = summary.safetyAlerts.length > 0 || summary.vaccines.expired.length > 0 || summary.deworming.overdue;
   const isLoadingAI = aiEnabled && isAILoading;
 
-  // Background styling according to gender - rich cohesive pink degrade
-  const bgGradient = isFemale
-    ? "bg-gradient-to-r from-pink-500 via-pink-500 to-pink-600 shadow-pink-500/25"
-    : hasAlerts
-      ? "bg-gradient-to-r from-blue-700 via-indigo-700 to-indigo-800 shadow-blue-500/15"
-      : "bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 shadow-blue-500/10";
+  // Background styling according to species - rich cohesive gradients
+  const bgGradient = hasAlerts
+    ? "bg-gradient-to-r from-rose-600 via-rose-700 to-red-800 shadow-rose-500/20"
+    : isCat
+      ? "bg-gradient-to-r from-indigo-600 via-violet-700 to-purple-800 shadow-indigo-500/20"
+      : isDog
+        ? "bg-gradient-to-r from-sky-700 via-blue-700 to-indigo-800 shadow-blue-500/20"
+        : "bg-gradient-to-r from-emerald-600 via-teal-700 to-cyan-800 shadow-emerald-500/20";
 
   return (
     <div className={cn("relative overflow-hidden rounded-3xl p-8 shadow-xl text-white group", bgGradient, className)}>

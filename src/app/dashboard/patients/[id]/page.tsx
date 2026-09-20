@@ -270,24 +270,39 @@ export default function PatientDetailPage() {
     <div className="w-full min-h-screen bg-slate-50/50 dark:bg-slate-950 p-4 md:p-8 lg:p-10 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
       {/* ── Header Context Bar (Consistent with Consultations) ── */}
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-white dark:bg-slate-900 p-6 rounded-3xl ring-1 ring-slate-100 dark:ring-white/5 shadow-sm w-full">
-        <div className="flex items-center gap-5">
+      <div className={cn(
+        "flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 p-6 rounded-3xl ring-1 shadow-sm w-full relative overflow-hidden",
+        isCat ? "bg-gradient-to-br from-indigo-50/50 to-white dark:from-indigo-950/20 dark:to-slate-900 ring-indigo-100 dark:ring-indigo-900/30" : 
+        isDog ? "bg-gradient-to-br from-sky-50/50 to-white dark:from-sky-950/20 dark:to-slate-900 ring-sky-100 dark:ring-sky-900/30" :
+        "bg-gradient-to-br from-emerald-50/50 to-white dark:from-emerald-950/20 dark:to-slate-900 ring-emerald-100 dark:ring-emerald-900/30"
+      )}>
+        {/* Subtle background icon */}
+        <div className={cn(
+           "absolute -right-10 -bottom-10 opacity-[0.03] dark:opacity-[0.02] pointer-events-none rotate-12",
+           isCat ? "text-indigo-900" : isDog ? "text-sky-900" : "text-emerald-900"
+        )}>
+          <SpeciesIcon size={250} />
+        </div>
+
+        <div className="flex items-center gap-5 relative z-10">
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={() => router.back()} 
-            className="rounded-2xl h-11 w-11 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all shrink-0"
+            className="rounded-2xl h-11 w-11 bg-white/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 transition-all shrink-0 backdrop-blur-sm"
             title="Voltar"
           >
             <ArrowLeft size={18} />
           </Button>
 
-          {/* Large Avatar with Gender Gradient & Initial */}
+          {/* Large Avatar with Species Gradient & Initial */}
           <div className={cn(
-            "w-20 h-20 rounded-3xl flex items-center justify-center font-black text-3xl shadow-xl transition-all duration-300 hover:scale-105 hover:rotate-2 shrink-0 ring-4 ring-slate-100 dark:ring-white/10 relative overflow-hidden",
-            isFemale
-              ? "bg-gradient-to-br from-pink-500 via-rose-500 to-purple-600 text-white shadow-pink-500/25"
-              : "bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-600 text-white shadow-blue-500/25"
+            "w-20 h-20 rounded-3xl flex items-center justify-center font-black text-3xl shadow-xl transition-all duration-300 hover:scale-105 hover:rotate-2 shrink-0 ring-4 ring-white/80 dark:ring-white/10 relative overflow-hidden backdrop-blur-sm",
+            isCat
+              ? "bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 text-white shadow-indigo-500/25"
+              : isDog
+              ? "bg-gradient-to-br from-sky-500 via-blue-500 to-indigo-600 text-white shadow-blue-500/25"
+              : "bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 text-white shadow-emerald-500/25"
           )}>
             <span>{patient.name?.[0]?.toUpperCase() || "?"}</span>
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
@@ -386,7 +401,7 @@ export default function PatientDetailPage() {
           </div>
         </div>
         
-        <div className="flex flex-wrap items-center gap-3 shrink-0 self-end xl:self-auto">
+        <div className="flex flex-wrap items-center gap-3 shrink-0 self-end xl:self-auto relative z-10">
           <Button
             onClick={() => {
               setEditForm({
