@@ -218,7 +218,7 @@ export function DiagnosticProfilesModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="sm:max-w-[750px] max-h-[85vh] p-0 rounded-3xl overflow-hidden border-none bg-white dark:bg-slate-900 shadow-2xl flex flex-col">
+      <DialogContent className="w-[94vw] max-w-4xl max-h-[88vh] p-0 rounded-3xl overflow-hidden border-none bg-white dark:bg-slate-900 shadow-2xl flex flex-col">
         {/* Header */}
         <div className="bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 p-6 text-white shrink-0">
           <div className="flex items-center gap-3">

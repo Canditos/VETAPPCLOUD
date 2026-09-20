@@ -1,16 +1,15 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { 
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription 
-} from "@/components/ui/dialog";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { Dialog, DialogPortal } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { 
   ShieldCheck, Bug, Search, Check, Plus, AlertTriangle, 
-  Sparkles, Weight, ArrowRight, Pill, Droplets, Info
+  Sparkles, Weight, ArrowRight, Pill, Droplets, Info, X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -542,75 +541,88 @@ export function DewormingSimulatorModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[92vh] flex flex-col p-0 gap-0 overflow-hidden rounded-3xl border-slate-200 dark:border-white/10">
-        
-        {/* Header */}
-        <DialogHeader className="p-6 pb-4 border-b border-slate-100 dark:border-white/10 bg-slate-50/50 dark:bg-slate-900/50">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-                <div>
-                  <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white">
-                    Simulador de Desparasitação
-                  </DialogTitle>
-                  <DialogDescription className="text-xs text-slate-500">
-                    Cálculo automático de apresentações e dosagens anti-parasitárias pelo peso do paciente
-                  </DialogDescription>
-                </div>
+      <DialogPortal>
+        {/* Overlay */}
+        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+
+        {/* Content — full screen, adaptive light & dark theme, matching ExamVisualizer */}
+        <DialogPrimitive.Content
+          className="
+            fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2
+            z-50
+            w-[98vw] h-[95vh]
+            rounded-2xl border border-slate-200 dark:border-white/10
+            bg-white dark:bg-slate-950
+            text-slate-900 dark:text-white
+            shadow-2xl shadow-black/40
+            p-0 overflow-hidden flex flex-col
+            outline-none
+            data-[state=open]:animate-in data-[state=closed]:animate-out
+            data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0
+            data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95
+          "
+        >
+          {/* ══════════════════════ TOP BAR ══════════════════════ */}
+          <div className="flex items-center justify-between px-6 py-3.5 bg-slate-50/90 dark:bg-slate-900 border-b border-slate-200 dark:border-white/8 shrink-0 gap-4 flex-wrap">
+            {/* Title + patient badge */}
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-teal-600 dark:text-teal-400 shrink-0 shadow-2xs">
+                <ShieldCheck size={22} strokeWidth={2.2} />
               </div>
+              <div className="min-w-0">
+                <h2 className="text-sm font-black text-slate-900 dark:text-white tracking-tight leading-none">
+                  Simulador de Desparasitação
+                </h2>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5 truncate">
+                  Cálculo automático de apresentações e dosagens anti-parasitárias pelo peso do animal
+                </p>
+              </div>
+
+              {patientName && (
+                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-teal-50 dark:bg-teal-500/10 border border-teal-200 dark:border-teal-500/20 text-xs font-bold text-teal-900 dark:text-teal-300 ml-1">
+                  <span>🐾 {patientName}</span>
+                  {patientSpecies && <span className="text-teal-600/70 dark:text-teal-400/70 font-medium">({patientSpecies})</span>}
+                </div>
+              )}
             </div>
 
-            {/* Species Toggle */}
-            <div className="flex items-center gap-1.5 bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-white/10">
-              <button
-                type="button"
-                onClick={() => setSpeciesFilter("DOG")}
-                className={cn(
-                  "px-3 py-1 rounded-lg text-xs font-bold transition-all",
-                  speciesFilter === "DOG" 
-                    ? "bg-teal-600 text-white shadow-xs" 
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
-                )}
-              >
-                🐶 Cão
-              </button>
-              <button
-                type="button"
-                onClick={() => setSpeciesFilter("CAT")}
-                className={cn(
-                  "px-3 py-1 rounded-lg text-xs font-bold transition-all",
-                  speciesFilter === "CAT" 
-                    ? "bg-teal-600 text-white shadow-xs" 
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
-                )}
-              >
-                🐱 Gato
-              </button>
-            </div>
-          </div>
-
-          {/* Weight Bar & Search */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 pt-3">
-            {/* Weight Input */}
-            <div className="md:col-span-5 p-3 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <Weight className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-                <div>
-                  <span className="text-[11px] font-bold text-teal-800 dark:text-teal-300 uppercase tracking-wider block">
-                    Peso do Animal
-                  </span>
-                  <span className="text-[10px] text-slate-500">
-                    {patientName ? `Paciente: ${patientName}` : "Ajustável para simulação"}
-                  </span>
-                </div>
+            {/* Controls: Species Toggle + Weight Box + Search + Close */}
+            <div className="flex items-center gap-3 shrink-0 flex-wrap">
+              {/* Species Toggle */}
+              <div className="flex items-center gap-1 bg-slate-200/70 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-300/50 dark:border-white/8">
+                <button
+                  type="button"
+                  onClick={() => setSpeciesFilter("DOG")}
+                  className={cn(
+                    "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all",
+                    speciesFilter === "DOG" 
+                      ? "bg-teal-600 text-white shadow-sm" 
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  )}
+                >
+                  🐶 Cão
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSpeciesFilter("CAT")}
+                  className={cn(
+                    "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all",
+                    speciesFilter === "CAT" 
+                      ? "bg-teal-600 text-white shadow-sm" 
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  )}
+                >
+                  🐱 Gato
+                </button>
               </div>
-              <div className="flex items-center gap-1.5">
-                <Input
+
+              {/* Weight Adjustment */}
+              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-500/30">
+                <Weight className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
+                <span className="text-xs font-bold text-teal-900 dark:text-teal-200">Peso:</span>
+                <input
                   type="number"
-                  step="0.05"
+                  step="0.1"
                   min="0.1"
                   max="120"
                   value={currentWeight}
@@ -618,145 +630,165 @@ export function DewormingSimulatorModal({
                     const val = parseFloat(e.target.value);
                     if (!isNaN(val) && val > 0) setCurrentWeight(val);
                   }}
-                  className="w-20 h-9 font-black text-center text-teal-700 dark:text-teal-300 bg-white dark:bg-slate-900 rounded-xl border-teal-300 shadow-2xs"
+                  className="w-16 h-7 font-black text-center text-xs text-teal-700 dark:text-teal-300 bg-white dark:bg-slate-900 rounded-lg border border-teal-300 dark:border-teal-500/40 focus:outline-teal-500"
                 />
                 <span className="text-xs font-black text-teal-700 dark:text-teal-300">kg</span>
               </div>
-            </div>
 
-            {/* Search Input */}
-            <div className="md:col-span-7 relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Pesquisar por nome (ex: Bravecto, Nexgard, Milbemax) ou princípio ativo..."
-                className="pl-9 h-11 bg-white dark:bg-slate-800/80 rounded-2xl border-slate-200 dark:border-white/10 text-xs font-medium"
-              />
+              {/* Search Box */}
+              <div className="relative w-44 sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Pesquisar por nome ou ativo..."
+                  className="pl-8 h-8 bg-white dark:bg-slate-800 rounded-xl border-slate-200 dark:border-white/10 text-xs font-medium"
+                />
+              </div>
+
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-8 h-8 rounded-xl bg-slate-200/60 dark:bg-slate-800/80 hover:bg-slate-300 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+                title="Fechar"
+              >
+                <X size={16} />
+              </button>
             </div>
           </div>
-        </DialogHeader>
 
-        {/* Categories Tabs */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          <Tabs defaultValue="all" className="w-full">
-            <TabsList className="w-full grid grid-cols-4 p-1 bg-slate-100 dark:bg-slate-800/60 rounded-2xl">
-              <TabsTrigger value="all" className="rounded-xl text-xs font-bold">
-                Todos ({filteredProducts.length})
-              </TabsTrigger>
-              <TabsTrigger value="external" className="rounded-xl text-xs font-bold gap-1 text-blue-600 dark:text-blue-400">
-                <Droplets className="w-3.5 h-3.5" /> Externos ({externalProducts.length})
-              </TabsTrigger>
-              <TabsTrigger value="internal" className="rounded-xl text-xs font-bold gap-1 text-amber-600 dark:text-amber-400">
-                <Pill className="w-3.5 h-3.5" /> Internos ({internalProducts.length})
-              </TabsTrigger>
-              <TabsTrigger value="combined" className="rounded-xl text-xs font-bold gap-1 text-teal-600 dark:text-teal-400">
-                <ShieldCheck className="w-3.5 h-3.5" /> Endo + Ecto ({combinedProducts.length})
-              </TabsTrigger>
-            </TabsList>
+          {/* ══════════════════════ CONTENT AREA ══════════════════════ */}
+          <div className="flex-1 overflow-hidden flex flex-col p-5 gap-4 bg-slate-100/50 dark:bg-slate-950">
+            <Tabs defaultValue="all" className="w-full flex-1 flex flex-col min-h-0">
+              {/* Categories Tabs List */}
+              <TabsList className="w-full grid grid-cols-4 p-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/8 rounded-2xl shrink-0 shadow-2xs">
+                <TabsTrigger value="all" className="rounded-xl text-xs font-bold py-2">
+                  Todos ({filteredProducts.length})
+                </TabsTrigger>
+                <TabsTrigger value="external" className="rounded-xl text-xs font-bold py-2 gap-1.5 text-blue-600 dark:text-blue-400">
+                  <Droplets className="w-3.5 h-3.5" /> Externos ({externalProducts.length})
+                </TabsTrigger>
+                <TabsTrigger value="internal" className="rounded-xl text-xs font-bold py-2 gap-1.5 text-amber-600 dark:text-amber-400">
+                  <Pill className="w-3.5 h-3.5" /> Internos ({internalProducts.length})
+                </TabsTrigger>
+                <TabsTrigger value="combined" className="rounded-xl text-xs font-bold py-2 gap-1.5 text-teal-600 dark:text-teal-400">
+                  <ShieldCheck className="w-3.5 h-3.5" /> Endo + Ecto ({combinedProducts.length})
+                </TabsTrigger>
+              </TabsList>
 
-            {/* TAB ALL: Section by Section */}
-            <TabsContent value="all" className="space-y-6 mt-5">
-              {/* 1. Desparasitantes Externos */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 pb-1 border-b border-slate-100 dark:border-white/5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
-                    Desparasitantes Externos (Ectoparasitas)
-                  </h3>
-                  <Badge variant="secondary" className="text-[10px] ml-auto">
-                    Pulgas, Carraças, Flebótomos & Ácaros
-                  </Badge>
-                </div>
-                {externalProducts.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Scrollable Products Area */}
+              <div className="flex-1 overflow-y-auto min-h-0 pt-3 pr-1">
+                {/* TAB ALL: Section by Section */}
+                <TabsContent value="all" className="space-y-6 m-0">
+                  {/* 1. Desparasitantes Externos */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-white/5">
+                      <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                      <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                        Desparasitantes Externos (Ectoparasitas)
+                      </h3>
+                      <Badge variant="secondary" className="text-[10px] ml-auto">
+                        Pulgas, Carraças, Flebótomos &amp; Ácaros
+                      </Badge>
+                    </div>
+                    {externalProducts.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {externalProducts.map(renderProductCard)}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-400 py-4 text-center">Nenhum desparasitante externo encontrado.</p>
+                    )}
+                  </div>
+
+                  {/* 2. Desparasitantes Internos */}
+                  <div className="space-y-3 pt-2">
+                    <div className="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-white/5">
+                      <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                      <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                        Desparasitantes Internos (Endoparasitas)
+                      </h3>
+                      <Badge variant="secondary" className="text-[10px] ml-auto">
+                        Nemátodos, Céstodos &amp; Protozoários
+                      </Badge>
+                    </div>
+                    {internalProducts.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {internalProducts.map(renderProductCard)}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-400 py-4 text-center">Nenhum desparasitante interno encontrado.</p>
+                    )}
+                  </div>
+
+                  {/* 3. Desparasitantes Internos e Externos */}
+                  <div className="space-y-3 pt-2">
+                    <div className="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-white/5">
+                      <div className="w-2.5 h-2.5 rounded-full bg-teal-500" />
+                      <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                        Desparasitantes Internos e Externos (Combinados)
+                      </h3>
+                      <Badge variant="secondary" className="text-[10px] ml-auto">
+                        Largo Espectro Endo + Ecto
+                      </Badge>
+                    </div>
+                    {combinedProducts.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {combinedProducts.map(renderProductCard)}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-400 py-4 text-center">Nenhum desparasitante combinado encontrado.</p>
+                    )}
+                  </div>
+                </TabsContent>
+
+                {/* TAB EXTERNAL */}
+                <TabsContent value="external" className="m-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {externalProducts.map(renderProductCard)}
                   </div>
-                ) : (
-                  <p className="text-xs text-slate-400 py-3 text-center">Nenhum desparasitante externo encontrado.</p>
-                )}
-              </div>
+                </TabsContent>
 
-              {/* 2. Desparasitantes Internos */}
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center gap-2 pb-1 border-b border-slate-100 dark:border-white/5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
-                    Desparasitantes Internos (Endoparasitas)
-                  </h3>
-                  <Badge variant="secondary" className="text-[10px] ml-auto">
-                    Nemátodos, Céstodos & Protozoários
-                  </Badge>
-                </div>
-                {internalProducts.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* TAB INTERNAL */}
+                <TabsContent value="internal" className="m-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {internalProducts.map(renderProductCard)}
                   </div>
-                ) : (
-                  <p className="text-xs text-slate-400 py-3 text-center">Nenhum desparasitante interno encontrado.</p>
-                )}
-              </div>
+                </TabsContent>
 
-              {/* 3. Desparasitantes Internos e Externos */}
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center gap-2 pb-1 border-b border-slate-100 dark:border-white/5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-teal-500" />
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
-                    Desparasitantes Internos e Externos (Combinados)
-                  </h3>
-                  <Badge variant="secondary" className="text-[10px] ml-auto">
-                    Largo Espectro Endo + Ecto
-                  </Badge>
-                </div>
-                {combinedProducts.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* TAB COMBINED */}
+                <TabsContent value="combined" className="m-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {combinedProducts.map(renderProductCard)}
                   </div>
-                ) : (
-                  <p className="text-xs text-slate-400 py-3 text-center">Nenhum desparasitante combinado encontrado.</p>
-                )}
+                </TabsContent>
               </div>
-            </TabsContent>
-
-            {/* TAB EXTERNAL */}
-            <TabsContent value="external" className="mt-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {externalProducts.map(renderProductCard)}
-              </div>
-            </TabsContent>
-
-            {/* TAB INTERNAL */}
-            <TabsContent value="internal" className="mt-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {internalProducts.map(renderProductCard)}
-              </div>
-            </TabsContent>
-
-            {/* TAB COMBINED */}
-            <TabsContent value="combined" className="mt-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {combinedProducts.map(renderProductCard)}
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
-
-        {/* Footer */}
-        <div className="p-4 px-6 border-t border-slate-100 dark:border-white/10 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <Info className="w-4 h-4 text-teal-600 shrink-0" />
-            <span>Ao clicar em <strong>Inserir no Tratamento</strong>, o protocolo com dosagem calculada é adicionado à Secção 6.</span>
+            </Tabs>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onClose}
-            className="rounded-xl text-xs font-semibold h-9 px-4"
-          >
-            Fechar
-          </Button>
-        </div>
-      </DialogContent>
+
+          {/* ══════════════════════ STATUS BAR ══════════════════════ */}
+          <div className="flex items-center justify-between px-6 py-2.5 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-white/5 shrink-0">
+            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+              <Info className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
+              <span>Ao clicar em <strong>Inserir no Tratamento</strong>, o protocolo com dosagem calculada é adicionado à Secção 6 (Tratamento).</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] text-slate-500 font-medium">
+                {filteredProducts.length} apresentações disponíveis para {speciesFilter === "DOG" ? "Cão" : "Gato"} ({currentWeight} kg)
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onClose}
+                className="rounded-xl text-xs font-semibold h-8 px-4 bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10"
+              >
+                Fechar
+              </Button>
+            </div>
+          </div>
+        </DialogPrimitive.Content>
+      </DialogPortal>
     </Dialog>
   );
 }
