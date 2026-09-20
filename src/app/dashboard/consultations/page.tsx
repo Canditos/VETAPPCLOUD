@@ -91,11 +91,21 @@ function ConsultationContent() {
     try {
       const stored = localStorage.getItem(`vet_patient_profiles_${patientId}`);
       if (stored) {
-        const ids: string[] = JSON.parse(stored);
-        const matched = ids
-          .map((id) => CLINICAL_PROFILES_CATALOG.find((p) => p.id === id))
-          .filter(Boolean) as ClinicalProfile[];
-        setActiveProfiles(matched);
+        const raw = JSON.parse(stored);
+        if (Array.isArray(raw)) {
+          const matched = raw
+            .map((item: any) => {
+              const id = typeof item === "string" ? item : item?.id;
+              const fromCatalog = CLINICAL_PROFILES_CATALOG.find((p) => p.id === id);
+              if (fromCatalog) return fromCatalog;
+              if (typeof item === "object" && item?.id) return item;
+              return null;
+            })
+            .filter(Boolean) as ClinicalProfile[];
+          setActiveProfiles(matched);
+        } else {
+          setActiveProfiles([]);
+        }
       } else {
         setActiveProfiles([]);
       }

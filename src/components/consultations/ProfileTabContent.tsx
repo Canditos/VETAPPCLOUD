@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { PremiumCard } from "@/components/PremiumCard";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface ProfileTabContentProps {
   profile: ClinicalProfile;
@@ -28,15 +29,29 @@ export function ProfileTabContent({
   onApplyToDiagnostics,
   onApplyToTreatment,
 }: ProfileTabContentProps) {
+  const recommendedExams = Array.isArray(profile?.recommendedExams) ? profile.recommendedExams : [];
+  const treatmentProtocol = Array.isArray(profile?.treatmentProtocol) ? profile.treatmentProtocol : [];
+  const stagingSystem = profile?.stagingSystem || "Informação de estadiamento não especificada.";
+  const followUp = profile?.followUp || "Acompanhamento conforme evolução clínica e indicação médica.";
+  const clientAdvice = profile?.clientAdvice || "Seguir rigorosamente as recomendações veterinárias.";
+  const title = profile?.title || "Perfil Clínico";
+  const category = profile?.category || "Geral";
+  const description = profile?.description || "";
 
   const handleCopyDiagnostics = () => {
-    const textToAppend = `\n[Perfil Clínico: ${profile.title}]\n• Estadiamento/Critérios: ${profile.stagingSystem}\n• Exames Recomendados:\n${profile.recommendedExams.map(e => `  - ${e}`).join("\n")}`;
+    const examsList = recommendedExams.length > 0 
+      ? recommendedExams.map(e => `  - ${e}`).join("\n") 
+      : "  - Conforme avaliação clínica";
+    const textToAppend = `\n[Perfil Clínico: ${title}]\n• Estadiamento/Critérios: ${stagingSystem}\n• Exames Recomendados:\n${examsList}`;
     onApplyToDiagnostics(textToAppend);
     toast.success(`Protocolo de diagnóstico adicionado à Secção 5!`);
   };
 
   const handleCopyTreatment = () => {
-    const textToAppend = `\n[Protocolo Terapêutico: ${profile.title}]\n${profile.treatmentProtocol.map(t => `• ${t}`).join("\n")}\n• Controlo/Follow-up: ${profile.followUp}`;
+    const treatmentsList = treatmentProtocol.length > 0
+      ? treatmentProtocol.map(t => `• ${t}`).join("\n")
+      : "• Conforme avaliação clínica";
+    const textToAppend = `\n[Protocolo Terapêutico: ${title}]\n${treatmentsList}\n• Controlo/Follow-up: ${followUp}`;
     onApplyToTreatment(textToAppend);
     toast.success(`Protocolo terapêutico adicionado à Secção 6!`);
   };
@@ -120,7 +135,7 @@ export function ProfileTabContent({
     },
   };
 
-  const theme = PROFILE_THEMES[profile.id] || PROFILE_THEMES.leishmaniose;
+  const theme = (profile?.id && PROFILE_THEMES[profile.id]) || PROFILE_THEMES.leishmaniose;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-400">
@@ -134,15 +149,17 @@ export function ProfileTabContent({
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-                  {profile.title}
+                  {title}
                 </h2>
                 <Badge variant="outline" className={cn("text-[11px] font-semibold", theme.badge)}>
-                  {profile.category}
+                  {category}
                 </Badge>
               </div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
-                {profile.description}
-              </p>
+              {description && (
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  {description}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -183,7 +200,7 @@ export function ProfileTabContent({
                   Critérios de Classificação & Estadiamento
                 </div>
                 <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
-                  {profile.stagingSystem}
+                  {stagingSystem}
                 </p>
               </div>
 
@@ -193,7 +210,7 @@ export function ProfileTabContent({
                   Bateria de Exames Recomendados
                 </span>
                 <div className="space-y-1.5">
-                  {profile.recommendedExams.map((exam, idx) => (
+                  {recommendedExams.map((exam, idx) => (
                     <div 
                       key={idx}
                       className="flex items-start gap-2.5 p-2.5 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/60 dark:border-white/5 shadow-2xs text-xs font-medium text-slate-700 dark:text-slate-200"
@@ -219,7 +236,7 @@ export function ProfileTabContent({
                   Linhas de Tratamento Recomendadas
                 </span>
                 <div className="space-y-2">
-                  {profile.treatmentProtocol.map((line, idx) => (
+                  {treatmentProtocol.map((line, idx) => (
                     <div 
                       key={idx}
                       className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/60 dark:border-white/5 text-xs text-slate-800 dark:text-slate-200 font-medium leading-relaxed"
@@ -236,7 +253,7 @@ export function ProfileTabContent({
                   <Calendar className="w-3.5 h-3.5" /> Plano de Reavaliação & Controlo
                 </div>
                 <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
-                  {profile.followUp}
+                  {followUp}
                 </p>
               </div>
 
@@ -246,7 +263,7 @@ export function ProfileTabContent({
                   <AlertCircle className="w-3.5 h-3.5" /> Recomendações e Informação ao Tutor
                 </div>
                 <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
-                  {profile.clientAdvice}
+                  {clientAdvice}
                 </p>
               </div>
             </div>
