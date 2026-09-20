@@ -19,7 +19,8 @@ export const GET = withAuth(async ({ clinicId }) => {
       rut240Ip: settings.rut240Ip || "",
       rut240Port: settings.rut240Port || 80,
       rut240User: settings.rut240User || "",
-      rut240Password: settings.rut240Password || "",
+      rut240Password: settings.rut240Password ? "••••••••" : "",
+      hasPassword: !!settings.rut240Password,
       rut240Enabled: settings.rut240Enabled || false,
     });
   } catch (error) {
@@ -29,10 +30,24 @@ export const GET = withAuth(async ({ clinicId }) => {
 });
 
 export const PUT = withAuth(async ({ req, clinicId }) => {
-
   try {
     const body = await req.json();
     const { rut240Ip, rut240Port, rut240User, rut240Password, rut240Enabled } = body;
+
+    const existing = await prisma.automationSettings.findUnique({
+      where: { clinicId },
+    });
+
+    // Determine whether to update password:
+    // Only update if a real new password is sent (not empty, not masked)
+    let passwordToSave: string | null | undefined = existing?.rut240Password || null;
+    if (rut240Password !== undefined) {
+      if (rut240Password === "" || rut240Password === null) {
+        passwordToSave = null;
+      } else if (rut240Password !== "••••••••") {
+        passwordToSave = rut240Password;
+      }
+    }
 
     await prisma.automationSettings.upsert({
       where: { clinicId },
@@ -40,7 +55,7 @@ export const PUT = withAuth(async ({ req, clinicId }) => {
         rut240Ip: rut240Ip || null,
         rut240Port: rut240Port ?? 80,
         rut240User: rut240User || null,
-        rut240Password: rut240Password || null,
+        rut240Password: passwordToSave,
         rut240Enabled: rut240Enabled ?? false,
       },
       create: {
@@ -48,7 +63,7 @@ export const PUT = withAuth(async ({ req, clinicId }) => {
         rut240Ip: rut240Ip || null,
         rut240Port: rut240Port ?? 80,
         rut240User: rut240User || null,
-        rut240Password: rut240Password || null,
+        rut240Password: passwordToSave,
         rut240Enabled: rut240Enabled ?? false,
       }
     });

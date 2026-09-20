@@ -99,6 +99,7 @@ function PatientsPageContent() {
             size="icon"
             onClick={() => refetch()}
             disabled={isRefetching}
+            aria-label="Atualizar lista de pacientes"
             className="h-12 w-12 rounded-2xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-all"
           >
             <RefreshCw className={`w-5 h-5 ${isRefetching ? "animate-spin" : ""}`} />
@@ -128,6 +129,7 @@ function PatientsPageContent() {
               <div className="relative flex-1 group">
                 <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 group-focus-within:text-blue-500 transition-colors" size={20} />
                 <Input
+                  aria-label="Procurar por nome, chip ou proprietário"
                   placeholder="Procurar por nome, chip ou proprietário..."
                   className="h-14 pl-16 pr-6 rounded-2xl border-none bg-slate-100/50 dark:bg-slate-800/50 focus-visible:ring-2 focus-visible:ring-blue-500/50 font-medium text-base text-slate-700 dark:text-slate-200 placeholder:text-slate-400 transition-all"
                   value={searchTerm}
@@ -159,14 +161,16 @@ function PatientsPageContent() {
         {/* Patients List */}
         <div className="space-y-4">
           {isLoading ? (
-            Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-24 w-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-3xl" />
-            ))
+            <div className="space-y-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="h-24 w-full bg-slate-50 dark:bg-slate-900/50 rounded-3xl animate-pulse" />
+              ))}
+            </div>
           ) : patients.length === 0 ? (
             <EmptyState
-              icon={PawPrint}
+              icon={Search}
               title="Nenhum paciente encontrado"
-              description="Tente ajustar os filtros ou adicione um novo registo."
+              description={searchTerm ? `Não foram encontrados resultados para "${searchTerm}".` : "Ainda não existem pacientes registados nesta clínica."}
             />
           ) : (
             patients.map((patient: Patient) => (
@@ -175,7 +179,7 @@ function PatientsPageContent() {
                 href={`/dashboard/patients/${patient.id}`}
                 className="group block"
               >
-                <div className="grid grid-cols-1 md:grid-cols-[1fr_200px_250px_180px_80px] gap-4 items-center bg-white dark:bg-slate-900 p-4 md:p-5 rounded-3xl border border-slate-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-900/50 hover:shadow-lg hover:shadow-slate-200/30 dark:hover:shadow-none transition-all duration-300">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1.2fr_160px_200px_140px_60px] xl:grid-cols-[1fr_180px_220px_160px_60px] gap-4 items-center bg-white dark:bg-slate-900 p-4 md:p-5 rounded-3xl border border-slate-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-900/50 hover:shadow-lg hover:shadow-slate-200/30 dark:hover:shadow-none transition-all duration-300">
                   {/* Patient Info */}
                   <div className="flex items-center gap-5">
                     <PatientAvatar name={patient.name} species={patient.species} />
@@ -204,7 +208,7 @@ function PatientsPageContent() {
                         {patient.species}
                       </span>
                     </div>
-                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 truncate pl-3.5">
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 truncate pl-3.5">
                       {patient.breed || "Indefinida"}
                     </p>
                   </div>
@@ -218,7 +222,7 @@ function PatientsPageContent() {
                       <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">
                         {patient.owner?.name || "—"}
                       </p>
-                      <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                      <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
                         {patient.owner?.phone || "Sem telefone"}
                       </p>
                     </div>
@@ -233,7 +237,7 @@ function PatientsPageContent() {
                   </div>
 
                   {/* Action */}
-                  <div className="text-right">
+                  <div className="text-right flex justify-end">
                     <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
                       <ChevronRight size={20} strokeWidth={3} />
                     </div>
@@ -247,7 +251,7 @@ function PatientsPageContent() {
         {/* Pagination */}
         {pagination && pagination.totalPages > 1 && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6 px-4 py-4">
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
               Página {pagination.page} / {pagination.totalPages}
             </p>
 

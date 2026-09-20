@@ -1,19 +1,45 @@
 import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 import { withAuth } from "@/lib/api-wrapper";
+import { z } from "zod";
 
-export const POST = withAuth(async ({ req, tenantPrisma }) => {
+const AdjustStockSchema = z.object({
+  productId: z.string().min(1, "ID do produto é obrigatório"),
+  type: z.enum(["IN", "OUT", "ADJUSTMENT"], {
+    errorMap: () => ({ message: "Tipo deve ser IN, OUT ou ADJUSTMENT" }),
+  }),
+  quantity: z.number().positive("A quantidade deve ser um número positivo").max(100000, "Quantidade excede o limite permitido"),
+  source: z.string().max(150).optional(),
+});
+
+export const POST = withAuth(async ({ req, tenantPrisma, clinicId }) => {
   try {
-    const body = await req.json();
+    const rawBody = await req.json();
+    const parsed = AdjustStockSchema.safeParse(rawBody);
 
-    const { productId, type, quantity, source } = body;
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Dados inválidos", details: parsed.error.format() },
+        { status: 400 }
+      );
+    }
 
-    if (!productId || !type || !quantity) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    const { productId, type, quantity, source } = parsed.data;
+
+    // Verify tenant ownership to prevent IDOR
+    const existingProduct = await tenantPrisma.product.findFirst({
+      where: { id: productId, clinicId },
+    });
+
+    if (!existingProduct) {
+      return NextResponse.json(
+        { error: "Produto não encontrado ou não pertence a esta clínica" },
+        { status: 404 }
+      );
     }
 
     const result = await tenantPrisma.$transaction(async (tx: any) => {
-      // 1. Update product stock
+      // 1. Update product stock safely
       const product = await tx.product.update({
         where: { id: productId },
         data: {
@@ -23,10 +49,11 @@ export const POST = withAuth(async ({ req, tenantPrisma }) => {
         },
       });
 
-      // 2. Log movement
+      // 2. Log movement associated with tenant
       const movement = await tx.stockMovement.create({
         data: {
           productId,
+          clinicId,
           type,
           quantity,
           source: source || "Manual Adjustment",
@@ -39,6 +66,6 @@ export const POST = withAuth(async ({ req, tenantPrisma }) => {
     return NextResponse.json(result);
   } catch (error) {
     console.error("[INVENTORY_ADJUST_POST]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 });

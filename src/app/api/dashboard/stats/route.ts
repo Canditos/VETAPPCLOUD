@@ -162,42 +162,57 @@ export const GET = withAuth(async ({ req, clinicId, session }) => {
           take: 4,
         }), []),
 
-      // 11. Faturação últimos 14 dias (tendência)
-      safe("revenueTrend", () => {
+      // 11. Faturação últimos 14 dias (tendência otimizada: 1 query em vez de 14)
+      safe("revenueTrend", async () => {
         const days = getTimezoneDaysInterval(14, clientTz, today);
-        return Promise.all(
-          days.map((day) => {
-            return prisma.payment.aggregate({
-              where: {
-                clinicId,
-                paidAt: { gte: day.start, lte: day.end },
-              },
-              _sum: { amount: true },
-            }).then((res) => ({
-              date: day.label,
-              value: Number(res._sum.amount ?? 0),
-            }));
-          })
-        );
+        if (days.length === 0) return [];
+        const intervalStart = days[0].start;
+        const intervalEnd = days[days.length - 1].end;
+
+        const payments = await prisma.payment.findMany({
+          where: {
+            clinicId,
+            paidAt: { gte: intervalStart, lte: intervalEnd },
+          },
+          select: { paidAt: true, amount: true },
+        });
+
+        return days.map((day) => {
+          const total = payments
+            .filter((p) => p.paidAt && p.paidAt >= day.start && p.paidAt <= day.end)
+            .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+          return {
+            date: day.label,
+            value: total,
+          };
+        });
       }, []),
 
-      // 12. Marcações últimos 14 dias (tendência)
-      safe("appointmentTrend", () => {
+      // 12. Marcações últimos 14 dias (tendência otimizada: 1 query em vez de 14)
+      safe("appointmentTrend", async () => {
         const days = getTimezoneDaysInterval(14, clientTz, today);
-        return Promise.all(
-          days.map((day) => {
-            return prisma.appointment.count({
-              where: {
-                clinicId,
-                startTime: { gte: day.start, lte: day.end },
-                status: { not: "CANCELLED" },
-              },
-            }).then((count) => ({
-              date: day.label,
-              value: count,
-            }));
-          })
-        );
+        if (days.length === 0) return [];
+        const intervalStart = days[0].start;
+        const intervalEnd = days[days.length - 1].end;
+
+        const appointments = await prisma.appointment.findMany({
+          where: {
+            clinicId,
+            startTime: { gte: intervalStart, lte: intervalEnd },
+            status: { not: "CANCELLED" },
+          },
+          select: { startTime: true },
+        });
+
+        return days.map((day) => {
+          const count = appointments.filter(
+            (a) => a.startTime && a.startTime >= day.start && a.startTime <= day.end
+          ).length;
+          return {
+            date: day.label,
+            value: count,
+          };
+        });
       }, []),
 
       // 13. Produtos a expirar nos próximos 30 dias

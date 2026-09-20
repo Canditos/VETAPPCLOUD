@@ -39,6 +39,203 @@ const emptyForm = (): ProductForm => ({
   barcode: "", batchNumber: "", expiryDate: "", category: "",
 });
 
+interface ProductDialogProps {
+  form: ProductForm;
+  setForm: (f: ProductForm) => void;
+  onSubmit: () => void;
+  title: string;
+  loading?: boolean;
+}
+
+function ProductDialog({ form, setForm, onSubmit, title, loading }: ProductDialogProps) {
+  return (
+    <div className="p-8 space-y-5">
+      <div className="space-y-2">
+        <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Designação *</Label>
+        <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Ex: Clavaseptin 500mg" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold text-slate-900 dark:text-white" />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Preço (€) *</Label>
+          <Input type="number" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} placeholder="0.00" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold text-slate-900 dark:text-white" />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">IVA</Label>
+          <select value={form.vatRate} onChange={e => setForm({ ...form, vatRate: Number(e.target.value) })} className="h-11 w-full rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-3 text-xs font-bold text-slate-900 dark:text-slate-100">
+            <option value={23}>23% (Normal)</option>
+            <option value={13}>13% (Intermédia)</option>
+            <option value={6}>6% (Reduzida)</option>
+          </select>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Stock Inicial</Label>
+          <Input type="number" value={form.stockQuantity} onChange={e => setForm({ ...form, stockQuantity: e.target.value })} placeholder="0" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold text-slate-900 dark:text-white" />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Stock Mínimo</Label>
+          <Input type="number" value={form.minStock} onChange={e => setForm({ ...form, minStock: e.target.value })} placeholder="5" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold text-slate-900 dark:text-white" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Categoria</Label>
+          <Input value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} placeholder="Ex: Medicamentos" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold text-slate-900 dark:text-white" />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Código de Barras</Label>
+          <Input value={form.barcode} onChange={e => setForm({ ...form, barcode: e.target.value })} placeholder="Ex: 5601234567890" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold text-slate-900 dark:text-white" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Nº Lote</Label>
+          <Input value={form.batchNumber} onChange={e => setForm({ ...form, batchNumber: e.target.value })} placeholder="Ex: LOTE-2024-001" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold text-slate-900 dark:text-white" />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Validade</Label>
+          <Input type="date" value={form.expiryDate} onChange={e => setForm({ ...form, expiryDate: e.target.value })} className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold text-slate-900 dark:text-white" />
+        </div>
+      </div>
+      <Button disabled={loading || !form.name || !form.price} onClick={onSubmit} className="w-full h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-widest">
+        {loading ? "A guardar..." : title}
+      </Button>
+    </div>
+  );
+}
+
+interface DeleteConfirmModalProps {
+  target: any;
+  onClose: () => void;
+  onConfirm: (id: string) => void;
+  loading: boolean;
+}
+
+function DeleteConfirmModal({ target, onClose, onConfirm, loading }: DeleteConfirmModalProps) {
+  return (
+    <Dialog open={!!target} onOpenChange={o => { if (!o) onClose(); }}>
+      <DialogContent className="sm:max-w-[400px] rounded-2xl border-none p-8 bg-white dark:bg-slate-900">
+        <div className="text-center space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-rose-50 dark:bg-rose-900/20 flex items-center justify-center mx-auto">
+            <Trash2 size={24} className="text-rose-500" />
+          </div>
+          <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white">Eliminar Artigo</DialogTitle>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Tem a certeza que pretende eliminar <strong>{target?.name}</strong>? Esta acção é irreversível.</p>
+          <div className="flex gap-3 pt-2">
+            <Button variant="outline" onClick={onClose} className="flex-1 h-10 rounded-xl border-slate-200 dark:border-slate-700 font-bold">Cancelar</Button>
+            <Button onClick={() => onConfirm(target.id)} disabled={loading} className="flex-1 h-10 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold">Eliminar</Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+interface AdjustStockModalProps {
+  target: any;
+  qty: string;
+  setQty: (q: string) => void;
+  onClose: () => void;
+  onAdjust: (type: "IN" | "OUT") => void;
+  loading: boolean;
+}
+
+function AdjustStockModalComponent({ target, qty, setQty, onClose, onAdjust, loading }: AdjustStockModalProps) {
+  return (
+    <Dialog open={!!target} onOpenChange={o => { if (!o) onClose(); }}>
+      <DialogContent className="sm:max-w-[400px] rounded-2xl border-none p-8 bg-white dark:bg-slate-900">
+        <div className="text-center space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center mx-auto">
+            <Package size={24} className="text-blue-500" />
+          </div>
+          <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white">Ajustar Stock</DialogTitle>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            <strong>{target?.name}</strong> &mdash; Stock atual: <strong>{target?.stockQuantity}</strong> un.
+          </p>
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">Quantidade</label>
+              <input type="number" min="1" value={qty} onChange={e => setQty(e.target.value)}
+                className="w-full h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center font-bold text-lg text-slate-900 dark:text-slate-100" />
+            </div>
+          </div>
+          {target?.barcode && (
+            <div className="text-center text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+              Cód. Barras: {target.barcode}
+            </div>
+          )}
+          <div className="flex gap-3 pt-2">
+            <Button variant="outline" onClick={() => onAdjust("IN")}
+              disabled={loading}
+              className="flex-1 h-10 rounded-xl border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 font-bold gap-1.5 transition-all">
+              <PlusCircle size={16} /> Entrada
+            </Button>
+            <Button variant="outline" onClick={() => onAdjust("OUT")}
+              disabled={loading || target?.stockQuantity === 0}
+              className="flex-1 h-10 rounded-xl border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 font-bold gap-1.5 transition-all">
+              <MinusCircle size={16} /> Saída
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+interface MovementsModalProps {
+  target: any;
+  onClose: () => void;
+  movements: any[] | undefined;
+}
+
+function MovementsModalComponent({ target, onClose, movements }: MovementsModalProps) {
+  return (
+    <Dialog open={!!target} onOpenChange={o => { if (!o) onClose(); }}>
+      <DialogContent className="sm:max-w-[600px] rounded-2xl border-none p-0 overflow-hidden bg-white dark:bg-slate-900">
+        <div className="bg-blue-600 p-6 text-white flex justify-between items-center">
+          <div>
+            <DialogTitle className="text-xl font-bold tracking-tight">Movimentos</DialogTitle>
+            <p className="text-blue-100 text-xs font-bold uppercase tracking-widest mt-0.5">{target?.name}</p>
+          </div>
+          <DialogClose className="text-white/70 hover:text-white transition-colors"><X size={20} /></DialogClose>
+        </div>
+        <div className="p-6 max-h-[400px] overflow-y-auto">
+          {!movements ? (
+            <p className="text-center text-slate-500 dark:text-slate-400 py-8">A carregar...</p>
+          ) : movements.length === 0 ? (
+            <p className="text-center text-slate-500 dark:text-slate-400 py-8 font-medium">Nenhum movimento registado.</p>
+          ) : (
+            <div className="space-y-2">
+              {movements.map((m: any) => (
+                <div key={m.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                  <div className="flex items-center gap-3">
+                    <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", m.type === "IN" ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400" : m.type === "OUT" ? "bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400" : "bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400")}>
+                      {m.type === "IN" ? <PlusCircle size={14} /> : m.type === "OUT" ? <MinusCircle size={14} /> : <AlertCircle size={14} />}
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm text-slate-800 dark:text-slate-100">
+                        {m.type === "IN" ? "Entrada" : m.type === "OUT" ? "Saída" : "Ajuste"}
+                      </p>
+                      <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase">{m.source || "Manual"}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className={cn("font-bold text-sm", m.type === "IN" ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")}>
+                      {m.type === "IN" ? "+" : "-"}{m.quantity} un.
+                    </p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">{format(new Date(m.createdAt), "dd MMM yyyy HH:mm", { locale: pt })}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [scanFeedback, setScanFeedback] = useState(false);
@@ -197,164 +394,6 @@ export default function InventoryPage() {
     </th>
   );
 
-  const ProductDialog = ({ form, setForm, onSubmit, title, loading }: { form: ProductForm; setForm: (f: ProductForm) => void; onSubmit: () => void; title: string; loading?: boolean }) => (
-    <div className="p-8 space-y-5">
-      <div className="space-y-2">
-        <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Designação *</Label>
-        <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Ex: Clavaseptin 500mg" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Preço (€) *</Label>
-          <Input type="number" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} placeholder="0.00" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
-        </div>
-        <div className="space-y-2">
-          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">IVA</Label>
-          <select value={form.vatRate} onChange={e => setForm({ ...form, vatRate: Number(e.target.value) })} className="h-11 w-full rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-3 text-xs font-bold">
-            <option value={23}>23% (Normal)</option>
-            <option value={13}>13% (Intermédia)</option>
-            <option value={6}>6% (Reduzida)</option>
-          </select>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Stock Inicial</Label>
-          <Input type="number" value={form.stockQuantity} onChange={e => setForm({ ...form, stockQuantity: e.target.value })} placeholder="0" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
-        </div>
-        <div className="space-y-2">
-          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Stock Mínimo</Label>
-          <Input type="number" value={form.minStock} onChange={e => setForm({ ...form, minStock: e.target.value })} placeholder="5" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Categoria</Label>
-          <Input value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} placeholder="Ex: Medicamentos" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
-        </div>
-        <div className="space-y-2">
-          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Código de Barras</Label>
-          <Input value={form.barcode} onChange={e => setForm({ ...form, barcode: e.target.value })} placeholder="Ex: 5601234567890" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Nº Lote</Label>
-          <Input value={form.batchNumber} onChange={e => setForm({ ...form, batchNumber: e.target.value })} placeholder="Ex: LOTE-2024-001" className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
-        </div>
-        <div className="space-y-2">
-          <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Validade</Label>
-          <Input type="date" value={form.expiryDate} onChange={e => setForm({ ...form, expiryDate: e.target.value })} className="h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-none ring-1 ring-slate-100 dark:ring-slate-700 px-4 font-bold" />
-        </div>
-      </div>
-      <Button disabled={loading || !form.name || !form.price} onClick={onSubmit} className="w-full h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-widest">
-        {loading ? "A guardar..." : title}
-      </Button>
-    </div>
-  );
-
-  const DeleteConfirm = () => (
-    <Dialog open={!!deleteTarget} onOpenChange={o => { if (!o) setDeleteTarget(null); }}>
-      <DialogContent className="sm:max-w-[400px] rounded-2xl border-none p-8 bg-white dark:bg-slate-900">
-        <div className="text-center space-y-4">
-          <div className="w-14 h-14 rounded-2xl bg-rose-50 dark:bg-rose-900/20 flex items-center justify-center mx-auto">
-            <Trash2 size={24} className="text-rose-500" />
-          </div>
-          <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white">Eliminar Artigo</DialogTitle>
-          <p className="text-sm text-slate-500">Tem a certeza que pretende eliminar <strong>{deleteTarget?.name}</strong>? Esta acção é irreversível.</p>
-          <div className="flex gap-3 pt-2">
-            <Button variant="outline" onClick={() => setDeleteTarget(null)} className="flex-1 h-10 rounded-xl border-slate-200 font-bold">Cancelar</Button>
-            <Button onClick={() => deleteMutation.mutate(deleteTarget.id)} disabled={deleteMutation.isPending} className="flex-1 h-10 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold">Eliminar</Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-
-  const AdjustStockModal = () => (
-    <Dialog open={!!adjustTarget} onOpenChange={o => { if (!o) { setAdjustTarget(null); setAdjustQty("1"); } }}>
-      <DialogContent className="sm:max-w-[400px] rounded-2xl border-none p-8 bg-white dark:bg-slate-900">
-        <div className="text-center space-y-4">
-          <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center mx-auto">
-            <Package size={24} className="text-blue-500" />
-          </div>
-          <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white">Ajustar Stock</DialogTitle>
-          <p className="text-sm text-slate-500">
-            <strong>{adjustTarget?.name}</strong> &mdash; Stock atual: <strong>{adjustTarget?.stockQuantity}</strong> un.
-          </p>
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">Quantidade</label>
-              <input type="number" min="1" value={adjustQty} onChange={e => setAdjustQty(e.target.value)}
-                className="w-full h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center font-bold text-lg" />
-            </div>
-          </div>
-          {adjustTarget?.barcode && (
-            <div className="text-center text-[11px] text-slate-500 font-mono">
-              Cód. Barras: {adjustTarget.barcode}
-            </div>
-          )}
-          <div className="flex gap-3 pt-2">
-            <Button variant="outline" onClick={() => adjustMutation.mutate({ productId: adjustTarget.id, type: "IN", quantity: parseInt(adjustQty) || 1 })}
-              disabled={adjustMutation.isPending}
-              className="flex-1 h-10 rounded-xl border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 font-bold gap-1.5 transition-all">
-              <PlusCircle size={16} /> Entrada
-            </Button>
-            <Button variant="outline" onClick={() => adjustMutation.mutate({ productId: adjustTarget.id, type: "OUT", quantity: parseInt(adjustQty) || 1 })}
-              disabled={adjustMutation.isPending || adjustTarget?.stockQuantity === 0}
-              className="flex-1 h-10 rounded-xl border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white hover:border-rose-600 font-bold gap-1.5 transition-all">
-              <MinusCircle size={16} /> Saída
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-
-  const MovementsModal = () => (
-    <Dialog open={!!movementTarget} onOpenChange={o => { if (!o) setMovementTarget(null); }}>
-      <DialogContent className="sm:max-w-[600px] rounded-2xl border-none p-0 overflow-hidden bg-white dark:bg-slate-900">
-        <div className="bg-blue-600 p-6 text-white flex justify-between items-center">
-          <div>
-            <DialogTitle className="text-xl font-bold tracking-tight">Movimentos</DialogTitle>
-            <p className="text-blue-100 text-xs font-bold uppercase tracking-widest mt-0.5">{movementTarget?.name}</p>
-          </div>
-          <DialogClose className="text-white/70 hover:text-white transition-colors"><X size={20} /></DialogClose>
-        </div>
-        <div className="p-6 max-h-[400px] overflow-y-auto">
-          {!movements ? (
-            <p className="text-center text-slate-500 dark:text-slate-400 py-8">A carregar...</p>
-          ) : movements.length === 0 ? (
-            <p className="text-center text-slate-500 dark:text-slate-400 py-8 font-medium">Nenhum movimento registado.</p>
-          ) : (
-            <div className="space-y-2">
-              {movements.map((m: any) => (
-                <div key={m.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-                  <div className="flex items-center gap-3">
-                    <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", m.type === "IN" ? "bg-emerald-50 text-emerald-600" : m.type === "OUT" ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600")}>
-                      {m.type === "IN" ? <PlusCircle size={14} /> : m.type === "OUT" ? <MinusCircle size={14} /> : <AlertCircle size={14} />}
-                    </div>
-                    <div>
-                      <p className="font-bold text-sm text-slate-800 dark:text-slate-100">
-                        {m.type === "IN" ? "Entrada" : m.type === "OUT" ? "Saída" : "Ajuste"}
-                      </p>
-                      <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase">{m.source || "Manual"}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className={cn("font-bold text-sm", m.type === "IN" ? "text-emerald-600" : "text-rose-600")}>
-                      {m.type === "IN" ? "+" : "-"}{m.quantity} un.
-                    </p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">{format(new Date(m.createdAt), "dd MMM yyyy HH:mm", { locale: pt })}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
 
   return (
     <div className="w-full space-y-5 p-4 md:p-8">
@@ -425,7 +464,7 @@ export default function InventoryPage() {
           <div className="relative flex-1 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 group-focus-within:text-blue-600 transition-colors" size={15} />
             <Barcode className={`absolute right-4 top-1/2 -translate-y-1/2 transition-all duration-300 ${scanFeedback ? "text-blue-500 scale-125" : "text-slate-300 dark:text-slate-600"}`} size={18} />
-            <Input ref={searchRef} placeholder="Pesquisar por nome, categoria ou código de barras..." className="h-10 pl-11 pr-12 rounded-xl border-none bg-slate-50 dark:bg-slate-800/50 ring-1 ring-slate-100 dark:ring-slate-800 focus-visible:ring-2 focus-visible:ring-blue-500/50 font-medium text-sm" value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }} onKeyDown={handleSearchKeyDown} />
+            <Input ref={searchRef} aria-label="Pesquisar por nome, categoria ou código de barras" placeholder="Pesquisar por nome, categoria ou código de barras..." className="h-10 pl-11 pr-12 rounded-xl border-none bg-slate-50 dark:bg-slate-800/50 ring-1 ring-slate-100 dark:ring-slate-800 focus-visible:ring-2 focus-visible:ring-blue-500/50 font-medium text-sm" value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }} onKeyDown={handleSearchKeyDown} />
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -478,11 +517,29 @@ export default function InventoryPage() {
       </Dialog>
 
       {/* Delete Confirm */}
-      <DeleteConfirm />
+      <DeleteConfirmModal
+        target={deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={(id) => deleteMutation.mutate(id)}
+        loading={deleteMutation.isPending}
+      />
 
       {/* Movements Modal */}
-      <MovementsModal />
-      <AdjustStockModal />
+      <MovementsModalComponent
+        target={movementTarget}
+        onClose={() => setMovementTarget(null)}
+        movements={movements}
+      />
+
+      {/* Adjust Stock Modal */}
+      <AdjustStockModalComponent
+        target={adjustTarget}
+        qty={adjustQty}
+        setQty={setAdjustQty}
+        onClose={() => { setAdjustTarget(null); setAdjustQty("1"); }}
+        onAdjust={(type) => adjustMutation.mutate({ productId: adjustTarget.id, type, quantity: parseInt(adjustQty) || 1 })}
+        loading={adjustMutation.isPending}
+      />
 
       {/* Table */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm ring-1 ring-slate-200/60 dark:ring-white/5 overflow-hidden">
@@ -596,13 +653,13 @@ export default function InventoryPage() {
           <div className="px-5 py-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4">
             <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">A mostrar {Math.min((page - 1) * PAGE_SIZE + 1, total)}–{Math.min(page * PAGE_SIZE, total)} de {total.toLocaleString("pt-PT")}</p>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" disabled={page === 1} onClick={() => setPage(p => p - 1)}><ChevronLeft size={15} /></Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" disabled={page === 1} onClick={() => setPage(p => p - 1)} aria-label="Página anterior"><ChevronLeft size={15} /></Button>
               {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
                 const pg = page <= 3 ? i + 1 : page - 2 + i;
                 if (pg > totalPages) return null;
-                return <Button key={pg} variant="ghost" size="icon" className={cn("h-8 w-8 rounded-lg text-xs font-bold", pg === page ? "bg-blue-600 text-white hover:bg-blue-600" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800")} onClick={() => setPage(pg)}>{pg}</Button>;
+                return <Button key={pg} variant="ghost" size="icon" className={cn("h-8 w-8 rounded-lg text-xs font-bold", pg === page ? "bg-blue-600 text-white hover:bg-blue-600" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800")} onClick={() => setPage(pg)} aria-label={`Página ${pg}`}>{pg}</Button>;
               })}
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}><ChevronRight size={15} /></Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" disabled={page === totalPages} onClick={() => setPage(p => p + 1)} aria-label="Próxima página"><ChevronRight size={15} /></Button>
             </div>
           </div>
         )}
