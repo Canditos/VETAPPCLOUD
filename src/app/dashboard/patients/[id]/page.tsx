@@ -952,7 +952,12 @@ export default function PatientDetailPage() {
                                     </Badge>
                                   </div>
                                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                                    {study.source} · {format(new Date(study.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: pt })}
+                                    {study.source} · {study.createdAt ? (() => {
+                                      try {
+                                        const d = new Date(study.createdAt);
+                                        return isNaN(d.getTime()) ? "Sem data" : format(d, "dd/MM/yyyy 'às' HH:mm", { locale: pt });
+                                      } catch { return "Sem data"; }
+                                    })() : "Sem data"}
                                   </p>
                                   <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mt-2 font-medium bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg">
                                     {study.metadataJson?.observations || "Campos pulmonares nítidos. Silhueta cardíaca dentro dos limites normais. Coluna torácica íntegra."}
@@ -1294,6 +1299,7 @@ export default function PatientDetailPage() {
         isOpen={isExamModalOpen}
         onClose={() => setIsExamModalOpen(false)}
         patient={patient}
+        diagnostics={diagnosticsList}
         patientDiagnostics={diagnosticsList}
         initialSelectedId={selectedExamId}
         onRequestExam={handleRequestExam}

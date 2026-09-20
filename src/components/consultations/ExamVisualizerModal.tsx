@@ -45,10 +45,23 @@ interface ExamVisualizerModalProps {
   } | null;
   appointmentId?: string | null;
   consultationId?: string | null;
-  diagnostics: DiagnosticResult[];
+  diagnostics?: DiagnosticResult[];
+  patientDiagnostics?: DiagnosticResult[];
+  initialSelectedId?: string | null;
   sessionExamIds?: string[];
   onRequestExam: (type: "LAB" | "IMAGING", source: string, testName: string) => Promise<any>;
   onInsertToNotes?: (text: string) => void;
+}
+
+function safeFormat(dateVal: any, formatStr: string, options?: any): string {
+  if (!dateVal) return "—";
+  try {
+    const d = new Date(dateVal);
+    if (isNaN(d.getTime())) return "—";
+    return format(d, formatStr, options);
+  } catch {
+    return "—";
+  }
 }
 
 function StatusDot({ status }: { status?: string }) {
@@ -63,13 +76,15 @@ export function ExamVisualizerModal({
   patient,
   appointmentId,
   consultationId,
-  diagnostics,
+  diagnostics = [],
+  patientDiagnostics: propPatientDiagnostics,
+  initialSelectedId,
   sessionExamIds = [],
   onRequestExam,
   onInsertToNotes,
 }: ExamVisualizerModalProps) {
-  const [scopeTab, setScopeTab]         = useState<"current" | "all">("current");
-  const [selectedExamId, setSelectedExamId] = useState<string | null>(null);
+  const [scopeTab, setScopeTab]         = useState<"current" | "all">(appointmentId || consultationId ? "current" : "all");
+  const [selectedExamId, setSelectedExamId] = useState<string | null>(initialSelectedId || null);
   const [zoom, setZoom]                 = useState(1);
   const [isInverted, setIsInverted]     = useState(false);
   const [contrastLevel, setContrastLevel] = useState<"normal" | "high" | "bone">("normal");
@@ -77,19 +92,33 @@ export function ExamVisualizerModal({
   const [copiedNote, setCopiedNote]     = useState(false);
   const [requesting, setRequesting]     = useState<string | null>(null);
 
+  React.useEffect(() => {
+    if (initialSelectedId) {
+      setSelectedExamId(initialSelectedId);
+    }
+  }, [initialSelectedId]);
+
   /* ── Data Filtering ── */
+  const allDiagnostics = useMemo(() => {
+    const list = propPatientDiagnostics || diagnostics;
+    return Array.isArray(list) ? list : [];
+  }, [propPatientDiagnostics, diagnostics]);
+
   const patientDiagnostics = useMemo(() => {
-    if (!patient?.id) return [];
-    return diagnostics.filter((d) => d.patientId === patient.id);
-  }, [diagnostics, patient?.id]);
+    if (!patient?.id) return allDiagnostics;
+    return allDiagnostics.filter((d) => !d?.patientId || d.patientId === patient.id);
+  }, [allDiagnostics, patient?.id]);
 
   const currentConsultationDiagnostics = useMemo(() => {
     return patientDiagnostics.filter((dx) => {
-      if (sessionExamIds.includes(dx.id)) return true;
+      if (!dx) return false;
+      if (sessionExamIds?.includes(dx.id)) return true;
       if (consultationId && (dx.consultationId === consultationId || dx.dataJson?.consultationId === consultationId)) return true;
       if (appointmentId  && (dx.appointmentId  === appointmentId  || dx.dataJson?.appointmentId  === appointmentId  || dx.metadataJson?.appointmentId === appointmentId)) return true;
       try {
+        if (!dx.createdAt) return false;
         const examDate = new Date(dx.createdAt);
+        if (isNaN(examDate.getTime())) return false;
         const today    = new Date();
         if (examDate.getFullYear() === today.getFullYear() && examDate.getMonth() === today.getMonth() && examDate.getDate() === today.getDate()) return true;
       } catch { /* ignore */ }
@@ -98,12 +127,12 @@ export function ExamVisualizerModal({
   }, [patientDiagnostics, sessionExamIds, consultationId, appointmentId]);
 
   const activeList    = scopeTab === "current" ? currentConsultationDiagnostics : patientDiagnostics;
-  const imagingExams  = activeList.filter((d) => d.type === "IMAGING");
-  const labExams      = activeList.filter((d) => d.type === "LAB");
+  const imagingExams  = activeList.filter((d) => d?.type === "IMAGING");
+  const labExams      = activeList.filter((d) => d?.type === "LAB");
 
   const selectedExam = useMemo(() => {
     if (selectedExamId) {
-      const found = activeList.find((e) => e.id === selectedExamId) || patientDiagnostics.find((e) => e.id === selectedExamId);
+      const found = activeList.find((e) => e?.id === selectedExamId) || patientDiagnostics.find((e) => e?.id === selectedExamId);
       if (found) return found;
     }
     return activeList.length > 0 ? activeList[0] : null;
@@ -137,7 +166,7 @@ export function ExamVisualizerModal({
   const handleCopyNotes = (exam: DiagnosticResult) => {
     let note = "";
     if (exam.type === "IMAGING") {
-      note = `[${exam.summary || exam.testName} (${exam.source})] Realizado em ${format(new Date(exam.createdAt), "dd/MM/yyyy HH:mm")}. Sem alterações radiográficas significativas observadas.`;
+      note = `[${exam.summary || exam.testName} (${exam.source})] Realizado em ${safeFormat(exam.createdAt, "dd/MM/yyyy HH:mm")}. Sem alterações radiográficas significativas observadas.`;
     } else {
       const params   = exam.dataJson?.parameters || [];
       const abnormal = params.filter((p: any) => p.isAbnormal);
@@ -228,7 +257,7 @@ export function ExamVisualizerModal({
                   "ml-2 px-1.5 py-0.5 rounded-md text-[10px] font-black",
                   scopeTab === tab ? "bg-white/20 text-white" : "bg-slate-300/70 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
                 )}>
-                  {tab === "current" ? currentConsultationDiagnostics.length : patientDiagnostics.length}
+                  {tab === "current" ? (currentConsultationDiagnostics?.length ?? 0) : (patientDiagnostics?.length ?? 0)}
                 </span>
               </button>
             ))}
@@ -279,7 +308,7 @@ export function ExamVisualizerModal({
                           {dx.summary ?? dx.testName ?? "Imagem"}
                         </p>
                         <p className="text-[10px] text-slate-500 mt-0.5 truncate">
-                          {dx.source} · {format(new Date(dx.createdAt), "dd/MM HH:mm")}
+                          {dx.source} · {safeFormat(dx.createdAt, "dd/MM HH:mm")}
                         </p>
                       </div>
                       <StatusDot status={dx.status} />
@@ -323,7 +352,7 @@ export function ExamVisualizerModal({
                           {dx.summary ?? dx.testName ?? "Análise"}
                         </p>
                         <p className="text-[10px] text-slate-500 mt-0.5 truncate">
-                          {dx.source} · {format(new Date(dx.createdAt), "dd/MM HH:mm")}
+                          {dx.source} · {safeFormat(dx.createdAt, "dd/MM HH:mm")}
                         </p>
                       </div>
                       {alertCount > 0 ? (
@@ -385,7 +414,7 @@ export function ExamVisualizerModal({
                     <div className="min-w-0">
                       <h3 className="text-sm font-black text-slate-900 dark:text-white leading-tight truncate">{selectedExam.summary || selectedExam.testName}</h3>
                       <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
-                        {selectedExam.source} &nbsp;·&nbsp; {format(new Date(selectedExam.createdAt), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: pt })}
+                        {selectedExam.source} &nbsp;·&nbsp; {safeFormat(selectedExam.createdAt, "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: pt })}
                       </p>
                     </div>
                   </div>
@@ -447,7 +476,7 @@ export function ExamVisualizerModal({
                           {patient?.microchip && <p>CHIP: {patient.microchip}</p>}
                           <p className="text-emerald-300 mt-1">{selectedExam.summary?.toUpperCase() || selectedExam.testName?.toUpperCase()}</p>
                           <p>EXP: 65kV 2.5mAs · DICOM 1.4</p>
-                          <p>{format(new Date(selectedExam.createdAt), "dd/MM/yyyy HH:mm:ss")}</p>
+                          <p>{safeFormat(selectedExam.createdAt, "dd/MM/yyyy HH:mm:ss")}</p>
                         </div>
 
                         {/* Overlay — DICOM info (top-right) */}
@@ -679,7 +708,7 @@ export function ExamVisualizerModal({
             </div>
           </div>
           <p className="text-[11px] text-slate-400 dark:text-slate-600">
-            {currentConsultationDiagnostics.length} nesta consulta · {patientDiagnostics.length} no total do animal
+            {(currentConsultationDiagnostics?.length ?? 0)} nesta consulta · {(patientDiagnostics?.length ?? 0)} no total do animal
           </p>
         </div>
         </DialogPrimitive.Content>
