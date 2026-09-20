@@ -429,32 +429,6 @@ export default function PatientDetailPage() {
             className="rounded-xl h-11 px-5 bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-500/20 gap-2 transition-all active:scale-95 text-xs"
           >
             <Plus size={16} strokeWidth={2.5} /> Nova Consulta
-          </Button>
-          {isFeatureEnabled("gdtIntegration") && (
-            <>
-              <Button
-                onClick={() => handleGdtSend("/api/gdt/fazer-rx", "fazer-rx")}
-                disabled={rxLoading !== null}
-                size="lg"
-                title="Envia ficha do paciente para a worklist do RX Examion"
-                className="rounded-xl h-11 px-5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-bold shadow-lg shadow-emerald-500/20 gap-2 transition-all active:scale-95 text-xs"
-              >
-                {rxLoading === "fazer-rx" ? <Loader2 size={16} className="animate-spin" /> : <Radio size={16} />}
-                Fazer RX
-              </Button>
-              <Button
-                onClick={() => handleGdtSend("/api/gdt/ver-rx", "ver-rx")}
-                disabled={rxLoading !== null}
-                variant="outline"
-                size="lg"
-                title="Abre o visualizador de imagens arquivadas no RX Examion"
-                className="rounded-xl h-11 px-5 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-50 dark:hover:bg-slate-800/80 disabled:opacity-60 shadow-sm gap-2 transition-all active:scale-95 text-xs"
-              >
-                {rxLoading === "ver-rx" ? <Loader2 size={16} className="animate-spin" /> : <ScanLine size={16} />}
-                Ver RX
-              </Button>
-            </>
-          )}
         </div>
       </div>
 
