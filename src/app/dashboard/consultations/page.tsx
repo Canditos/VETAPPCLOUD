@@ -37,7 +37,14 @@ import { useIntegrationHealth } from "@/hooks/useIntegrationHealth";
 import type { BillingItem, DiagnosticResult } from "@/types";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
-import { pt } from "date-fns/locale";
+function normalizeTemperament(raw?: string | null): "Dócil" | "Nervoso" | "Agressivo" | null {
+  if (!raw) return null;
+  const s = raw.trim().toLowerCase();
+  if (s.includes("dócil") || s.includes("docil") || s.includes("baixo")) return "Dócil";
+  if (s.includes("nervoso") || s.includes("médio") || s.includes("medio")) return "Nervoso";
+  if (s.includes("agressivo") || s.includes("alto")) return "Agressivo";
+  return null;
+}
 
 function ConsultationContent() {
   const searchParams = useSearchParams();
@@ -99,7 +106,8 @@ function ConsultationContent() {
 
   useEffect(() => {
     if (patient?.aggressionLevel && !temperament) {
-      setTemperament(patient.aggressionLevel);
+      const norm = normalizeTemperament(patient.aggressionLevel);
+      if (norm) setTemperament(norm);
     }
   }, [patient?.aggressionLevel, temperament]);
 
@@ -498,18 +506,22 @@ function ConsultationContent() {
               )}
 
               {/* Temperament Badge */}
-              {(temperament || patient?.aggressionLevel) && (
-                <Badge className={cn("text-xs font-bold px-2.5 py-1 rounded-lg border-none flex items-center gap-1 shadow-sm",
-                  (temperament || patient?.aggressionLevel) === "Dócil" ? "bg-emerald-600 text-white shadow-emerald-500/20" :
-                  (temperament || patient?.aggressionLevel) === "Nervoso" ? "bg-amber-500 text-slate-950 font-black shadow-amber-500/20" :
-                  "bg-rose-600 text-white shadow-rose-500/20"
-                )}>
-                  {(temperament || patient?.aggressionLevel) === "Dócil" ? <ShieldCheck size={12} strokeWidth={2.5} /> :
-                   (temperament || patient?.aggressionLevel) === "Nervoso" ? <Zap size={12} strokeWidth={2.5} /> :
-                   <ShieldAlert size={12} strokeWidth={2.5} />}
-                  {temperament || patient?.aggressionLevel}
-                </Badge>
-              )}
+              {(() => {
+                const norm = normalizeTemperament(temperament || patient?.aggressionLevel);
+                if (!norm) return null;
+                return (
+                  <Badge className={cn("text-xs font-bold px-2.5 py-1 rounded-lg border-none flex items-center gap-1 shadow-sm",
+                    norm === "Dócil" ? "bg-emerald-600 text-white shadow-emerald-500/20" :
+                    norm === "Nervoso" ? "bg-amber-500 text-slate-950 font-black shadow-amber-500/20" :
+                    "bg-rose-600 text-white shadow-rose-500/20"
+                  )}>
+                    {norm === "Dócil" ? <ShieldCheck size={12} strokeWidth={2.5} /> :
+                     norm === "Nervoso" ? <Zap size={12} strokeWidth={2.5} /> :
+                     <ShieldAlert size={12} strokeWidth={2.5} />}
+                    {norm}
+                  </Badge>
+                );
+              })()}
 
               {!appointmentId && (
                 <Badge variant="outline" className="border-amber-200 dark:border-amber-900/30 text-amber-600 dark:text-amber-400 font-medium text-[11px] px-3 py-1 rounded-lg animate-pulse">Walk-in</Badge>

@@ -47,9 +47,9 @@ export function ClinicalSummaryBanner({ patientId, fallbackGender, className }: 
   const hasAlerts = summary.safetyAlerts.length > 0 || summary.vaccines.expired.length > 0 || summary.deworming.overdue;
   const isLoadingAI = aiEnabled && isAILoading;
 
-  // Background styling according to gender
+  // Background styling according to gender - rich cohesive pink degrade
   const bgGradient = isFemale
-    ? "bg-gradient-to-r from-pink-500 via-pink-400 to-rose-300 shadow-pink-400/25"
+    ? "bg-gradient-to-r from-pink-500 via-pink-500 to-pink-600 shadow-pink-500/25"
     : hasAlerts
       ? "bg-gradient-to-r from-blue-700 via-indigo-700 to-indigo-800 shadow-blue-500/15"
       : "bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 shadow-blue-500/10";
@@ -58,7 +58,7 @@ export function ClinicalSummaryBanner({ patientId, fallbackGender, className }: 
     <div className={cn("relative overflow-hidden rounded-3xl p-8 shadow-xl text-white group", bgGradient, className)}>
       <div className={cn(
         "absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl -translate-y-32 translate-x-32 group-hover:opacity-100 transition-all duration-700 opacity-60",
-        isFemale ? "bg-pink-300/30" : "bg-white/20"
+        isFemale ? "bg-white/15" : "bg-white/20"
       )} />
       
       <div className="relative z-10 flex flex-col lg:flex-row lg:items-start justify-between gap-8">

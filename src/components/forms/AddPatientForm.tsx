@@ -67,7 +67,7 @@ export function AddPatientForm({ onSuccess, defaultOwnerId }: { onSuccess?: () =
       species: "Gato",
       gender: "F",
       reproductiveStatus: "Intacto",
-      aggressionLevel: "Baixo"
+      aggressionLevel: "Dócil"
     }
   });
 
