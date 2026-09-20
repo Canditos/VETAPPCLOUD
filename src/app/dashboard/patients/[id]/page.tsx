@@ -429,6 +429,7 @@ export default function PatientDetailPage() {
             className="rounded-xl h-11 px-5 bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-500/20 gap-2 transition-all active:scale-95 text-xs"
           >
             <Plus size={16} strokeWidth={2.5} /> Nova Consulta
+          </Button>
         </div>
       </div>
 
