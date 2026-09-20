@@ -17,8 +17,8 @@ interface ProfileTabContentProps {
   patientSpecies?: string;
   onApplyToDiagnostics: (text: string) => void;
   onApplyToTreatment: (text: string) => void;
-  onCloseTab: () => void;
-  onNavigateToClinical: () => void;
+  onCloseTab?: () => void;
+  onNavigateToClinical?: () => void;
 }
 
 export function ProfileTabContent({
@@ -27,22 +27,18 @@ export function ProfileTabContent({
   patientSpecies,
   onApplyToDiagnostics,
   onApplyToTreatment,
-  onCloseTab,
-  onNavigateToClinical,
 }: ProfileTabContentProps) {
 
   const handleCopyDiagnostics = () => {
     const textToAppend = `\n[Perfil Clínico: ${profile.title}]\n• Estadiamento/Critérios: ${profile.stagingSystem}\n• Exames Recomendados:\n${profile.recommendedExams.map(e => `  - ${e}`).join("\n")}`;
     onApplyToDiagnostics(textToAppend);
     toast.success(`Protocolo de diagnóstico adicionado à Secção 5!`);
-    onNavigateToClinical();
   };
 
   const handleCopyTreatment = () => {
     const textToAppend = `\n[Protocolo Terapêutico: ${profile.title}]\n${profile.treatmentProtocol.map(t => `• ${t}`).join("\n")}\n• Controlo/Follow-up: ${profile.followUp}`;
     onApplyToTreatment(textToAppend);
     toast.success(`Protocolo terapêutico adicionado à Secção 6!`);
-    onNavigateToClinical();
   };
 
   return (
@@ -62,27 +58,11 @@ export function ProfileTabContent({
                 <Badge variant="outline" className="border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 text-[11px] font-semibold">
                   {profile.category}
                 </Badge>
-                {patientName && (
-                  <Badge variant="secondary" className="text-[11px] font-medium">
-                    Paciente: {patientName}
-                  </Badge>
-                )}
               </div>
               <p className="text-sm text-slate-600 dark:text-slate-400">
                 {profile.description}
               </p>
             </div>
-          </div>
-
-          <div className="flex items-center gap-2 self-end md:self-auto">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onCloseTab}
-              className="text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl text-xs font-semibold gap-1.5"
-            >
-              <X className="w-4 h-4" /> Fechar Tab
-            </Button>
           </div>
         </div>
 
@@ -105,14 +85,6 @@ export function ProfileTabContent({
               className="h-9 px-3.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold shadow-sm gap-2 active:scale-95 transition-all"
             >
               <Pill className="w-4 h-4" /> Inserir no Tratamento (Secção 6)
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onNavigateToClinical}
-              className="h-9 px-3 rounded-xl border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-700 dark:text-slate-300 gap-1.5 ml-auto"
-            >
-              Voltar ao Atendimento <ArrowRight className="w-3.5 h-3.5" />
             </Button>
           </div>
 

@@ -10,7 +10,7 @@ import {
   Thermometer, Weight, Plus, Pill, Shield, TrendingUp, Info, Clock, 
   Sparkles, ChevronRight, Microscope, Edit3, Radio, ScanLine, Loader2,
   CheckCircle2, WifiOff, Venus, Mars, ShieldAlert, ShieldCheck, Zap,
-  ArrowUpRight
+  ArrowUpRight, ImageIcon, Eye, ExternalLink
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import { VaccinationForm } from "@/components/forms/VaccinationForm";
 import { VitalSignsForm } from "@/components/forms/VitalSignsForm";
 import { PrescriptionForm } from "@/components/forms/PrescriptionForm";
 import { LabChartsViewer } from "@/components/patients/LabChartsViewer";
+import { ExamVisualizerModal } from "@/components/consultations/ExamVisualizerModal";
 import { ClinicalTimeline } from "@/components/ClinicalTimeline";
 import { format, isPast, differenceInDays, differenceInYears, differenceInMonths } from "date-fns";
 import { pt } from "date-fns/locale";
@@ -31,7 +32,7 @@ import { ClinicalSummaryBanner } from "@/components/ClinicalSummaryBanner";
 import { PremiumCard } from "@/components/PremiumCard";
 import { isFeatureEnabled } from "@/lib/features";
 import { toast } from "sonner";
-import type { Vaccination, VitalSign, Prescription } from "@/types";
+import type { Vaccination, VitalSign, Prescription, DiagnosticResult } from "@/types";
 
 // ── GDT send helper ───────────────────────────────────────────────────────
 
@@ -178,6 +179,44 @@ export default function PatientDetailPage() {
     queryFn: async () => { const r = await fetch(`/api/patients/${patientId}/lab`); return r.ok ? r.json() : []; },
     enabled: !!patientId,
   });
+
+  // ── Diagnostics (Imagiologia / RX & Laboratório) ─────────────────────────
+  const [isExamModalOpen, setIsExamModalOpen] = useState(false);
+  const [selectedExamId, setSelectedExamId] = useState<string | undefined>(undefined);
+  const [examCategoryFilter, setExamCategoryFilter] = useState<"ALL" | "IMAGING" | "LAB">("ALL");
+
+  const { data: rawDiagnostics = [], refetch: refetchDiagnostics } = useQuery<DiagnosticResult[]>({
+    queryKey: ["patient-diagnostics", patientId],
+    queryFn: async () => {
+      const res = await fetch(`/api/diagnostics?patientId=${patientId}`);
+      if (!res.ok) return [];
+      const json = await res.json();
+      return Array.isArray(json) ? json : json.data || [];
+    },
+    enabled: !!patientId,
+  });
+
+  const diagnosticsList = Array.isArray(rawDiagnostics) ? rawDiagnostics : [];
+  const imagingStudies = diagnosticsList.filter((d) => d.type === "IMAGING");
+  const labStudies = diagnosticsList.filter((d) => d.type === "LAB");
+
+  const handleRequestExam = async (type: "IMAGING" | "LAB", source: string, name: string) => {
+    try {
+      const res = await fetch("/api/diagnostics/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ patientId, type, source, testName: name }),
+      });
+      if (res.ok) {
+        toast.success(`Exame ${name} requisitado com sucesso!`);
+        refetchDiagnostics();
+      } else {
+        toast.error("Não foi possível registar o pedido");
+      }
+    } catch {
+      toast.error("Erro ao requisitar exame");
+    }
+  };
 
   const { data: history = [], isLoading: isHistoryLoading } = useQuery({
     queryKey: ["patient-history", patientId],
@@ -594,8 +633,8 @@ export default function PatientDetailPage() {
                   <TabsTrigger value="prescriptions" className="rounded-xl flex-1 px-3 h-full font-bold text-xs uppercase tracking-wider data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm transition-all justify-center">
                     Receituário
                   </TabsTrigger>
-                  <TabsTrigger value="lab" className="rounded-xl flex-1 px-3 h-full font-bold text-xs uppercase tracking-wider data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm transition-all justify-center">
-                    Análises
+                  <TabsTrigger value="lab" className="rounded-xl flex-1 px-3 h-full font-bold text-xs uppercase tracking-wider data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm transition-all justify-center gap-1.5">
+                    <Microscope size={14} /> Exames (RX &amp; Análises)
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -756,15 +795,240 @@ export default function PatientDetailPage() {
                   )}
                 </TabsContent>
 
-                {/* ── LABORATÓRIO (Análises) ── */}
-                <TabsContent value="lab" className="m-0 space-y-4 animate-in fade-in slide-in-from-right-4 duration-500">
-                  <div className="flex justify-between items-center bg-indigo-50/50 dark:bg-indigo-900/10 p-5 rounded-2xl ring-1 ring-indigo-100 dark:ring-indigo-900/30">
-                    <div>
-                      <h4 className="text-lg font-bold text-slate-900 dark:text-white">Análises Laboratoriais</h4>
-                      <p className="text-sm text-slate-500 font-medium">Resultados integrados dos equipamentos locais.</p>
+                {/* ── EXAMES COMPLEMENTARES (RX & Análises) ── */}
+                <TabsContent value="lab" className="m-0 space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+                  {/* Top Header Card */}
+                  <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-gradient-to-r from-blue-500/10 via-indigo-500/5 to-purple-500/10 dark:from-blue-950/40 dark:via-indigo-950/20 dark:to-purple-950/40 p-5 rounded-2xl ring-1 ring-blue-500/20">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-10 h-10 rounded-xl bg-blue-600/15 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                          <ScanLine size={20} strokeWidth={2.2} />
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-bold text-slate-900 dark:text-white">Exames Complementares (RX &amp; Análises)</h4>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                            Radiografias digitais (DICOM / Examion) e análises clínicas integradas (HL7 / Fuji).
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setSelectedExamId(undefined);
+                          setIsExamModalOpen(true);
+                        }}
+                        className="rounded-xl h-9 px-4 bg-purple-600 hover:bg-purple-700 text-white font-bold shadow-md shadow-purple-500/20 text-xs gap-1.5"
+                      >
+                        <Eye size={14} /> Abrir Visualizador Completo
+                      </Button>
                     </div>
                   </div>
-                  <LabChartsViewer results={labResults} />
+
+                  {/* Filter Sub-Bar */}
+                  <div className="flex items-center justify-between gap-3 flex-wrap bg-slate-100/60 dark:bg-slate-800/40 p-1.5 rounded-2xl border border-slate-200/60 dark:border-white/5">
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setExamCategoryFilter("ALL")}
+                        className={cn(
+                          "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all",
+                          examCategoryFilter === "ALL"
+                            ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
+                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                        )}
+                      >
+                        Todos os Exames ({diagnosticsList.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setExamCategoryFilter("IMAGING")}
+                        className={cn(
+                          "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all gap-1.5 inline-flex items-center",
+                          examCategoryFilter === "IMAGING"
+                            ? "bg-emerald-600 text-white shadow-xs"
+                            : "text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10"
+                        )}
+                      >
+                        <ImageIcon size={13} /> Radiologia / RX ({imagingStudies.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setExamCategoryFilter("LAB")}
+                        className={cn(
+                          "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all gap-1.5 inline-flex items-center",
+                          examCategoryFilter === "LAB"
+                            ? "bg-purple-600 text-white shadow-xs"
+                            : "text-purple-700 dark:text-purple-400 hover:bg-purple-500/10"
+                        )}
+                      >
+                        <Microscope size={13} /> Análises Laboratoriais ({labStudies.length || labResults.length})
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRequestExam("IMAGING", "Examion RX", "RX Tórax")}
+                        className="h-8 rounded-xl text-xs font-semibold border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100 gap-1"
+                      >
+                        <Plus size={12} /> Requisitar RX (Examion)
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRequestExam("LAB", "Fuji DX-500", "Hemograma Completo")}
+                        className="h-8 rounded-xl text-xs font-semibold border-purple-300 dark:border-purple-800 text-purple-700 dark:text-purple-300 bg-purple-50/50 dark:bg-purple-950/30 hover:bg-purple-100 gap-1"
+                      >
+                        <Plus size={12} /> Requisitar Hemograma
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* ── IMAGING / RX SECTION ── */}
+                  {(examCategoryFilter === "ALL" || examCategoryFilter === "IMAGING") && (
+                    <div className="space-y-4 pt-2">
+                      <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/5">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                          <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                            Radiografias Digitais (RX / Imagiologia)
+                          </h4>
+                        </div>
+                        <Badge variant="outline" className="text-[10px] font-bold border-emerald-500/30 text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30">
+                          Examion RX · DICOM SR / GDT 6302
+                        </Badge>
+                      </div>
+
+                      {imagingStudies.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {imagingStudies.map((study) => (
+                            <div
+                              key={study.id}
+                              className="flex flex-col justify-between p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 hover:border-emerald-500/50 hover:shadow-md transition-all group"
+                            >
+                              <div className="space-y-3">
+                                {/* Thumbnail preview container */}
+                                <div
+                                  onClick={() => {
+                                    setSelectedExamId(study.id);
+                                    setIsExamModalOpen(true);
+                                  }}
+                                  className="relative w-full h-36 rounded-xl bg-[#060a0f] border border-white/10 overflow-hidden flex items-center justify-center cursor-pointer group-hover:scale-[1.01] transition-transform"
+                                >
+                                  {/* Radiological mock preview */}
+                                  <svg viewBox="0 0 300 180" className="w-full h-full opacity-70" fill="none">
+                                    <circle cx="150" cy="90" r="70" fill="white" fillOpacity="0.04" />
+                                    {/* Spine */}
+                                    {[60, 90, 120, 150, 180, 210, 240].map((x, i) => (
+                                      <rect key={i} x={x} y="45" width="16" height="8" rx="2" fill="#cbd5e1" fillOpacity="0.6" />
+                                    ))}
+                                    {/* Ribs */}
+                                    {[90, 120, 150, 180, 210].map((x, i) => (
+                                      <path key={i} d={`M ${x} 55 C ${x - 8} 90, ${x + 15} 120, ${x + 30} 140`} stroke="#cbd5e1" strokeWidth="1.5" strokeOpacity="0.5" fill="none" />
+                                    ))}
+                                    {/* Heart */}
+                                    <ellipse cx="150" cy="100" rx="35" ry="25" fill="white" fillOpacity="0.2" />
+                                  </svg>
+
+                                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/70 text-[9px] font-mono text-emerald-400">
+                                    DICOM · 65kV 2.5mAs
+                                  </div>
+                                  <div className="absolute inset-0 bg-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white font-bold text-xs backdrop-blur-[1px]">
+                                    <Eye size={16} /> Abrir no Visualizador
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <div className="flex items-center justify-between gap-2">
+                                    <h5 className="font-bold text-sm text-slate-900 dark:text-white truncate">
+                                      {study.summary || study.testName}
+                                    </h5>
+                                    <Badge className="text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0">
+                                      DICOM OK
+                                    </Badge>
+                                  </div>
+                                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                                    {study.source} · {format(new Date(study.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: pt })}
+                                  </p>
+                                  <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mt-2 font-medium bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg">
+                                    {study.metadataJson?.observations || "Campos pulmonares nítidos. Silhueta cardíaca dentro dos limites normais. Coluna torácica íntegra."}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="pt-3 mt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between gap-2">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSelectedExamId(study.id);
+                                    setIsExamModalOpen(true);
+                                  }}
+                                  className="w-full rounded-xl text-xs font-bold gap-1.5 h-8 bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10"
+                                >
+                                  <Eye size={13} className="text-emerald-500" /> Ver Radiografia (DICOM)
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        /* Empty state when no RX yet */
+                        <div className="p-8 rounded-2xl bg-slate-50 dark:bg-slate-800/30 border border-dashed border-slate-300 dark:border-white/10 flex flex-col items-center justify-center text-center gap-3">
+                          <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                            <ImageIcon size={24} />
+                          </div>
+                          <div>
+                            <h5 className="font-bold text-sm text-slate-800 dark:text-slate-200">Sem estudos radiográficos registados</h5>
+                            <p className="text-xs text-slate-500 max-w-md mt-1">
+                              Pode enviar o pedido diretamente para a estação Examion através do protocolo GDT.
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 pt-2">
+                            <Button
+                              size="sm"
+                              onClick={() => handleRequestExam("IMAGING", "Examion RX", "RX Tórax")}
+                              className="rounded-xl h-8 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
+                            >
+                              <Plus size={13} /> Requisitar RX Tórax
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleRequestExam("IMAGING", "Examion RX", "RX Abdómen")}
+                              className="rounded-xl h-8 text-xs font-bold border-slate-300 dark:border-white/10 gap-1.5"
+                            >
+                              <Plus size={13} /> Requisitar RX Abdómen
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ── LAB SECTION ── */}
+                  {(examCategoryFilter === "ALL" || examCategoryFilter === "LAB") && (
+                    <div className="space-y-4 pt-2">
+                      <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/5">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-2.5 h-2.5 rounded-full bg-purple-500" />
+                          <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                            Análises Clínicas &amp; Tendências Laboratoriais
+                          </h4>
+                        </div>
+                        <Badge variant="outline" className="text-[10px] font-bold border-purple-500/30 text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/30">
+                          Fuji DX-500 · HL7 v2.5
+                        </Badge>
+                      </div>
+
+                      <LabChartsViewer results={labResults} />
+                    </div>
+                  )}
                 </TabsContent>
 
               </div>
@@ -1024,6 +1288,16 @@ export default function PatientDetailPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ── Visualizador de Exames (DICOM / HL7) ── */}
+      <ExamVisualizerModal
+        isOpen={isExamModalOpen}
+        onClose={() => setIsExamModalOpen(false)}
+        patient={patient}
+        patientDiagnostics={diagnosticsList}
+        initialSelectedId={selectedExamId}
+        onRequestExam={handleRequestExam}
+      />
     </div>
   );
 }

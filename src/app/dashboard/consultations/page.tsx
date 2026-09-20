@@ -35,7 +35,7 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { ExamVisualizerModal } from "@/components/consultations/ExamVisualizerModal";
-import { DiagnosticProfilesModal, ClinicalProfile } from "@/components/consultations/DiagnosticProfilesModal";
+import { DiagnosticProfilesModal, ClinicalProfile, CLINICAL_PROFILES_CATALOG } from "@/components/consultations/DiagnosticProfilesModal";
 import { ProfileTabContent } from "@/components/consultations/ProfileTabContent";
 import { DewormingSimulatorModal } from "@/components/consultations/DewormingSimulatorModal";
 import { PetLink } from "@/components/PetLink";
@@ -81,6 +81,28 @@ function ConsultationContent() {
   const [reassessmentPopup, setReassessmentPopup] = useState<{ open: boolean; date: string } | null>(null);
   const [patientSearch, setPatientSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // Persist and load active clinical profiles with the patient
+  useEffect(() => {
+    if (!patientId) {
+      setActiveProfiles([]);
+      return;
+    }
+    try {
+      const stored = localStorage.getItem(`vet_patient_profiles_${patientId}`);
+      if (stored) {
+        const ids: string[] = JSON.parse(stored);
+        const matched = ids
+          .map((id) => CLINICAL_PROFILES_CATALOG.find((p) => p.id === id))
+          .filter(Boolean) as ClinicalProfile[];
+        setActiveProfiles(matched);
+      } else {
+        setActiveProfiles([]);
+      }
+    } catch (e) {
+      console.error("Error loading patient clinical profiles:", e);
+    }
+  }, [patientId]);
 
   useEffect(() => { setActiveTab(urlTab); }, [urlTab]);
 
@@ -329,7 +351,18 @@ function ConsultationContent() {
   const handleSelectProfile = (profile: ClinicalProfile) => {
     setActiveProfiles((prev) => {
       if (!prev.some((p) => p.id === profile.id)) {
-        return [...prev, profile];
+        const updated = [...prev, profile];
+        if (patientId) {
+          try {
+            localStorage.setItem(
+              `vet_patient_profiles_${patientId}`,
+              JSON.stringify(updated.map((p) => p.id))
+            );
+          } catch (e) {
+            console.error("Error saving patient clinical profile:", e);
+          }
+        }
+        return updated;
       }
       return prev;
     });
@@ -670,16 +703,7 @@ function ConsultationContent() {
                 className="group flex-1 rounded-2xl data-[state=active]:bg-amber-600 data-[state=active]:text-white dark:data-[state=active]:bg-amber-600 data-[state=active]:shadow-md font-bold text-xs transition-all gap-2 py-3 px-3.5 text-amber-800 dark:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 whitespace-nowrap justify-center border border-amber-500/30"
               >
                 <Activity className="w-3.5 h-3.5 shrink-0 text-amber-600 dark:text-amber-400 group-data-[state=active]:text-white" />
-                <span className="truncate max-w-[130px] sm:max-w-[180px]">{p.shortTitle || p.title}</span>
-                <span
-                  role="button"
-                  tabIndex={0}
-                  onClick={(e) => handleCloseProfileTab(p.id, e)}
-                  className="ml-1 p-0.5 rounded-full hover:bg-black/20 dark:hover:bg-white/20 transition-colors text-amber-700 dark:text-amber-200 group-data-[state=active]:text-white"
-                  title="Fechar aba"
-                >
-                  <X className="w-3 h-3" />
-                </span>
+                <span className="truncate max-w-[150px] sm:max-w-[200px]">{p.shortTitle || p.title}</span>
               </TabsTrigger>
             ))}
 
@@ -1121,7 +1145,6 @@ function ConsultationContent() {
           <TabsContent key={profile.id} value={profile.id} className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <ProfileTabContent
               profile={profile}
-              patientName={patient?.name}
               patientSpecies={patient?.species}
               onApplyToDiagnostics={(text) => {
                 setDiagnosticsNotes((prev) => (prev ? `${prev}\n${text}` : text.trim()));
@@ -1129,8 +1152,6 @@ function ConsultationContent() {
               onApplyToTreatment={(text) => {
                 setTreatment((prev) => (prev ? `${prev}\n${text}` : text.trim()));
               }}
-              onCloseTab={() => handleCloseProfileTab(profile.id)}
-              onNavigateToClinical={() => updateTab("clinical")}
             />
           </TabsContent>
         ))}

@@ -288,7 +288,7 @@ export function DiagnosticProfilesModal({
                       )}
                       {isSelected && (
                         <Badge className="bg-emerald-600 text-white border-none text-[10px] font-bold gap-1">
-                          <Check size={10} strokeWidth={3} /> Aberto no Tab
+                          <Check size={10} strokeWidth={3} /> Ativo no Paciente
                         </Badge>
                       )}
                     </div>
