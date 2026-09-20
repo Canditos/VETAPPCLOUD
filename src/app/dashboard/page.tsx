@@ -64,7 +64,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-6 p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="w-full space-y-6 p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <PageHeader
         title={`${greeting()}${data?.userName ? `, ${data.userName.split(" ")[0]}` : ""} 👋`}
         description={format(now, "EEEE, d 'de' MMMM", { locale: pt }).replace(/^./, (c) => c.toUpperCase())}

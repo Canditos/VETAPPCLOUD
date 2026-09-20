@@ -114,10 +114,27 @@ export const POST = withAuth(async ({ tenantPrisma, clinicId, req }) => {
     const speciesPt = patient.species?.toLowerCase().includes("gato") || patient.species?.toLowerCase().includes("fel") ? "Felino (Gato)" : "Canino (Cão)";
     const genderPt = patient.gender === "M" || patient.gender?.toLowerCase().includes("m") ? "Macho" : "Fêmea";
 
-    // 4. Configuração de IA
-    const automationSettings = await tenantPrisma.automationSettings.findUnique({
-      where: { clinicId },
-    });
+    // 4. Configuração de IA (com auto-heal da base de dados e query defensiva)
+    try {
+      await tenantPrisma.$executeRawUnsafe(`ALTER TABLE "AutomationSettings" ADD COLUMN IF NOT EXISTS "aiVisionModel" TEXT DEFAULT 'qwen3.7-max'`);
+      await tenantPrisma.$executeRawUnsafe(`ALTER TABLE "AutomationSettings" ADD COLUMN IF NOT EXISTS "aiApiKey" TEXT`);
+      await tenantPrisma.$executeRawUnsafe(`ALTER TABLE "AutomationSettings" ADD COLUMN IF NOT EXISTS "aiBaseUrl" TEXT DEFAULT 'https://openrouter.ai/api/v1'`);
+      await tenantPrisma.$executeRawUnsafe(`ALTER TABLE "AutomationSettings" ADD COLUMN IF NOT EXISTS "aiModel" TEXT DEFAULT 'openai/gpt-4o-mini'`);
+    } catch {}
+
+    let automationSettings: { aiApiKey?: string | null; aiBaseUrl?: string | null; aiModel?: string | null } | null = null;
+    try {
+      automationSettings = await tenantPrisma.automationSettings.findUnique({
+        where: { clinicId },
+        select: {
+          aiApiKey: true,
+          aiBaseUrl: true,
+          aiModel: true,
+        },
+      });
+    } catch (e) {
+      console.warn("[AI_LAB_SETTINGS_WARN] Could not query automationSettings, using environment defaults:", e);
+    }
 
     const apiKey = automationSettings?.aiApiKey || process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY;
     const baseUrl = automationSettings?.aiBaseUrl || (process.env.OPENAI_API_KEY && !process.env.GROQ_API_KEY ? "https://api.openai.com/v1/chat/completions" : "https://api.groq.com/openai/v1/chat/completions");

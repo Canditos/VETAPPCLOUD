@@ -482,7 +482,7 @@ export default function InternamentoPage() {
   }, [hospitalizations, selectedHosp]);
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-6 animate-in fade-in duration-700 p-4 md:p-8">
+    <div className="w-full space-y-6 animate-in fade-in duration-700 p-4 md:p-8">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Ocupação" value={`${hospitalizations.length}/${TOTAL_BOXES}`} icon={Bed} color="text-blue-600" bg="bg-blue-50" trend={`${Math.round((hospitalizations.length / TOTAL_BOXES) * 100)}% Capacidade`} />
         <StatCard label="Críticos" value={stats.criticos} icon={AlertCircle} color="text-rose-600" bg="bg-rose-50" trend="Atenção" />

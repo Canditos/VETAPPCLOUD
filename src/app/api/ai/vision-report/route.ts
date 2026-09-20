@@ -11,10 +11,23 @@ export const POST = withAuth(async ({ req, clinicId }) => {
       return NextResponse.json({ error: "Imagem não fornecida" }, { status: 400 });
     }
 
+    // Ensure column exists
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE "AutomationSettings" ADD COLUMN IF NOT EXISTS "aiVisionModel" TEXT DEFAULT 'qwen3.7-max'`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "AutomationSettings" ADD COLUMN IF NOT EXISTS "aiApiKey" TEXT`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "AutomationSettings" ADD COLUMN IF NOT EXISTS "aiBaseUrl" TEXT DEFAULT 'https://opencode.ai/zen/go/v1'`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "AutomationSettings" ADD COLUMN IF NOT EXISTS "aiModel" TEXT DEFAULT 'deepseek-v4-flash'`);
+    } catch {}
+
     // Load AI settings from the database
-    const settings = await prisma.automationSettings.findUnique({
-      where: { clinicId }
-    });
+    let settings: any = null;
+    try {
+      settings = await prisma.automationSettings.findUnique({
+        where: { clinicId }
+      });
+    } catch (e) {
+      console.warn("Could not query automationSettings:", e);
+    }
 
     if (!settings || !settings.aiApiKey) {
       return NextResponse.json({ error: "Configuração de IA ou Chave de API em falta" }, { status: 400 });

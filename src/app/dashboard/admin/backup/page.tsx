@@ -64,7 +64,7 @@ export default function BackupDashboard() {
   const cloudConfigured = data?.cloud?.configured;
 
   return (
-    <div className="max-w-[1200px] mx-auto space-y-6 p-6">
+    <div className="w-full space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tighter">

@@ -87,7 +87,7 @@ function PatientsPageContent() {
   ];
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-10 p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="w-full space-y-10 p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Header */}
       <PageHeader
         title="Pacientes"
@@ -282,7 +282,7 @@ function PatientsPageContent() {
 export default function PatientsPage() {
   return (
     <Suspense fallback={
-      <div className="max-w-[1600px] mx-auto space-y-10 p-4 md:p-8 animate-pulse">
+      <div className="w-full space-y-10 p-4 md:p-8 animate-pulse">
         <div className="h-12 w-48 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
         <div className="h-24 w-full bg-slate-100 dark:bg-slate-800 rounded-3xl" />
         <div className="space-y-4">

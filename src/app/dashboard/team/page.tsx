@@ -114,7 +114,7 @@ export default function TeamPage() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 max-w-[1600px] mx-auto p-4 md:p-8">
+    <div className="space-y-6 animate-in fade-in duration-500 w-full p-4 md:p-8">
       <div className="flex justify-between items-end">
         <div>
           <h1 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight">Equipa & Acessos</h1>

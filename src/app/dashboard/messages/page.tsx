@@ -191,7 +191,7 @@ export default function MessageCenter() {
   ];
 
   return (
-    <div className="p-8 space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-700 h-[calc(100vh-130px)] flex flex-col">
+    <div className="p-8 space-y-6 w-full animate-in fade-in duration-700 h-[calc(100vh-130px)] flex flex-col">
       {/* Header */}
       <PageHeader
         title="Inbox & Portal"

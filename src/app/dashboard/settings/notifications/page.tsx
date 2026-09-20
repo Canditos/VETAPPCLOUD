@@ -212,7 +212,7 @@ export default function NotificationSettings() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-[1400px] mx-auto pb-20">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 w-full p-4 md:p-8 pb-20">
       
       {/* Header */}
       <div className="flex justify-between items-end">

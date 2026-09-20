@@ -95,7 +95,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-700 max-w-[1400px] mx-auto">
+    <div className="space-y-6 animate-in fade-in duration-700 w-full p-4 md:p-8">
       <div className="flex justify-between items-end">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Definições</h1>

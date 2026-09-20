@@ -107,7 +107,7 @@ export default function AutomationsPage() {
   }
 
   return (
-    <div className="max-w-[1400px] mx-auto space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="w-full p-4 md:p-8 space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex justify-between items-end">
         <div>
           <h1 className="text-4xl font-bold text-slate-900 tracking-tight">Automações & Notificações</h1>

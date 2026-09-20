@@ -5,6 +5,13 @@ import { withAuth } from "@/lib/api-wrapper";
 
 export const GET = withAuth(async ({ clinicId }) => {
   try {
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE "AutomationSettings" ADD COLUMN IF NOT EXISTS "aiVisionModel" TEXT DEFAULT 'qwen3.7-max'`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "AutomationSettings" ADD COLUMN IF NOT EXISTS "aiApiKey" TEXT`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "AutomationSettings" ADD COLUMN IF NOT EXISTS "aiBaseUrl" TEXT DEFAULT 'https://opencode.ai/zen/go/v1'`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "AutomationSettings" ADD COLUMN IF NOT EXISTS "aiModel" TEXT DEFAULT 'deepseek-v4-flash'`);
+    } catch {}
+
     let settings = await prisma.automationSettings.findUnique({
       where: { clinicId }
     });
@@ -29,6 +36,13 @@ export const GET = withAuth(async ({ clinicId }) => {
 
 export const PUT = withAuth(async ({ req, clinicId }) => {
   try {
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE "AutomationSettings" ADD COLUMN IF NOT EXISTS "aiVisionModel" TEXT DEFAULT 'qwen3.7-max'`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "AutomationSettings" ADD COLUMN IF NOT EXISTS "aiApiKey" TEXT`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "AutomationSettings" ADD COLUMN IF NOT EXISTS "aiBaseUrl" TEXT DEFAULT 'https://opencode.ai/zen/go/v1'`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "AutomationSettings" ADD COLUMN IF NOT EXISTS "aiModel" TEXT DEFAULT 'deepseek-v4-flash'`);
+    } catch {}
+
     const body = await req.json();
     const { aiApiKey, aiBaseUrl, aiModel, aiVisionModel } = body;
 

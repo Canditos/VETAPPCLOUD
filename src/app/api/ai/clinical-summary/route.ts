@@ -111,10 +111,27 @@ export const POST = withAuth(async ({ tenantPrisma, clinicId, req }) => {
     })),
   });
 
-  // Chamar IA
-  const automationSettings = await tenantPrisma.automationSettings.findUnique({
-    where: { clinicId },
-  });
+  // Chamar IA (com auto-heal e consulta defensiva)
+  try {
+    await tenantPrisma.$executeRawUnsafe(`ALTER TABLE "AutomationSettings" ADD COLUMN IF NOT EXISTS "aiVisionModel" TEXT DEFAULT 'qwen3.7-max'`);
+    await tenantPrisma.$executeRawUnsafe(`ALTER TABLE "AutomationSettings" ADD COLUMN IF NOT EXISTS "aiApiKey" TEXT`);
+    await tenantPrisma.$executeRawUnsafe(`ALTER TABLE "AutomationSettings" ADD COLUMN IF NOT EXISTS "aiBaseUrl" TEXT DEFAULT 'https://openrouter.ai/api/v1'`);
+    await tenantPrisma.$executeRawUnsafe(`ALTER TABLE "AutomationSettings" ADD COLUMN IF NOT EXISTS "aiModel" TEXT DEFAULT 'openai/gpt-4o-mini'`);
+  } catch {}
+
+  let automationSettings: { aiApiKey?: string | null; aiBaseUrl?: string | null; aiModel?: string | null } | null = null;
+  try {
+    automationSettings = await tenantPrisma.automationSettings.findUnique({
+      where: { clinicId },
+      select: {
+        aiApiKey: true,
+        aiBaseUrl: true,
+        aiModel: true,
+      },
+    });
+  } catch (e) {
+    console.warn("[AI_SUMMARY_SETTINGS_WARN] Could not query automationSettings, using environment defaults:", e);
+  }
 
   const aiConfig = {
     apiKey: automationSettings?.aiApiKey || process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY,

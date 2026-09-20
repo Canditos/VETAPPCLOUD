@@ -73,7 +73,7 @@ export default function MarketingPage() {
   const charsLeft = 160 - message.length;
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-[1400px] mx-auto pb-20">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 w-full p-4 md:p-8 pb-20">
       <div>
         <h1 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tighter">Campanhas SMS</h1>
         <p className="text-slate-500 dark:text-slate-400 font-medium mt-2">Envie comunicações em massa para os tutores.</p>

@@ -71,7 +71,7 @@ export default function DiagnosticsPage() {
   ];
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-700 p-4 md:p-8 max-w-[1600px] mx-auto">
+    <div className="space-y-6 animate-in fade-in duration-700 p-4 md:p-8 w-full">
       {/* Header */}
       <PageHeader
         title="Centro de Diagnóstico"
