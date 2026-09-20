@@ -23,6 +23,7 @@ import { VaccinationForm } from "@/components/forms/VaccinationForm";
 import { VitalSignsForm } from "@/components/forms/VitalSignsForm";
 import { PrescriptionForm } from "@/components/forms/PrescriptionForm";
 import { LabChartsViewer } from "@/components/patients/LabChartsViewer";
+import { LabAIAnalysisCard } from "@/components/patients/LabAIAnalysisCard";
 import { ExamVisualizerModal } from "@/components/consultations/ExamVisualizerModal";
 import { ClinicalTimeline } from "@/components/ClinicalTimeline";
 import { format, isPast, differenceInDays, differenceInYears, differenceInMonths } from "date-fns";
@@ -1032,6 +1033,13 @@ export default function PatientDetailPage() {
                       </div>
 
                       <LabChartsViewer results={labResults} />
+
+                      {/* Análise Clínica com IA das Análises e Resultados */}
+                      <LabAIAnalysisCard
+                        patientId={patientId}
+                        patient={patient}
+                        labResults={labResults}
+                      />
                     </div>
                   )}
                 </TabsContent>
