@@ -2,13 +2,16 @@
 
 import { useState, Suspense, useEffect, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Save, FileText, Activity, ClipboardCheck, Receipt, FlaskConical,
   ChevronLeft, Stethoscope, Image as ImageIcon, Thermometer, Weight,
   Clock, Plus, ShieldAlert, Search, History, Syringe, AlertCircle,
   AlertTriangle, Sparkles, Eye, TrendingUp, CheckCircle2, Pill,
-  Venus, Mars, ShieldCheck, Zap, Calendar, CalendarCheck
+  Venus, Mars, ShieldCheck, Zap, Calendar, CalendarCheck,
+  Phone, Mail, User
 } from "lucide-react";
+import { LungsIcon } from "@/components/icons/LungsIcon";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -37,6 +40,7 @@ import { useIntegrationHealth } from "@/hooks/useIntegrationHealth";
 import type { BillingItem, DiagnosticResult } from "@/types";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
+import { pt } from "date-fns/locale";
 function normalizeTemperament(raw?: string | null): "Dócil" | "Nervoso" | "Agressivo" | null {
   if (!raw) return null;
   const s = raw.trim().toLowerCase();
@@ -487,7 +491,7 @@ function ConsultationContent() {
             </div>
           </PetLink>
           <div>
-            <div className="flex flex-wrap items-center gap-3 mb-2">
+            <div className="flex flex-wrap items-center gap-2.5 mb-2">
               <PetLink petId={patientId}>
                 <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-none hover:text-blue-600 dark:hover:text-blue-400 transition-colors">{patient?.name}</h1>
               </PetLink>
@@ -502,6 +506,13 @@ function ConsultationContent() {
                 )}>
                   {patient.gender === "F" || patient.gender === "Fêmea" ? <Venus size={12} strokeWidth={2.5} /> : <Mars size={12} strokeWidth={2.5} />}
                   {patient.gender === "F" || patient.gender === "Fêmea" ? "Fêmea" : "Macho"}
+                </Badge>
+              )}
+
+              {/* Raça — após a espécie e o sexo */}
+              {patient?.breed && (
+                <Badge variant="outline" className="text-xs font-semibold px-2.5 py-1 rounded-lg border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50">
+                  {patient.breed}
                 </Badge>
               )}
 
@@ -528,12 +539,54 @@ function ConsultationContent() {
               )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 dark:text-slate-400 font-medium">
-              <p>{patient?.breed || "Sem raça definida"} <span className="mx-2 opacity-20">|</span> {patient?.owner?.name || "Sem tutor"}</p>
+            <div className="flex flex-wrap items-center gap-3.5 text-sm text-slate-600 dark:text-slate-400 font-medium">
+              {/* Tutor (Nome primeiro) */}
+              <Link 
+                href={patient?.owner?.id ? `/dashboard/customers/${patient.owner.id}` : (patient?.ownerId ? `/dashboard/customers/${patient.ownerId}` : '#')}
+                className="font-semibold text-slate-800 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1.5 transition-colors"
+                title="Ficha do Tutor"
+              >
+                <User size={14} className="text-slate-400 shrink-0" />
+                <span>{patient?.owner?.name || "Sem tutor associado"}</span>
+              </Link>
+
+              {/* Contacto telefónico do tutor */}
+              {patient?.owner?.phone && (
+                <>
+                  <span className="opacity-25 text-slate-300 dark:text-slate-700">|</span>
+                  <a 
+                    href={`tel:${patient.owner.phone}`} 
+                    className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    title="Ligar para o tutor"
+                  >
+                    <Phone size={13} className="text-slate-400 shrink-0" />
+                    <span>{patient.owner.phone}</span>
+                  </a>
+                </>
+              )}
+
+              {/* E-mail do tutor */}
+              {patient?.owner?.email && (
+                <>
+                  <span className="opacity-25 text-slate-300 dark:text-slate-700">|</span>
+                  <a 
+                    href={`mailto:${patient.owner.email}`} 
+                    className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    title="Enviar e-mail ao tutor"
+                  >
+                    <Mail size={13} className="text-slate-400 shrink-0" />
+                    <span>{patient.owner.email}</span>
+                  </a>
+                </>
+              )}
+
               {lastVitals && (
-                <span className="flex items-center gap-1.5 text-[11px] font-semibold bg-slate-100 dark:bg-white/5 px-2.5 py-0.5 rounded-md text-slate-600 dark:text-slate-300">
-                  <Weight size={12} /> {lastVitals.weight}kg
-                </span>
+                <>
+                  <span className="opacity-25 text-slate-300 dark:text-slate-700">|</span>
+                  <span className="flex items-center gap-1.5 text-[11px] font-semibold bg-slate-100 dark:bg-white/5 px-2.5 py-0.5 rounded-md text-slate-600 dark:text-slate-300">
+                    <Weight size={12} /> {lastVitals.weight}kg
+                  </span>
+                </>
               )}
             </div>
           </div>
@@ -577,8 +630,7 @@ function ConsultationContent() {
           <TabsList className="flex w-full bg-slate-100/50 dark:bg-slate-900/50 p-1.5 rounded-2xl ring-1 ring-slate-200/50 dark:ring-white/5 gap-1">
             {[
               { val: "clinical", label: "Atendimento Clínico", icon: ClipboardCheck },
-              { val: "exams", label: "Meios Complementares", icon: FlaskConical },
-              { val: "billing", label: "Farmácia & Faturação", icon: Receipt }
+              { val: "billing", label: "Faturação", icon: Receipt }
             ].map(t => (
               <TabsTrigger key={t.val} value={t.val}
                 className="flex-1 rounded-2xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-md font-semibold text-xs transition-all gap-2 py-3 px-4 dark:text-slate-400 dark:data-[state=active]:text-white whitespace-nowrap justify-center">
@@ -628,7 +680,7 @@ function ConsultationContent() {
                         },
                         { 
                           label: "FC", 
-                          icon: Clock, 
+                          icon: Stethoscope, 
                           unit: "bpm", 
                           color: "text-purple-600 dark:text-purple-400", 
                           bg: "bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400", 
@@ -638,7 +690,7 @@ function ConsultationContent() {
                         },
                         { 
                           label: "FR", 
-                          icon: Activity, 
+                          icon: LungsIcon, 
                           unit: "mpm", 
                           color: "text-rose-600 dark:text-rose-400", 
                           bg: "bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400", 
@@ -993,7 +1045,7 @@ function ConsultationContent() {
                         }>
                           {health?.inventorySync?.label || "Inventory Sync"}
                         </Badge>
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white leading-none">Prescrição & Faturação</h2>
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white leading-none">Faturação</h2>
                         <p className="text-slate-500 dark:text-slate-400 font-medium mt-1 text-sm">Registe consumíveis, medicamentos e atos clínicos.</p>
                      </div>
                   </div>
@@ -1003,102 +1055,6 @@ function ConsultationContent() {
                </PremiumCard>
            </div>
         </TabsContent>
-
-        {/* EXAMS TAB - Unified with Diagnostics */}
-        <TabsContent value="exams" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-           <div className="space-y-6">
-              {/* Request Exams */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <PremiumCard padding="lg">
-                     <div className="flex items-center gap-4 mb-6">
-                        <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-2xl text-purple-600 dark:text-purple-400"><FlaskConical size={24} strokeWidth={2.5} /></div>
-                        <div>
-                           <h3 className="text-lg font-bold text-slate-900 dark:text-white">Laboratório</h3>
-                           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Fuji DX-500 • HL7 Gateway</p>
-                        </div>
-                     </div>
-                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <Button onClick={() => handleRequestExam("LAB", "Fuji DX-500", "Hemograma Completo")} className="h-12 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl text-xs shadow-sm">Hemograma Completo</Button>
-                        <Button variant="outline" onClick={() => handleRequestExam("LAB", "Fuji DX-500", "Bioquímica 12")} className="h-12 border-purple-200 dark:border-purple-900/30 text-purple-700 dark:text-purple-400 font-semibold rounded-xl text-xs">Bioquímica 12</Button>
-                        <Button variant="outline" onClick={() => handleRequestExam("LAB", "Fuji DX-500", "PCR")} className="h-12 border-purple-200 dark:border-purple-900/30 text-purple-700 dark:text-purple-400 font-semibold rounded-xl text-xs">PCR</Button>
-                        <Button variant="outline" onClick={() => handleRequestExam("LAB", "Fuji DX-500", "Urinalise")} className="h-12 border-purple-200 dark:border-purple-900/30 text-purple-700 dark:text-purple-400 font-semibold rounded-xl text-xs">Urinalise</Button>
-                     </div>
-                  </PremiumCard>
-
-                  <PremiumCard padding="lg">
-                     <div className="flex items-center gap-4 mb-6">
-                        <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl text-emerald-600 dark:text-emerald-400"><ImageIcon size={24} strokeWidth={2.5} /></div>
-                        <div>
-                           <h3 className="text-lg font-bold text-slate-900 dark:text-white">Imagiologia</h3>
-                           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Examion RX • DICOM 1.4</p>
-                        </div>
-                     </div>
-                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <Button onClick={() => handleRequestExam("IMAGING", "Examion RX", "RX Tórax")} className="h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-xs shadow-sm">RX Tórax</Button>
-                        <Button variant="outline" onClick={() => handleRequestExam("IMAGING", "Examion RX", "RX Abdómen")} className="h-12 border-emerald-200 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-semibold rounded-xl text-xs">RX Abdómen</Button>
-                        <Button variant="outline" onClick={() => handleRequestExam("IMAGING", "Examion RX", "Ecografia")} className="h-12 border-emerald-200 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-semibold rounded-xl text-xs">Ecografia</Button>
-                        <Button variant="outline" onClick={() => handleRequestExam("IMAGING", "Examion RX", "RX Membros")} className="h-12 border-emerald-200 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-semibold rounded-xl text-xs">RX Membros</Button>
-                     </div>
-                  </PremiumCard>
-              </div>
-
-              {/* Recent Results */}
-               <PremiumCard padding="none">
-                  <div className="px-6 py-4 border-b border-slate-100 dark:border-white/5">
-                     <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2"><TrendingUp size={14} className="text-blue-600" /> Resultados Recebidos</h3>
-                  </div>
-                  <div className="p-6">
-                     {safeDiagnostics.length === 0 ? (
-                       <div className="py-12 text-center bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-100 dark:border-white/5">
-                          <FlaskConical size={32} className="mx-auto text-slate-200 dark:text-slate-700 mb-3" />
-                          <p className="text-slate-500 dark:text-slate-400 font-bold text-sm">Sem resultados para este paciente</p>
-                          <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">Os resultados aparecerão aqui quando recebidos dos integradores.</p>
-                       </div>
-                    ) : (
-                       <div className="space-y-3">
-                           {safeDiagnostics.map((dx: DiagnosticResult) => (
-                             <div key={dx.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 hover:border-blue-200 dark:hover:border-blue-900/30 transition-all group">
-                                <div className="flex items-center gap-4">
-                                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${dx.type === 'LAB' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600' : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600'}`}>
-                                      {dx.type === 'LAB' ? <FlaskConical size={18} /> : <ImageIcon size={18} />}
-                                   </div>
-                                   <div>
-                                      <p className="font-bold text-sm text-slate-900 dark:text-white">{dx.summary ?? dx.testName ?? "—"}</p>
-                                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold">{dx.source} • {safeFormatDistance(dx.createdAt)}</p>
-                                   </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                   <Badge className={cn(
-                                      "border-none font-bold text-[8px]",
-                                      dx.status === "COMPLETED" ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" :
-                                      dx.status === "ALERT" ? "bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400" :
-                                      "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
-                                   )}>{dx.status === "COMPLETED" ? "Recebido" : dx.status === "ALERT" ? "Alerta" : "Pendente"}</Badge>
-                                   <Button
-                                     variant="ghost"
-                                     size="icon"
-                                     onClick={() => setIsExamsModalOpen(true)}
-                                     title="Visualizar Exame"
-                                     className="h-8 w-8 rounded-lg text-slate-500 dark:text-slate-400 group-hover:text-blue-600 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-all"
-                                   >
-                                      <Eye size={14} />
-                                   </Button>
-                                </div>
-                             </div>
-                          ))}
-                       </div>
-                    )}
-                  </div>
-               </PremiumCard>
-
-               {/* Link to full diagnostics page */}
-               <div className="text-center">
-                  <Button variant="outline" onClick={() => router.push("/dashboard/diagnostics")} className="rounded-xl font-semibold text-xs gap-2 border-slate-200 dark:border-white/10">
-                     <TrendingUp size={14} /> Ver Todos os Diagnósticos da Clínica <ChevronLeft className="rotate-180" size={14} />
-                  </Button>
-               </div>
-            </div>
-         </TabsContent>
        </Tabs>
 
         {/* Modal de Visualização dos Exames da Consulta e Paciente */}
