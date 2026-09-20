@@ -23,6 +23,7 @@ import { VaccinationForm } from "@/components/forms/VaccinationForm";
 import { VitalSignsForm } from "@/components/forms/VitalSignsForm";
 import { PrescriptionForm } from "@/components/forms/PrescriptionForm";
 import { LabChartsViewer } from "@/components/patients/LabChartsViewer";
+import { ClinicalTimeline } from "@/components/ClinicalTimeline";
 import { format, isPast, differenceInDays, differenceInYears, differenceInMonths } from "date-fns";
 import { pt } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -94,49 +95,6 @@ function VaccineStatusBadge({ expiresAt }: { expiresAt: string | null }) {
   if (isPast(d)) return <Badge className="bg-red-100 text-red-700 border-none text-[11px]">Expirada</Badge>;
   if (days <= 30) return <Badge className="bg-amber-100 text-amber-700 border-none text-[11px]">Em {days}d</Badge>;
   return <Badge className="bg-green-100 text-green-700 border-none text-[11px]">Válida</Badge>;
-}
-
-// ── Timeline Component ──
-interface TimelineEvent {
-  type: "CONSULTATION" | "VACCINE" | "EXAM" | string;
-  date: string | Date;
-  title: string;
-  description: string;
-  doctor?: string;
-}
-
-function ClinicalTimeline({ events }: { events: TimelineEvent[] }) {
-  if (events.length === 0) return <EmptyState icon={Clock} text="Ainda não existem eventos no histórico clínico." />;
-
-  return (
-    <div className="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-blue-500 before:via-slate-200 dark:before:via-slate-800 before:to-transparent">
-      {events.map((event, i) => (
-        <div key={i} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group animate-in fade-in slide-in-from-left-4">
-          {/* Dot */}
-          <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white dark:border-slate-900 bg-slate-100 dark:bg-slate-800 text-slate-500 group-hover:bg-blue-600 group-hover:text-white transition-all z-10 shrink-0 shadow-sm ring-4 ring-white dark:ring-slate-950">
-            {event.type === "CONSULTATION" && <Stethoscope size={16} />}
-            {event.type === "VACCINE" && <Syringe size={16} />}
-            {event.type === "EXAM" && <Microscope size={16} />}
-          </div>
-          {/* Content */}
-          <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-6 rounded-[2rem] bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all ml-6 md:ml-0 md:group-odd:mr-10 md:group-even:ml-10">
-            <div className="flex items-center justify-between mb-2">
-              <time className="text-[11px] font-black text-blue-500 uppercase tracking-widest">{fmt(event.date)}</time>
-              <Badge variant="outline" className="text-[11px] uppercase tracking-tighter border-slate-200 dark:border-slate-700">{event.type}</Badge>
-            </div>
-            <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">{event.title}</h4>
-            <p className="text-sm text-slate-500 font-medium mt-1 leading-relaxed">{event.description}</p>
-            {event.doctor && (
-               <div className="mt-4 pt-4 border-t border-slate-50 dark:border-slate-800/50 flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center"><User size={12} className="text-slate-500 dark:text-slate-400" /></div>
-                  <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Dr. {event.doctor}</span>
-               </div>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
@@ -221,7 +179,7 @@ export default function PatientDetailPage() {
     enabled: !!patientId,
   });
 
-  const { data: history = [] } = useQuery({
+  const { data: history = [], isLoading: isHistoryLoading } = useQuery({
     queryKey: ["patient-history", patientId],
     queryFn: async () => { const r = await fetch(`/api/patients/${patientId}/history`); return r.ok ? r.json() : []; },
     enabled: !!patientId,
@@ -594,7 +552,7 @@ export default function PatientDetailPage() {
               <div className="flex-1 p-6 overflow-y-auto">
                 {/* ── HISTÓRICO (Timeline) ── */}
                 <TabsContent value="history" className="m-0 animate-in fade-in slide-in-from-right-4 duration-500">
-                  <ClinicalTimeline events={history} />
+                  <ClinicalTimeline history={history} isLoading={isHistoryLoading} patientId={patientId} />
                 </TabsContent>
 
                 {/* ── VACINAS ── */}
