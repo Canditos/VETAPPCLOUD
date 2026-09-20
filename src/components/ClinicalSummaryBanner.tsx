@@ -48,11 +48,12 @@ export function ClinicalSummaryBanner({ patientId, fallbackGender, className }: 
   const isDog = speciesLower.includes("cão") || speciesLower.includes("can");
   const isCat = speciesLower.includes("gato") || speciesLower.includes("fel");
 
-  const hasAlerts = summary.safetyAlerts.length > 0 || summary.vaccines.expired.length > 0 || summary.deworming.overdue;
+  // Only use critical alerts to turn the banner red, so species styling is visible most of the time
+  const hasCriticalAlerts = summary.safetyAlerts.length > 0;
   const isLoadingAI = aiEnabled && isAILoading;
 
   // Background styling according to species - rich cohesive gradients
-  const bgGradient = hasAlerts
+  const bgGradient = hasCriticalAlerts
     ? "bg-gradient-to-r from-rose-600 via-rose-700 to-red-800 shadow-rose-500/20"
     : isCat
       ? "bg-gradient-to-r from-indigo-600 via-violet-700 to-purple-800 shadow-indigo-500/20"

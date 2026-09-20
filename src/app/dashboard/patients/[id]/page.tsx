@@ -271,17 +271,17 @@ export default function PatientDetailPage() {
 
       {/* ── Header Context Bar (Consistent with Consultations) ── */}
       <div className={cn(
-        "flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 p-6 rounded-3xl ring-1 shadow-sm w-full relative overflow-hidden",
-        isCat ? "bg-gradient-to-br from-indigo-50/50 to-white dark:from-indigo-950/20 dark:to-slate-900 ring-indigo-100 dark:ring-indigo-900/30" : 
-        isDog ? "bg-gradient-to-br from-sky-50/50 to-white dark:from-sky-950/20 dark:to-slate-900 ring-sky-100 dark:ring-sky-900/30" :
-        "bg-gradient-to-br from-emerald-50/50 to-white dark:from-emerald-950/20 dark:to-slate-900 ring-emerald-100 dark:ring-emerald-900/30"
+        "flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 p-6 rounded-3xl ring-1 shadow-md w-full relative overflow-hidden",
+        isCat ? "bg-gradient-to-br from-indigo-100/80 via-white to-purple-50/50 dark:from-indigo-900/40 dark:via-slate-900 dark:to-purple-900/20 ring-indigo-200 dark:ring-indigo-800/50" : 
+        isDog ? "bg-gradient-to-br from-sky-100/80 via-white to-blue-50/50 dark:from-sky-900/40 dark:via-slate-900 dark:to-blue-900/20 ring-sky-200 dark:ring-sky-800/50" :
+        "bg-gradient-to-br from-emerald-100/80 via-white to-teal-50/50 dark:from-emerald-900/40 dark:via-slate-900 dark:to-teal-900/20 ring-emerald-200 dark:ring-emerald-800/50"
       )}>
         {/* Subtle background icon */}
         <div className={cn(
-           "absolute -right-10 -bottom-10 opacity-[0.03] dark:opacity-[0.02] pointer-events-none rotate-12",
-           isCat ? "text-indigo-900" : isDog ? "text-sky-900" : "text-emerald-900"
+           "absolute -right-8 -bottom-12 opacity-10 dark:opacity-[0.08] pointer-events-none rotate-12",
+           isCat ? "text-indigo-600 dark:text-indigo-400" : isDog ? "text-sky-600 dark:text-sky-400" : "text-emerald-600 dark:text-emerald-400"
         )}>
-          <SpeciesIcon size={250} />
+          <SpeciesIcon size={280} />
         </div>
 
         <div className="flex items-center gap-5 relative z-10">
