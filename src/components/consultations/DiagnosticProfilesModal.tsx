@@ -1,15 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
-import { 
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription 
-} from "@/components/ui/dialog";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { Dialog, DialogPortal } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   Search, Sparkles, Plus, Check, ChevronRight, Activity, 
-  Stethoscope, ShieldAlert, Heart, Flame, Bug, Dog, Cat, Layers
+  Stethoscope, ShieldAlert, Heart, Flame, Bug, Dog, Cat, Layers, X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -218,113 +217,149 @@ export function DiagnosticProfilesModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="w-[94vw] max-w-4xl max-h-[88vh] p-0 rounded-3xl overflow-hidden border-none bg-white dark:bg-slate-900 shadow-2xl flex flex-col">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 p-6 text-white shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center text-white">
-              <Sparkles size={20} strokeWidth={2.5} />
+      <DialogPortal>
+        {/* Overlay */}
+        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+
+        {/* Content — wide full screen presentation */}
+        <DialogPrimitive.Content className="
+          fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2
+          z-50
+          w-[95vw] max-w-5xl h-[88vh]
+          rounded-3xl border border-slate-200 dark:border-white/10
+          bg-white dark:bg-slate-900
+          shadow-2xl shadow-black/40
+          p-0 overflow-hidden flex flex-col
+          outline-none
+          data-[state=open]:animate-in data-[state=closed]:animate-out
+          data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0
+          data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95
+        ">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 p-6 text-white shrink-0 relative">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center text-white shrink-0">
+                  <Sparkles size={20} strokeWidth={2.5} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white tracking-tight">Perfis Clínicos de Diagnóstico</h3>
+                  <p className="text-indigo-100 text-xs font-medium mt-0.5">
+                    Selecione um protocolo clínico especializado para abrir uma aba de acompanhamento na consulta
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={onClose}
+                className="h-9 w-9 rounded-xl text-white/80 hover:text-white hover:bg-white/15 shrink-0"
+              >
+                <X size={18} />
+              </Button>
             </div>
-            <div>
-              <DialogTitle className="text-xl font-bold text-white tracking-tight">Perfis Clínicos de Diagnóstico</DialogTitle>
-              <DialogDescription className="text-indigo-100 text-xs font-medium mt-0.5">
-                Selecione um protocolo clínico especializado para abrir uma aba de acompanhamento na consulta
-              </DialogDescription>
+
+            {/* Search bar */}
+            <div className="mt-4 relative max-w-2xl">
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-indigo-300" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Pesquisar por leishmaniose, insuficiência renal, diabetes, dermatite, pancreatite..."
+                className="pl-9 pr-4 h-10 rounded-xl bg-white/15 text-white placeholder:text-indigo-200 border-indigo-400/30 focus-visible:ring-2 focus-visible:ring-white/40 text-xs font-medium"
+              />
             </div>
           </div>
 
-          {/* Search bar */}
-          <div className="mt-4 relative">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-indigo-300" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Pesquisar por leishmaniose, insuficiência renal, diabetes, dermatite..."
-              className="pl-9 pr-4 h-10 rounded-xl bg-white/15 text-white placeholder:text-indigo-200 border-indigo-400/30 focus-visible:ring-2 focus-visible:ring-white/40 text-xs font-medium"
-            />
-          </div>
-        </div>
+          {/* Profile list in responsive 2-column grid */}
+          <div className="p-6 overflow-y-auto flex-1">
+            {filteredProfiles.length === 0 ? (
+              <div className="text-center py-16 text-slate-400">
+                <p className="text-sm font-semibold">Nenhum perfil encontrado com o termo "{search}".</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredProfiles.map((profile) => {
+                  const isSelected = activeProfileIds.includes(profile.id);
+                  const isSpeciesMatch = 
+                    profile.species === "BOTH" ||
+                    (isFeline && profile.species === "CAT") ||
+                    (isCanine && profile.species === "DOG");
 
-        {/* Profile list */}
-        <div className="p-6 overflow-y-auto space-y-3.5 flex-1">
-          {filteredProfiles.length === 0 ? (
-            <div className="text-center py-12 text-slate-400">
-              <p className="text-sm font-semibold">Nenhum perfil encontrado com o termo "{search}".</p>
-            </div>
-          ) : (
-            filteredProfiles.map((profile) => {
-              const isSelected = activeProfileIds.includes(profile.id);
-              const isSpeciesMatch = 
-                profile.species === "BOTH" ||
-                (isFeline && profile.species === "CAT") ||
-                (isCanine && profile.species === "DOG");
-
-              return (
-                <div
-                  key={profile.id}
-                  onClick={() => {
-                    onSelectProfile(profile);
-                    onClose();
-                  }}
-                  className={cn(
-                    "p-4 rounded-2xl border transition-all cursor-pointer group flex flex-col sm:flex-row sm:items-center justify-between gap-4",
-                    isSelected
-                      ? "border-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/20 shadow-sm ring-2 ring-indigo-500/20"
-                      : "border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:border-indigo-300 hover:shadow-md"
-                  )}
-                >
-                  <div className="space-y-1.5 flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h4 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">
-                        {profile.title}
-                      </h4>
-                      <Badge variant="outline" className="text-[10px] font-semibold border-slate-200 dark:border-slate-700 text-slate-500">
-                        {profile.category}
-                      </Badge>
-                      {profile.species !== "BOTH" && (
-                        <Badge className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border-none text-[10px] font-bold">
-                          {profile.species === "DOG" ? "Caninos" : "Felinos"}
-                        </Badge>
-                      )}
-                      {isSelected && (
-                        <Badge className="bg-emerald-600 text-white border-none text-[10px] font-bold gap-1">
-                          <Check size={10} strokeWidth={3} /> Ativo no Paciente
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
-                      {profile.description}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-500 pt-1">
-                      <span className="font-semibold text-indigo-600 dark:text-indigo-400">
-                        📋 {profile.recommendedExams.length} Exames recomendados
-                      </span>
-                      <span>·</span>
-                      <span className="font-semibold text-slate-600 dark:text-slate-400">
-                        💊 Protocolo Terapêutico estruturado
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="shrink-0 flex items-center justify-end">
-                    <Button
-                      size="sm"
+                  return (
+                    <div
+                      key={profile.id}
+                      onClick={() => {
+                        onSelectProfile(profile);
+                        onClose();
+                      }}
                       className={cn(
-                        "rounded-xl h-9 px-4 text-xs font-bold gap-1.5 shadow-sm transition-all",
+                        "p-5 rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between gap-4",
                         isSelected
-                          ? "bg-indigo-700 text-white"
-                          : "bg-indigo-600 hover:bg-indigo-700 text-white group-hover:scale-105"
+                          ? "border-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/20 shadow-sm ring-2 ring-indigo-500/20"
+                          : "border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:border-indigo-300 hover:shadow-md"
                       )}
                     >
-                      {isSelected ? "Ver Tab" : <><Plus size={14} /> Abrir Perfil</>}
-                    </Button>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </DialogContent>
+                      <div className="space-y-2 flex-1">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <h4 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">
+                            {profile.title}
+                          </h4>
+                          {isSelected && (
+                            <Badge className="bg-emerald-600 text-white border-none text-[10px] font-bold gap-1 shrink-0">
+                              <Check size={10} strokeWidth={3} /> Ativo no Paciente
+                            </Badge>
+                          )}
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <Badge variant="outline" className="text-[10px] font-semibold border-slate-200 dark:border-slate-700 text-slate-500">
+                            {profile.category}
+                          </Badge>
+                          {profile.species !== "BOTH" && (
+                            <Badge className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border-none text-[10px] font-bold">
+                              {profile.species === "DOG" ? "Caninos" : "Felinos"}
+                            </Badge>
+                          )}
+                        </div>
+
+                        <p className="text-xs text-slate-600 dark:text-slate-400 font-medium leading-relaxed line-clamp-2">
+                          {profile.description}
+                        </p>
+
+                        <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 pt-1">
+                          <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                            📋 {profile.recommendedExams.length} Exames recomendados
+                          </span>
+                          <span>·</span>
+                          <span className="font-semibold text-slate-600 dark:text-slate-400">
+                            💊 Protocolo Terapêutico
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-end">
+                        <Button
+                          size="sm"
+                          className={cn(
+                            "rounded-xl h-8 px-4 text-xs font-bold gap-1.5 shadow-sm transition-all",
+                            isSelected
+                              ? "bg-indigo-700 text-white"
+                              : "bg-indigo-600 hover:bg-indigo-700 text-white group-hover:scale-105"
+                          )}
+                        >
+                          {isSelected ? "Ver Tab" : <><Plus size={13} /> Abrir Perfil</>}
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </DialogPrimitive.Content>
+      </DialogPortal>
     </Dialog>
   );
 }

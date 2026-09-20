@@ -41,13 +41,94 @@ export function ProfileTabContent({
     toast.success(`Protocolo terapêutico adicionado à Secção 6!`);
   };
 
+  const PROFILE_THEMES: Record<string, {
+    bannerGrad: string;
+    bannerBorder: string;
+    iconBox: string;
+    iconText: string;
+    badge: string;
+    quickBox: string;
+    quickTitle: string;
+    quickIcon: string;
+    diagBtn: string;
+  }> = {
+    irc: {
+      bannerGrad: "from-cyan-500/15 via-teal-500/5 to-transparent",
+      bannerBorder: "border-cyan-500/20",
+      iconBox: "bg-cyan-500/15 border-cyan-500/30",
+      iconText: "text-cyan-600 dark:text-cyan-400",
+      badge: "border-cyan-500/30 text-cyan-700 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-950/40",
+      quickBox: "bg-cyan-50/50 dark:bg-cyan-950/20 border-cyan-200/60 dark:border-cyan-900/30",
+      quickTitle: "text-cyan-800 dark:text-cyan-300",
+      quickIcon: "text-cyan-600",
+      diagBtn: "bg-cyan-600 hover:bg-cyan-700 text-white",
+    },
+    leishmaniose: {
+      bannerGrad: "from-amber-500/15 via-orange-500/5 to-transparent",
+      bannerBorder: "border-amber-500/20",
+      iconBox: "bg-amber-500/15 border-amber-500/30",
+      iconText: "text-amber-600 dark:text-amber-400",
+      badge: "border-amber-500/30 text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40",
+      quickBox: "bg-amber-50/50 dark:bg-amber-950/20 border-amber-200/60 dark:border-amber-900/30",
+      quickTitle: "text-amber-800 dark:text-amber-300",
+      quickIcon: "text-amber-600",
+      diagBtn: "bg-amber-600 hover:bg-amber-700 text-white",
+    },
+    diabetes: {
+      bannerGrad: "from-purple-500/15 via-violet-500/5 to-transparent",
+      bannerBorder: "border-purple-500/20",
+      iconBox: "bg-purple-500/15 border-purple-500/30",
+      iconText: "text-purple-600 dark:text-purple-400",
+      badge: "border-purple-500/30 text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40",
+      quickBox: "bg-purple-50/50 dark:bg-purple-950/20 border-purple-200/60 dark:border-purple-900/30",
+      quickTitle: "text-purple-800 dark:text-purple-300",
+      quickIcon: "text-purple-600",
+      diagBtn: "bg-purple-600 hover:bg-purple-700 text-white",
+    },
+    pancreatite: {
+      bannerGrad: "from-rose-500/15 via-red-500/5 to-transparent",
+      bannerBorder: "border-rose-500/20",
+      iconBox: "bg-rose-500/15 border-rose-500/30",
+      iconText: "text-rose-600 dark:text-rose-400",
+      badge: "border-rose-500/30 text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40",
+      quickBox: "bg-rose-50/50 dark:bg-rose-950/20 border-rose-200/60 dark:border-rose-900/30",
+      quickTitle: "text-rose-800 dark:text-rose-300",
+      quickIcon: "text-rose-600",
+      diagBtn: "bg-rose-600 hover:bg-rose-700 text-white",
+    },
+    cardiopatia: {
+      bannerGrad: "from-red-500/15 via-rose-500/5 to-transparent",
+      bannerBorder: "border-red-500/20",
+      iconBox: "bg-red-500/15 border-red-500/30",
+      iconText: "text-red-600 dark:text-red-400",
+      badge: "border-red-500/30 text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/40",
+      quickBox: "bg-red-50/50 dark:bg-red-950/20 border-red-200/60 dark:border-red-900/30",
+      quickTitle: "text-red-800 dark:text-red-300",
+      quickIcon: "text-red-600",
+      diagBtn: "bg-red-600 hover:bg-red-700 text-white",
+    },
+    dermatite_atopica: {
+      bannerGrad: "from-orange-500/15 via-amber-500/5 to-transparent",
+      bannerBorder: "border-orange-500/20",
+      iconBox: "bg-orange-500/15 border-orange-500/30",
+      iconText: "text-orange-600 dark:text-orange-400",
+      badge: "border-orange-500/30 text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-950/40",
+      quickBox: "bg-orange-50/50 dark:bg-orange-950/20 border-orange-200/60 dark:border-orange-900/30",
+      quickTitle: "text-orange-800 dark:text-orange-300",
+      quickIcon: "text-orange-600",
+      diagBtn: "bg-orange-600 hover:bg-orange-700 text-white",
+    },
+  };
+
+  const theme = PROFILE_THEMES[profile.id] || PROFILE_THEMES.leishmaniose;
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-400">
       {/* Profile Header Banner */}
       <PremiumCard padding="none">
-        <div className="p-6 bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-transparent border-b border-amber-500/20 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className={cn("p-6 bg-gradient-to-r border-b flex flex-col md:flex-row md:items-center justify-between gap-4", theme.bannerGrad, theme.bannerBorder)}>
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0 shadow-inner">
+            <div className={cn("w-12 h-12 rounded-2xl border flex items-center justify-center shrink-0 shadow-inner", theme.iconBox, theme.iconText)}>
               <Activity className="w-6 h-6" />
             </div>
             <div className="space-y-1">
@@ -55,7 +136,7 @@ export function ProfileTabContent({
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
                   {profile.title}
                 </h2>
-                <Badge variant="outline" className="border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 text-[11px] font-semibold">
+                <Badge variant="outline" className={cn("text-[11px] font-semibold", theme.badge)}>
                   {profile.category}
                 </Badge>
               </div>
@@ -68,14 +149,14 @@ export function ProfileTabContent({
 
         <div className="p-6 space-y-6">
           {/* Quick Transfer Actions */}
-          <div className="flex flex-wrap items-center gap-3 p-4 bg-amber-50/50 dark:bg-amber-950/20 rounded-2xl border border-amber-200/60 dark:border-amber-900/30">
-            <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-bold text-xs uppercase tracking-wider shrink-0">
-              <Sparkles className="w-4 h-4 text-amber-600" /> Ações Rápidas:
+          <div className={cn("flex flex-wrap items-center gap-3 p-4 rounded-2xl border", theme.quickBox)}>
+            <div className={cn("flex items-center gap-2 font-bold text-xs uppercase tracking-wider shrink-0", theme.quickTitle)}>
+              <Sparkles className={cn("w-4 h-4", theme.quickIcon)} /> Ações Rápidas:
             </div>
             <Button
               type="button"
               onClick={handleCopyDiagnostics}
-              className="h-9 px-3.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-sm gap-2 active:scale-95 transition-all"
+              className={cn("h-9 px-3.5 rounded-xl text-xs font-bold shadow-sm gap-2 active:scale-95 transition-all", theme.diagBtn)}
             >
               <FileText className="w-4 h-4" /> Inserir em Diagnósticos (Secção 5)
             </Button>

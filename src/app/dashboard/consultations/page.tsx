@@ -687,29 +687,89 @@ function ConsultationContent() {
       {/* Main Clinical Navigation */}
       <Tabs value={activeTab} onValueChange={updateTab} className="w-full">
         <div className="mb-10 overflow-x-auto -mx-4 px-4 md:-mx-8 md:px-8 no-scrollbar w-full">
-          <TabsList className="flex w-full bg-slate-100/50 dark:bg-slate-900/50 p-1.5 rounded-2xl ring-1 ring-slate-200/50 dark:ring-white/5 gap-1">
+          <TabsList className="flex w-full bg-slate-100/70 dark:bg-slate-900/60 p-1.5 rounded-2xl ring-1 ring-slate-200/60 dark:ring-white/5 gap-1.5">
             <TabsTrigger
               value="clinical"
-              className="flex-1 rounded-2xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-md font-semibold text-xs transition-all gap-2 py-3 px-4 dark:text-slate-400 dark:data-[state=active]:text-white whitespace-nowrap justify-center"
+              className="flex-1 rounded-2xl data-[state=active]:bg-blue-600 data-[state=active]:text-white dark:data-[state=active]:bg-blue-600 dark:data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-blue-500/25 font-bold text-xs transition-all gap-2 py-3 px-4 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white whitespace-nowrap justify-center"
             >
               <ClipboardCheck className="w-4 h-4 shrink-0" strokeWidth={2.5} /> Atendimento Clínico
             </TabsTrigger>
 
-            {/* Dynamic Profile Tabs placed BETWEEN Atendimento Clínico and Faturação */}
-            {activeProfiles.map((p) => (
-              <TabsTrigger
-                key={p.id}
-                value={p.id}
-                className="group flex-1 rounded-2xl data-[state=active]:bg-amber-600 data-[state=active]:text-white dark:data-[state=active]:bg-amber-600 data-[state=active]:shadow-md font-bold text-xs transition-all gap-2 py-3 px-3.5 text-amber-800 dark:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 whitespace-nowrap justify-center border border-amber-500/30"
-              >
-                <Activity className="w-3.5 h-3.5 shrink-0 text-amber-600 dark:text-amber-400 group-data-[state=active]:text-white" />
-                <span className="truncate max-w-[150px] sm:max-w-[200px]">{p.shortTitle || p.title}</span>
-              </TabsTrigger>
-            ))}
+            {/* Dynamic Profile Tabs placed BETWEEN Atendimento Clínico and Faturação with differentiated colors */}
+            {activeProfiles.map((p, idx) => {
+              // Differentiated color palette per clinical profile
+              const PROFILE_THEMES: Record<string, { active: string; inactive: string; iconColor: string }> = {
+                irc: {
+                  active: "data-[state=active]:bg-cyan-600 data-[state=active]:text-white dark:data-[state=active]:bg-cyan-600 dark:data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-cyan-500/25",
+                  inactive: "text-cyan-800 dark:text-cyan-300 bg-cyan-500/10 hover:bg-cyan-500/20 border-cyan-500/30",
+                  iconColor: "text-cyan-600 dark:text-cyan-400 group-data-[state=active]:text-white",
+                },
+                leishmaniose: {
+                  active: "data-[state=active]:bg-amber-600 data-[state=active]:text-white dark:data-[state=active]:bg-amber-600 dark:data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-amber-500/25",
+                  inactive: "text-amber-800 dark:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30",
+                  iconColor: "text-amber-600 dark:text-amber-400 group-data-[state=active]:text-white",
+                },
+                diabetes: {
+                  active: "data-[state=active]:bg-purple-600 data-[state=active]:text-white dark:data-[state=active]:bg-purple-600 dark:data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-purple-500/25",
+                  inactive: "text-purple-800 dark:text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/30",
+                  iconColor: "text-purple-600 dark:text-purple-400 group-data-[state=active]:text-white",
+                },
+                pancreatite: {
+                  active: "data-[state=active]:bg-rose-600 data-[state=active]:text-white dark:data-[state=active]:bg-rose-600 dark:data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-rose-500/25",
+                  inactive: "text-rose-800 dark:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border-rose-500/30",
+                  iconColor: "text-rose-600 dark:text-rose-400 group-data-[state=active]:text-white",
+                },
+                cardiopatia: {
+                  active: "data-[state=active]:bg-red-600 data-[state=active]:text-white dark:data-[state=active]:bg-red-600 dark:data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-red-500/25",
+                  inactive: "text-red-800 dark:text-red-300 bg-red-500/10 hover:bg-red-500/20 border-red-500/30",
+                  iconColor: "text-red-600 dark:text-red-400 group-data-[state=active]:text-white",
+                },
+                dermatite_atopica: {
+                  active: "data-[state=active]:bg-orange-600 data-[state=active]:text-white dark:data-[state=active]:bg-orange-600 dark:data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-orange-500/25",
+                  inactive: "text-orange-800 dark:text-orange-300 bg-orange-500/10 hover:bg-orange-500/20 border-orange-500/30",
+                  iconColor: "text-orange-600 dark:text-orange-400 group-data-[state=active]:text-white",
+                },
+              };
+
+              const FALLBACK_THEMES = [
+                {
+                  active: "data-[state=active]:bg-indigo-600 data-[state=active]:text-white dark:data-[state=active]:bg-indigo-600 dark:data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-indigo-500/25",
+                  inactive: "text-indigo-800 dark:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 border-indigo-500/30",
+                  iconColor: "text-indigo-600 dark:text-indigo-400 group-data-[state=active]:text-white",
+                },
+                {
+                  active: "data-[state=active]:bg-teal-600 data-[state=active]:text-white dark:data-[state=active]:bg-teal-600 dark:data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-teal-500/25",
+                  inactive: "text-teal-800 dark:text-teal-300 bg-teal-500/10 hover:bg-teal-500/20 border-teal-500/30",
+                  iconColor: "text-teal-600 dark:text-teal-400 group-data-[state=active]:text-white",
+                },
+                {
+                  active: "data-[state=active]:bg-fuchsia-600 data-[state=active]:text-white dark:data-[state=active]:bg-fuchsia-600 dark:data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-fuchsia-500/25",
+                  inactive: "text-fuchsia-800 dark:text-fuchsia-300 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 border-fuchsia-500/30",
+                  iconColor: "text-fuchsia-600 dark:text-fuchsia-400 group-data-[state=active]:text-white",
+                },
+              ];
+
+              const theme = PROFILE_THEMES[p.id] || FALLBACK_THEMES[idx % FALLBACK_THEMES.length];
+
+              return (
+                <TabsTrigger
+                  key={p.id}
+                  value={p.id}
+                  className={cn(
+                    "group flex-1 rounded-2xl font-bold text-xs transition-all gap-2 py-3 px-3.5 whitespace-nowrap justify-center border",
+                    theme.inactive,
+                    theme.active
+                  )}
+                >
+                  <Activity className={cn("w-3.5 h-3.5 shrink-0 transition-colors", theme.iconColor)} />
+                  <span className="truncate max-w-[150px] sm:max-w-[200px]">{p.shortTitle || p.title}</span>
+                </TabsTrigger>
+              );
+            })}
 
             <TabsTrigger
               value="billing"
-              className="flex-1 rounded-2xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-md font-semibold text-xs transition-all gap-2 py-3 px-4 dark:text-slate-400 dark:data-[state=active]:text-white whitespace-nowrap justify-center"
+              className="flex-1 rounded-2xl data-[state=active]:bg-emerald-600 data-[state=active]:text-white dark:data-[state=active]:bg-emerald-600 dark:data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-emerald-500/25 font-bold text-xs transition-all gap-2 py-3 px-4 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white whitespace-nowrap justify-center"
             >
               <Receipt className="w-4 h-4 shrink-0" strokeWidth={2.5} /> Faturação
             </TabsTrigger>
