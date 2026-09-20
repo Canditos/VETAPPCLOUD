@@ -1,12 +1,15 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { ClinicalProfile } from "./DiagnosticProfilesModal";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { Dialog, DialogPortal } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   Activity, Sparkles, Check, ArrowRight, 
-  Stethoscope, AlertCircle, FileText, Pill, Calendar, X
+  Stethoscope, AlertCircle, FileText, Pill, Calendar, X,
+  PowerOff, AlertTriangle, Info
 } from "lucide-react";
 import { PremiumCard } from "@/components/PremiumCard";
 import { toast } from "sonner";
@@ -20,6 +23,7 @@ interface ProfileTabContentProps {
   onApplyToTreatment: (text: string) => void;
   onCloseTab?: () => void;
   onNavigateToClinical?: () => void;
+  onDeactivate?: () => void;
 }
 
 export function ProfileTabContent({
@@ -28,7 +32,9 @@ export function ProfileTabContent({
   patientSpecies,
   onApplyToDiagnostics,
   onApplyToTreatment,
+  onDeactivate,
 }: ProfileTabContentProps) {
+  const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
   const recommendedExams = Array.isArray(profile?.recommendedExams) ? profile.recommendedExams : [];
   const treatmentProtocol = Array.isArray(profile?.treatmentProtocol) ? profile.treatmentProtocol : [];
   const stagingSystem = profile?.stagingSystem || "Informação de estadiamento não especificada.";
@@ -162,6 +168,18 @@ export function ProfileTabContent({
               )}
             </div>
           </div>
+          {onDeactivate && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowDeactivateConfirm(true)}
+              className="h-9 px-3.5 rounded-xl border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 hover:text-white hover:bg-rose-600 dark:hover:bg-rose-600 bg-white/70 dark:bg-slate-900/70 text-xs font-semibold gap-1.5 transition-all self-start md:self-center shrink-0 shadow-sm"
+              title="Desativar este perfil clínico do paciente"
+            >
+              <PowerOff size={13} /> Desativar Perfil
+            </Button>
+          )}
         </div>
 
         <div className="p-6 space-y-6">
@@ -270,6 +288,54 @@ export function ProfileTabContent({
           </div>
         </div>
       </PremiumCard>
+
+      {/* Confirmation Dialog before deactivating */}
+      <Dialog open={showDeactivateConfirm} onOpenChange={setShowDeactivateConfirm}>
+        <DialogPortal>
+          <DialogPrimitive.Overlay className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+          <DialogPrimitive.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] w-[95vw] max-w-md rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-6 space-y-5 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 flex items-center justify-center text-rose-600 shrink-0">
+                <AlertTriangle size={24} />
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-lg font-bold text-slate-900 dark:text-white">
+                  Desativar Perfil Clínico?
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Tem a certeza que pretende desativar o perfil <strong className="text-slate-900 dark:text-white">{title}</strong> deste paciente?
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2.5">
+              <Info size={16} className="shrink-0 mt-0.5 text-amber-600" />
+              <span>Esta aba de acompanhamento será removida da consulta. Poderá voltar a ativá-la a qualquer momento através do catálogo.</span>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowDeactivateConfirm(false)}
+                className="h-10 px-4 rounded-xl border-slate-200 dark:border-slate-700 font-semibold text-xs text-slate-700 dark:text-slate-300"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                onClick={() => {
+                  setShowDeactivateConfirm(false);
+                  onDeactivate?.();
+                }}
+                className="h-10 px-5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs gap-1.5 shadow-md shadow-rose-600/20"
+              >
+                <PowerOff size={14} /> Sim, Desativar Perfil
+              </Button>
+            </div>
+          </DialogPrimitive.Content>
+        </DialogPortal>
+      </Dialog>
     </div>
   );
 }

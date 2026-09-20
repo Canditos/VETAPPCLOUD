@@ -379,15 +379,33 @@ function ConsultationContent() {
     updateTab(profile.id);
   };
 
+  const handleDeactivateProfile = (profileId: string) => {
+    setActiveProfiles((prev) => {
+      const updated = prev.filter((p) => p.id !== profileId);
+      if (patientId) {
+        try {
+          localStorage.setItem(
+            `vet_patient_profiles_${patientId}`,
+            JSON.stringify(updated.map((p) => p.id))
+          );
+        } catch (e) {
+          console.error("Error updating patient clinical profiles:", e);
+        }
+      }
+      return updated;
+    });
+    if (activeTab === profileId) {
+      updateTab("clinical");
+    }
+    toast.success("Perfil clínico desativado com sucesso.");
+  };
+
   const handleCloseProfileTab = (profileId: string, e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
-    setActiveProfiles((prev) => prev.filter((p) => p.id !== profileId));
-    if (activeTab === profileId) {
-      updateTab("clinical");
-    }
+    handleDeactivateProfile(profileId);
   };
 
   if (!patientId || patientError) {
@@ -1222,6 +1240,7 @@ function ConsultationContent() {
               onApplyToTreatment={(text) => {
                 setTreatment((prev) => (prev ? `${prev}\n${text}` : text.trim()));
               }}
+              onDeactivate={() => handleDeactivateProfile(profile.id)}
             />
           </TabsContent>
         ))}
@@ -1271,6 +1290,7 @@ function ConsultationContent() {
           isOpen={isProfilesModalOpen}
           onClose={() => setIsProfilesModalOpen(false)}
           onSelectProfile={handleSelectProfile}
+          onDeactivateProfile={handleDeactivateProfile}
           activeProfileIds={activeProfiles.map((p) => p.id)}
           patientSpecies={patient?.species}
         />

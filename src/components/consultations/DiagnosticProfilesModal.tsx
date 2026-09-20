@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   Search, Sparkles, Plus, Check, ChevronRight, Activity, 
-  Stethoscope, ShieldAlert, Heart, Flame, Bug, Dog, Cat, Layers, X
+  Stethoscope, ShieldAlert, Heart, Flame, Bug, Dog, Cat, Layers, X,
+  PowerOff, AlertTriangle, Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -187,6 +188,7 @@ interface DiagnosticProfilesModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectProfile: (profile: ClinicalProfile) => void;
+  onDeactivateProfile?: (profileId: string) => void;
   activeProfileIds: string[];
   patientSpecies?: string;
 }
@@ -195,10 +197,12 @@ export function DiagnosticProfilesModal({
   isOpen,
   onClose,
   onSelectProfile,
+  onDeactivateProfile,
   activeProfileIds,
   patientSpecies
 }: DiagnosticProfilesModalProps) {
   const [search, setSearch] = useState("");
+  const [profileToDeactivate, setProfileToDeactivate] = useState<ClinicalProfile | null>(null);
 
   const isFeline = (patientSpecies || "").toLowerCase().includes("gato") || (patientSpecies || "").toLowerCase().includes("fel");
   const isCanine = (patientSpecies || "").toLowerCase().includes("cão") || (patientSpecies || "").toLowerCase().includes("can");
@@ -307,9 +311,26 @@ export function DiagnosticProfilesModal({
                             {profile.title}
                           </h4>
                           {isSelected && (
-                            <Badge className="bg-emerald-600 text-white border-none text-[10px] font-bold gap-1 shrink-0">
-                              <Check size={10} strokeWidth={3} /> Ativo no Paciente
-                            </Badge>
+                            <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                              <Badge className="bg-emerald-600 text-white border-none text-[10px] font-bold gap-1">
+                                <Check size={10} strokeWidth={3} /> Ativo no Paciente
+                              </Badge>
+                              {onDeactivateProfile && (
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setProfileToDeactivate(profile);
+                                  }}
+                                  className="h-6 px-2 rounded-lg text-rose-600 dark:text-rose-400 hover:text-white hover:bg-rose-600 dark:hover:bg-rose-600 border-rose-200 dark:border-rose-900/60 bg-rose-50/50 dark:bg-rose-950/30 text-[10px] font-bold gap-1 transition-all"
+                                  title="Desativar perfil deste paciente"
+                                >
+                                  <PowerOff size={10} /> Desativar
+                                </Button>
+                              )}
+                            </div>
                           )}
                         </div>
 
@@ -339,18 +360,48 @@ export function DiagnosticProfilesModal({
                         </div>
                       </div>
 
-                      <div className="pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-end">
-                        <Button
-                          size="sm"
-                          className={cn(
-                            "rounded-xl h-8 px-4 text-xs font-bold gap-1.5 shadow-sm transition-all",
-                            isSelected
-                              ? "bg-indigo-700 text-white"
-                              : "bg-indigo-600 hover:bg-indigo-700 text-white group-hover:scale-105"
-                          )}
-                        >
-                          {isSelected ? "Ver Tab" : <><Plus size={13} /> Abrir Perfil</>}
-                        </Button>
+                      <div className="pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between gap-2">
+                        {isSelected ? (
+                          <>
+                            {onDeactivateProfile ? (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setProfileToDeactivate(profile);
+                                }}
+                                className="h-8 px-3 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 gap-1.5 transition-all"
+                              >
+                                <PowerOff size={13} /> Desativar Perfil
+                              </Button>
+                            ) : <div />}
+                            <Button
+                              size="sm"
+                              className="rounded-xl h-8 px-4 text-xs font-bold gap-1.5 shadow-sm bg-indigo-700 hover:bg-indigo-800 text-white ml-auto"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onSelectProfile(profile);
+                                onClose();
+                              }}
+                            >
+                              Ver Tab
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            size="sm"
+                            className="rounded-xl h-8 px-4 text-xs font-bold gap-1.5 shadow-sm bg-indigo-600 hover:bg-indigo-700 text-white group-hover:scale-105 ml-auto"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onSelectProfile(profile);
+                              onClose();
+                            }}
+                          >
+                            <Plus size={13} /> Abrir Perfil
+                          </Button>
+                        )}
                       </div>
                     </div>
                   );
@@ -360,6 +411,56 @@ export function DiagnosticProfilesModal({
           </div>
         </DialogPrimitive.Content>
       </DialogPortal>
+
+      {/* Confirmation Dialog before deactivating */}
+      <Dialog open={!!profileToDeactivate} onOpenChange={(open) => { if (!open) setProfileToDeactivate(null); }}>
+        <DialogPortal>
+          <DialogPrimitive.Overlay className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+          <DialogPrimitive.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] w-[95vw] max-w-md rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-6 space-y-5 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 flex items-center justify-center text-rose-600 shrink-0">
+                <AlertTriangle size={24} />
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-lg font-bold text-slate-900 dark:text-white">
+                  Desativar Perfil Clínico?
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Tem a certeza que pretende desativar o perfil <strong className="text-slate-900 dark:text-white">{profileToDeactivate?.title}</strong> deste paciente?
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2.5">
+              <Info size={16} className="shrink-0 mt-0.5 text-amber-600" />
+              <span>A aba deste perfil será removida da consulta. Poderá voltar a ativá-lo a qualquer momento através do catálogo.</span>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setProfileToDeactivate(null)}
+                className="h-10 px-4 rounded-xl border-slate-200 dark:border-slate-700 font-semibold text-xs text-slate-700 dark:text-slate-300"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                onClick={() => {
+                  if (profileToDeactivate) {
+                    onDeactivateProfile?.(profileToDeactivate.id);
+                    setProfileToDeactivate(null);
+                  }
+                }}
+                className="h-10 px-5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs gap-1.5 shadow-md shadow-rose-600/20"
+              >
+                <PowerOff size={14} /> Sim, Desativar Perfil
+              </Button>
+            </div>
+          </DialogPrimitive.Content>
+        </DialogPortal>
+      </Dialog>
     </Dialog>
   );
 }
