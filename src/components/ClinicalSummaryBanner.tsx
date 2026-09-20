@@ -52,14 +52,10 @@ export function ClinicalSummaryBanner({ patientId, fallbackGender, className }: 
   const hasCriticalAlerts = summary.safetyAlerts.length > 0;
   const isLoadingAI = aiEnabled && isAILoading;
 
-  // Background styling according to species - rich cohesive gradients
-  const bgGradient = hasCriticalAlerts
-    ? "bg-gradient-to-r from-rose-600 via-rose-700 to-red-800 shadow-rose-500/20"
-    : isCat
-      ? "bg-gradient-to-r from-indigo-600 via-violet-700 to-purple-800 shadow-indigo-500/20"
-      : isDog
-        ? "bg-gradient-to-r from-sky-700 via-blue-700 to-indigo-800 shadow-blue-500/20"
-        : "bg-gradient-to-r from-emerald-600 via-teal-700 to-cyan-800 shadow-emerald-500/20";
+  // Background styling according to gender
+  const bgGradient = isFemale
+    ? "bg-gradient-to-r from-rose-500 via-pink-600 to-purple-700 shadow-pink-500/20"
+    : "bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-700 shadow-blue-500/20";
 
   return (
     <div className={cn("relative overflow-hidden rounded-3xl p-8 shadow-xl text-white group", bgGradient, className)}>
