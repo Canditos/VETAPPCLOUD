@@ -496,72 +496,73 @@ function CalendarContent() {
       onDragEnd={handleDragEnd}
       onDragCancel={() => { setActiveId(null); setHoverSlotKey(null); }}
     >
-      <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-slate-50/30 dark:bg-slate-950 max-w-[1600px] mx-auto">
+      <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-slate-50/30 dark:bg-slate-950 w-full">
         {/* ── Top Bar ─────────────────────────────────────────────────── */}
-        <div className="bg-white/80 dark:bg-slate-900/50 backdrop-blur-xl border-b border-slate-200/60 dark:border-white/5 p-5 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 ring-4 ring-blue-500/10">
-                <Stethoscope size={24} strokeWidth={2.5} />
+        <div className="bg-white/80 dark:bg-slate-900/50 backdrop-blur-xl border-b border-slate-200/60 dark:border-white/5 px-4 lg:px-6 py-3.5 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3 sticky top-0 z-50 shadow-sm w-full">
+          
+          {/* Left: Brand / Title + Date Navigator */}
+          <div className="flex items-center gap-3 shrink-0 flex-wrap">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-md shadow-blue-500/20 ring-2 ring-blue-500/10 shrink-0">
+                <Stethoscope size={20} strokeWidth={2.5} />
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none">Agenda Clínica</h1>
-                <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 tracking-wider mt-1.5">Gestão de Marcações e Fluxo</p>
+              <div className="hidden sm:block">
+                <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-none">Agenda Clínica</h1>
+                <p className="text-[10px] font-bold text-slate-400 tracking-wider mt-1">Gestão de Marcações e Fluxo</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-4 bg-slate-100/50 dark:bg-white/5 p-1.5 rounded-2xl border border-slate-200/50 dark:border-white/5 shadow-inner">
-              <div className="flex items-center gap-1">
+            {/* Date Navigator */}
+            <div className="flex items-center gap-2 bg-slate-100/70 dark:bg-white/5 p-1 rounded-2xl border border-slate-200/50 dark:border-white/5 shadow-inner">
+              <div className="flex items-center">
                 <Button variant="ghost" size="icon" onClick={() => {
                   const d = new Date(currentDate);
                   d.setDate(d.getDate() - (view === "week" ? 7 : 1));
                   setCurrentDate(d);
-                }} className="h-9 w-9 rounded-xl hover:bg-white dark:hover:bg-white/10 transition-all text-slate-600 dark:text-slate-400">
-                  <ChevronLeft size={18} strokeWidth={3} />
+                }} className="h-8 w-8 rounded-xl hover:bg-white dark:hover:bg-white/10 transition-all text-slate-600 dark:text-slate-400">
+                  <ChevronLeft size={16} strokeWidth={3} />
                 </Button>
-                <Button variant="ghost" onClick={() => setCurrentDate(new Date())} className="h-9 px-4 font-bold text-[11px] tracking-widest hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all text-slate-900 dark:text-white">
+                <Button variant="ghost" onClick={() => setCurrentDate(new Date())} className="h-8 px-3 font-bold text-[11px] tracking-widest hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all text-slate-900 dark:text-white">
                   Hoje
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => {
                   const d = new Date(currentDate);
                   d.setDate(d.getDate() + (view === "week" ? 7 : 1));
                   setCurrentDate(d);
-                }} className="h-9 w-9 rounded-xl hover:bg-white dark:hover:bg-white/10 transition-all text-slate-600 dark:text-slate-400">
-                  <ChevronRight size={18} strokeWidth={3} />
+                }} className="h-8 w-8 rounded-xl hover:bg-white dark:hover:bg-white/10 transition-all text-slate-600 dark:text-slate-400">
+                  <ChevronRight size={16} strokeWidth={3} />
                 </Button>
               </div>
-              <div className="h-4 w-px bg-slate-200 dark:bg-white/10 mx-2" />
+              <div className="h-4 w-px bg-slate-200 dark:bg-white/10 mx-1" />
               
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <Input 
-                    key={format(currentDate, "yyyy-MM-dd")}
-                    defaultValue={format(currentDate, "dd/MM/yyyy")}
-                    className="h-9 w-[110px] bg-transparent border-none font-bold text-[11px] tracking-widest text-slate-900 dark:text-white p-0 text-center focus:ring-0 focus:bg-slate-200/50 dark:focus:bg-white/5 rounded-lg transition-all"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        const val = (e.target as HTMLInputElement).value;
-                        const [d, m, y] = val.split('/').map(Number);
-                        if (d && m && y) {
-                          const newD = new Date(y, m - 1, d);
-                          if (!isNaN(newD.getTime())) {
-                            setCurrentDate(newD);
-                            (e.target as HTMLInputElement).blur();
-                            toast.success(`Agenda movida para ${format(newD, "PP", { locale: pt })}`);
-                          }
+              <div className="flex items-center gap-1">
+                <Input 
+                  key={format(currentDate, "yyyy-MM-dd")}
+                  defaultValue={format(currentDate, "dd/MM/yyyy")}
+                  className="h-8 w-[95px] bg-transparent border-none font-bold text-[11px] tracking-wider text-slate-900 dark:text-white p-0 text-center focus:ring-0 focus:bg-slate-200/50 dark:focus:bg-white/5 rounded-lg transition-all"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const val = (e.target as HTMLInputElement).value;
+                      const [d, m, y] = val.split('/').map(Number);
+                      if (d && m && y) {
+                        const newD = new Date(y, m - 1, d);
+                        if (!isNaN(newD.getTime())) {
+                          setCurrentDate(newD);
+                          (e.target as HTMLInputElement).blur();
+                          toast.success(`Agenda movida para ${format(newD, "PP", { locale: pt })}`);
                         }
                       }
-                    }}
-                  />
-                </div>
+                    }
+                  }}
+                />
 
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl hover:bg-white dark:hover:bg-white/10 transition-all text-blue-600">
-                      <CalendarDays size={18} strokeWidth={2.5} />
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl hover:bg-white dark:hover:bg-white/10 transition-all text-blue-600">
+                      <CalendarDays size={16} strokeWidth={2.5} />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-4 rounded-2xl bg-white dark:bg-slate-900 border-none shadow-2xl ring-1 ring-black/5 dark:ring-white/10 z-[110]" align="end">
+                  <PopoverContent className="w-auto p-4 rounded-2xl bg-white dark:bg-slate-900 border-none shadow-2xl ring-1 ring-black/5 dark:ring-white/10 z-[110]" align="start">
                     <Calendar
                       mode="single"
                       selected={currentDate}
@@ -576,32 +577,33 @@ function CalendarContent() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            {/* Vet filters */}
-            <div className="flex flex-wrap gap-2 border-r border-slate-200/60 dark:border-white/10 pr-6">
-              <button
-                onClick={() => setSelectedVet("all")}
-                className={cn("px-5 h-10 rounded-2xl font-bold text-[11px] tracking-widest transition-all shadow-sm",
-                  selectedVet === "all" ? "bg-blue-600 text-white" : "bg-white dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/10")}
-              >Todos</button>
-              {vets.map((vet: any) => (
-                <button key={vet.id} onClick={() => setSelectedVet(vet.id)}
-                  className={cn("px-5 h-10 rounded-2xl font-bold text-[11px] tracking-widest transition-all flex items-center gap-2 whitespace-nowrap shadow-sm border border-transparent",
-                    selectedVet === vet.id ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white" : "bg-white dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/10")}
-                >
-                  <div className="w-2 h-2 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.1)]" style={{ backgroundColor: vet.color }} />
-                  {vet.name.split(" ").slice(-1)[0]}
-                </button>
-              ))}
+          {/* Center: Vet / User Filters — utilizing the available space across the screen */}
+          <div className="flex-1 flex items-center justify-start xl:justify-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+            <button
+              onClick={() => setSelectedVet("all")}
+              className={cn("px-3.5 h-8 rounded-xl font-bold text-[11px] tracking-wide transition-all shadow-2xs shrink-0",
+                selectedVet === "all" ? "bg-blue-600 text-white shadow-blue-500/20" : "bg-slate-100/80 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-slate-200/80 dark:hover:bg-white/10")}
+            >Todos</button>
+            {vets.map((vet: any) => (
+              <button key={vet.id} onClick={() => setSelectedVet(vet.id)}
+                className={cn("px-3 h-8 rounded-xl font-bold text-[11px] tracking-wide transition-all flex items-center gap-1.5 whitespace-nowrap shadow-2xs border shrink-0",
+                  selectedVet === vet.id ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white" : "bg-slate-100/80 dark:bg-white/5 text-slate-600 dark:text-slate-400 border-transparent hover:bg-slate-200/80 dark:hover:bg-white/10")}
+              >
+                <div className="w-2 h-2 rounded-full shadow-2xs" style={{ backgroundColor: vet.color }} />
+                <span>{vet.name.split(" ").slice(-1)[0]}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Right: View Toggle (Dia / Semana) + Agendar */}
+          <div className="flex items-center gap-2.5 shrink-0 self-end xl:self-auto">
+            <div className="flex bg-slate-100/70 dark:bg-white/5 p-1 rounded-2xl border border-slate-200/50 dark:border-white/5">
+              <button onClick={() => setView("day")} className={cn("px-4 h-8 rounded-xl font-bold text-[11px] tracking-wide transition-all", view === "day" ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200")}>Dia</button>
+              <button onClick={() => setView("week")} className={cn("px-4 h-8 rounded-xl font-bold text-[11px] tracking-wide transition-all", view === "week" ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200")}>Semana</button>
             </div>
 
-            <div className="flex bg-slate-100/50 dark:bg-white/5 p-1.5 rounded-2xl border border-slate-200/50 dark:border-white/5">
-              <button onClick={() => setView("day")} className={cn("px-5 h-9 rounded-xl font-bold text-[11px] tracking-widest transition-all", view === "day" ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300")}>Dia</button>
-              <button onClick={() => setView("week")} className={cn("px-5 h-9 rounded-xl font-bold text-[11px] tracking-widest transition-all", view === "week" ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300")}>Semana</button>
-            </div>
-
-            <Button onClick={() => { setNewSlot(null); setIsAddOpen(true); }} className="h-10 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold text-[11px] tracking-wider shadow-lg shadow-blue-500/25 active:scale-95 transition-all flex items-center gap-2">
-              <Plus size={18} strokeWidth={3} />
+            <Button onClick={() => { setNewSlot(null); setIsAddOpen(true); }} className="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-md shadow-blue-500/20 active:scale-95 transition-all flex items-center gap-1.5 shrink-0">
+              <Plus size={16} strokeWidth={3} />
               Agendar
             </Button>
           </div>

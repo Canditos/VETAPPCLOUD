@@ -164,15 +164,16 @@ export function ExamVisualizerModal({
       <DialogPortal>
         {/* Overlay */}
         <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-        {/* Content — full screen, bypassing shadcn's sm:max-w-sm */}
+        {/* Content — full screen, adaptive light & dark theme */}
         <DialogPrimitive.Content
           className="
             fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2
             z-50
             w-[98vw] h-[95vh]
-            rounded-2xl border border-white/10
-            bg-slate-950
-            shadow-2xl shadow-black/60
+            rounded-2xl border border-slate-200 dark:border-white/10
+            bg-white dark:bg-slate-950
+            text-slate-900 dark:text-white
+            shadow-2xl shadow-black/40
             p-0 overflow-hidden flex flex-col
             outline-none
             data-[state=open]:animate-in data-[state=closed]:animate-out
@@ -182,26 +183,26 @@ export function ExamVisualizerModal({
         >
 
         {/* ══════════════════════ TOP BAR ══════════════════════ */}
-        <div className="flex items-center justify-between px-5 py-3 bg-slate-900 border-b border-white/8 shrink-0 gap-4">
+        <div className="flex items-center justify-between px-5 py-3 bg-slate-50/90 dark:bg-slate-900 border-b border-slate-200 dark:border-white/8 shrink-0 gap-4">
 
           {/* Title + patient pill */}
           <div className="flex items-center gap-4 min-w-0">
             <div className="flex items-center gap-2.5 shrink-0">
-              <div className="w-9 h-9 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
+              <div className="w-9 h-9 rounded-xl bg-purple-600/15 border border-purple-500/30 flex items-center justify-center text-purple-600 dark:text-purple-400 shadow-2xs">
                 <Microscope size={18} strokeWidth={2} />
               </div>
               <div>
-                <h2 className="text-sm font-black text-white tracking-tight leading-none">Exames Complementares</h2>
-                <p className="text-[11px] text-slate-400 font-medium mt-0.5">Visualizador HL7 &amp; DICOM</p>
+                <h2 className="text-sm font-black text-slate-900 dark:text-white tracking-tight leading-none">Exames Complementares</h2>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">Visualizador HL7 &amp; DICOM</p>
               </div>
             </div>
 
             {patient && (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-500/10 border border-blue-500/20 min-w-0">
-                <Stethoscope size={13} className="text-blue-400 shrink-0" />
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 min-w-0">
+                <Stethoscope size={13} className="text-blue-600 dark:text-blue-400 shrink-0" />
                 <div className="leading-tight min-w-0">
-                  <p className="text-xs font-bold text-blue-300 truncate">{patient.name}</p>
-                  <p className="text-[10px] text-blue-400/70 font-medium truncate">
+                  <p className="text-xs font-bold text-blue-900 dark:text-blue-300 truncate">{patient.name}</p>
+                  <p className="text-[10px] text-blue-600/80 dark:text-blue-400/70 font-medium truncate">
                     {patient.species}{patient.breed ? ` · ${patient.breed}` : ""}{patient.microchip ? ` · #${patient.microchip}` : ""}
                   </p>
                 </div>
@@ -210,7 +211,7 @@ export function ExamVisualizerModal({
           </div>
 
           {/* Scope toggle */}
-          <div className="flex items-center gap-1 bg-slate-800/80 border border-white/8 rounded-xl p-1 shrink-0">
+          <div className="flex items-center gap-1 bg-slate-200/70 dark:bg-slate-800/80 border border-slate-300/50 dark:border-white/8 rounded-xl p-1 shrink-0">
             {(["current", "all"] as const).map((tab) => (
               <button
                 key={tab}
@@ -218,14 +219,14 @@ export function ExamVisualizerModal({
                 className={cn(
                   "px-4 py-1.5 rounded-lg text-xs font-bold transition-all",
                   scopeTab === tab
-                    ? "bg-purple-600 text-white shadow-sm shadow-purple-900/50"
-                    : "text-slate-400 hover:text-slate-200"
+                    ? "bg-purple-600 text-white shadow-sm shadow-purple-900/30"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
                 )}
               >
                 {tab === "current" ? "Esta Consulta" : "Histórico Completo"}
                 <span className={cn(
                   "ml-2 px-1.5 py-0.5 rounded-md text-[10px] font-black",
-                  scopeTab === tab ? "bg-white/20 text-white" : "bg-slate-700 text-slate-300"
+                  scopeTab === tab ? "bg-white/20 text-white" : "bg-slate-300/70 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
                 )}>
                   {tab === "current" ? currentConsultationDiagnostics.length : patientDiagnostics.length}
                 </span>
@@ -235,7 +236,7 @@ export function ExamVisualizerModal({
 
           {/* Close */}
           <Button size="icon" variant="ghost" onClick={onClose}
-            className="h-9 w-9 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 shrink-0">
+            className="h-9 w-9 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800 shrink-0">
             <X size={18} />
           </Button>
         </div>
@@ -244,37 +245,37 @@ export function ExamVisualizerModal({
         <div className="flex-1 flex min-h-0 overflow-hidden">
 
           {/* ── LEFT SIDEBAR ── */}
-          <div className="w-72 shrink-0 flex flex-col border-r border-white/8 bg-slate-900/50 overflow-hidden">
+          <div className="w-72 shrink-0 flex flex-col border-r border-slate-200 dark:border-white/8 bg-slate-50/70 dark:bg-slate-900/50 overflow-hidden">
 
             {/* Section: Imagiologia */}
             <div className="flex flex-col">
-              <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/5 bg-slate-900/70">
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-200 dark:border-white/5 bg-slate-100/80 dark:bg-slate-900/70">
                 <div className="flex items-center gap-2">
-                  <ImageIcon size={13} className="text-emerald-400" />
-                  <span className="text-[11px] font-black text-slate-300 uppercase tracking-wider">Imagiologia</span>
+                  <ImageIcon size={13} className="text-emerald-600 dark:text-emerald-400" />
+                  <span className="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">Imagiologia</span>
                 </div>
                 <span className="text-[10px] font-bold text-slate-500">{imagingExams.length}</span>
               </div>
 
               {imagingExams.length === 0 ? (
-                <p className="px-4 py-3 text-[11px] text-slate-600 italic">Nenhum exame de imagem</p>
+                <p className="px-4 py-3 text-[11px] text-slate-400 dark:text-slate-600 italic">Nenhum exame de imagem</p>
               ) : (
                 imagingExams.map((dx) => {
                   const isSelected = selectedExam?.id === dx.id;
                   return (
                     <button key={dx.id} onClick={() => setSelectedExamId(dx.id)}
                       className={cn(
-                        "w-full text-left px-4 py-3 border-b border-white/5 transition-all flex items-center gap-3",
+                        "w-full text-left px-4 py-3 border-b border-slate-200/50 dark:border-white/5 transition-all flex items-center gap-3",
                         isSelected
-                          ? "bg-emerald-600/15 border-l-[3px] border-l-emerald-500"
-                          : "hover:bg-slate-800/60 border-l-[3px] border-l-transparent"
+                          ? "bg-emerald-50 dark:bg-emerald-600/15 border-l-[3px] border-l-emerald-500"
+                          : "hover:bg-slate-100 dark:hover:bg-slate-800/60 border-l-[3px] border-l-transparent"
                       )}>
                       <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
-                        isSelected ? "bg-emerald-500/20 text-emerald-400" : "bg-slate-800 text-slate-500")}>
+                        isSelected ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" : "bg-slate-200/70 dark:bg-slate-800 text-slate-500")}>
                         <ImageIcon size={14} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className={cn("text-xs font-bold truncate", isSelected ? "text-white" : "text-slate-300")}>
+                        <p className={cn("text-xs font-bold truncate", isSelected ? "text-emerald-900 dark:text-white" : "text-slate-800 dark:text-slate-300")}>
                           {dx.summary ?? dx.testName ?? "Imagem"}
                         </p>
                         <p className="text-[10px] text-slate-500 mt-0.5 truncate">
@@ -289,17 +290,17 @@ export function ExamVisualizerModal({
             </div>
 
             {/* Section: Laboratório */}
-            <div className="flex flex-col border-t border-white/8">
-              <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/5 bg-slate-900/70">
+            <div className="flex flex-col border-t border-slate-200 dark:border-white/8">
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-200 dark:border-white/5 bg-slate-100/80 dark:bg-slate-900/70">
                 <div className="flex items-center gap-2">
-                  <FlaskConical size={13} className="text-purple-400" />
-                  <span className="text-[11px] font-black text-slate-300 uppercase tracking-wider">Laboratório</span>
+                  <FlaskConical size={13} className="text-purple-600 dark:text-purple-400" />
+                  <span className="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">Laboratório</span>
                 </div>
                 <span className="text-[10px] font-bold text-slate-500">{labExams.length}</span>
               </div>
 
               {labExams.length === 0 ? (
-                <p className="px-4 py-3 text-[11px] text-slate-600 italic">Nenhuma análise laboratorial</p>
+                <p className="px-4 py-3 text-[11px] text-slate-400 dark:text-slate-600 italic">Nenhuma análise laboratorial</p>
               ) : (
                 labExams.map((dx) => {
                   const isSelected  = selectedExam?.id === dx.id;
@@ -308,17 +309,17 @@ export function ExamVisualizerModal({
                   return (
                     <button key={dx.id} onClick={() => setSelectedExamId(dx.id)}
                       className={cn(
-                        "w-full text-left px-4 py-3 border-b border-white/5 transition-all flex items-center gap-3",
+                        "w-full text-left px-4 py-3 border-b border-slate-200/50 dark:border-white/5 transition-all flex items-center gap-3",
                         isSelected
-                          ? "bg-purple-600/15 border-l-[3px] border-l-purple-500"
-                          : "hover:bg-slate-800/60 border-l-[3px] border-l-transparent"
+                          ? "bg-purple-50 dark:bg-purple-600/15 border-l-[3px] border-l-purple-500"
+                          : "hover:bg-slate-100 dark:hover:bg-slate-800/60 border-l-[3px] border-l-transparent"
                       )}>
                       <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
-                        isSelected ? "bg-purple-500/20 text-purple-400" : "bg-slate-800 text-slate-500")}>
+                        isSelected ? "bg-purple-500/20 text-purple-600 dark:text-purple-400" : "bg-slate-200/70 dark:bg-slate-800 text-slate-500")}>
                         <FlaskConical size={14} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className={cn("text-xs font-bold truncate", isSelected ? "text-white" : "text-slate-300")}>
+                        <p className={cn("text-xs font-bold truncate", isSelected ? "text-purple-900 dark:text-white" : "text-slate-800 dark:text-slate-300")}>
                           {dx.summary ?? dx.testName ?? "Análise"}
                         </p>
                         <p className="text-[10px] text-slate-500 mt-0.5 truncate">
@@ -326,7 +327,7 @@ export function ExamVisualizerModal({
                         </p>
                       </div>
                       {alertCount > 0 ? (
-                        <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 shrink-0">{alertCount}↑</span>
+                        <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-600 dark:text-rose-400 shrink-0">{alertCount}↑</span>
                       ) : (
                         <StatusDot status={dx.status} />
                       )}
@@ -337,9 +338,9 @@ export function ExamVisualizerModal({
             </div>
 
             {/* Quick Request Footer */}
-            <div className="mt-auto border-t border-white/8 p-3 bg-slate-900/70 shrink-0">
+            <div className="mt-auto border-t border-slate-200 dark:border-white/8 p-3 bg-slate-100/70 dark:bg-slate-900/70 shrink-0">
               <p className="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1.5">
-                <Sparkles size={10} className="text-purple-400" /> Requisitar Novo Exame
+                <Sparkles size={10} className="text-purple-500 dark:text-purple-400" /> Requisitar Novo Exame
               </p>
               <div className="grid grid-cols-2 gap-1.5">
                 {[
@@ -354,8 +355,8 @@ export function ExamVisualizerModal({
                       "flex items-center gap-1.5 px-2 py-2 rounded-lg text-[11px] font-bold transition-all border",
                       requesting === item.name ? "opacity-50 cursor-not-allowed" :
                       item.color === "emerald"
-                        ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20"
-                        : "bg-purple-500/10 border-purple-500/20 text-purple-400 hover:bg-purple-500/20"
+                        ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20"
+                        : "bg-purple-50 dark:bg-purple-500/10 border-purple-200 dark:border-purple-500/20 text-purple-700 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-500/20"
                     )}>
                     <Plus size={11} />
                     {("label" in item ? item.label : null) ?? item.name}
@@ -366,24 +367,24 @@ export function ExamVisualizerModal({
           </div>
 
           {/* ── RIGHT PANEL: Viewer ── */}
-          <div className="flex-1 flex flex-col overflow-hidden bg-slate-950">
+          <div className="flex-1 flex flex-col overflow-hidden bg-slate-100/70 dark:bg-slate-950">
             {selectedExam ? (
               <>
                 {/* ── Viewer Toolbar ── */}
-                <div className="flex items-center justify-between px-5 py-3 bg-slate-900/80 border-b border-white/8 shrink-0 gap-4">
+                <div className="flex items-center justify-between px-5 py-3 bg-white dark:bg-slate-900/80 border-b border-slate-200 dark:border-white/8 shrink-0 gap-4">
                   {/* Exam info */}
                   <div className="flex items-center gap-3 min-w-0">
                     <span className={cn(
                       "px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider shrink-0",
                       selectedExam.type === "IMAGING"
-                        ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/25"
-                        : "bg-purple-500/15 text-purple-400 border border-purple-500/25"
+                        ? "bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/25"
+                        : "bg-purple-50 dark:bg-purple-500/15 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/25"
                     )}>
                       {selectedExam.type === "IMAGING" ? "Imagiologia" : "Laboratório"}
                     </span>
                     <div className="min-w-0">
-                      <h3 className="text-sm font-black text-white leading-tight truncate">{selectedExam.summary || selectedExam.testName}</h3>
-                      <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+                      <h3 className="text-sm font-black text-slate-900 dark:text-white leading-tight truncate">{selectedExam.summary || selectedExam.testName}</h3>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
                         {selectedExam.source} &nbsp;·&nbsp; {format(new Date(selectedExam.createdAt), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: pt })}
                       </p>
                     </div>
@@ -394,22 +395,24 @@ export function ExamVisualizerModal({
                     {selectedExam.type === "IMAGING" && (
                       <>
                         {/* Zoom controls */}
-                        <div className="flex items-center gap-0.5 bg-slate-800 border border-white/8 rounded-lg px-1">
-                          <button onClick={() => setZoom((z) => Math.max(z - 0.25, 0.5))} className="p-1.5 text-slate-400 hover:text-white" title="Diminuir"><ZoomOut size={14} /></button>
-                          <span className="text-[11px] font-mono text-slate-300 px-1.5 min-w-[42px] text-center">{Math.round(zoom * 100)}%</span>
-                          <button onClick={() => setZoom((z) => Math.min(z + 0.25, 3))} className="p-1.5 text-slate-400 hover:text-white" title="Aumentar"><ZoomIn size={14} /></button>
-                          <div className="w-px h-4 bg-white/10 mx-0.5" />
-                          <button onClick={() => { setZoom(1); setRotation(0); setIsInverted(false); setContrastLevel("normal"); }} className="p-1.5 text-slate-400 hover:text-white" title="Repor"><RotateCcw size={13} /></button>
+                        <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/8 rounded-lg px-1">
+                          <button onClick={() => setZoom((z) => Math.max(z - 0.25, 0.5))} className="p-1.5 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white" title="Diminuir"><ZoomOut size={14} /></button>
+                          <span className="text-[11px] font-mono text-slate-700 dark:text-slate-300 px-1.5 min-w-[42px] text-center">{Math.round(zoom * 100)}%</span>
+                          <button onClick={() => setZoom((z) => Math.min(z + 0.25, 3))} className="p-1.5 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white" title="Aumentar"><ZoomIn size={14} /></button>
+                          <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-0.5" />
+                          <button onClick={() => { setZoom(1); setRotation(0); setIsInverted(false); setContrastLevel("normal"); }} className="p-1.5 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white" title="Repor"><RotateCcw size={13} /></button>
                         </div>
 
                         <button onClick={() => setIsInverted((v) => !v)}
                           className={cn("px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-all",
-                            isInverted ? "bg-white text-slate-950 border-white" : "bg-slate-800 text-slate-300 border-white/10 hover:bg-slate-700")}>
+                            isInverted
+                              ? "bg-slate-900 text-white dark:bg-white dark:text-slate-950 border-slate-900 dark:border-white"
+                              : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-700")}>
                           Inv P/B
                         </button>
 
                         <button onClick={() => setContrastLevel((c) => c === "normal" ? "high" : c === "high" ? "bone" : "normal")}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-slate-800 border border-white/10 text-slate-300 hover:bg-slate-700 transition-all">
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
                           <SunMedium size={12} />
                           {contrastLevel === "normal" ? "Normal" : contrastLevel === "high" ? "Alto Contraste" : "Janela Óssea"}
                         </button>
@@ -422,8 +425,8 @@ export function ExamVisualizerModal({
                     )}
 
                     <Button size="sm" variant="outline" onClick={() => handleCopyNotes(selectedExam)}
-                      className="h-8 text-xs font-semibold rounded-xl bg-slate-800 border-white/10 text-slate-200 hover:bg-slate-700 gap-1.5">
-                      {copiedNote ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+                      className="h-8 text-xs font-semibold rounded-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 gap-1.5">
+                      {copiedNote ? <Check size={13} className="text-emerald-500 dark:text-emerald-400" /> : <Copy size={13} />}
                       {onInsertToNotes ? "Inserir nas Notas" : "Copiar Resumo"}
                     </Button>
                   </div>
@@ -512,17 +515,17 @@ export function ExamVisualizerModal({
                       </div>
 
                       {/* Observation bar */}
-                      <div className="flex items-start justify-between p-4 rounded-xl bg-slate-900/80 border border-white/8 shrink-0 gap-4">
+                      <div className="flex items-start justify-between p-4 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/8 shrink-0 gap-4">
                         <div className="flex items-start gap-3 min-w-0">
-                          <CheckCircle2 size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                          <CheckCircle2 size={16} className="text-emerald-500 dark:text-emerald-400 shrink-0 mt-0.5" />
                           <div className="min-w-0">
-                            <p className="text-xs font-bold text-white mb-1">Observações Clínicas</p>
-                            <p className="text-sm text-slate-300 leading-relaxed">
+                            <p className="text-xs font-bold text-slate-900 dark:text-white mb-1">Observações Clínicas</p>
+                            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                               {selectedExam.metadataJson?.observations || "Campos pulmonares nítidos. Silhueta cardíaca dentro dos limites normais. Coluna torácica íntegra. Sem achados radiográficos significativos."}
                             </p>
                           </div>
                         </div>
-                        <Badge className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 font-bold text-[10px] shrink-0">
+                        <Badge className="bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/25 font-bold text-[10px] shrink-0">
                           DICOM Verificado
                         </Badge>
                       </div>
@@ -533,45 +536,45 @@ export function ExamVisualizerModal({
                     <div className="flex-1 flex flex-col gap-4 min-h-0">
                       {/* Summary cards */}
                       <div className="grid grid-cols-3 gap-3 shrink-0">
-                        <div className="p-4 rounded-xl bg-slate-900 border border-white/8">
-                          <p className="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">Equipamento</p>
-                          <p className="text-sm font-bold text-white">{selectedExam.source || "Analisador"}</p>
-                          <p className="text-[11px] text-slate-400 mt-0.5">Transmissão direta HL7</p>
+                        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/8">
+                          <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Equipamento</p>
+                          <p className="text-sm font-bold text-slate-900 dark:text-white">{selectedExam.source || "Analisador"}</p>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Transmissão direta HL7</p>
                         </div>
-                        <div className="p-4 rounded-xl bg-slate-900 border border-white/8">
-                          <p className="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">Parâmetros</p>
-                          <p className="text-sm font-bold text-white">{(selectedExam.dataJson?.parameters || []).length} analisados</p>
-                          <p className="text-[11px] text-slate-400 mt-0.5">
+                        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/8">
+                          <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Parâmetros</p>
+                          <p className="text-sm font-bold text-slate-900 dark:text-white">{(selectedExam.dataJson?.parameters || []).length} analisados</p>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                             {(selectedExam.dataJson?.parameters || []).filter((p: any) => p.isAbnormal).length} fora do intervalo
                           </p>
                         </div>
-                        <div className="p-4 rounded-xl border border-white/8"
+                        <div className="p-4 rounded-xl border border-slate-200 dark:border-white/8"
                           style={{ background: (selectedExam.dataJson?.parameters || []).some((p: any) => p.isAbnormal) ? "rgb(239 68 68 / 0.08)" : "rgb(16 185 129 / 0.08)" }}>
-                          <p className="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">Estado Geral</p>
+                          <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Estado Geral</p>
                           {(selectedExam.dataJson?.parameters || []).some((p: any) => p.isAbnormal) ? (
                             <>
-                              <p className="text-sm font-black text-rose-400 flex items-center gap-1.5"><AlertCircle size={14} /> Com Alertas</p>
-                              <p className="text-[11px] text-rose-400/70 mt-0.5">Verificar valores assinalados</p>
+                              <p className="text-sm font-black text-rose-500 dark:text-rose-400 flex items-center gap-1.5"><AlertCircle size={14} /> Com Alertas</p>
+                              <p className="text-[11px] text-rose-600/70 dark:text-rose-400/70 mt-0.5">Verificar valores assinalados</p>
                             </>
                           ) : (
                             <>
-                              <p className="text-sm font-black text-emerald-400 flex items-center gap-1.5"><CheckCircle2 size={14} /> Normal</p>
-                              <p className="text-[11px] text-emerald-400/70 mt-0.5">Dentro dos valores de referência</p>
+                              <p className="text-sm font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5"><CheckCircle2 size={14} /> Normal</p>
+                              <p className="text-[11px] text-emerald-600/70 dark:text-emerald-400/70 mt-0.5">Dentro dos valores de referência</p>
                             </>
                           )}
                         </div>
                       </div>
 
                       {/* Parameters Table */}
-                      <div className="flex-1 rounded-2xl border border-white/8 bg-slate-900/60 overflow-hidden flex flex-col min-h-0">
-                        <div className="grid grid-cols-12 px-5 py-3 bg-slate-900 border-b border-white/8 text-[11px] font-black text-slate-400 uppercase tracking-wider shrink-0">
+                      <div className="flex-1 rounded-2xl border border-slate-200 dark:border-white/8 bg-white dark:bg-slate-900/60 overflow-hidden flex flex-col min-h-0">
+                        <div className="grid grid-cols-12 px-5 py-3 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-white/8 text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider shrink-0">
                           <span className="col-span-4">Parâmetro</span>
                           <span className="col-span-3 text-right">Resultado</span>
                           <span className="col-span-3 text-center">Ref. Min – Máx</span>
                           <span className="col-span-1 text-center">Unidade</span>
                           <span className="col-span-1 text-right">Estado</span>
                         </div>
-                        <div className="flex-1 overflow-y-auto divide-y divide-white/5">
+                        <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-white/5">
                           {(selectedExam.dataJson?.parameters || [
                             { name: "Eritrócitos (RBC)",  value: 7.15, unit: "M/µL",    refMin: 5.5,  refMax: 8.5,   isAbnormal: false },
                             { name: "Leucócitos (WBC)",   value: 11.2, unit: "10³/µL",  refMin: 6.0,  refMax: 17.0,  isAbnormal: false },
@@ -586,25 +589,27 @@ export function ExamVisualizerModal({
                           ]).map((param: any, idx: number) => (
                             <div key={idx} className={cn(
                               "grid grid-cols-12 px-5 py-3.5 items-center transition-colors",
-                              param.isAbnormal ? "bg-rose-500/5 hover:bg-rose-500/10" : "hover:bg-slate-800/40"
+                              param.isAbnormal
+                                ? "bg-rose-50/70 dark:bg-rose-500/5 hover:bg-rose-100/70 dark:hover:bg-rose-500/10"
+                                : "hover:bg-slate-50 dark:hover:bg-slate-800/40"
                             )}>
-                              <span className={cn("col-span-4 text-sm font-semibold truncate", param.isAbnormal ? "text-rose-300" : "text-slate-200")}>
+                              <span className={cn("col-span-4 text-sm font-semibold truncate", param.isAbnormal ? "text-rose-600 dark:text-rose-300" : "text-slate-800 dark:text-slate-200")}>
                                 {param.name}
                               </span>
-                              <span className={cn("col-span-3 text-right font-mono font-black text-base", param.isAbnormal ? "text-rose-300" : "text-white")}>
+                              <span className={cn("col-span-3 text-right font-mono font-black text-base", param.isAbnormal ? "text-rose-600 dark:text-rose-300" : "text-slate-900 dark:text-white")}>
                                 {param.value}
                               </span>
-                              <span className="col-span-3 text-center text-slate-500 text-xs font-mono">
+                              <span className="col-span-3 text-center text-slate-500 dark:text-slate-400 text-xs font-mono">
                                 {param.refMin !== undefined && param.refMax !== undefined ? `${param.refMin} – ${param.refMax}` : "—"}
                               </span>
-                              <span className="col-span-1 text-center text-slate-500 text-xs font-mono">{param.unit}</span>
+                              <span className="col-span-1 text-center text-slate-500 dark:text-slate-400 text-xs font-mono">{param.unit}</span>
                               <span className="col-span-1 text-right">
                                 {param.isAbnormal ? (
-                                  <span className="inline-flex items-center gap-1 text-[10px] font-black text-rose-400 bg-rose-500/15 px-2 py-1 rounded-lg border border-rose-500/20">
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-black text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/15 px-2 py-1 rounded-lg border border-rose-200 dark:border-rose-500/20">
                                     <AlertCircle size={10} /> ALERTA
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-lg border border-emerald-500/20">
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-lg border border-emerald-200 dark:border-emerald-500/20">
                                     <CheckCircle2 size={10} /> OK
                                   </span>
                                 )}
@@ -620,11 +625,11 @@ export function ExamVisualizerModal({
             ) : (
               /* ─── EMPTY STATE ─── */
               <div className="flex-1 flex flex-col items-center justify-center gap-6 text-center p-8">
-                <div className="w-20 h-20 rounded-3xl bg-slate-900 border border-white/8 flex items-center justify-center text-slate-700">
+                <div className="w-20 h-20 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/8 flex items-center justify-center text-slate-400 dark:text-slate-600 shadow-sm">
                   {activeList.length === 0 ? <Layers size={36} strokeWidth={1.5} /> : <Eye size={36} strokeWidth={1.5} />}
                 </div>
                 <div>
-                  <h4 className="text-xl font-black text-slate-300 mb-2">
+                  <h4 className="text-xl font-black text-slate-800 dark:text-slate-300 mb-2">
                     {activeList.length === 0
                       ? scopeTab === "current" ? "Nenhum exame nesta consulta" : "Sem registos de exames"
                       : "Selecione um exame"}
@@ -648,8 +653,8 @@ export function ExamVisualizerModal({
                         className={cn(
                           "flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold transition-all border",
                           item.color === "emerald"
-                            ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/20"
-                            : "bg-purple-500/10 border-purple-500/25 text-purple-400 hover:bg-purple-500/20"
+                            ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/25 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20"
+                            : "bg-purple-50 dark:bg-purple-500/10 border-purple-200 dark:border-purple-500/25 text-purple-700 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-500/20"
                         )}>
                         {item.icon} + {("label" in item ? item.label : null) ?? item.name}
                       </button>
@@ -662,7 +667,7 @@ export function ExamVisualizerModal({
         </div>
 
         {/* ══════════════════════ STATUS BAR ══════════════════════ */}
-        <div className="flex items-center justify-between px-5 py-2 bg-slate-900 border-t border-white/5 shrink-0">
+        <div className="flex items-center justify-between px-5 py-2 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-white/5 shrink-0">
           <div className="flex items-center gap-5">
             <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
@@ -673,7 +678,7 @@ export function ExamVisualizerModal({
               Fuji DX-500 · HL7 v2.5
             </div>
           </div>
-          <p className="text-[11px] text-slate-600">
+          <p className="text-[11px] text-slate-400 dark:text-slate-600">
             {currentConsultationDiagnostics.length} nesta consulta · {patientDiagnostics.length} no total do animal
           </p>
         </div>

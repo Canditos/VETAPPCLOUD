@@ -229,73 +229,124 @@ export default function PatientDetailPage() {
   return (
     <div className="w-full min-h-screen bg-slate-50/50 dark:bg-slate-950 p-4 md:p-8 lg:p-10 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
-      {/* ── Header ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 max-w-[1600px] mx-auto">
-        <div className="flex items-start gap-5">
+      {/* ── Header Context Bar (Consistent with Consultations) ── */}
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-white dark:bg-slate-900 p-6 rounded-3xl ring-1 ring-slate-100 dark:ring-white/5 shadow-sm w-full">
+        <div className="flex items-center gap-5">
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={() => router.back()} 
-            className="rounded-2xl h-12 w-12 bg-white dark:bg-slate-900 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 hover:scale-105 transition-all mt-1"
+            className="rounded-2xl h-11 w-11 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all shrink-0"
+            title="Voltar"
           >
-            <ArrowLeft size={20} className="text-slate-600 dark:text-slate-400" />
+            <ArrowLeft size={18} />
           </Button>
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <h1 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight">
+
+          {/* Large Avatar with Gender Gradient & Initial */}
+          <div className={cn(
+            "w-20 h-20 rounded-3xl flex items-center justify-center font-black text-3xl shadow-xl transition-all duration-300 hover:scale-105 hover:rotate-2 shrink-0 ring-4 ring-slate-100 dark:ring-white/10 relative overflow-hidden",
+            isFemale
+              ? "bg-gradient-to-br from-pink-500 via-rose-500 to-purple-600 text-white shadow-pink-500/25"
+              : "bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-600 text-white shadow-blue-500/25"
+          )}>
+            <span>{patient.name?.[0]?.toUpperCase() || "?"}</span>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+          </div>
+
+          <div>
+            {/* Top row: Name + Species + Gender + Breed + Temperament + Status */}
+            <div className="flex flex-wrap items-center gap-2.5 mb-2">
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">
                 {patient.name}
               </h1>
+
+              {/* Species */}
+              <Badge className="bg-blue-600 text-white border-none font-semibold text-xs px-3 py-1 rounded-lg">
+                {patient.species}
+              </Badge>
+
+              {/* Gender */}
+              <Badge variant="outline" className={cn("text-xs font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1",
+                isFemale
+                  ? "border-pink-300 text-pink-700 bg-pink-50 dark:bg-pink-950/30 dark:border-pink-800 dark:text-pink-300"
+                  : "border-blue-300 text-blue-700 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800 dark:text-blue-300"
+              )}>
+                <GenderIcon size={12} strokeWidth={2.5} />
+                <span>{isFemale ? "Fêmea" : "Macho"}</span>
+              </Badge>
+
+              {/* Breed (após espécie e sexo) */}
+              {patient.breed && (
+                <Badge variant="outline" className="text-xs font-semibold px-2.5 py-1 rounded-lg border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50">
+                  {patient.breed}
+                </Badge>
+              )}
+
+              {/* Temperament */}
+              {patient.aggressionLevel && (
+                <Badge className={cn("text-xs font-bold px-2.5 py-1 rounded-lg border-none flex items-center gap-1 shadow-sm",
+                  isDocil ? "bg-emerald-600 text-white shadow-emerald-500/20" :
+                  isNervoso ? "bg-amber-500 text-slate-950 font-black shadow-amber-500/20" :
+                  "bg-rose-600 text-white shadow-rose-500/20"
+                )}>
+                  <tempDisplay.icon size={12} strokeWidth={2.5} />
+                  <span>{tempDisplay.label}</span>
+                </Badge>
+              )}
+
+              {/* Status */}
               <Badge variant={patient.status === "ACTIVE" ? "default" : "secondary"} 
-                className="rounded-full px-3 py-1 bg-blue-600/10 text-blue-600 border-blue-200 dark:border-blue-900/50 text-xs font-bold uppercase tracking-wider">
+                className="rounded-lg px-2.5 py-1 text-xs font-bold uppercase tracking-wider">
                 {patient.status === "ACTIVE" ? "Ativo" : "Inativo"}
               </Badge>
             </div>
-            <div className="flex flex-wrap items-center gap-2 text-slate-500 dark:text-slate-400 font-medium text-base">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-slate-900 rounded-lg shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
-                <SpeciesIcon size={16} className="text-blue-500" />
-                <span className="capitalize">{patient.species}</span>
-              </div>
-              {patient.breed && (
-                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-slate-900 rounded-lg shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
-                  <span>{patient.breed}</span>
-                </div>
+
+            {/* Bottom row: Tutor Name first, then Phone, then Email */}
+            <div className="flex flex-wrap items-center gap-3.5 text-sm text-slate-600 dark:text-slate-400 font-medium">
+              {/* Tutor (Nome primeiro) */}
+              <Link 
+                href={`/dashboard/customers/${patient.owner?.id || patient.ownerId}`}
+                className="font-semibold text-slate-800 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1.5 transition-colors"
+                title="Ficha do Tutor"
+              >
+                <User size={14} className="text-slate-400 shrink-0" />
+                <span>{patient.owner?.name || "Sem tutor associado"}</span>
+              </Link>
+
+              {/* Contacto telefónico do tutor */}
+              {patient.owner?.phone && (
+                <>
+                  <span className="opacity-25 text-slate-300 dark:text-slate-700">|</span>
+                  <a 
+                    href={`tel:${patient.owner.phone}`} 
+                    className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    title="Ligar para o tutor"
+                  >
+                    <Phone size={13} className="text-slate-400 shrink-0" />
+                    <span>{patient.owner.phone}</span>
+                  </a>
+                </>
               )}
-              <div className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-lg shadow-sm ring-1",
-                isFemale
-                  ? "bg-pink-50 dark:bg-pink-950/40 text-pink-700 dark:text-pink-300 ring-pink-200 dark:ring-pink-900/40"
-                  : "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 ring-blue-200 dark:ring-blue-900/40"
-              )}>
-                <GenderIcon size={15} className={isFemale ? "text-pink-500" : "text-blue-500"} strokeWidth={2.5} />
-                <span className="font-semibold text-xs">{isFemale ? "Fêmea" : "Macho"}</span>
-              </div>
-              {patient.aggressionLevel && (
-                <div className={cn("flex items-center gap-1.5 px-3 py-1 rounded-lg shadow-sm font-bold text-xs uppercase tracking-wider text-white",
-                  isDocil ? "bg-emerald-600 shadow-emerald-500/20" :
-                  isNervoso ? "bg-amber-500 shadow-amber-500/20 text-slate-950 font-black" :
-                  "bg-rose-600 shadow-rose-500/20"
-                )}>
-                  <tempDisplay.icon size={13} className={isNervoso ? "text-slate-950" : "text-white"} strokeWidth={2.5} />
-                  <span>{tempDisplay.label}</span>
-                </div>
-              )}
-              {patient.owner?.name && (
-                <Link
-                  href={`/dashboard/customers/${patient.owner?.id || patient.ownerId}`}
-                  className="flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-slate-900 rounded-lg shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 hover:ring-blue-400 dark:hover:ring-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-all group"
-                  title="Ver perfil do tutor"
-                >
-                  <User size={14} className="text-purple-500 group-hover:text-blue-600 transition-colors" />
-                  <span className="font-semibold text-xs text-slate-700 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                    {patient.owner.name}
-                  </span>
-                  <ArrowUpRight size={13} className="text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                </Link>
+
+              {/* E-mail do tutor */}
+              {patient.owner?.email && (
+                <>
+                  <span className="opacity-25 text-slate-300 dark:text-slate-700">|</span>
+                  <a 
+                    href={`mailto:${patient.owner.email}`} 
+                    className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    title="Enviar e-mail"
+                  >
+                    <Mail size={13} className="text-slate-400 shrink-0" />
+                    <span>{patient.owner.email}</span>
+                  </a>
+                </>
               )}
             </div>
           </div>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 shrink-0 self-end xl:self-auto">
           <Button
             onClick={() => {
               setEditForm({
@@ -313,16 +364,16 @@ export default function PatientDetailPage() {
             }}
             variant="outline"
             size="lg"
-            className="rounded-xl h-12 px-6 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-50 dark:hover:bg-slate-800/80 shadow-sm gap-2 transition-all active:scale-95"
+            className="rounded-xl h-11 px-5 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-50 dark:hover:bg-slate-800/80 shadow-sm gap-2 transition-all active:scale-95 text-xs"
           >
-            <Edit3 size={16} /> Editar Ficha
+            <Edit3 size={15} /> Editar Ficha
           </Button>
           <Button 
             onClick={() => router.push(`/dashboard/consultations?patientId=${patientId}`)}
             size="lg" 
-            className="rounded-xl h-12 px-6 bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-500/20 gap-2 transition-all active:scale-95"
+            className="rounded-xl h-11 px-5 bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-500/20 gap-2 transition-all active:scale-95 text-xs"
           >
-            <Plus size={18} strokeWidth={2.5} /> Nova Consulta
+            <Plus size={16} strokeWidth={2.5} /> Nova Consulta
           </Button>
           {isFeatureEnabled("gdtIntegration") && (
             <>
@@ -331,9 +382,9 @@ export default function PatientDetailPage() {
                 disabled={rxLoading !== null}
                 size="lg"
                 title="Envia ficha do paciente para a worklist do RX Examion"
-                className="rounded-xl h-12 px-6 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-bold shadow-lg shadow-emerald-500/20 gap-2 transition-all active:scale-95"
+                className="rounded-xl h-11 px-5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-bold shadow-lg shadow-emerald-500/20 gap-2 transition-all active:scale-95 text-xs"
               >
-                {rxLoading === "fazer-rx" ? <Loader2 size={18} className="animate-spin" /> : <Radio size={18} />}
+                {rxLoading === "fazer-rx" ? <Loader2 size={16} className="animate-spin" /> : <Radio size={16} />}
                 Fazer RX
               </Button>
               <Button
@@ -342,9 +393,9 @@ export default function PatientDetailPage() {
                 variant="outline"
                 size="lg"
                 title="Abre o visualizador de imagens arquivadas no RX Examion"
-                className="rounded-xl h-12 px-6 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-50 dark:hover:bg-slate-800/80 disabled:opacity-60 shadow-sm gap-2 transition-all active:scale-95"
+                className="rounded-xl h-11 px-5 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-50 dark:hover:bg-slate-800/80 disabled:opacity-60 shadow-sm gap-2 transition-all active:scale-95 text-xs"
               >
-                {rxLoading === "ver-rx" ? <Loader2 size={18} className="animate-spin" /> : <ScanLine size={18} />}
+                {rxLoading === "ver-rx" ? <Loader2 size={16} className="animate-spin" /> : <ScanLine size={16} />}
                 Ver RX
               </Button>
             </>
@@ -353,12 +404,12 @@ export default function PatientDetailPage() {
       </div>
 
       {/* ── Clinical Summary Banner ── */}
-      <div className="max-w-[1600px] mx-auto">
+      <div className="w-full">
         <ClinicalSummaryBanner patientId={patientId} fallbackGender={patient.gender} />
       </div>
 
       {/* ── Main Layout ── */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 max-w-[1600px] mx-auto items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 w-full items-start">
         
         {/* Sidebar Column */}
         <div className="xl:col-span-3 space-y-6">

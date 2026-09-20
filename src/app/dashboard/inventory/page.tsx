@@ -357,7 +357,7 @@ export default function InventoryPage() {
   );
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-5 p-4 md:p-6">
+    <div className="w-full space-y-5 p-4 md:p-8">
       {/* Header */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm ring-1 ring-slate-200/60 dark:ring-white/5 space-y-5">
         <PageHeader title="Inventário & Stock" description="Controlo de Medicamentos e Consumíveis">

@@ -1,7 +1,6 @@
 "use client";
 
 import { User } from "lucide-react";
-import { CommandMenu } from "./CommandMenu";
 import { ThemeToggle } from "./ThemeToggle";
 import { NotificationsDropdown } from "./NotificationsDropdown";
 import { useSession } from "next-auth/react";
@@ -15,9 +14,7 @@ export default function Header() {
 
   return (
     <header className="h-20 flex items-center justify-between px-10 glass-panel sticky top-0 z-40">
-      <div className="flex-1 max-w-2xl">
-        <CommandMenu />
-      </div>
+      <div className="flex-1" />
 
       <div className="flex items-center gap-6">
         <ThemeToggle />

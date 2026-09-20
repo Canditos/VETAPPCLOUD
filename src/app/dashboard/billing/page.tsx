@@ -54,7 +54,7 @@ export default function BillingPage() {
   const stats = data?.stats;
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-6 p-4 md:p-6 animate-premium">
+    <div className="w-full space-y-6 p-4 md:p-8 animate-premium">
       {/* Painel de Gestão Financeira Unificado */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm ring-1 ring-slate-200/60 dark:ring-white/5 space-y-6">
         <PageHeader title="Faturação & Finanças" description="Controlo Legal via Vendus ERP & Vendas Locais">

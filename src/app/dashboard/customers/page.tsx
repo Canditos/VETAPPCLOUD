@@ -41,7 +41,7 @@ export default function CustomersPage() {
   const pagination = response?.pagination;
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-6 p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+    <div className="w-full space-y-6 p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
       {/* Header Section */}
       <PageHeader
         title="Hub de Clientes"

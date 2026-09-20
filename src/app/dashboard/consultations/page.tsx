@@ -449,7 +449,7 @@ function ConsultationContent() {
 
   if (isPatientLoading) {
     return (
-      <div className="space-y-6 animate-pulse p-6 max-w-[1600px] mx-auto">
+      <div className="space-y-6 animate-pulse p-4 md:p-8 w-full">
         <div className="flex justify-between items-end">
           <div className="flex gap-6">
             <Skeleton className="h-24 w-24 rounded-2xl" />
@@ -501,7 +501,7 @@ function ConsultationContent() {
   };
 
   return (
-    <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-[1600px] mx-auto px-4 sm:px-0">
+    <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700 w-full px-4 md:px-8">
       
       {/* Header Context Bar */}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-white dark:bg-slate-900 p-6 rounded-3xl ring-1 ring-slate-100 dark:ring-white/5 shadow-sm">
