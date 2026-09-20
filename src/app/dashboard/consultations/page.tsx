@@ -576,10 +576,10 @@ function ConsultationContent() {
       )}>
         {/* Subtle background icon */}
         <div className={cn(
-           "absolute -right-8 -bottom-12 opacity-10 dark:opacity-[0.08] pointer-events-none rotate-12",
+           "absolute right-[25%] top-1/2 -translate-y-1/2 opacity-10 dark:opacity-[0.08] pointer-events-none -rotate-12",
            isFeline ? "text-indigo-600 dark:text-indigo-400" : isDog ? "text-sky-600 dark:text-sky-400" : "text-emerald-600 dark:text-emerald-400"
         )}>
-          <SpeciesIcon size={280} />
+          <SpeciesIcon size={240} />
         </div>
 
         <div className="flex items-center gap-6 relative z-10">
