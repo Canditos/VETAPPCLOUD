@@ -9,7 +9,7 @@ import {
   Clock, Plus, ShieldAlert, Search, History, Syringe, AlertCircle,
   AlertTriangle, Sparkles, Eye, TrendingUp, CheckCircle2, Pill,
   Venus, Mars, ShieldCheck, Zap, Calendar, CalendarCheck,
-  Phone, Mail, User
+  Phone, Mail, User, X
 } from "lucide-react";
 import { LungsIcon } from "@/components/icons/LungsIcon";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -35,6 +35,9 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { ExamVisualizerModal } from "@/components/consultations/ExamVisualizerModal";
+import { DiagnosticProfilesModal, ClinicalProfile } from "@/components/consultations/DiagnosticProfilesModal";
+import { ProfileTabContent } from "@/components/consultations/ProfileTabContent";
+import { DewormingSimulatorModal } from "@/components/consultations/DewormingSimulatorModal";
 import { PetLink } from "@/components/PetLink";
 import { useIntegrationHealth } from "@/hooks/useIntegrationHealth";
 import type { BillingItem, DiagnosticResult } from "@/types";
@@ -72,6 +75,9 @@ function ConsultationContent() {
   const [vitals, setVitals] = useState({ weight: "", temperature: "", heartRate: "", respiratoryRate: "", bodyConditionScore: -1 });
   const [temperament, setTemperament] = useState<string>("");
   const [isExamsModalOpen, setIsExamsModalOpen] = useState(false);
+  const [isProfilesModalOpen, setIsProfilesModalOpen] = useState(false);
+  const [isDewormingModalOpen, setIsDewormingModalOpen] = useState(false);
+  const [activeProfiles, setActiveProfiles] = useState<ClinicalProfile[]>([]);
   const [reassessmentPopup, setReassessmentPopup] = useState<{ open: boolean; date: string } | null>(null);
   const [patientSearch, setPatientSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -318,6 +324,27 @@ function ConsultationContent() {
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", tab);
     router.replace(`?${params.toString()}`);
+  };
+
+  const handleSelectProfile = (profile: ClinicalProfile) => {
+    setActiveProfiles((prev) => {
+      if (!prev.some((p) => p.id === profile.id)) {
+        return [...prev, profile];
+      }
+      return prev;
+    });
+    updateTab(profile.id);
+  };
+
+  const handleCloseProfileTab = (profileId: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setActiveProfiles((prev) => prev.filter((p) => p.id !== profileId));
+    if (activeTab === profileId) {
+      updateTab("clinical");
+    }
   };
 
   if (!patientId || patientError) {
@@ -628,15 +655,40 @@ function ConsultationContent() {
       <Tabs value={activeTab} onValueChange={updateTab} className="w-full">
         <div className="mb-10 overflow-x-auto -mx-4 px-4 md:-mx-8 md:px-8 no-scrollbar w-full">
           <TabsList className="flex w-full bg-slate-100/50 dark:bg-slate-900/50 p-1.5 rounded-2xl ring-1 ring-slate-200/50 dark:ring-white/5 gap-1">
-            {[
-              { val: "clinical", label: "Atendimento Clínico", icon: ClipboardCheck },
-              { val: "billing", label: "Faturação", icon: Receipt }
-            ].map(t => (
-              <TabsTrigger key={t.val} value={t.val}
-                className="flex-1 rounded-2xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-md font-semibold text-xs transition-all gap-2 py-3 px-4 dark:text-slate-400 dark:data-[state=active]:text-white whitespace-nowrap justify-center">
-                <t.icon className="w-4 h-4 shrink-0" strokeWidth={2.5} />{t.label}
+            <TabsTrigger
+              value="clinical"
+              className="flex-1 rounded-2xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-md font-semibold text-xs transition-all gap-2 py-3 px-4 dark:text-slate-400 dark:data-[state=active]:text-white whitespace-nowrap justify-center"
+            >
+              <ClipboardCheck className="w-4 h-4 shrink-0" strokeWidth={2.5} /> Atendimento Clínico
+            </TabsTrigger>
+
+            {/* Dynamic Profile Tabs placed BETWEEN Atendimento Clínico and Faturação */}
+            {activeProfiles.map((p) => (
+              <TabsTrigger
+                key={p.id}
+                value={p.id}
+                className="group flex-1 rounded-2xl data-[state=active]:bg-amber-600 data-[state=active]:text-white dark:data-[state=active]:bg-amber-600 data-[state=active]:shadow-md font-bold text-xs transition-all gap-2 py-3 px-3.5 text-amber-800 dark:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 whitespace-nowrap justify-center border border-amber-500/30"
+              >
+                <Activity className="w-3.5 h-3.5 shrink-0 text-amber-600 dark:text-amber-400 group-data-[state=active]:text-white" />
+                <span className="truncate max-w-[130px] sm:max-w-[180px]">{p.shortTitle || p.title}</span>
+                <span
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => handleCloseProfileTab(p.id, e)}
+                  className="ml-1 p-0.5 rounded-full hover:bg-black/20 dark:hover:bg-white/20 transition-colors text-amber-700 dark:text-amber-200 group-data-[state=active]:text-white"
+                  title="Fechar aba"
+                >
+                  <X className="w-3 h-3" />
+                </span>
               </TabsTrigger>
             ))}
+
+            <TabsTrigger
+              value="billing"
+              className="flex-1 rounded-2xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-md font-semibold text-xs transition-all gap-2 py-3 px-4 dark:text-slate-400 dark:data-[state=active]:text-white whitespace-nowrap justify-center"
+            >
+              <Receipt className="w-4 h-4 shrink-0" strokeWidth={2.5} /> Faturação
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -935,15 +987,31 @@ function ConsultationContent() {
 
                     {/* 5. Diagnósticos Diferenciais / Definitivo */}
                     <div className="space-y-2 group/field transition-all">
-                      <div className="flex items-center gap-2 ml-0.5">
-                        <span className="w-6 h-6 bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 rounded-lg text-xs font-black flex items-center justify-center transition-transform group-focus-within/field:scale-110 group-focus-within/field:shadow-sm">5</span>
-                        <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Diagnósticos Diferenciais / Definitivo</Label>
-                        {diagnosticsNotes && (
-                          <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 ml-auto animate-in fade-in duration-200">
-                            <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
-                            {diagnosticsNotes.trim().split(/\s+/).filter(Boolean).length} {diagnosticsNotes.trim().split(/\s+/).filter(Boolean).length === 1 ? "palavra" : "palavras"}
-                          </span>
-                        )}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 ml-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className="w-6 h-6 bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 rounded-lg text-xs font-black flex items-center justify-center transition-transform group-focus-within/field:scale-110 group-focus-within/field:shadow-sm">5</span>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Diagnósticos Diferenciais / Definitivo</Label>
+                              {diagnosticsNotes && (
+                                <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 animate-in fade-in duration-200">
+                                  <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
+                                  {diagnosticsNotes.trim().split(/\s+/).filter(Boolean).length} {diagnosticsNotes.trim().split(/\s+/).filter(Boolean).length === 1 ? "palavra" : "palavras"}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Hipóteses clínicas, estadiamento e perfis nosológicos</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Button
+                            type="button"
+                            onClick={() => setIsProfilesModalOpen(true)}
+                            className="h-9 px-3.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-md shadow-amber-500/20 gap-2 transition-transform active:scale-95"
+                          >
+                            <Sparkles size={14} /> Adicionar perfil {activeProfiles.length > 0 && `(${activeProfiles.length})`}
+                          </Button>
+                        </div>
                       </div>
                       <Textarea
                         value={diagnosticsNotes}
@@ -955,15 +1023,31 @@ function ConsultationContent() {
 
                     {/* 6. Tratamento */}
                     <div className="space-y-2 group/field transition-all">
-                      <div className="flex items-center gap-2 ml-0.5">
-                        <span className="w-6 h-6 bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 rounded-lg text-xs font-black flex items-center justify-center transition-transform group-focus-within/field:scale-110 group-focus-within/field:shadow-sm">6</span>
-                        <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Tratamento</Label>
-                        {treatment && (
-                          <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 ml-auto animate-in fade-in duration-200">
-                            <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
-                            {treatment.trim().split(/\s+/).filter(Boolean).length} {treatment.trim().split(/\s+/).filter(Boolean).length === 1 ? "palavra" : "palavras"}
-                          </span>
-                        )}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 ml-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className="w-6 h-6 bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 rounded-lg text-xs font-black flex items-center justify-center transition-transform group-focus-within/field:scale-110 group-focus-within/field:shadow-sm">6</span>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Tratamento</Label>
+                              {treatment && (
+                                <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 animate-in fade-in duration-200">
+                                  <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
+                                  {treatment.trim().split(/\s+/).filter(Boolean).length} {treatment.trim().split(/\s+/).filter(Boolean).length === 1 ? "palavra" : "palavras"}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Protocolo medicamentoso, posologias e simulações antiparasitárias</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Button
+                            type="button"
+                            onClick={() => setIsDewormingModalOpen(true)}
+                            className="h-9 px-3.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-md shadow-teal-500/20 gap-2 transition-transform active:scale-95"
+                          >
+                            <ShieldCheck size={14} /> Simulador de desparasitação
+                          </Button>
+                        </div>
                       </div>
                       <Textarea
                         value={treatment}
@@ -1032,6 +1116,25 @@ function ConsultationContent() {
             </div>
           </TabsContent>
 
+        {/* DYNAMIC CLINICAL PROFILE TABS */}
+        {activeProfiles.map((profile) => (
+          <TabsContent key={profile.id} value={profile.id} className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <ProfileTabContent
+              profile={profile}
+              patientName={patient?.name}
+              patientSpecies={patient?.species}
+              onApplyToDiagnostics={(text) => {
+                setDiagnosticsNotes((prev) => (prev ? `${prev}\n${text}` : text.trim()));
+              }}
+              onApplyToTreatment={(text) => {
+                setTreatment((prev) => (prev ? `${prev}\n${text}` : text.trim()));
+              }}
+              onCloseTab={() => handleCloseProfileTab(profile.id)}
+              onNavigateToClinical={() => updateTab("clinical")}
+            />
+          </TabsContent>
+        ))}
+
         {/* BILLING TAB */}
         <TabsContent value="billing" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
            <div className="flex flex-col min-h-[calc(100vh-20rem)]">
@@ -1069,6 +1172,27 @@ function ConsultationContent() {
           onRequestExam={handleRequestExam}
           onInsertToNotes={(note) => {
             setExamNotes((prev) => (prev ? `${prev}\n\n${note}` : note));
+          }}
+        />
+
+        {/* Modal de Perfis Clínicos de Diagnóstico */}
+        <DiagnosticProfilesModal
+          isOpen={isProfilesModalOpen}
+          onClose={() => setIsProfilesModalOpen(false)}
+          onSelectProfile={handleSelectProfile}
+          activeProfileIds={activeProfiles.map((p) => p.id)}
+          patientSpecies={patient?.species}
+        />
+
+        {/* Modal do Simulador de Desparasitação */}
+        <DewormingSimulatorModal
+          isOpen={isDewormingModalOpen}
+          onClose={() => setIsDewormingModalOpen(false)}
+          patientWeight={vitals.weight || lastVitals?.weight}
+          patientSpecies={patient?.species}
+          patientName={patient?.name}
+          onInsertTreatment={(text) => {
+            setTreatment((prev) => (prev ? `${prev}\n${text}` : text.trim()));
           }}
         />
 
