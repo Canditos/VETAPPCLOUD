@@ -377,6 +377,7 @@ function CalendarContent() {
       setPatientSearch("");
       setNewVetId("");
       setNewType("CONSULTA");
+      setNewDuration("30");
       setNewReason("");
     },
     onError: (e: any) => toast.error(e.message || "Erro ao criar marcação"),
@@ -874,7 +875,17 @@ function CalendarContent() {
 
                 <div className="space-y-3">
                   <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 tracking-wider ml-1">Tipo de Serviço</label>
-                  <Select value={newType} onValueChange={setNewType}>
+                  <Select 
+                    value={newType} 
+                    onValueChange={(val) => {
+                      setNewType(val);
+                      if (val === "REAVALIACAO") {
+                        setNewDuration("15");
+                      } else if (newDuration === "15") {
+                        setNewDuration("30");
+                      }
+                    }}
+                  >
                     <SelectTrigger className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 border-none font-bold text-sm px-6">
                       <SelectValue />
                     </SelectTrigger>
