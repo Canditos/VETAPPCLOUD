@@ -9,7 +9,7 @@ import {
   Clock, Plus, ShieldAlert, Search, History, Syringe, AlertCircle,
   AlertTriangle, Sparkles, Eye, TrendingUp, CheckCircle2, Pill,
   Venus, Mars, ShieldCheck, Zap, Calendar, CalendarCheck,
-  Phone, Mail, User, X, Dog, Cat, PawPrint
+  Phone, Mail, User, X, Dog, Cat, PawPrint, Scissors
 } from "lucide-react";
 import { LungsIcon } from "@/components/icons/LungsIcon";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -59,9 +59,11 @@ function ConsultationContent() {
   const patientId = searchParams.get("patientId");
   const appointmentId = searchParams.get("appointmentId");
   const urlTab = searchParams.get("tab") || "clinical";
+  const urlType = searchParams.get("type") || "CONSULTA";
   
   const [activeTab, setActiveTab] = useState(urlTab);
   const [billingItems, setBillingItems] = useState<BillingItem[]>([]);
+  const [consultationType, setConsultationType] = useState<string>(urlType);
   
   // Clinical structured fields
   const [chiefComplaint, setChiefComplaint] = useState("");
@@ -71,6 +73,14 @@ function ConsultationContent() {
   const [diagnosticsNotes, setDiagnosticsNotes] = useState("");
   const [treatment, setTreatment] = useState("");
   const [reassessmentDate, setReassessmentDate] = useState("");
+
+  // Vaccination-specific
+  const [vaccineApplied, setVaccineApplied] = useState("");
+  const [nextVaccineDate, setNextVaccineDate] = useState("");
+
+  // Surgery-specific
+  const [surgeryMeds, setSurgeryMeds] = useState("");
+  const [surgeryComplications, setSurgeryComplications] = useState("");
 
   const [vitals, setVitals] = useState({ weight: "", temperature: "", heartRate: "", respiratoryRate: "", bodyConditionScore: -1 });
   const [temperament, setTemperament] = useState<string>("");
@@ -294,7 +304,7 @@ function ConsultationContent() {
   };
 
   const handleSave = async () => {
-    const hasNotes = chiefComplaint || pastHistory || physicalExam || examNotes || diagnosticsNotes || treatment;
+    const hasNotes = chiefComplaint || pastHistory || physicalExam || examNotes || diagnosticsNotes || treatment || vaccineApplied || surgeryMeds || surgeryComplications;
     if (billingItems.length === 0 && !hasNotes) {
       toast.error("Adicione notas clínicas ou itens para faturar.");
       return;
@@ -305,6 +315,7 @@ function ConsultationContent() {
         body: JSON.stringify({
           patientId,
           appointmentId: appointmentId || "walk-in-" + Date.now(),
+          consultationType,
           clinicalFields: {
             chiefComplaint,
             pastHistory,
@@ -313,12 +324,18 @@ function ConsultationContent() {
             diagnostics: diagnosticsNotes,
             treatment,
             reassessmentDate,
+            // Vaccination fields
+            vaccineApplied,
+            nextVaccineDate,
+            // Surgery fields
+            surgeryMeds,
+            surgeryComplications,
           },
           notes: {
             subjective: [chiefComplaint && `Motivo: ${chiefComplaint}`, pastHistory && `História: ${pastHistory}`].filter(Boolean).join("\n\n"),
-            objective: [physicalExam && `Exame Físico:\n${physicalExam}`, examNotes && `Exames Complementares:\n${examNotes}`].filter(Boolean).join("\n\n"),
+            objective: [physicalExam && `Exame Físico:\n${physicalExam}`, examNotes && `Exames Complementares:\n${examNotes}`, surgeryMeds && `Medicação Administrada:\n${surgeryMeds}`, surgeryComplications && `Intercorrências:\n${surgeryComplications}`].filter(Boolean).join("\n\n"),
             assessment: diagnosticsNotes,
-            plan: [treatment && `Tratamento: ${treatment}`, reassessmentDate && `Reavaliação: ${reassessmentDate}`].filter(Boolean).join("\n\n"),
+            plan: [treatment && `Tratamento: ${treatment}`, vaccineApplied && `Vacina: ${vaccineApplied}`, nextVaccineDate && `Próxima Vacina: ${nextVaccineDate}`, reassessmentDate && `Reavaliação: ${reassessmentDate}`].filter(Boolean).join("\n\n"),
           },
           temperament: temperament || null,
           vitals: {
@@ -496,6 +513,32 @@ function ConsultationContent() {
           )}
         </div>
 
+        <div className="w-full relative z-10 space-y-2">
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Tipo de Atendimento</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {([
+              { value: "CONSULTA",    label: "Consulta",    icon: Stethoscope, color: "blue" },
+              { value: "VACINA",      label: "Vacinação",   icon: Syringe,     color: "emerald" },
+              { value: "CIRURGIA",    label: "Cirurgia",    icon: Scissors,    color: "rose" },
+              { value: "REAVALIACAO", label: "Reavaliação", icon: Clock,       color: "amber" },
+            ] as const).map(t => {
+              const Icon = t.icon;
+              const isActive = consultationType === t.value;
+              const colorMap: Record<string, string> = {
+                blue:    isActive ? "bg-blue-600 text-white border-blue-600" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-blue-400",
+                emerald: isActive ? "bg-emerald-600 text-white border-emerald-600" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-emerald-400",
+                rose:    isActive ? "bg-rose-600 text-white border-rose-600" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-rose-400",
+                amber:   isActive ? "bg-amber-500 text-white border-amber-500" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-amber-400",
+              };
+              return (
+                <button key={t.value} type="button" onClick={() => setConsultationType(t.value)} className={`flex items-center gap-2 px-4 py-3 rounded-xl border font-bold text-sm transition-all ${colorMap[t.color]}`}>
+                  <Icon size={15} /> {t.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="flex gap-4 pt-2">
           <Button onClick={() => router.push("/dashboard/appointments")} className="h-12 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:scale-105 px-8 font-bold transition-all active:scale-95 shadow-xl shadow-blue-500/10 tracking-wide text-xs">
             Abrir Agenda
@@ -643,6 +686,13 @@ function ConsultationContent() {
               {!appointmentId && (
                 <Badge variant="outline" className="border-amber-200 dark:border-amber-900/30 text-amber-600 dark:text-amber-400 font-medium text-[11px] px-3 py-1 rounded-lg animate-pulse">Walk-in</Badge>
               )}
+              {/* Tipo de Consulta Badge */}
+              {{
+                CONSULTA:    <Badge className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-0 text-[11px] px-3 py-1 rounded-lg font-bold">Consulta</Badge>,
+                VACINA:      <Badge className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-0 text-[11px] px-3 py-1 rounded-lg font-bold flex items-center gap-1"><Syringe size={10} />Vacinação</Badge>,
+                CIRURGIA:    <Badge className="bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border-0 text-[11px] px-3 py-1 rounded-lg font-bold">Cirurgia</Badge>,
+                REAVALIACAO: <Badge className="bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-0 text-[11px] px-3 py-1 rounded-lg font-bold flex items-center gap-1"><Clock size={10} />Reavaliação</Badge>,
+              }[consultationType] || null}
             </div>
 
             <div className="flex flex-wrap items-center gap-3.5 text-sm text-slate-600 dark:text-slate-400 font-medium">
@@ -1010,235 +1060,313 @@ function ConsultationContent() {
 
                   {/* Campos Clínicos Estruturados */}
                   <div className="space-y-6 pt-2">
-                    {/* 1. Motivo de Consulta (campo mais pequeno) */}
-                    <div className="space-y-2 group/field transition-all">
-                      <div className="flex items-center gap-2 ml-0.5">
-                        <span className="w-6 h-6 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-black flex items-center justify-center transition-transform group-focus-within/field:scale-110 group-focus-within/field:shadow-sm">1</span>
-                        <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Motivo de Consulta</Label>
-                        {chiefComplaint && (
-                          <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 ml-auto animate-in fade-in duration-200">
-                            <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
-                            Preenchido
-                          </span>
-                        )}
-                      </div>
-                      <Input
-                        value={chiefComplaint}
-                        onChange={(e) => setChiefComplaint(e.target.value)}
-                        placeholder="Ex: Vacinação anual, tosse e espirros, vómitos frequentes, claudicação da pata posterior..."
-                        className="h-11 rounded-xl bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm font-medium focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500/40 transition-all duration-200"
-                      />
-                    </div>
 
-                    {/* 2. História Pregressa */}
-                    <div className="space-y-2 group/field transition-all">
-                      <div className="flex items-center gap-2 ml-0.5">
-                        <span className="w-6 h-6 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-black flex items-center justify-center transition-transform group-focus-within/field:scale-110 group-focus-within/field:shadow-sm">2</span>
-                        <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">História Pregressa</Label>
-                        {pastHistory && (
-                          <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 ml-auto animate-in fade-in duration-200">
-                            <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
-                            {pastHistory.trim().split(/\s+/).filter(Boolean).length} {pastHistory.trim().split(/\s+/).filter(Boolean).length === 1 ? "palavra" : "palavras"}
-                          </span>
-                        )}
+                    {/* ── CONSULTA (default) ── */}
+                    {consultationType === "CONSULTA" && (<>
+                      {/* 1. Motivo de Consulta */}
+                      <div className="space-y-2 group/field transition-all">
+                        <div className="flex items-center gap-2 ml-0.5">
+                          <span className="w-6 h-6 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-black flex items-center justify-center transition-transform group-focus-within/field:scale-110 group-focus-within/field:shadow-sm">1</span>
+                          <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Motivo de Consulta</Label>
+                          {chiefComplaint && (<span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 ml-auto animate-in fade-in duration-200"><CheckCircle2 size={11} className="text-emerald-500 shrink-0" />Preenchido</span>)}
+                        </div>
+                        <Input value={chiefComplaint} onChange={(e) => setChiefComplaint(e.target.value)} placeholder="Ex: Tosse e espirros, vómitos frequentes, claudicação da pata posterior..." className="h-11 rounded-xl bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm font-medium focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500/40 transition-all duration-200" />
                       </div>
-                      <Textarea
-                        value={pastHistory}
-                        onChange={(e) => setPastHistory(e.target.value)}
-                        placeholder="Início e evolução dos sinais clínicos, medicação em curso, doenças prévias, cirurgias anteriores, alimentação e ambiente..."
-                        className="min-h-[105px] rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500/40 transition-all duration-200 resize-none"
-                      />
-                    </div>
-
-                    {/* 3. Exame Físico */}
-                    <div className="space-y-2 group/field transition-all">
-                      <div className="flex items-center gap-2 ml-0.5">
-                        <span className="w-6 h-6 bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 rounded-lg text-xs font-black flex items-center justify-center transition-transform group-focus-within/field:scale-110 group-focus-within/field:shadow-sm">3</span>
-                        <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Exame Físico</Label>
-                        {physicalExam && (
-                          <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 ml-auto animate-in fade-in duration-200">
-                            <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
-                            {physicalExam.trim().split(/\s+/).filter(Boolean).length} {physicalExam.trim().split(/\s+/).filter(Boolean).length === 1 ? "palavra" : "palavras"}
-                          </span>
-                        )}
+                      {/* 2. História Pregressa */}
+                      <div className="space-y-2 group/field transition-all">
+                        <div className="flex items-center gap-2 ml-0.5">
+                          <span className="w-6 h-6 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-black flex items-center justify-center transition-transform group-focus-within/field:scale-110 group-focus-within/field:shadow-sm">2</span>
+                          <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">História Pregressa</Label>
+                          {pastHistory && <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 ml-auto animate-in fade-in duration-200"><CheckCircle2 size={11} className="text-emerald-500 shrink-0" />{pastHistory.trim().split(/\s+/).filter(Boolean).length} palavras</span>}
+                        </div>
+                        <Textarea value={pastHistory} onChange={(e) => setPastHistory(e.target.value)} placeholder="Início e evolução dos sinais clínicos, medicação em curso, doenças prévias, cirurgias anteriores, alimentação e ambiente..." className="min-h-[105px] rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500/40 transition-all duration-200 resize-none" />
                       </div>
-                      <Textarea
-                        value={physicalExam}
-                        onChange={(e) => setPhysicalExam(e.target.value)}
-                        placeholder="Alerta mental, mucosas, TRC, hidratação, auscultação cardiopulmonar, palpação abdominal, linfonodos, ouvidos, olhos, cavidade oral, pele e anexos..."
-                        className="min-h-[105px] rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500/40 transition-all duration-200 resize-none"
-                      />
-                    </div>
-
-                    {/* 4. Exames Complementares de Diagnóstico */}
-                    <div className="space-y-2 group/field transition-all">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 ml-0.5">
-                        <div className="flex items-center gap-2">
-                          <span className="w-6 h-6 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-black flex items-center justify-center transition-transform group-focus-within/field:scale-110 group-focus-within/field:shadow-sm">4</span>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Exames Complementares de Diagnóstico</Label>
-                              {examNotes && (
-                                <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 animate-in fade-in duration-200">
-                                  <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
-                                  {examNotes.trim().split(/\s+/).filter(Boolean).length} {examNotes.trim().split(/\s+/).filter(Boolean).length === 1 ? "palavra" : "palavras"}
-                                </span>
-                              )}
+                      {/* 3. Exame Físico */}
+                      <div className="space-y-2 group/field transition-all">
+                        <div className="flex items-center gap-2 ml-0.5">
+                          <span className="w-6 h-6 bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 rounded-lg text-xs font-black flex items-center justify-center transition-transform group-focus-within/field:scale-110 group-focus-within/field:shadow-sm">3</span>
+                          <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Exame Físico</Label>
+                          {physicalExam && <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 ml-auto animate-in fade-in duration-200"><CheckCircle2 size={11} className="text-emerald-500 shrink-0" />{physicalExam.trim().split(/\s+/).filter(Boolean).length} palavras</span>}
+                        </div>
+                        <Textarea value={physicalExam} onChange={(e) => setPhysicalExam(e.target.value)} placeholder="Alerta mental, mucosas, TRC, hidratação, auscultação cardiopulmonar, palpação abdominal, linfonodos, ouvidos, olhos, cavidade oral, pele e anexos..." className="min-h-[105px] rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500/40 transition-all duration-200 resize-none" />
+                      </div>
+                      {/* 4. Exames Complementares */}
+                      <div className="space-y-2 group/field transition-all">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 ml-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="w-6 h-6 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-black flex items-center justify-center transition-transform group-focus-within/field:scale-110 group-focus-within/field:shadow-sm">4</span>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Exames Complementares de Diagnóstico</Label>
+                                {examNotes && <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 animate-in fade-in duration-200"><CheckCircle2 size={11} className="text-emerald-500 shrink-0" />{examNotes.trim().split(/\s+/).filter(Boolean).length} palavras</span>}
+                              </div>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Resultados laboratoriais, radiografias e ecografias deste atendimento</p>
                             </div>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Resultados laboratoriais, radiografias e ecografias deste atendimento</p>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Button type="button" onClick={() => setIsExamsModalOpen(true)} className="h-9 px-3.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md shadow-purple-500/20 gap-2 transition-transform active:scale-95"><FlaskConical size={14} /> Ver Resultados ({currentConsultationDiagnostics.length})</Button>
+                            <Button type="button" variant="outline" onClick={() => setIsExamsModalOpen(true)} className="h-9 px-3 rounded-xl border-slate-200 dark:border-white/10 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 gap-1.5"><Plus size={13} /> Requisitar Exame</Button>
                           </div>
                         </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Button
-                            type="button"
-                            onClick={() => setIsExamsModalOpen(true)}
-                            className="h-9 px-3.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md shadow-purple-500/20 gap-2 transition-transform active:scale-95"
-                          >
-                            <FlaskConical size={14} /> Ver Resultados dos Exames ({currentConsultationDiagnostics.length})
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setIsExamsModalOpen(true)}
-                            className="h-9 px-3 rounded-xl border-slate-200 dark:border-white/10 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 gap-1.5"
-                          >
-                            <Plus size={13} /> Requisitar Exame
-                          </Button>
-                        </div>
+                        <Textarea value={examNotes} onChange={(e) => setExamNotes(e.target.value)} placeholder="Resultados e observações dos exames complementares..." className="min-h-[105px] rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500/40 transition-all duration-200 resize-none" />
                       </div>
-
-                      <Textarea
-                        value={examNotes}
-                        onChange={(e) => setExamNotes(e.target.value)}
-                        placeholder="Resultados e observações dos exames complementares (inseridos pelo visualizador de exames ou manualmente)..."
-                        className="min-h-[105px] rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500/40 transition-all duration-200 resize-none"
-                      />
-                    </div>
-
-                    {/* 5. Diagnósticos Diferenciais / Definitivo */}
-                    <div className="space-y-2 group/field transition-all">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 ml-0.5">
-                        <div className="flex items-center gap-2">
-                          <span className="w-6 h-6 bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 rounded-lg text-xs font-black flex items-center justify-center transition-transform group-focus-within/field:scale-110 group-focus-within/field:shadow-sm">5</span>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Diagnósticos Diferenciais / Definitivo</Label>
-                              {diagnosticsNotes && (
-                                <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 animate-in fade-in duration-200">
-                                  <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
-                                  {diagnosticsNotes.trim().split(/\s+/).filter(Boolean).length} {diagnosticsNotes.trim().split(/\s+/).filter(Boolean).length === 1 ? "palavra" : "palavras"}
-                                </span>
-                              )}
+                      {/* 5. Diagnósticos */}
+                      <div className="space-y-2 group/field transition-all">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 ml-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="w-6 h-6 bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 rounded-lg text-xs font-black flex items-center justify-center transition-transform group-focus-within/field:scale-110 group-focus-within/field:shadow-sm">5</span>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Diagnósticos Diferenciais / Definitivo</Label>
+                                {diagnosticsNotes && <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 animate-in fade-in duration-200"><CheckCircle2 size={11} className="text-emerald-500 shrink-0" />{diagnosticsNotes.trim().split(/\s+/).filter(Boolean).length} palavras</span>}
+                              </div>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Hipóteses clínicas, estadiamento e perfis nosológicos</p>
                             </div>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Hipóteses clínicas, estadiamento e perfis nosológicos</p>
+                          </div>
+                          <Button type="button" onClick={() => setIsProfilesModalOpen(true)} className="h-9 px-3.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-md shadow-amber-500/20 gap-2 transition-transform active:scale-95"><Sparkles size={14} /> Adicionar perfil {activeProfiles.length > 0 && `(${activeProfiles.length})`}</Button>
+                        </div>
+                        <Textarea value={diagnosticsNotes} onChange={(e) => setDiagnosticsNotes(e.target.value)} placeholder="Lista de hipóteses diagnósticas, diferenciais considerados e diagnóstico definitivo..." className="min-h-[105px] rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500/40 transition-all duration-200 resize-none" />
+                      </div>
+                      {/* 6. Tratamento */}
+                      <div className="space-y-2 group/field transition-all">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 ml-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="w-6 h-6 bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 rounded-lg text-xs font-black flex items-center justify-center transition-transform group-focus-within/field:scale-110 group-focus-within/field:shadow-sm">6</span>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Tratamento</Label>
+                                {treatment && <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 animate-in fade-in duration-200"><CheckCircle2 size={11} className="text-emerald-500 shrink-0" />{treatment.trim().split(/\s+/).filter(Boolean).length} palavras</span>}
+                              </div>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Protocolo medicamentoso, posologias e simulações antiparasitárias</p>
+                            </div>
+                          </div>
+                          <Button type="button" onClick={() => setIsDewormingModalOpen(true)} className="h-9 px-3.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-md shadow-teal-500/20 gap-2 transition-transform active:scale-95"><ShieldCheck size={14} /> Simulador de desparasitação</Button>
+                        </div>
+                        <Textarea value={treatment} onChange={(e) => setTreatment(e.target.value)} placeholder="Protocolo medicamentoso (fármacos, posologia, frequência, duração), fluidoterapia, procedimentos realizados e instruções ao tutor..." className="min-h-[110px] rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500/40 transition-all duration-200 resize-none" />
+                      </div>
+                      {/* 7. Reavaliação */}
+                      <div className="p-4 sm:p-5 rounded-2xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 space-y-3">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                          <div className="flex items-center gap-2.5">
+                            <span className="w-6 h-6 bg-blue-600 text-white rounded-lg text-xs font-black flex items-center justify-center">7</span>
+                            <div>
+                              <Label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Data de Reavaliação</Label>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Apresenta aviso em pop-up quando a fatura for liquidada</p>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Input type="date" value={reassessmentDate} onChange={(e) => setReassessmentDate(e.target.value)} className="h-10 w-44 rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-xs font-bold text-slate-900 dark:text-white shadow-sm" />
+                            {[{ label: "+3d", days: 3 }, { label: "+7d", days: 7 }, { label: "+15d", days: 15 }, { label: "+30d", days: 30 }].map(q => (
+                              <Button key={q.label} type="button" variant="outline" size="sm" onClick={() => { const d = new Date(); d.setDate(d.getDate() + q.days); setReassessmentDate(d.toISOString().split("T")[0]); }} className="h-9 px-2.5 rounded-lg border-blue-200 dark:border-blue-900/40 text-blue-700 dark:text-blue-300 bg-white dark:bg-slate-900 text-xs font-bold hover:bg-blue-50">{q.label}</Button>
+                            ))}
+                            {reassessmentDate && <Button type="button" variant="ghost" size="sm" onClick={() => setReassessmentDate("")} className="h-9 px-2 text-xs font-semibold text-slate-400 hover:text-slate-600">Limpar</Button>}
                           </div>
                         </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Button
-                            type="button"
-                            onClick={() => setIsProfilesModalOpen(true)}
-                            className="h-9 px-3.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-md shadow-amber-500/20 gap-2 transition-transform active:scale-95"
-                          >
-                            <Sparkles size={14} /> Adicionar perfil {activeProfiles.length > 0 && `(${activeProfiles.length})`}
-                          </Button>
-                        </div>
                       </div>
-                      <Textarea
-                        value={diagnosticsNotes}
-                        onChange={(e) => setDiagnosticsNotes(e.target.value)}
-                        placeholder="Lista de hipóteses diagnósticas, diferenciais considerados e diagnóstico definitivo..."
-                        className="min-h-[105px] rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500/40 transition-all duration-200 resize-none"
-                      />
-                    </div>
+                    </>)}
 
-                    {/* 6. Tratamento */}
-                    <div className="space-y-2 group/field transition-all">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 ml-0.5">
-                        <div className="flex items-center gap-2">
-                          <span className="w-6 h-6 bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 rounded-lg text-xs font-black flex items-center justify-center transition-transform group-focus-within/field:scale-110 group-focus-within/field:shadow-sm">6</span>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Tratamento</Label>
-                              {treatment && (
-                                <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 animate-in fade-in duration-200">
-                                  <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
-                                  {treatment.trim().split(/\s+/).filter(Boolean).length} {treatment.trim().split(/\s+/).filter(Boolean).length === 1 ? "palavra" : "palavras"}
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Protocolo medicamentoso, posologias e simulações antiparasitárias</p>
-                          </div>
+                    {/* ── VACINAÇÃO ── */}
+                    {consultationType === "VACINA" && (<>
+                      {/* 1. Motivo */}
+                      <div className="space-y-2 group/field transition-all">
+                        <div className="flex items-center gap-2 ml-0.5">
+                          <span className="w-6 h-6 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-black flex items-center justify-center">1</span>
+                          <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Motivo da Visita</Label>
+                          {chiefComplaint && <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 ml-auto animate-in fade-in duration-200"><CheckCircle2 size={11} className="text-emerald-500 shrink-0" />Preenchido</span>}
                         </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Button
-                            type="button"
-                            onClick={() => setIsDewormingModalOpen(true)}
-                            className="h-9 px-3.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-md shadow-teal-500/20 gap-2 transition-transform active:scale-95"
-                          >
-                            <ShieldCheck size={14} /> Simulador de desparasitação
-                          </Button>
-                        </div>
+                        <Input value={chiefComplaint} onChange={(e) => setChiefComplaint(e.target.value)} placeholder="Ex: Vacinação anual, reforço de vacina, primovacinação..." className="h-11 rounded-xl bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm font-medium focus-visible:ring-2 focus-visible:ring-emerald-500/20 transition-all duration-200" />
                       </div>
-                      <Textarea
-                        value={treatment}
-                        onChange={(e) => setTreatment(e.target.value)}
-                        placeholder="Protocolo medicamentoso (fármacos, posologia, frequência, duração), fluidoterapia, procedimentos realizados e instruções ao tutor..."
-                        className="min-h-[110px] rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500/40 transition-all duration-200 resize-none"
-                      />
-                    </div>
-
-                    {/* 7. Data de Reavaliação */}
-                    <div className="p-4 sm:p-5 rounded-2xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 space-y-3">
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                      {/* 2. História Pregressa */}
+                      <div className="space-y-2 group/field transition-all">
+                        <div className="flex items-center gap-2 ml-0.5">
+                          <span className="w-6 h-6 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-black flex items-center justify-center">2</span>
+                          <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">História Pregressa</Label>
+                        </div>
+                        <Textarea value={pastHistory} onChange={(e) => setPastHistory(e.target.value)} placeholder="Reações anteriores a vacinas, medicação em curso, estado geral do animal..." className="min-h-[90px] rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-2 focus-visible:ring-emerald-500/20 transition-all duration-200 resize-none" />
+                      </div>
+                      {/* 3. Exame Físico */}
+                      <div className="space-y-2 group/field transition-all">
+                        <div className="flex items-center gap-2 ml-0.5">
+                          <span className="w-6 h-6 bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 rounded-lg text-xs font-black flex items-center justify-center">3</span>
+                          <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Exame Físico Pré-Vacinal</Label>
+                        </div>
+                        <Textarea value={physicalExam} onChange={(e) => setPhysicalExam(e.target.value)} placeholder="Estado geral, temperatura, mucosas, condição corporal — confirmar aptidão para vacinação..." className="min-h-[90px] rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-2 focus-visible:ring-emerald-500/20 transition-all duration-200 resize-none" />
+                      </div>
+                      {/* 4. Tratamento */}
+                      <div className="space-y-2 group/field transition-all">
+                        <div className="flex items-center gap-2 ml-0.5">
+                          <span className="w-6 h-6 bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 rounded-lg text-xs font-black flex items-center justify-center">4</span>
+                          <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Tratamento / Observações</Label>
+                        </div>
+                        <Textarea value={treatment} onChange={(e) => setTreatment(e.target.value)} placeholder="Recomendações pós-vacinais, observação de reações, instruções ao tutor..." className="min-h-[90px] rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-2 focus-visible:ring-emerald-500/20 transition-all duration-200 resize-none" />
+                      </div>
+                      {/* 5. Vacina Aplicada */}
+                      <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 space-y-3">
                         <div className="flex items-center gap-2.5">
-                          <span className="w-6 h-6 bg-blue-600 text-white rounded-lg text-xs font-black flex items-center justify-center">7</span>
+                          <span className="w-6 h-6 bg-emerald-600 text-white rounded-lg text-xs font-black flex items-center justify-center">5</span>
                           <div>
-                            <Label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Data de Reavaliação</Label>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Apresenta aviso em pop-up quando a fatura for liquidada</p>
+                            <Label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Vacina Aplicada</Label>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Selecione a vacina aplicada nesta visita</p>
                           </div>
                         </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Input
-                            type="date"
-                            value={reassessmentDate}
-                            onChange={(e) => setReassessmentDate(e.target.value)}
-                            className="h-10 w-44 rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-xs font-bold text-slate-900 dark:text-white shadow-sm"
-                          />
-                          {[
-                            { label: "+3d", days: 3 },
-                            { label: "+7d", days: 7 },
-                            { label: "+15d", days: 15 },
-                            { label: "+30d", days: 30 }
-                          ].map(q => (
-                            <Button
-                              key={q.label}
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                const d = new Date();
-                                d.setDate(d.getDate() + q.days);
-                                setReassessmentDate(d.toISOString().split("T")[0]);
-                              }}
-                              className="h-9 px-2.5 rounded-lg border-blue-200 dark:border-blue-900/40 text-blue-700 dark:text-blue-300 bg-white dark:bg-slate-900 text-xs font-bold hover:bg-blue-50"
-                            >
-                              {q.label}
-                            </Button>
-                          ))}
-                          {reassessmentDate && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setReassessmentDate("")}
-                              className="h-9 px-2 text-xs font-semibold text-slate-400 hover:text-slate-600"
-                            >
-                              Limpar
-                            </Button>
-                          )}
+                        <Select value={vaccineApplied} onValueChange={setVaccineApplied}>
+                          <SelectTrigger className="h-11 rounded-xl bg-white dark:bg-slate-900 border-emerald-200 dark:border-emerald-900/50 font-semibold text-sm">
+                            <SelectValue placeholder="Selecionar vacina..." />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-2xl p-2">
+                            {(isFeline ? [
+                              "Panleucopenia Felina",
+                              "Calicivírus Felino",
+                              "Herpesvírus Felino (Rinotraqueíte)",
+                              "Tríplice Felina (Panleucopenia + Calicivírus + Herpesvírus)",
+                              "Raiva",
+                              "Leucemia Felina (FeLV)",
+                              "Clamidofilose Felina",
+                              "Peritonite Infecciosa Felina (PIF)",
+                            ] : isDog ? [
+                              "Esgana (Distemper)",
+                              "Parvovirose Canina",
+                              "Adenovírus tipo 2 (Hepatite Infecciosa)",
+                              "Parainfluenza Canina",
+                              "Tetravalente (DHPPi)",
+                              "Pentavalente (DHPPi + Coronavírus)",
+                              "Leptospirose",
+                              "Raiva",
+                              "Leishmaniose",
+                              "Bordetella bronchiseptica (Tosse do Canil)",
+                              "Coronavírus Canino",
+                            ] : [
+                              "Raiva",
+                              "Outras (especificar nas observações)",
+                            ]).map(v => (
+                              <SelectItem key={v} value={v} className="rounded-xl p-2.5 font-medium text-sm">{v}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {vaccineApplied && (
+                          <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5"><Syringe size={11} className="text-emerald-500" />Pode adicionar lote e fabricante nas observações do tratamento.</p>
+                        )}
+                      </div>
+                      {/* 6. Data da Próxima Vacina */}
+                      <div className="p-4 sm:p-5 rounded-2xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 space-y-3">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                          <div className="flex items-center gap-2.5">
+                            <span className="w-6 h-6 bg-blue-600 text-white rounded-lg text-xs font-black flex items-center justify-center">6</span>
+                            <div>
+                              <Label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Data da Próxima Vacina</Label>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">O tutor receberá um SMS de lembrete nesta data</p>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Input type="date" value={nextVaccineDate} onChange={(e) => setNextVaccineDate(e.target.value)} className="h-10 w-44 rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-xs font-bold text-slate-900 dark:text-white shadow-sm" />
+                            {[{ label: "+1 mês", days: 30 }, { label: "+3 meses", days: 90 }, { label: "+6 meses", days: 180 }, { label: "+1 ano", days: 365 }].map(q => (
+                              <Button key={q.label} type="button" variant="outline" size="sm" onClick={() => { const d = new Date(); d.setDate(d.getDate() + q.days); setNextVaccineDate(d.toISOString().split("T")[0]); }} className="h-9 px-2.5 rounded-lg border-blue-200 dark:border-blue-900/40 text-blue-700 dark:text-blue-300 bg-white dark:bg-slate-900 text-xs font-bold hover:bg-blue-50">{q.label}</Button>
+                            ))}
+                            {nextVaccineDate && <Button type="button" variant="ghost" size="sm" onClick={() => setNextVaccineDate("")} className="h-9 px-2 text-xs font-semibold text-slate-400 hover:text-slate-600">Limpar</Button>}
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    </>)}
+
+                    {/* ── CIRURGIA ── */}
+                    {consultationType === "CIRURGIA" && (<>
+                      {/* 1. Peso */}
+                      <div className="p-4 sm:p-5 rounded-2xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30">
+                        <div className="flex items-center gap-2.5 mb-3">
+                          <span className="w-6 h-6 bg-rose-600 text-white rounded-lg text-xs font-black flex items-center justify-center">1</span>
+                          <Label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Peso Pré-Cirúrgico</Label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Input type="number" step="0.1" value={vitals.weight} onChange={(e) => setVitals({ ...vitals, weight: e.target.value })} placeholder="0.0" className="h-11 w-32 rounded-xl bg-white dark:bg-slate-900 border-rose-200 dark:border-rose-900/50 text-sm font-bold" />
+                          <span className="text-sm font-bold text-slate-500">kg</span>
+                        </div>
+                      </div>
+                      {/* 2. Medicação Administrada */}
+                      <div className="space-y-2 group/field transition-all">
+                        <div className="flex items-center gap-2 ml-0.5">
+                          <span className="w-6 h-6 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-black flex items-center justify-center">2</span>
+                          <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Medicação Administrada</Label>
+                          {surgeryMeds && <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 ml-auto animate-in fade-in duration-200"><CheckCircle2 size={11} className="text-emerald-500 shrink-0" />{surgeryMeds.trim().split(/\s+/).filter(Boolean).length} palavras</span>}
+                        </div>
+                        <Textarea value={surgeryMeds} onChange={(e) => setSurgeryMeds(e.target.value)} placeholder="Pré-medicação, indução anestésica, manutenção, analgesia pós-operatória (fármaco, dose, via e frequência)..." className="min-h-[110px] rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-2 focus-visible:ring-rose-500/20 transition-all duration-200 resize-none" />
+                      </div>
+                      {/* 3. Intercorrências Cirúrgicas */}
+                      <div className="space-y-2 group/field transition-all">
+                        <div className="flex items-center gap-2 ml-0.5">
+                          <span className="w-6 h-6 bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 rounded-lg text-xs font-black flex items-center justify-center">3</span>
+                          <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Intercorrências Cirúrgicas</Label>
+                          {surgeryComplications && <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 ml-auto animate-in fade-in duration-200"><AlertTriangle size={11} className="text-amber-500 shrink-0" />Registadas</span>}
+                        </div>
+                        <Textarea value={surgeryComplications} onChange={(e) => setSurgeryComplications(e.target.value)} placeholder="Descrever eventuais intercorrências durante o ato cirúrgico (hipotensão, hemorragia, reações anestésicas, etc.) — deixar em branco se sem intercorrências..." className="min-h-[110px] rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-2 focus-visible:ring-amber-500/20 transition-all duration-200 resize-none" />
+                      </div>
+                      {/* 4. Reavaliação */}
+                      <div className="p-4 sm:p-5 rounded-2xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 space-y-3">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                          <div className="flex items-center gap-2.5">
+                            <span className="w-6 h-6 bg-blue-600 text-white rounded-lg text-xs font-black flex items-center justify-center">4</span>
+                            <div>
+                              <Label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Data de Reavaliação Pós-Cirúrgica</Label>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Aviso em pop-up quando a fatura for liquidada</p>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Input type="date" value={reassessmentDate} onChange={(e) => setReassessmentDate(e.target.value)} className="h-10 w-44 rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-xs font-bold text-slate-900 dark:text-white shadow-sm" />
+                            {[{ label: "+3d", days: 3 }, { label: "+7d", days: 7 }, { label: "+10d", days: 10 }, { label: "+15d", days: 15 }].map(q => (
+                              <Button key={q.label} type="button" variant="outline" size="sm" onClick={() => { const d = new Date(); d.setDate(d.getDate() + q.days); setReassessmentDate(d.toISOString().split("T")[0]); }} className="h-9 px-2.5 rounded-lg border-blue-200 dark:border-blue-900/40 text-blue-700 dark:text-blue-300 bg-white dark:bg-slate-900 text-xs font-bold hover:bg-blue-50">{q.label}</Button>
+                            ))}
+                            {reassessmentDate && <Button type="button" variant="ghost" size="sm" onClick={() => setReassessmentDate("")} className="h-9 px-2 text-xs font-semibold text-slate-400 hover:text-slate-600">Limpar</Button>}
+                          </div>
+                        </div>
+                      </div>
+                    </>)}
+
+                    {/* ── REAVALIAÇÃO ── */}
+                    {consultationType === "REAVALIACAO" && (<>
+                      {/* 1. Exame Físico */}
+                      <div className="space-y-2 group/field transition-all">
+                        <div className="flex items-center gap-2 ml-0.5">
+                          <span className="w-6 h-6 bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 rounded-lg text-xs font-black flex items-center justify-center">1</span>
+                          <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Exame Físico</Label>
+                          {physicalExam && <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 ml-auto animate-in fade-in duration-200"><CheckCircle2 size={11} className="text-emerald-500 shrink-0" />{physicalExam.trim().split(/\s+/).filter(Boolean).length} palavras</span>}
+                        </div>
+                        <Textarea value={physicalExam} onChange={(e) => setPhysicalExam(e.target.value)} placeholder="Evolução do estado clínico desde a última consulta, parâmetros vitais, resposta ao tratamento..." className="min-h-[110px] rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-2 focus-visible:ring-amber-500/20 transition-all duration-200 resize-none" />
+                      </div>
+                      {/* 2. Tratamentos */}
+                      <div className="space-y-2 group/field transition-all">
+                        <div className="flex items-center gap-2 ml-0.5">
+                          <span className="w-6 h-6 bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 rounded-lg text-xs font-black flex items-center justify-center">2</span>
+                          <Label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Tratamentos</Label>
+                          {treatment && <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 ml-auto animate-in fade-in duration-200"><CheckCircle2 size={11} className="text-emerald-500 shrink-0" />{treatment.trim().split(/\s+/).filter(Boolean).length} palavras</span>}
+                        </div>
+                        <Textarea value={treatment} onChange={(e) => setTreatment(e.target.value)} placeholder="Ajustes terapêuticos, administração de medicação, procedimentos realizados nesta reavaliação..." className="min-h-[110px] rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-white/10 text-sm focus-visible:ring-2 focus-visible:ring-teal-500/20 transition-all duration-200 resize-none" />
+                      </div>
+                      {/* 3. Reavaliação + Alta */}
+                      <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 space-y-3">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                          <div className="flex items-center gap-2.5">
+                            <span className="w-6 h-6 bg-amber-600 text-white rounded-lg text-xs font-black flex items-center justify-center">3</span>
+                            <div>
+                              <Label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Data de Reavaliação</Label>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Deixar em branco e clicar em Alta se o paciente não necessitar de nova avaliação</p>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Input type="date" value={reassessmentDate} onChange={(e) => setReassessmentDate(e.target.value)} className="h-10 w-44 rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-xs font-bold text-slate-900 dark:text-white shadow-sm" />
+                            {[{ label: "+15m", days: 0 }, { label: "+1d", days: 1 }, { label: "+3d", days: 3 }, { label: "+7d", days: 7 }].map(q => (
+                              <Button key={q.label} type="button" variant="outline" size="sm" onClick={() => { const d = new Date(); d.setDate(d.getDate() + q.days); if (q.days === 0) { d.setMinutes(d.getMinutes() + 15); } setReassessmentDate(d.toISOString().split("T")[0]); }} className="h-9 px-2.5 rounded-lg border-amber-200 dark:border-amber-900/40 text-amber-700 dark:text-amber-300 bg-white dark:bg-slate-900 text-xs font-bold hover:bg-amber-50">{q.label}</Button>
+                            ))}
+                            <Button
+                              type="button"
+                              onClick={() => { setReassessmentDate(""); handleSave(); }}
+                              className="h-9 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold gap-1.5 shadow-md shadow-emerald-500/20 active:scale-95 transition-all"
+                            >
+                              <CheckCircle2 size={13} /> Alta
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </>)}
+
                   </div>
                  </div>
                 </PremiumCard>

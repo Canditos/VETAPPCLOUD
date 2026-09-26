@@ -42,11 +42,12 @@ const VET_COLORS = ["#3b82f6","#8b5cf6","#10b981","#f59e0b","#f43f5e","#6366f1"]
 
 const getTypeConfig = (type: string) => {
   switch (type?.toUpperCase()) {
-    case "VACINA":    return { icon: Syringe,     color: "#10b981", bg: "#ecfdf5", label: "Vacina" };
-    case "CIRURGIA":  return { icon: Scissors,    color: "#f43f5e", bg: "#fff1f2", label: "Cirurgia" };
-    case "URGÊNCIA":  return { icon: Zap,         color: "#f59e0b", bg: "#fffbeb", label: "Urgência" };
-    case "CONSULTA":  return { icon: Stethoscope, color: "#3b82f6", bg: "#eff6ff", label: "Consulta" };
-    default:          return { icon: Activity,    color: "#64748b", bg: "#f8fafc", label: "Geral" };
+    case "VACINA":      return { icon: Syringe,     color: "#10b981", bg: "#ecfdf5", label: "Vacinação" };
+    case "CIRURGIA":    return { icon: Scissors,    color: "#f43f5e", bg: "#fff1f2", label: "Cirurgia" };
+    case "URGÊNCIA":
+    case "REAVALIACAO": return { icon: Zap,         color: "#f59e0b", bg: "#fffbeb", label: "Reavaliação" };
+    case "CONSULTA":    return { icon: Stethoscope, color: "#3b82f6", bg: "#eff6ff", label: "Consulta" };
+    default:            return { icon: Activity,    color: "#64748b", bg: "#f8fafc", label: "Geral" };
   }
 };
 
@@ -878,10 +879,10 @@ function CalendarContent() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="rounded-2xl bg-slate-900 border-white/10 text-white p-2">
-                      <SelectItem value="CONSULTA" className="rounded-xl focus:bg-blue-600 p-3 font-bold">Consulta Geral</SelectItem>
+                      <SelectItem value="CONSULTA" className="rounded-xl focus:bg-blue-600 p-3 font-bold">Consulta</SelectItem>
                       <SelectItem value="VACINA" className="rounded-xl focus:bg-blue-600 p-3 font-bold">Vacinação</SelectItem>
                       <SelectItem value="CIRURGIA" className="rounded-xl focus:bg-blue-600 p-3 font-bold">Cirurgia</SelectItem>
-                      <SelectItem value="URGÊNCIA" className="rounded-xl focus:bg-blue-600 p-3 font-bold">Urgência</SelectItem>
+                      <SelectItem value="REAVALIACAO" className="rounded-xl focus:bg-blue-600 p-3 font-bold">Reavaliação</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1016,7 +1017,7 @@ function CalendarContent() {
                     <Button
                       className="w-full h-10 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm gap-2 shadow-md shadow-blue-500/10"
                       onClick={() => {
-                        router.push(`/dashboard/consultations?patientId=${selectedApp.patientId}&appointmentId=${selectedApp.id}`);
+                        router.push(`/dashboard/consultations?patientId=${selectedApp.patientId}&appointmentId=${selectedApp.id}&type=${selectedApp.type || "CONSULTA"}`);
                         setSelectedApp(null);
                       }}
                     >
