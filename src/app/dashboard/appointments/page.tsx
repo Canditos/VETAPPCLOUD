@@ -499,7 +499,7 @@ function CalendarContent() {
     >
       <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-slate-50/30 dark:bg-slate-950 w-full">
         {/* ── Top Bar ─────────────────────────────────────────────────── */}
-        <div className="bg-white/80 dark:bg-slate-900/50 backdrop-blur-xl border-b border-slate-200/60 dark:border-white/5 px-4 lg:px-6 py-3.5 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3 sticky top-0 z-50 shadow-sm w-full">
+        <div className="bg-white/80 dark:bg-slate-900/50 backdrop-blur-xl border-b border-slate-200/60 dark:border-white/5 px-4 lg:px-6 py-3.5 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3 sticky top-0 z-30 shadow-sm w-full">
           
           {/* Left: Brand / Title + Date Navigator */}
           <div className="flex items-center gap-3 shrink-0 flex-wrap">
